@@ -1,0 +1,4 @@
+classdef  SimpleClass < dynamicprops
+
+end
+

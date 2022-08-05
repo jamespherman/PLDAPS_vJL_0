@@ -1,0 +1,46 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf510
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+\margl1440\margr1440\vieww16680\viewh15820\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\f0\fs24 \cf0 # README for PLDAPS_vK2\
+\
+PLDAPS 	= PLexon DAtapixx PSychtoolbox, based on Eastman & Huk 2012. \
+vK2 		= version Krauzlis 2 (where version K1 is the standard PLDAPS used in the Krauzlis lab)\
+\
+PLDAPS_vK2 was written by James Herman & Leor Katz in the great winter of 2018.\
+\
+The quintet of functions that govern a PLDAPS task are still the same. We have:\
+1. settings\
+2. init \
+3. next\
+4. run\
+5. finish\
+\
+The main differences from vK1 are in organization, modularization, generalization, optimization, and another word that ends with 'tion'.\
+\
+## organization: \
+The quintet of files have been organized to exclusively do what their name implies. *_settings have all the settings. \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+\cf0 *_Init performs actions that are done only once in the task. \
+*_next sets up the very next trial\
+*_run exclusively runs the while loop (the "state machine" that is at the heart of PLDAPS)\
+*_finish performs actions that take place at the end of a trial.\
+\
+Every rig/animal gets a rigConfig file that has some basic rig specifications (e.g. screen size, distance from screen etc.). This is loaded by the init file to compute pixels per degree (ppd).\
+\
+## modularization and generalization:\
+The different functions are now saved as their own functions. There are two versions of support functions: task-specific functions and PLDAPS-wide support functions.\
+\
+## optimizations:\
+Removed all magic numbers, minimized redundant code, etc.\
+\
+------------\
+\
+Folder structure:\
+PLDAPS_vK2 folder\
+-- task_1\
+-- task_2\
+-- task_n\
++pds % support functions that PLDAPS-wide e.g. pds.getEye}

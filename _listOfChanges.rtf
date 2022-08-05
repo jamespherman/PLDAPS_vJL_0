@@ -1,0 +1,184 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf510
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fmodern\fcharset0 Courier;\f2\fmodern\fcharset0 Courier-Bold;
+}
+{\colortbl;\red255\green255\blue255;\red34\green139\blue34;}
+\margl1440\margr1440\vieww21640\viewh20720\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\f0\fs24 \cf0 \
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\b\fs36 \cf0 Changes we've made:
+\b0 \
+- complete revamp of the 5 core functions.\
+- complete revamp of variable names: verbose, make sense, organized, human-readable\
+- support functions are either PLDAPS general (+pds) or task-specific.\
+- no more GetSecs. Everything is in Datapixx time.\
+- no more c. all p. yes, really.\
+- p has substructs:\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\f1\fs28 \cf2 % p.init;           % all things that are saved once except for trialVarsInit\cf0 \
+\pard\pardeftab720
+\cf2 % p.rig;            % all rig (monitor, PTB stuff, distances) related stuff\cf0 \
+\cf2 % p.audio;          % all things audio related\cf0 \
+\cf2 % p.draw;           % all widths/hieghts/etc of stuff that's drawn. (all except for stimulus, which is saved uniquely in stim struct)\cf0 \
+\cf2 % p.state           % all the states that we use and their id integer\cf0 \
+\cf2 % p.trVarsInit;     % all vars used in pldaps. here intiailized.\cf0 \
+\cf2 % p.trVars;         % all vars used in run function inherit value from trVarsInit.\cf0 \
+\cf2 % p.trVarsGuiComm;  % inheritance and user update of trVars happens through this struct, the trial variables gui coomunication\cf0 \
+\cf2 % p.trData;         % all data collected in a trial (behavior, timing, analog..)\cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\f0\fs36 \cf0 - no more m. all taskFiles and taskActions are now part of p.init.\
+- states have names (e.g. p.state.dontMove) and stored in p.state\
+- changed clut terminology form human/monkey to exp/sub, and now in p.draw.clutIdx\
+- cluts have names (e.g. p.clut.expCyan_subBg)\
+- new strobe function (ensures strobing after flip)\
+- rigConfigFile (this might change into subConfigFile e.g. ridleyRigA_20180606 so that it matches both monk n rig).\
+
+\b - 
+\b0 the 12 vars that show up on GUI are set manually, and are no longer "the first 12 that are defined".\
+- saving: creates folder, saves every trial (fast!) via saveP.m. folder can be loaded (and concatenated) with loadP.m \
+
+\b \
+ORGANIZATION OF FOLDERS
+\b0 \
+PLDPS_vK2\
+- attnMot_training1\
+- - - setting, init, next, run, finish\
+- - - taskActions\
+- - - data\
+- - - figures\
+- attnMot_training2\
+\
+- attnMot_porter\
+\
++pds\
+- - - functions/actions...\
+\
+- difference between fa & foilFa\
+\
+============================\
+
+\b 2do:\
+\
+\
+JAMES\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\f1\b0\fs20 \cf2 % % % p.trData.spikeAndStrobeTimes(p.trData.spikeAndStrobeTimes(:,1)==4, 3)
+\fs24 \cf0 \
+\pard\pardeftab720
+
+\fs20 \cf2 % % % 
+\fs24 \cf0 \
+
+\fs20 \cf2 % % % keyboard
+\fs24 \cf0 \
+\
+Can you make the "initialize" remove the green run button?\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\f2\b\fs36 \cf0 \
+make sure that joystick indicator doesn't show!\
+\
+\
+\pard\pardeftab720
+\cf0 VERIFY 
+\f1\b0 that strobing 2 values one after the other does not corrupt any of them. \
+TEST elapsed time between multiple "zero-lag" strobes (if under 1ms that's ok, otherwise we should account for elapsed time)\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\f0\b \cf0 \
+consider what to do with status vars. consider moving the 'isTrialCue\'85' to status?
+\b0 \
+\
+Need to code up a method for counting frames + detecting dropped frames (and present the dropped frame count on expCLUT)\
+\
+redo genDots. (
+\f2\b would genDtos be faster of you prealloc dotY/X/C/W ? --> probably)
+\f0\b0 \
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\f1 \cf0 - all init files need to have "pds.defineGridLines" instead of defining grid lines in "defineVisuals" which is in "next".
+\fs20 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\f2\b\fs36 \cf0 \
+- 
+\f1\b0 move things in "degrees" from p.draw to p.trVarsInit in _settings.m
+\f2\b \
+\
+- 
+\f1\b0 modify "eyeInWindow" across tasks\
+
+\f2\b \
+\pard\pardeftab720
+\cf0 =======================\
+Considerations for future releases:\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\f0\b0 \cf0 \
+- should we make dots isoluminant? \
+\
+\
+=====\
+20180701 - lnk building visually/memory guided saccade task 'gSac'\
+- rigConfigFile shouldn't be in the task folder but in the pldaps root folder. \
+- do we always want the GUI to take us to the folder from whence the settings file came?\
+\
+2do:\
+- move all tasks into 'tasks' folder\
+- dataToWorkspace should be +pds \
+- in general, go over all mcd functions and see if they can be +pds\
+- 
+\f1 joyThreshPress/release should be defined as proportions of the joystick range (which, in turn, should be defined in the rigConfigFile).\
+- STROBES STROBES STROBES\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\fs20 \cf0 \
+\
+\
+- change all Width and Height to W and H.\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\fs24 \cf0 - how do we want to deal with codes? Same codes across all tasks? makes sense, but I still advocate for having a 'codes' file per task, and not one sweeping code that gets used for all. \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\f0\fs36 \cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\f2\b \cf0 \
+- add general output folder within pldaps root?\
+\
+- make grid should be a function in +pds\
+\
+some of our trVars (e.g. 'isCue\'85' ) should be in status, no?\
+\
+- 7/2/2018: modified "initAudio.m" to include "alphaBinauralBeats" garbage\
+\
+why do we have both trBegin and trStart in trData.timing ?\
+\
+\
+===============\
+Leor Jan 2019\
+\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\f1\b0 \cf0 rigConfigFiles in own package\
+\
+removing .trialType as it is redundant with trialCode (which already reprints the type)
+\f2\b \
+
+\f1\b0 \
+deal with audio\
+\
+\
+\
+}
