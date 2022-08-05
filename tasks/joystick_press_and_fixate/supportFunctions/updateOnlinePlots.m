@@ -90,17 +90,20 @@ set(p.draw.onlinePlotAxes, 'XLim', xMax*[-0.1 1], 'YLim', [0 newY + 1]);
 % "NaN" to post-fixation-aquisition eye X & Y; if fixation was acquired in
 % this trial, define a logicalindex for pre-fixation-acquisition time
 % samples:
+eyeX = 4 * p.trData.eyeX;
+eyeY = 4 * p.trData.eyeY;
+eyeT = p.trData.eyeT;
 if p.trData.timing.fixAq < 0
-    eyeX_preFixAq = p.trData.eyeX - p.trVars.fixDegX;
-    eyeY_preFixAq = p.trData.eyeY - p.trVars.fixDegY;
+    eyeX_preFixAq = eyeX - p.trVars.fixDegX;
+    eyeY_preFixAq = eyeY - p.trVars.fixDegY;
     eyeX_postFixAq = NaN;
     eyeY_postFixAq = NaN;
 else
-    preFixAqLogical = p.trData.eyeT < p.trData.timing.fixAq;
-    eyeX_preFixAq = p.trData.eyeX(preFixAqLogical) - p.trVars.fixDegX;
-    eyeY_preFixAq = p.trData.eyeY(preFixAqLogical) - p.trVars.fixDegY;
-    eyeX_postFixAq = p.trData.eyeX(~preFixAqLogical) - p.trVars.fixDegX;
-    eyeY_postFixAq = p.trData.eyeY(~preFixAqLogical) - p.trVars.fixDegY;
+    preFixAqLogical = eyeT < p.trData.timing.fixAq;
+    eyeX_preFixAq = eyeX(preFixAqLogical) - p.trVars.fixDegX;
+    eyeY_preFixAq = eyeY(preFixAqLogical) - p.trVars.fixDegY;
+    eyeX_postFixAq = eyeX(~preFixAqLogical) - p.trVars.fixDegX;
+    eyeY_postFixAq = eyeY(~preFixAqLogical) - p.trVars.fixDegY;
 end
     
 % update onlineEyePlots:

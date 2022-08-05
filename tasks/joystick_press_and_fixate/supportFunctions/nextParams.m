@@ -235,7 +235,7 @@ p.draw.fixPointRect = repmat(p.draw.fixPointPix, 1, 2) + ...
 
 % store fix point after adding random bit
 p.trVars.fixDegX = tempX;
-p.trVars.fixDegX = tempY;
+p.trVars.fixDegY = tempY;
 
 end
 
