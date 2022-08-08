@@ -383,7 +383,7 @@ Screen('Preference','VisualDebuglevel',3);
 % first, make sure Datapixx is open:
 try 
     Datapixx('Open'); 
-catch me, 
+catch me 
     error(['I BET YOU 1 MILLION DOLLARS THAT YOU FORGOT TO TURN DATAPIXX ON'...
         'no gow turn it on & hit Initialize before anyone notices your ignorance']); 
 end
