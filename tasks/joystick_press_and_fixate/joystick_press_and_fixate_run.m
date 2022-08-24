@@ -219,27 +219,23 @@ switch p.trVars.currentState
         
         % exit while loop
         p.trVars.exitWhileLoop = true;
-        
-        % THIS BLOCK OF CODE IS FOR INTRODUCING A DELAY BETWEEN HIGH TONE
-        % AND REWARD DELIVERY. We have to revisit how the delay works
-        % because in the code below the delay is relative to fixation
-        % acquisition rather than relative to successful fixation hold.
-        %         % if the delay for reward delivery has elapsed and reward delivery
-        %         % hasn't yet been triggered, deliver the reward.
-        %         if (timeNow - p.trData.timing.fixAq) > p.trVars.hitRwdTime && ...
-        %                 p.trData.timing.reward < 0
-        %             p = pds.deliverReward(p);
-        %
-        %         % if reward delivery has been triggered and the interval to wait
-        %         % after reward delivery has elapsed, it's time to exit the
-        %         % while-loop.
-        %         elseif p.trData.timing.reward > 0 && ...
-        %                 (timeNow - p.trData.timing.reward) > ...
-        %                 (p.trVars.postRewardDuration + p.rig.dp.dacPadDur + ...
-        %                 (p.trVars.rewardDurationMs/1000))
-        %             p.trVars.exitWhileLoop = true;
-        %         end
-        
+
+        % if the delay for reward delivery has elapsed and reward delivery
+        % hasn't yet been triggered, deliver the reward.
+        if (timeNow - p.trData.timing.fixHoldReqMet) > ...
+                p.trVars.rewardDelay && p.trData.timing.reward < 0
+            p = pds.deliverReward(p);
+
+            % if reward delivery has been triggered and the interval to wait
+            % after reward delivery has elapsed, it's time to exit the
+            % while-loop.
+        elseif p.trData.timing.reward > 0 && ...
+                (timeNow - p.trData.timing.reward) > ...
+                (p.trVars.postRewardDuration + p.rig.dp.dacPadDur + ...
+                (p.trVars.rewardDurationMs/1000))
+            p.trVars.exitWhileLoop = true;
+        end
+
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%% end states: trial ABORTED %%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

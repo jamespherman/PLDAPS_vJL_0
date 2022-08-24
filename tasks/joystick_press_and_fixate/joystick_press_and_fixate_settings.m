@@ -168,6 +168,7 @@ p.rig.guiStatVals = {...
 
 p.rig.guiVars = {...
     'rewardDurationMs'; ...   %1
+    'rewardDelay'; ...
     'fixDurReqMin'; ...
     'fixDurReqMax'; ...
     'fixWinWidthDeg'; ...
@@ -176,7 +177,6 @@ p.rig.guiVars = {...
     'fixDegY'; ...
     'fixPointLinePix'; ...
     'fixPointRadPix'; ...
-    'stimLoc2Elev'; ...
     'passJoy'; ...          
     'passEye'};              % 12
 
@@ -232,15 +232,15 @@ p.trVarsInit.fixLocRandX             = 15;          % random variation in X loca
 p.trVarsInit.fixLocRandY             = 10;          % random variation in X location of fixation point
 
 % times/latencies/durations:
-p.trVarsInit.rewardDurationMs        = 400;     % reward duration
-p.trVarsInit.fixDurReqMin            = 0.15;      % minimum possible duration of joystick press required
-p.trVarsInit.fixDurReqMax            = 0.3;      % maximum possible duration of joystick press required
+p.trVarsInit.rewardDurationMs        = 200;      % reward duration
+p.trVarsInit.fixDurReqMin            = 0.2;      % minimum possible duration of joystick press required
+p.trVarsInit.fixDurReqMax            = 0.5;      % maximum possible duration of joystick press required
 p.trVarsInit.fix2CueIntvl            = 0.25;     % Time delay between acquiring fixation and cue ring onset.
 p.trVarsInit.cueDur                  = 0.133;    % Duration of ring presentaiton.
 p.trVarsInit.cue2StimItvl            = 0.567;    % time between ring offset and motion onset (stimulus onset asynchrony).
 p.trVarsInit.stim2ChgIntvl           = 1;        % minimum time between stimulus onset and change.
 p.trVarsInit.chgWinDur               = 3;        % time window during which a change is possible.
-p.trVarsInit.rewardDelay             = 0;        % delay between cued change and reward delivery for hits.
+p.trVarsInit.rewardDelay             = 0.1;      % delay between cued change and reward delivery for hits.
 p.trVarsInit.joyMinLatency           = 0.2;      % minimum acceptable joystick release latency.
 p.trVarsInit.joyMaxLatency           = 0.8;      % maximum acceptable joystick release latency.
 p.trVarsInit.timeoutAfterFa          = 2;        % timeout duration following false alarm.
@@ -254,7 +254,7 @@ p.trVarsInit.trialMax                = 15;       % max length of the trial
 p.trVarsInit.joyReleaseWaitDur       = 5;        % how long to wait after trial end to start flickering the screen if the joystick hasn't been released
 p.trVarsInit.stimFrameIdx            = 1;        % stimulus (eg dots) frame display index
 p.trVarsInit.flipIdx                 = 1;        % index of
-p.trVarsInit.postRewardDuration      = 0.25;     % how long should the trial last AFTER reward delivery? This lets us record the neuronal response to reward.
+p.trVarsInit.postRewardDuration      = 0;     % how long should the trial last AFTER reward delivery? This lets us record the neuronal response to reward.
 p.trVarsInit.useQuest                = false;
 
 % I don't think I need to carry these around in 'p'....
