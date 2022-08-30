@@ -98,7 +98,7 @@ switch p.trVars.currentState
         %% STATE 2:
         %   WAITING FOR SUBJECT TO HOLD JOYSTICK DOWN
         
-        % If joystick is held down, onwards to state 0.25
+        % If joystick is held down, onwards to state "showFix"
         % If not, onward to state 3.3 (non-start)
         if pds.joyHeld(p)
             p.init.strb.addValue(p.init.codes.joyPress);
@@ -111,7 +111,7 @@ switch p.trVars.currentState
         
     case p.state.showFix
         %% STATE 3:
-        %   JOYSTICK IS HELD, SO SHOW FIXATION POINT AND WAIT FOR
+        %   JOYSTICK IS HELD, SHOW FIXATION POINT AND WAIT FOR
         %   SUBJECT TO ACQUIRE FIXATION.
         
         % show fixatoin point & fixation window on exp-display
@@ -209,17 +209,11 @@ switch p.trVars.currentState
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     case p.state.hit
         %% HIT!
-        % STATE 21 = reward delivery
+        % 	DELIVER REWARD AFTER SOME DELAY
         
         % hide fixatoin point
         p.draw.color.fix                = p.draw.clutIdx.expBg_subBg;
         
-        % deliver reward
-        p = pds.deliverReward(p);
-        
-        % exit while loop
-        p.trVars.exitWhileLoop = true;
-
         % if the delay for reward delivery has elapsed and reward delivery
         % hasn't yet been triggered, deliver the reward.
         if (timeNow - p.trData.timing.fixHoldReqMet) > ...
