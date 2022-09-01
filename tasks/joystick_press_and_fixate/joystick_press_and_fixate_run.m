@@ -35,7 +35,7 @@ function p = joystick_press_and_fixate_run(p)
 %   (3) DRAW section: PTB-based drawing
 
 % hide fixatoin point
-        p.draw.color.fix                = p.draw.clutIdx.expBg_subBg;
+p.draw.color.fix                = p.draw.clutIdx.expBg_subBg;
         
 i = 0;
 while ~p.trVars.exitWhileLoop
