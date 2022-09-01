@@ -55,11 +55,16 @@ if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
         'FontSize', 16 ...
         );
     
-    % make plot objects: (1) green filled squares for "hits", (2) red Xs
-    % for "misses", and (3) grey circles for non-starts:
+    % make plot objects: (1) green filled squares for "hits" on "release
+    % after reward" trials, (2) red Xs for fixation or joybreaks on
+    % "release after reward" trials, (3) grey circles for non-starts, (4)
+    % blue filled squares for "hits" on "release after fix off" trials, and
+    % (5) orange Xs for "misses" on "release after fix off" trials.
     p.draw.onlinePlotObj(1) = plot(p.draw.onlinePlotAxes, NaN, NaN);
     p.draw.onlinePlotObj(2) = plot(p.draw.onlinePlotAxes, NaN, NaN);
     p.draw.onlinePlotObj(3) = plot(p.draw.onlinePlotAxes, NaN, NaN);
+    p.draw.onlinePlotObj(4) = plot(p.draw.onlinePlotAxes, NaN, NaN);
+    p.draw.onlinePlotObj(5) = plot(p.draw.onlinePlotAxes, NaN, NaN);
     
     % set plot object properties:
     set(p.draw.onlinePlotObj(1), 'LineStyle', 'none', 'Marker', 's', ...
@@ -68,7 +73,11 @@ if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
         'MarkerEdgeColor', [1 0.1 0.1], 'LineWidth', 2);
     set(p.draw.onlinePlotObj(3), 'LineStyle', 'none', 'Marker', 'o', ...
         'MarkerEdgeColor', 0.8 * [1 1 1], 'LineWidth', 1);
-    
+    set(p.draw.onlinePlotObj(4), 'LineStyle', 'none', 'Marker', 's', ...
+        'MarkerFaceColor', [0.1 0.1 1], 'MarkerEdgeColor', 'None');
+    set(p.draw.onlinePlotObj(5), 'LineStyle', 'none', 'Marker', 'x', ...
+        'MarkerEdgeColor', [1 0.5 0], 'LineWidth', 1);
+
     % make axes for plotting eye position:
     p.draw.onlineEyePlotAxes = axes(...
         'Parent', p.draw.onlineEyePlotWindow, ...

@@ -38,8 +38,8 @@ switch p.trData.trialEndState
             % we use the time that the joystick was released:
             try
                 newX = p.trData.timing.fixBreak  - p.trData.timing.fixAq;
-            catch me
-                keyboard
+            catch
+                newX = p.trData.timing.joyBreak  - p.trData.timing.fixAq;
             end
             plotInd = 2;
         end
@@ -54,8 +54,9 @@ switch p.trData.trialEndState
             % what's the new "X" data value? Since the last trial was a miss,
             % we use the time that the joystick was released:
             try
-                newX = p.trData.timing.joyRelease - p.trData.timing.fixAq;
-            catch me
+                newX = p.trData.timing.joyBreak  - p.trData.timing.fixAq;
+            catch
+                me
                 keyboard
             end
             plotInd = 2;

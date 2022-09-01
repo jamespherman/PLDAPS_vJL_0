@@ -124,9 +124,13 @@ switch p.trVars.currentState
         else
             tempFixIndex = 13;
         end
-            p.draw.color.fix                = tempFixIndex;
+        p.draw.color.fix                = tempFixIndex;
         end
-    
+        
+        % set fixation window color & line weight
+        p.draw.color.fixWin  = p.draw.clutIdx.expBlack_subBg;
+        p.draw.fixWinPenDraw = p.draw.fixWinPenPre;
+        
         % we only want to strobe this once:
         p.init.strb.addValueOnce(p.init.codes.fixOn);
         
@@ -156,7 +160,7 @@ switch p.trVars.currentState
             p.trData.timing.joyRelease = timeNow;
             p.trVars.currentState      = p.state.joyBreak;
             
-            % hide fixation point
+            % hide fixatoin point
             p.draw.color.fix                = p.draw.clutIdx.expBg_subBg;
             
         elseif p.trData.timing.fixOn > 0 && timeNow > ...
@@ -176,21 +180,16 @@ switch p.trVars.currentState
 
         % If fixation has been held for the requisite duration and the
         % joystick has not been released:
-        % (1) On a "release after fixation offset" trial, extinguish
-        % fixation and go to state 5: "make decision".
+        % (1) On a "release after fixation offset" trial, go to state 5:
+        % "make decision".
         % (2) On a "release after reward" trial, go to "hit" state.
         if p.trData.timing.fixAq > 0 && ...
                 timeFromFixAq > p.trVars.fixDurReq && pds.eyeInWindow(p)
 
-            % mark time that fixation hold requirement was met:
             p.trData.timing.fixHoldReqMet = timeNow;
 
             if p.trVars.isRelOnFixOffTrial
-
-                % extinguish fixation and move to next state:
                 p.trVars.currentState      = p.state.makeDecision;
-                p.draw.color.fix           = p.draw.clutIdx.expBg_subBg;
-
             else
                 p.init.strb.addValue(p.init.codes.hit);
                 p.trVars.currentState      = p.state.hit;
@@ -202,7 +201,7 @@ switch p.trVars.currentState
             p.trData.timing.fixBreak   = timeNow;
             p.trVars.currentState      = p.state.fixBreak;
             
-            % hide fixation point
+            % hide fixatoin point
             p.draw.color.fix                = p.draw.clutIdx.expBg_subBg;
             
         elseif ~pds.joyHeld(p)
@@ -217,16 +216,7 @@ switch p.trVars.currentState
         % was met:
         timeFromFixHoldMet = timeNow - p.trData.timing.fixHoldReqMet;
 
-        % if maximum allowed duration after fixation hold duration
-        % requirement has been reached, this is a miss, go to miss state:
-        if timeFromFixHoldMet > p.trVarsInit.maxJoyRelLatency
-            p.trVars.currentState = p.state.miss;
-        elseif ~pds.joyHeld(p)
-            p.init.strb.addValue(p.init.codes.hit);
-            p.trVars.currentState      = p.state.hit;
-            p = playTone(p, 'high');
-        end
-
+        % if joystick has been released 
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%% end states: trial COMPLETED %%%
@@ -253,12 +243,6 @@ switch p.trVars.currentState
                 (p.trVars.rewardDurationMs/1000))
             p.trVars.exitWhileLoop = true;
         end
-
-    case p.state.miss
-        %% MISS
-        % state 23 = play low tone, then turn things off and move on
-        p = playTone(p, 'low');
-        p.trVars.exitWhileLoop = true;
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%% end states: trial ABORTED %%%

@@ -16,11 +16,19 @@ initmon('LUTvpixx');
 % mutGreen    = [0.3953 0.7459 0.5244];
 mutGreen    = [0.5 0.9 0.4];
 
+% define some other useful colors
 redISH      = [225 0 76]/255;
 orangeISH   = [255 146 0]/255;
 blueISH     = [11 97 164]/255;
 greenISH    = [112 229 0]/255;
 oldGreen    = [0.45, 0.63, 0.45];
+
+% define grayscale levels for fixation dimming, we'll make 20, 40, 60, and
+% 80 percent "white":
+white20 = 0.2 * [1 1 1];
+white40 = 0.4 * [1 1 1];
+white60 = 0.6 * [1 1 1];
+white80 = 0.8 * [1 1 1];
 
 % colors for exp's display
 % black                     0
@@ -48,8 +56,11 @@ p.draw.clut.expColors = ...
     mutGreen;           % 10
     greenISH;           % 11
     0, 0, 0;            % 12
-    oldGreen];          % 13
-
+    oldGreen;           % 13
+    white20;            % 14
+    white40;            % 15
+    white60;            % 16
+    white80];           % 17
 
 % colors for subject's display
 % black                     0
@@ -64,20 +75,24 @@ p.draw.clut.expColors = ...
 % muted green (fixation)    9
 
 p.draw.clut.subColors = ...
-    [0, 0, 0;     % 0
-    bgRGB;        % 1
-    bgRGB;        % 2
-    bgRGB;        % 3
-    1, 1, 1;      % 4
-    bgRGB;        % 5
-    bgRGB;        % 6
-    bgRGB;        % 7
-    0, 1, 1;      % 8
-    bgRGB;        % 9
-    mutGreen;     % 10
-    bgRGB;        % 11
-    bgRGB;        % 12
-    oldGreen];    % 13
+    [0, 0, 0;           % 0
+    bgRGB;              % 1
+    bgRGB;              % 2
+    bgRGB;              % 3
+    1, 1, 1;            % 4
+    bgRGB;              % 5
+    bgRGB;              % 6
+    bgRGB;              % 7
+    0, 1, 1;            % 8
+    bgRGB;              % 9
+    mutGreen;           % 10
+    bgRGB;              % 11
+    bgRGB;              % 12
+    oldGreen;           % 13
+    white20;            % 14
+    white40;            % 15
+    white60;            % 16
+    white80];           % 17
 
 assert(size(p.draw.clut.subColors,1)==size(p.draw.clut.expColors,1), 'ERROR-- exp & sub Colors must have equal length')
 

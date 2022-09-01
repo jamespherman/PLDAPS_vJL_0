@@ -94,12 +94,10 @@ p.state.waitForJoy      = 2;
 p.state.showFix         = 3;
 p.state.dontMove        = 4;
 p.state.makeDecision    = 5;
-
 % end states - aborted:
 p.state.fixBreak        = 11;
 p.state.joyBreak        = 12;
 p.state.nonStart        = 13;
-
 % end states - success:
 p.state.hit             = 21;
 p.state.cr              = 22;
@@ -177,10 +175,11 @@ p.rig.guiVars = {...
     'fixWinHeightDeg'; ...
     'fixDegX'; ...       % 6
     'fixDegY'; ...
-    'propRelTrials'; ...
-    'maxJoyRelLatency'; ...
+    'fixPointLinePix'; ...
+    'fixPointRadPix'; ...
     'passJoy'; ...          
     'passEye'};              % 12
+
 
 %% INIT VARIABLES 
 % vars that are only set once
@@ -225,7 +224,7 @@ p.trVarsInit.eyePixY             = 0;
 % "release on fixation offset" trial or a "release after reward" trial.
 p.trVarsInit.propRelTrials       = 0.2;         % proportion of trials on which joystick release after fixation offset is required.
 p.trVarsInit.maxJoyRelLatency    = 10;          % time in seconds after fixation offset that the monkey has to release the joystick to get reward.
-p.trVarsInit.isRelOnFixOffTrial  = false;       % variable tracking whether the current trial is a "release on fixation offset" trial or not.
+p.trVarsInit.
 
 % geometry/stimulus vars:
 p.trVarsInit.speedDelta          = (pi/8);      % motion magniutde
@@ -410,6 +409,7 @@ p.stim.nFeatures         = length(p.stim.featureValueNames);
 % refers to a row in the CLUT (see initClut.m); format is:
 % 'expColor_subColor' where 'exp' stands for experimenter, 'sub' for 
 % subject clut ('Bg' = background)
+
 p.draw.clutIdx.expBlack_subBlack         = 0;
 p.draw.clutIdx.expGrey25_subBg           = 1;
 p.draw.clutIdx.expBg_subBg               = 2;
@@ -420,14 +420,10 @@ p.draw.clutIdx.expOrange_subBg           = 6;
 p.draw.clutIdx.expBlue_subBg             = 7;
 p.draw.clutIdx.expCyan_subCyan           = 8;
 p.draw.clutIdx.expGrey90_subBg           = 9;
-p.draw.clutIdx.expMutGreen_subMutGreen   = 10;
+p.draw.clutIdx.expMutGreen_subBg         = 10;
 p.draw.clutIdx.expGreen_subBg            = 11;
 p.draw.clutIdx.expBlack_subBg            = 12;
 p.draw.clutIdx.expOldGreen_subOldGreen   = 13;
-p.draw.clutIdx.expWhite20_subWhite20     = 14;
-p.draw.clutIdx.expWhite40_subWhite40     = 15;
-p.draw.clutIdx.expWhite60_subWhite60     = 16;
-p.draw.clutIdx.expWhite80_subWhite80     = 17;
 
 %% COLORS 
 % here we just init them. They get updated in the run function as a 

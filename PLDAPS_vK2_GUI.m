@@ -232,9 +232,13 @@ eval(['uiData.p = ' ...
 % how many control parameter "slots" (popup menu / box rows) are there?
 nCtrlParamRows = length(uiData.handles.ctrlParamPopUp);
 
+try
 % Obtain all trial variable names in string form, and sort:
 trVarsStrings = pds.setStringListForGui(uiData.p.trVarsGuiComm);
 trVarsStrings = sort(trVarsStrings);
+catch me
+    keyboard
+end
 
 % If user has defined a list of variables to use as control parameters in
 % "settings", use them to populate 'guiStrings':
