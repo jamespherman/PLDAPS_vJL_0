@@ -79,16 +79,16 @@ p.trVars.isRelOnFixOffTrial = rand < p.trVars.propRelTrials;
 % brightness of the fixation after dimming:
 tempRand = rand;
 if tempRand < 1/3
-    dimVal = p.trVars.lowDimVal;
+    p.trData.dimVal = p.trVars.lowDimVal;
 elseif tempRand < 2/3
-    dimVal = p.trVars.midDimVal;
+    p.trData.dimVal = p.trVars.midDimVal;
 else
-    dimVal = p.trVars.highDimVal;
+    p.trData.dimVal = p.trVars.highDimVal;
 end
 
 % Now we convert from the "dimVal" to the CLUT ID:
 p.draw.fixDimClutId = ...
-    round(p.draw.nColors + dimVal * (255 - p.draw.nColors) + 1);
+    round(p.draw.nColors + p.trData.dimVal * (255 - p.draw.nColors) + 1);
 
 % if we're using QUEST run "getQuestSuggestedDelta" - this both gets a
 % suggested signal strength AND initializes the QUEST object if it doesn't
