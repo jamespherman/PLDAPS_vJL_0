@@ -93,7 +93,7 @@ switch p.trVars.currentState
         p.init.strb.addValue(p.init.codes.trialBegin);
         p.trData.timing.trialBegin      = timeNow;
         p.trVars.currentState           = p.state.waitForJoy;
-        
+
     case p.state.waitForJoy
         %% STATE 2:
         %   WAITING FOR SUBJECT TO HOLD JOYSTICK DOWN
@@ -114,25 +114,23 @@ switch p.trVars.currentState
         %   JOYSTICK IS HELD, SHOW FIXATION POINT AND WAIT FOR
         %   SUBJECT TO ACQUIRE FIXATION.
         
-        % show fixatoin point & fixation window on exp-display
+        % if fixation has not yet been illuminated, choose a color for the
+        % fixation point:
         if p.trData.timing.fixOn < 0
-        tempRand = rand;
-        if tempRand < 0.33
-            tempFixIndex = 0;
-        elseif tempRand < 0.66
-            tempFixIndex = 8;
-        else
-            tempFixIndex = 13;
-        end
-        p.draw.color.fix                = tempFixIndex;
+            tempRand = rand;
+            if tempRand < 0.33
+                tempFixIndex = p.draw.clutIdx.expWhite_subWhite;
+            elseif tempRand < 0.66
+                tempFixIndex = p.draw.clutIdx.expCyan_subCyan;
+            else
+                tempFixIndex = p.draw.clutIdx.expOldGreen_subOldGreen;
+            end
+            p.draw.color.fix = tempFixIndex;
         end
         
         % set fixation window color & line weight
         p.draw.color.fixWin  = p.draw.clutIdx.expBlack_subBg;
-        p.draw.fixWinPenDraw = p.draw.fixWinPenPre;
-        
-        % we only want to strobe this once:
-        p.init.strb.addValueOnce(p.init.codes.fixOn);
+        p.draw.fixWinPenDraw = p.draw.fixWinPenPost;
         
         % If "fixOn" time hasn't been defined, and we haven't already
         % indicated that "fixOn" should be defined after the next flip,
@@ -160,7 +158,7 @@ switch p.trVars.currentState
             p.trData.timing.joyRelease = timeNow;
             p.trVars.currentState      = p.state.joyBreak;
             
-            % hide fixatoin point
+            % hide fixation point
             p.draw.color.fix                = p.draw.clutIdx.expBg_subBg;
             
         elseif p.trData.timing.fixOn > 0 && timeNow > ...
@@ -290,67 +288,45 @@ end
 % now calculate size of joystick-fill rectangle
 joyRectNow = pds.joyRectFillCalc(p);
 
-% if we're close enouframegh in time to the next screen flip, start drawing.
-if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNumber
+% if we're close enouframegh in time to the next screen flip, start drawing
+if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - ...
+        p.rig.magicNumber
 
     % Fill the window with the background color.
     Screen('FillRect', p.draw.window, p.draw.color.background);
     
     % Draw the grid
-    Screen('DrawLines', p.draw.window, p.draw.gridXY, [], p.draw.color.gridMajor);
+    Screen('DrawLines', p.draw.window, p.draw.gridXY, [], ...
+        p.draw.color.gridMajor);
     
     % Draw the gaze position, MUST DRAW THE GAZE BEFORE THE
     % FIXATION. Otherwise, when the gaze indicator goes over any
     % stimuli it will change the occluded stimulus' color!
-    gazePosition = [p.trVars.eyePixX p.trVars.eyePixY p.trVars.eyePixX p.trVars.eyePixY] + ...
+    gazePosition = [p.trVars.eyePixX p.trVars.eyePixY ...
+        p.trVars.eyePixX p.trVars.eyePixY] + ...
         [-1 -1 1 1]*p.draw.eyePosWidth + repmat(p.draw.middleXY, 1, 2);
     Screen('FillRect', p.draw.window, p.draw.color.eyePos, gazePosition);
     
-    % draw the cue-ring (if desired)
-    % if p.trVars.cueIsOn
-        % Screen('FrameOval', p.draw.window, p.draw.color.cueRing, p.draw.cueRingRect, ...
-            % p.draw.ringThickPix);
-    % end
-    
-    % calculate which stimulus frame we're in based on time since
-    % stimulus onset - stimuli should be drawn in the frame that their
-    % onset time is defined ("p.trData.timing.stimOn") for this reason,
-    % we force "stimFrameIdx" to a value of "1" until the stimulus
-    % onset time has been defined.
-    % p.trVars.stimFrameIdx  = ...
-        % (fix((timeNow - p.trData.timing.stimOn) / ...
-        % p.rig.frameDuration)) * (p.trData.timing.stimOn > 0) + 1;
-    
-    % if stimuli should be drawn (based on time in trial), draw them.
-    % if (p.trVars.cueStimIsOn || p.trVars.foilStimIsOn) && ...
-            % (p.trVars.stimFrameIdx <= p.trVars.stimFrames)
-
-        % Push (possibly new) color look-up table to ViewPIXX based on
-        % current frame (frame determined based on time in trial).
-        % Datapixx('SetVideoClut', p.draw.myCLUTs(:, : , p.trVars.stimFrameIdx));
-        
-        % draw FIXED textures to screen (one per stimulus)
-        % for i = 1:p.stim.nStim
-            % Screen('DrawTexture', p.draw.window, p.draw.stimTex{i}, [], ...
-                % p.trVars.stimRects(i,:));
-        % end
-    % end
-    
     % draw fixation spot
-    Screen('FrameRect',p.draw.window, p.draw.color.fix, p.draw.fixPointRect, p.draw.fixPointWidth);
+    Screen('FrameRect',p.draw.window, p.draw.color.fix, ...
+        p.draw.fixPointRect, p.draw.fixPointWidth);
     
     % draw fixation window
-    Screen('FrameRect',p.draw.window, p.draw.color.fixWin, repmat(p.draw.fixPointPix, 1, 2) +  ...
+    Screen('FrameRect',p.draw.window, p.draw.color.fixWin, ...
+        repmat(p.draw.fixPointPix, 1, 2) +  ...
         [-p.draw.fixWinWidthPix -p.draw.fixWinHeightPix ...
-        p.draw.fixWinWidthPix p.draw.fixWinHeightPix], p.draw.fixWinPenDraw)
+        p.draw.fixWinWidthPix p.draw.fixWinHeightPix], ...
+        p.draw.fixWinPenDraw)
     
     % Draw the joystick-bar graphic.
     Screen('FrameRect', p.draw.window, p.draw.color.joyInd, p.draw.joyRect);
     Screen('FillRect',  p.draw.window, p.draw.color.joyInd, joyRectNow);
 
     % flip and store time of flip.
-    [p.trData.timing.flipTime(p.trVars.flipIdx), ~, ~, frMs] = Screen('Flip', p.draw.window);
-    p.trData.timing.lastFrameTime   = p.trData.timing.flipTime(p.trVars.flipIdx) - ...
+    [p.trData.timing.flipTime(p.trVars.flipIdx), ~, ~, ~] = ...
+        Screen('Flip', p.draw.window);
+    p.trData.timing.lastFrameTime   = ...
+        p.trData.timing.flipTime(p.trVars.flipIdx) - ...
         p.trData.timing.trialStartPTB;
     
     % strobe all values that are in the strobe list with the

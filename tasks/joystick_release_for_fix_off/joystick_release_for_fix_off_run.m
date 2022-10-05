@@ -219,7 +219,7 @@ switch p.trVars.currentState
 
         % if maximum allowed duration after fixation hold duration
         % requirement has been reached, this is a miss, go to miss state:
-        if timeFromFixHoldMet > p.trVarsInit.maxJoyRelLatency
+        if timeFromFixHoldMet > p.trVars.maxJoyRelLatency
             p.trVars.currentState = p.state.miss;
         elseif ~pds.joyHeld(p)
             p.init.strb.addValue(p.init.codes.hit);
