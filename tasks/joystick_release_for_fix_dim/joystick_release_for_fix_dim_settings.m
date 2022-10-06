@@ -365,6 +365,8 @@ p.init.trDataInitList = {...
     'p.trData.timing.reward',           '-1'; ...   % time of reward delivery
     'p.trData.timing.tone',             '-1'; ...   % time of audio feedback delivery
     'p.trData.timing.joyPress',         '-1'; ...   % time of joystick press
+    'p.trData.timing.joyRelease',       '-1'; ...   % time of joystick release
+    'p.trData.timing.fixHoldReqMet',    '-1'; ...   % time that fixation hold duration was met (also time of fixation dimming)
     };
 
 % since the list above is fixed, count its rows now for looping over later.
