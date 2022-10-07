@@ -1,4 +1,4 @@
-function p = joystick_release_for_fix_dim_settings
+function p = joystick_release_for_fix_dim_settings_DEBUG
 %  p = joystick_release_for_fix_off_settings
 %
 %  On some proportion of trials, the fixation point turns off without
@@ -201,7 +201,7 @@ p.init.exptType         = 'joystick_release_on_fix_off';  % Which experiment are
 
 % general vars:
 p.trVarsInit.passJoy             = 0;       % pass = 1; simulate correct trials (for debugging)
-p.trVarsInit.passEye             = 0;       % pass = 1; simulate correct trials (for debugging)
+p.trVarsInit.passEye             = 1;       % pass = 1; simulate correct trials (for debugging)
 p.trVarsInit.blockNumber         = 0;       % block number
 p.trVarsInit.repeat              = 0;       % repeat trial if true
 p.trVarsInit.rwdJoyPR            = 0;       % 0 = Give reward if Joy is pressed; 1 = Give reward if Joystick released
@@ -226,7 +226,7 @@ p.trVarsInit.eyePixY             = 0;
 % need to be in the CLUT so I don't think I'm going to mess with that right
 % now. We also need a variable to indicate whether this is indeed a
 % "release on fixation offset" trial or a "release after reward" trial.
-p.trVarsInit.propRelTrials       = 0.2;         % proportion of trials on which joystick release after fixation offset is required.
+p.trVarsInit.propRelTrials       = 1;           % proportion of trials on which joystick release after fixation offset is required.
 p.trVarsInit.maxJoyRelLatency    = 10;          % time in seconds after fixation offset that the monkey has to release the joystick to get reward.
 p.trVarsInit.isRelOnFixOffTrial  = false;       % variable tracking whether the current trial is a "release on fixation offset" trial or not.
 
@@ -256,9 +256,9 @@ p.trVarsInit.fixLocRandY         = 10;          % random variation in X location
 % relative to the background. A value of 0 would mean the fixation is
 % completely extinguished (off), a value of 1 would mean the fixation
 % remains at a fixed brightness.
-p.trVarsInit.lowDimVal           = 0;           % minimum brightness ABOVE background level of fixation after dimming
-p.trVarsInit.midDimVal           = 0.1;         % middle brightness ABOVE background level of fixation after dimming
-p.trVarsInit.highDimVal          = 0.2;         % high brightness ABOVE background level of fixation after dimming
+p.trVarsInit.lowDimVal           = 0.85;           % minimum brightness ABOVE background level of fixation after dimming
+p.trVarsInit.midDimVal           = 0.9;         % middle brightness ABOVE background level of fixation after dimming
+p.trVarsInit.highDimVal          = 0.95;         % high brightness ABOVE background level of fixation after dimming
 
 % times/latencies/durations:
 p.trVarsInit.rewardDurationMs        = 200;      % reward duration

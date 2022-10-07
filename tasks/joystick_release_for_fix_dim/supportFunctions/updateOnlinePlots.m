@@ -1,12 +1,22 @@
 function p               = updateOnlinePlots(p)
 
+% keep a running log of trial end states and reaction times:
+p.status.trialEndStates(p.status.iTrial)    = p.trData.trialEndState;
+p.status.reactionTimes(p.status.iTrial)     = p.trData.timing.reactionTime;
+p.status.dimVals(p.status.iTrial)           = p.trData.dimVal;
+
 % the new Y value for updating the appropriate plot object is always the
 % same, the trial index:
 newY = p.status.iTrial;
 
 % Was the last trial a hit, a miss, or a non-start? Depending on which
 % state the last trial ended in, define the new "X" value and an index for
-% updating the appropriate plot object:
+% updating the appropriate plot object. These new "X" values and "plotInd"s
+% are for the trial-by-trial data plot. Since we also want to plot
+% aggregate data across trials, we need to store across-trials data here
+% since we save each trial's data at the end of the trial and discard it
+% rather than keeping it in "p". We need to log trial end state and
+% reaction time.
 switch p.trData.trialEndState
     case p.state.hit
         
@@ -138,7 +148,121 @@ set(p.draw.onlineEyePlotAxes, ...
     'XLim', p.trVars.fixWinWidthDeg * [-1 1] + [-1 1], ...
     'YLim', p.trVars.fixWinHeightDeg * [-1 1] + [-1 1]);
 
-% update figure window:
+% Here we will compute aggregate performance (percent correct) and reaction
+% time. We first define which trials we're interested in numerically based
+% on the variable "p.trVars.numTrialsForPerfCalc", then we only keep the
+% numerical indexes of hits or misses:
+firstTrial = max([1, p.status.iTrial - p.trVars.numTrialsForPerfCalc]);
+lastTrial  = p.status.iTrial;
+perfComputeTrialsIdx = firstTrial:lastTrial;
+perfComputeTrialsIdx = ...
+    perfComputeTrialsIdx(p.status.trialEndStates(perfComputeTrialsIdx) ...
+    > 20);
+
+% make temporary variables to hold the data we're currently interested in:
+tempStates          = p.status.trialEndStates(perfComputeTrialsIdx);
+tempReactionTimes   = p.status.reactionTimes(perfComputeTrialsIdx);
+tempDimVals         = p.status.dimVals(perfComputeTrialsIdx);
+
+% find unique values of "dimVals":
+uniqueDimVals       = unique(tempDimVals);
+nDimVals            = length(uniqueDimVals);
+
+% make sure we actually have dimVals to work with and nothing hinky has
+% happened:
+if nDimVals > 0
+
+    % compute bar width based on minimum difference between unique dim vals:
+    barHalfWidth = min(diff(uniqueDimVals))*0.4;
+    if isempty(barHalfWidth)
+        barHalfWidth = 0.4;
+    end
+
+    % if the number of plot objects we have matches the number of unique dim
+    % values we'll just replace the X / Y data for each plot object, but if we
+    % have a mismatch, we'll delete extra plot objects or add new ones before
+    % we replace the X / Y data:
+    nPlotObj = length(p.draw.onlinePerfFillObj);
+    if  nPlotObj > nDimVals
+
+        % index plot objects to be deleted:
+        deleteIdx = (nDimVals+1):nPlotObj;
+
+        % delete plot objects:
+        delete([...
+            p.draw.onlinePerfFillObj(deleteIdx), ...
+            p.draw.onlineRtFillObj(deleteIdx), ...
+            p.draw.onlinePerfPlotObj(deleteIdx), ...
+            p.draw.onlineRtPlotObj(deleteIdx), ...
+            ]);
+
+        % get rid of extra entries in vectors:
+        p.draw.onlinePerfFillObj(deleteIdx) = [];
+        p.draw.onlineRtFillObj(deleteIdx) = [];
+        p.draw.onlinePerfPlotObj(deleteIdx) = [];
+        p.draw.onlineRtPlotObj(deleteIdx) = [];
+
+    elseif nPlotObj < nDimVals
+
+        % add extra plot objects to the end of the plot object vectors:
+        p.draw.onlinePerfFillObj((nPlotObj+1):nDimVals) = ...
+            copyobj(p.draw.onlinePerfFillObj(1), ...
+            repmat(p.draw.onlinePerfPlotAxes, 1, nDimVals - nPlotObj));
+        p.draw.onlineRtFillObj((nPlotObj+1):nDimVals)   = ...
+            copyobj(p.draw.onlineRtFillObj(1), ...
+            repmat(p.draw.onlineRtPlotAxes, 1, nDimVals - nPlotObj));
+        p.draw.onlinePerfPlotObj((nPlotObj+1):nDimVals) = ...
+            copyobj(p.draw.onlinePerfPlotObj(1), ...
+            repmat(p.draw.onlinePerfPlotAxes, 1, nDimVals - nPlotObj));
+        p.draw.onlineRtPlotObj((nPlotObj+1):nDimVals)   = ...
+            copyobj(p.draw.onlineRtPlotObj(1), ...
+            repmat(p.draw.onlineRtPlotAxes, 1, nDimVals - nPlotObj));
+    end
+
+    % loop over unique values of "dimVals" to compute average performance,
+    % median reaction time, and error bars:
+    for i = 1:length(uniqueDimVals)
+
+        % count hits and total trials for currently considered dimVal
+        hitCount    = nnz(tempStates == 21 & tempDimVals == uniqueDimVals(i));
+        totalCount  = nnz(tempStates > 20 & tempDimVals == uniqueDimVals(i));
+
+        % compute performance and confidence interval:
+        [perf, pci] = binofit(hitCount, totalCount);
+
+        % compute median reaction time and confidence interval:
+        [med, mci] = medci(tempReactionTimes(tempDimVals == ...
+            uniqueDimVals(i) & tempReactionTimes > 0));
+
+        % define x / y vectors for fill objects; note that we only need a
+        % single X vector for both performance and RT:
+        fillX       = uniqueDimVals(i) + barHalfWidth*[-1 1 1 -1 -1];
+        perfFillY   = [pci(1) pci(1) pci(2) pci(2) pci(1)];
+        rtFillY     = [mci(1) mci(1) mci(2) mci(2) mci(1)];
+
+        % update x/y data of plot objects:
+        p.draw.onlinePerfFillObj(i).XData   = fillX;
+        p.draw.onlineRtFillObj(i).XData     = fillX;
+        p.draw.onlinePerfFillObj(i).YData   = perfFillY;
+        p.draw.onlineRtFillObj(i).YData     = rtFillY;
+        p.draw.onlinePerfPlotObj(i).XData   = fillX(1:2);
+        p.draw.onlineRtPlotObj(i).XData     = fillX(1:2);
+        p.draw.onlinePerfPlotObj(i).YData   = perf*[1 1];
+        p.draw.onlineRtPlotObj(i).YData     = med*[1 1];
+    end
+
+    % update axis x / y limits?
+end
+
+% update figure windows:
 drawnow;
 
+end
+
+function [med, mci] = medci(X)
+
+p = prctile(X,[25 50 75]);
+
+med = p(2);
+mci = p(2) + [-1; 1]*1.57*(p(3)-p(1))/sqrt(length(X));
 end

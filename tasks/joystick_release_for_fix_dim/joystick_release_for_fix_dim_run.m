@@ -219,10 +219,11 @@ switch p.trVars.currentState
             p.trData.timing.joyRelease    = timeNow;
             p.trVars.currentState  = p.state.joyBreak;
 
-        elseif ~pds.joyHeld(p)
+        elseif ~pds.joyHeld(p) || (p.trVars.passJoy && timeFromFixHoldMet > 0.2)
             p.init.strb.addValue(p.init.codes.hit);
-            p.trVars.currentState      = p.state.hit;
-            p.trData.timing.joyRelease    = timeNow;
+            p.trVars.currentState           = p.state.hit;
+            p.trData.timing.joyRelease      = timeNow;
+            p.trData.timing.reactionTime    = timeFromFixHoldMet;
             p = playTone(p, 'high');
         end
 
