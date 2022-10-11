@@ -54,7 +54,7 @@ switch p.trData.trialEndState
             plotInd = 2;
         end
         
-    case p.state.joyBreak
+    case {p.state.joyBreak, p.state.fa}
         
         % if he never started fixating, we don't code this the same way:
         if p.trData.timing.fixAq < 0
