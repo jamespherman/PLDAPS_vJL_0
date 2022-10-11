@@ -185,7 +185,7 @@ switch p.trVars.currentState
                 timeFromFixAq > p.trVars.fixDurReq && pds.eyeInWindow(p)
 
             % if this is a "release after fixation dim" trial:
-            if p.trVars.isRelOnFixOffTrial
+            if p.trVars.isChangeTrial
 
                 % dim fixation, mark time that dimming occurred and go to 
                 % next state (make decision):
@@ -284,20 +284,40 @@ switch p.trVars.currentState
         end
 
     case p.state.miss
+
         %% MISS
         % state 23 = play low tone, then turn things off and move on
         p = playTone(p, 'low');
         p.trVars.exitWhileLoop = true;
 
     case p.state.fa
+
         %% FALSE ALARM
         p = playTone(p, 'noise');
         p.trVars.exitWhileLoop = true;
 
     case p.state.cr
-        %% JCORRECT REJECT
+
+        %% CORRECT REJECT
         p = playTone(p, 'high');
         p.trVars.exitWhileLoop = true;
+
+        % 	DELIVER REWARD AFTER SOME DELAY
+        % if the delay for reward delivery has elapsed and reward delivery
+        % hasn't yet been triggered, deliver the reward.
+        if (timeNow - p.trData.timing.fixHoldReqMet) > ...
+                p.trVars.rewardDelay && p.trData.timing.reward < 0
+            p = pds.deliverReward(p);
+
+            % if reward delivery has been triggered and the interval to wait
+            % after reward delivery has elapsed, it's time to exit the
+            % while-loop.
+        elseif p.trData.timing.reward > 0 && ...
+                (timeNow - p.trData.timing.reward) > ...
+                (p.trVars.postRewardDuration + p.rig.dp.dacPadDur + ...
+                (p.trVars.rewardDurationMs/1000))
+            p.trVars.exitWhileLoop = true;
+        end
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%% end states: trial ABORTED %%%

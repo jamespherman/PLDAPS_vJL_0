@@ -73,17 +73,21 @@ function p = trialTypeInfo(p)
 
 % Will this be a release on fixation dim trial or a release after reward
 % trial?
-p.trVars.isRelOnFixOffTrial = rand < p.trVars.propRelTrials;
+p.trVars.isChangeTrial = rand < p.trVars.propChangeTrials;
 
-% if this is a release on fixation dim trial, we need to choose the final
-% brightness of the fixation after dimming:
-tempRand = rand;
-if tempRand < 1/3
-    p.trData.dimVal = p.trVars.lowDimVal;
-elseif tempRand < 2/3
-    p.trData.dimVal = p.trVars.midDimVal;
-else
-    p.trData.dimVal = p.trVars.highDimVal;
+% If this is a change trial, we choose among "lowDimVal", "midDimVal", and
+% "highDimVal" with equal probability. If this is isn't a change trial, we
+% set "p.trData.dimVal" to 0.
+if p.trVars.isChangeTrial
+    tempRand = rand;
+    if tempRand < 1/3
+        p.trData.dimVal = p.trVars.lowDimVal;
+    elseif tempRand < 2/3
+        p.trData.dimVal = p.trVars.midDimVal;
+    else
+        p.trData.dimVal = p.trVars.highDimVal;
+    end
+else p.trData.dimVal = 0;
 end
 
 % Now we convert from the "dimVal" to the CLUT ID:

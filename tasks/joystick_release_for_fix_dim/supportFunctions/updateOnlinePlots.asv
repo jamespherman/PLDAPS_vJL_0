@@ -226,20 +226,10 @@ if nDimVals > 0
     for i = 1:length(uniqueDimVals)
 
         % if the dimVal is 0, we count "hits" differently since correct
-        % performance with a dimVal of 0 is a CR:
-        if uniqueDimVals(i) == 0
-            % count CRs and total trials for currently considered dimVal
-            hitCount    = nnz(tempStates == p.state.cr & ...
-                tempDimVals == uniqueDimVals(i));
-            totalCount  = nnz(tempStates > 20 & ...
-                tempDimVals == uniqueDimVals(i));
-        else
-            % count hits and total trials for currently considered dimVal
-            hitCount    = nnz(tempStates == p.state.hit & ...
-                tempDimVals == uniqueDimVals(i));
-            totalCount  = nnz(tempStates > 20 & ...
-                tempDimVals == uniqueDimVals(i));
-        end
+        % performance with a dimVal of 0 is 
+        % count hits and total trials for currently considered dimVal
+        hitCount    = nnz(tempStates == 21 & tempDimVals == uniqueDimVals(i));
+        totalCount  = nnz(tempStates > 20 & tempDimVals == uniqueDimVals(i));
 
         % compute performance and confidence interval:
         [perf, pci] = binofit(hitCount, totalCount);

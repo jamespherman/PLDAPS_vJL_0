@@ -179,8 +179,8 @@ p.rig.guiVars = {...
     'lowDimVal'; ...
     'midDimVal'; ...
     'highDimVal'; ...       % 6
-    'propChangeTrials'; ...
-    'joyMinLatency'; ...
+    'fixDegY'; ...
+    'propRelTrials'; ...
     'joyMaxLatency'; ...
     'passJoy'; ...          
     'passEye'};              % 12
@@ -188,7 +188,7 @@ p.rig.guiVars = {...
 %% INIT VARIABLES 
 % vars that are only set once
 
-p.init.exptType         = 'joystick_release_on_fix_dim';  % Which experiment are we running? The full version with all trial types? The single-stimulus-only version? Something else?
+p.init.exptType         = 'joystick_release_on_fix_off';  % Which experiment are we running? The full version with all trial types? The single-stimulus-only version? Something else?
 
 
 %% TRIAL VARIABLES
@@ -217,14 +217,18 @@ p.trVarsInit.eyePixX             = 0;
 p.trVarsInit.eyePixY             = 0;
 
 % what are the variables we need for this task? We need one that controls
-% the proportion of trials that will be "change" trials in which the monkey
-% has to release the joystick in response to the fixation dimming, and the
-% porportion that will be "no change" trials in which the monkey has to
-% keep holding the joystick down. We also need a logical variable to
-% indicate whether the current trial is a "change" or a "no change" trial.
-
-p.trVarsInit.propChangeTrials   = 0.8;         % proportion of trials on the fixation dims.
-p.trVarsInit.isChangeTrial      = false;       % variable tracking whether the current trial is a "change" or "no change" trial.
+% the proportion of trials that will be "release on fix off to get reward"
+% and the proportion of trials that will be "release after reward". We need
+% one that controls the maximum duration he has to release the joystick
+% after fixation offset. Do we need any others? We could add one that
+% controls whether the fixation turns off or just dims, but there's more
+% thinking that needs to go into that because the various levels of dimming
+% need to be in the CLUT so I don't think I'm going to mess with that right
+% now. We also need a variable to indicate whether this is indeed a
+% "release on fixation offset" trial or a "release after reward" trial.
+p.trVarsInit.propRelTrials       = 0.2;         % proportion of trials on which joystick release after fixation offset is required.
+p.trVarsInit.maxJoyRelLatency    = 10;          % time in seconds after fixation offset that the monkey has to release the joystick to get reward.
+p.trVarsInit.isRelOnFixOffTrial  = false;       % variable tracking whether the current trial is a "release on fixation offset" trial or not.
 
 % geometry/stimulus vars:
 p.trVarsInit.speedDelta          = (pi/8);      % motion magniutde
@@ -252,9 +256,9 @@ p.trVarsInit.fixLocRandY         = 10;          % random variation in X location
 % relative to the background. A value of 0 would mean the fixation is
 % completely extinguished (off), a value of 1 would mean the fixation
 % remains at a fixed brightness.
-p.trVarsInit.lowDimVal           = 075;          % minimum brightness ABOVE background level of fixation after dimming
-p.trVarsInit.midDimVal           = 0.85;         % middle brightness ABOVE background level of fixation after dimming
-p.trVarsInit.highDimVal          = 0.925;        % high brightness ABOVE background level of fixation after dimming
+p.trVarsInit.lowDimVal           = 0;           % minimum brightness ABOVE background level of fixation after dimming
+p.trVarsInit.midDimVal           = 0.1;         % middle brightness ABOVE background level of fixation after dimming
+p.trVarsInit.highDimVal          = 0.2;         % high brightness ABOVE background level of fixation after dimming
 
 % times/latencies/durations:
 p.trVarsInit.rewardDurationMs        = 200;      % reward duration
