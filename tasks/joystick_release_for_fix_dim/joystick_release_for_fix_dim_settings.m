@@ -242,8 +242,8 @@ p.trVarsInit.stimRadius          = 3.25;        % aperture radius in deg
 p.trVarsInit.motionDir           = 30;          % Motion direction in degrees
 p.trVarsInit.fixDegX             = 0;           % fixation X location in degrees
 p.trVarsInit.fixDegY             = 0;           % fixation Y location in degrees
-p.trVarsInit.fixLocRandX         = 15;          % random variation in X location of fixation point
-p.trVarsInit.fixLocRandY         = 10;          % random variation in X location of fixation point
+p.trVarsInit.fixLocRandX         = 24;          % random variation in X location of fixation point
+p.trVarsInit.fixLocRandY         = 16;          % random variation in X location of fixation point
 
 % the following three variables determine how fixation dimming works. In
 % each trial we will choose with equal probability whether the fixation
@@ -293,8 +293,8 @@ p.trVarsInit.foilStimIsOn     = false;  % is the foil stimulus (eg motion dots) 
 
 p.trVarsInit.fixWinWidthDeg       = 4;        % fixation window width in degrees
 p.trVarsInit.fixWinHeightDeg      = 4;        % fixation window height in degrees
-p.trVarsInit.fixPointRadPix       = 28;       % fixation point "radius" in pixels
-p.trVarsInit.fixPointLinePix      = 16;       % fixation point line weight in pixels
+p.trVarsInit.fixPointRadPix       = 20;       % fixation point "radius" in pixels
+p.trVarsInit.fixPointLinePix      = 12;       % fixation point line weight in pixels
 
 % variables related to how the experiment is run / what is shown, etc.
 p.trVarsInit.useCellsForDraw        = false;
