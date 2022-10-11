@@ -252,9 +252,9 @@ p.trVarsInit.fixLocRandY         = 10;          % random variation in X location
 % relative to the background. A value of 0 would mean the fixation is
 % completely extinguished (off), a value of 1 would mean the fixation
 % remains at a fixed brightness.
-p.trVarsInit.lowDimVal           = 075;          % minimum brightness ABOVE background level of fixation after dimming
-p.trVarsInit.midDimVal           = 0.85;         % middle brightness ABOVE background level of fixation after dimming
-p.trVarsInit.highDimVal          = 0.925;        % high brightness ABOVE background level of fixation after dimming
+p.trVarsInit.lowDimVal           = 0.75;          % minimum brightness ABOVE background level of fixation after dimming
+p.trVarsInit.midDimVal           = 0.825;         % middle brightness ABOVE background level of fixation after dimming
+p.trVarsInit.highDimVal          = 0.9;        % high brightness ABOVE background level of fixation after dimming
 
 % times/latencies/durations:
 p.trVarsInit.rewardDurationMs        = 200;      % reward duration

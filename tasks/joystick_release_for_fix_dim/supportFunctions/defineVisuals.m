@@ -27,7 +27,7 @@ for i = 1:length(gridY)
 end
 
 % define fixation window color depending on trial type:
-if p.trVars.isRelOnFixOffTrial
+if p.trVars.isChangeTrial
     p.draw.color.fixWin = p.draw.clutIdx.expBlue_subBg;
 else
     p.draw.color.fixWin = p.draw.clutIdx.expGrey25_subBg;
