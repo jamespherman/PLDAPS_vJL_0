@@ -1,4 +1,4 @@
-function p = joystick_release_for_fix_dim_run(p)
+function p = joystick_release_for_fix_and_stim_dim_run(p)
 %   p = joystick_release_for_fix_off_run(p)
 %
 % Part of the quintet of pldpas functions:
@@ -189,15 +189,13 @@ switch p.trVars.currentState
 
                 % dim fixation, mark time that dimming occurred and go to 
                 % next state (make decision):
-                p.trData.timing.fixHoldReqMet   = timeNow;
-                p.trVars.currentState           = p.state.makeDecision;
-                p.draw.color.fix                = ...
-                    p.draw.clutIdx.expFixDim_subFixDim;
+                p.trData.timing.fixHoldReqMet = timeNow;
+                p.trVars.currentState      = p.state.makeDecision;
+                p.draw.color.fix           = p.draw.fixDimClutId;
 
             elseif pds.joyHeld(p)
 
                 % this is a correct reject:
-                p.trData.timing.fixHoldReqMet   = timeNow;
                 p.init.strb.addValue(p.init.codes.cr);
                 p.trVars.currentState      = p.state.cr;
                 p = playTone(p, 'high');

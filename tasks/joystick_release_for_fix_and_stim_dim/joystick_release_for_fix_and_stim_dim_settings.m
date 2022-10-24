@@ -1,5 +1,5 @@
-function p = joystick_release_for_fix_dim_settings
-%  p = joystick_release_for_fix_off_settings
+function p = joystick_release_for_fix_and_stim_dim_settings
+%  p = joystick_release_for_fix_and_stim_dim_settings
 %
 %  On some proportion of trials, the fixation point turns off without
 %  reward delivery or "boop", monkey must release joystick to get reward on
@@ -437,7 +437,10 @@ p.draw.clutIdx.expMutGreen_subMutGreen   = 10;
 p.draw.clutIdx.expGreen_subBg            = 11;
 p.draw.clutIdx.expBlack_subBg            = 12;
 p.draw.clutIdx.expOldGreen_subOldGreen   = 13;
-p.draw.clutIdx.expFixDim_subFixDim       = 14;
+p.draw.clutIdx.expWhite20_subWhite20     = 14;
+p.draw.clutIdx.expWhite40_subWhite40     = 15;
+p.draw.clutIdx.expWhite60_subWhite60     = 16;
+p.draw.clutIdx.expWhite80_subWhite80     = 17;
 
 %% COLORS 
 % here we just init them. They get updated in the run function as a 

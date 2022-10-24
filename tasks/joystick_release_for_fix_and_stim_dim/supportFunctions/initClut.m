@@ -49,7 +49,7 @@ p.draw.clut.expColors = ...
     mutGreen;           % 10
     greenISH;           % 11
     0, 0, 0;            % 12
-    oldGreen];           % 13
+    oldGreen];           % 17
 
 % colors for subject's display
 % black                     0
@@ -77,25 +77,30 @@ p.draw.clut.subColors = ...
     mutGreen;           % 10
     bgRGB;              % 11
     bgRGB;              % 12
-    oldGreen];           % 13
+    oldGreen];           % 17
 
-% Throw error if the exp / sub colors are unequal lengths:
-assert(size(p.draw.clut.subColors,1)==size(p.draw.clut.expColors,1), ...
-    'ERROR-- exp & sub Colors must have equal length')
+assert(size(p.draw.clut.subColors,1)==size(p.draw.clut.expColors,1), 'ERROR-- exp & sub Colors must have equal length')
 
 %%
 
-% fill the remaining CLUT slots with background RGB.
-p.draw.nColors                                  = ...
-    size(p.draw.clut.subColors,1);
-nTotalColors                                    = 256;
-p.draw.clut.ffc                                 = p.draw.nColors + 1;
-p.draw.clut.expCLUT                             = p.draw.clut.expColors;
-p.draw.clut.subCLUT                             = p.draw.clut.subColors;
-p.draw.clut.expCLUT(p.draw.ffc:nTotalColors, :) = ...
-    repmat(bgRGB, nTotalColors - p.draw.nColors, 1);
-p.draw.clut.subCLUT(p.draw.ffc:nTotalColors, :) = ...
-    repmat(bgRGB, nTotalColors - p.draw.nColors, 1);
+% fill the remaining LUT slots with background RGB.
+p.draw.nColors                                          = size(p.draw.clut.subColors,1);
+nTotalColors                                            = 256;
+p.draw.clut.expColors(p.draw.nColors+1:nTotalColors, :) = [...
+    linspace(bgRGB(1), 1, nTotalColors - p.draw.nColors)', ...
+    linspace(bgRGB(2), 1, nTotalColors - p.draw.nColors)', ...
+    linspace(bgRGB(3), 1, nTotalColors - p.draw.nColors)'];
+
+p.draw.clut.subColors(p.draw.nColors+1:nTotalColors, :) = [...
+    linspace(bgRGB(1), 1, nTotalColors - p.draw.nColors)', ...
+    linspace(bgRGB(2), 1, nTotalColors - p.draw.nColors)', ...
+    linspace(bgRGB(3), 1, nTotalColors - p.draw.nColors)'];
+
+% populate the rest with 0's
+p.draw.clut.ffc      = p.draw.nColors + 1;
+p.draw.clut.expCLUT  = p.draw.clut.expColors;
+p.draw.clut.subCLUT  = p.draw.clut.subColors;
+
 
 end
 

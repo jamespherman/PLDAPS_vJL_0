@@ -90,19 +90,9 @@ if p.trVars.isChangeTrial
 else p.trData.dimVal = 0;
 end
 
-% Based on the "dimVal", we generate a new RGB triplet for the appearance
-% of the fixation after dimming. The first step is to retrieve the
-% background RGB value from the CLUT, then we take the difference between
-% the default / initial fixation RGB and the background RGB, multiply it by
-% the "dimVal", then add it back to the background RGB. Once we've
-% generated that value, we need to update the CLUT on the VIEWPixx.
-bgRGB = p.draw.clut.combinedClut(p.draw.clutIdx.expBg_subBg + 1, :);
-fxRGB = p.draw.clut.combinedClut(p.draw.clutIdx.expWhite_subWhite + 1, :);
-fxDimRGB = bgRGB + p.trData.dimVal*(fxRGB-bgRGB);
-myClut = p.draw.clut.combinedClut;
-myClut(p.draw.clutIdx.expFixDim_subFixDim + 1, :) = fxDimRGB;
-Datapixx('SetVideoClut', myClut);
-p.draw.clut.combinedClut = myClut;
+% Now we convert from the "dimVal" to the CLUT ID:
+p.draw.fixDimClutId = ...
+    round(p.draw.nColors + p.trData.dimVal * (255 - p.draw.nColors) + 1);
 
 % if we're using QUEST run "getQuestSuggestedDelta" - this both gets a
 % suggested signal strength AND initializes the QUEST object if it doesn't

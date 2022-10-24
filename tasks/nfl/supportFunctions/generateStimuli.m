@@ -319,6 +319,14 @@ scaledIm        = hw.*(arrayScale(unscaledIm, p.trVars.boxSizePix));
 % CLUT. This logical index lets us do that.
 p.stim.colorRowSelector = repmat(ismember(unscaledIm(:), scaledIm(:)), p.trVars.nPatches, 1); 
 
+% Currently "nPatches" determines how many textures will be generated to
+% display stimuli, and it lives in "trVars" but this doesn't make sense
+% because the trials array will determine how many stimuli are displayed on
+% any given trial. The hack we'll use to get around this for now is to
+% force p.trVars.nPatches to inherit the value from p.stim.nStim right
+% here:
+p.trVars.nPatches = p.stim.nStim;
+
 % make "p.trVars.nPatches" arrays that will be made into textures for stimulus display,
 % then generate textures.
 for i = 1:p.trVars.nPatches

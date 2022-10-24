@@ -182,13 +182,13 @@ switch p.trVars.currentState
         % determine if the cue should be off, etc.
         if timeFromFixAq >= p.trVars.fix2CueIntvl && ...
                 timeFromFixAq < (p.trVars.fix2CueIntvl + p.trVars.cueDur) && ...
-                ~ismember('cueOn', p.trVars.postFlip.varNames);
+                ~ismember('cueOn', p.trVars.postFlip.varNames)
             p.trVars.cueIsOn                    = true;
             p.trVars.postFlip.logical           = true;
             p.trVars.postFlip.varNames{end + 1} = 'cueOn';
             p.init.strb.addValueOnce(p.init.codes.cueOn);
             
-        elseif ~ismember('cueOff', p.trVars.postFlip.varNames);
+        elseif ~ismember('cueOff', p.trVars.postFlip.varNames)
             p.trVars.cueIsOn                    = false;
             p.trVars.postFlip.logical           = true;
             p.trVars.postFlip.varNames{end + 1} = 'cueOff';
@@ -201,7 +201,7 @@ switch p.trVars.currentState
         % and strobe "stimOn" after the next flip.
         if timeFromFixAq >= p.trVars.fix2StimOnIntvl && ...
                 timeFromFixAq < p.trVars.fix2StimOffIntvl && ...
-                ~ismember('stimOn', p.trVars.postFlip.varNames);
+                ~ismember('stimOn', p.trVars.postFlip.varNames)
             p.trVars.postFlip.logical           = true;
             p.trVars.postFlip.varNames{end + 1} = 'stimOn';
             p.init.strb.addValueOnce(p.init.codes.stimOn);
@@ -216,7 +216,7 @@ switch p.trVars.currentState
         
         if p.trVars.isCueChangeTrial && ...
                 ((timeNow - p.trData.timing.fixAq) >= p.trVars.cueChangeTime) && ...
-                ~ismember('cueChg', p.trVars.postFlip.varNames);
+                ~ismember('cueChg', p.trVars.postFlip.varNames)
             
             p.trVars.currentState               = p.state.makeDecision;
             p.trVars.postFlip.logical           = true;
@@ -225,7 +225,7 @@ switch p.trVars.currentState
             
         elseif p.trVars.isFoilChangeTrial && ...
                 ((timeNow - p.trData.timing.fixAq) >= p.trVars.foilChangeTime) && ...
-                ~ismember('foilChg', p.trVars.postFlip.varNames);
+                ~ismember('foilChg', p.trVars.postFlip.varNames)
             
             p.trVars.currentState               = p.state.makeDecision;
             p.trVars.postFlip.logical           = true;
@@ -234,7 +234,7 @@ switch p.trVars.currentState
             
         elseif p.trVars.isNoChangeTrial && ...
                 ((timeNow - p.trData.timing.fixAq) >= p.trVars.foilChangeTime) && ...
-                ~ismember('noChg', p.trVars.postFlip.varNames);
+                ~ismember('noChg', p.trVars.postFlip.varNames)
             
             p.trVars.currentState               = p.state.makeDecision;
             p.trVars.postFlip.logical           = true;

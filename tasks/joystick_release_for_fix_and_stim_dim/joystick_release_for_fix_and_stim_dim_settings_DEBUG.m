@@ -1,4 +1,4 @@
-function p = joystick_release_for_fix_dim_settings
+function p = joystick_release_for_fix_dim_settings_DEBUG
 %  p = joystick_release_for_fix_off_settings
 %
 %  On some proportion of trials, the fixation point turns off without
@@ -176,19 +176,19 @@ p.rig.guiVars = {...
     'rewardDelay'; ...
     'fixDurReqMin'; ...
     'fixDurReqMax'; ...
-    'lowDimVal'; ...
-    'midDimVal'; ...
-    'highDimVal'; ...       % 6
-    'propChangeTrials'; ...
-    'joyMinLatency'; ...
-    'joyMaxLatency'; ...
+    'fixWinWidthDeg'; ...
+    'fixWinHeightDeg'; ...
+    'fixDegX'; ...       % 6
+    'fixDegY'; ...
+    'propRelTrials'; ...
+    'maxJoyRelLatency'; ...
     'passJoy'; ...          
     'passEye'};              % 12
 
 %% INIT VARIABLES 
 % vars that are only set once
 
-p.init.exptType         = 'joystick_release_on_fix_dim';  % Which experiment are we running? The full version with all trial types? The single-stimulus-only version? Something else?
+p.init.exptType         = 'joystick_release_on_fix_off';  % Which experiment are we running? The full version with all trial types? The single-stimulus-only version? Something else?
 
 
 %% TRIAL VARIABLES
@@ -201,7 +201,7 @@ p.init.exptType         = 'joystick_release_on_fix_dim';  % Which experiment are
 
 % general vars:
 p.trVarsInit.passJoy             = 0;       % pass = 1; simulate correct trials (for debugging)
-p.trVarsInit.passEye             = 0;       % pass = 1; simulate correct trials (for debugging)
+p.trVarsInit.passEye             = 1;       % pass = 1; simulate correct trials (for debugging)
 p.trVarsInit.blockNumber         = 0;       % block number
 p.trVarsInit.repeat              = 0;       % repeat trial if true
 p.trVarsInit.rwdJoyPR            = 0;       % 0 = Give reward if Joy is pressed; 1 = Give reward if Joystick released
@@ -217,14 +217,18 @@ p.trVarsInit.eyePixX             = 0;
 p.trVarsInit.eyePixY             = 0;
 
 % what are the variables we need for this task? We need one that controls
-% the proportion of trials that will be "change" trials in which the monkey
-% has to release the joystick in response to the fixation dimming, and the
-% porportion that will be "no change" trials in which the monkey has to
-% keep holding the joystick down. We also need a logical variable to
-% indicate whether the current trial is a "change" or a "no change" trial.
-
-p.trVarsInit.propChangeTrials   = 0.8;         % proportion of trials on the fixation dims.
-p.trVarsInit.isChangeTrial      = false;       % variable tracking whether the current trial is a "change" or "no change" trial.
+% the proportion of trials that will be "release on fix off to get reward"
+% and the proportion of trials that will be "release after reward". We need
+% one that controls the maximum duration he has to release the joystick
+% after fixation offset. Do we need any others? We could add one that
+% controls whether the fixation turns off or just dims, but there's more
+% thinking that needs to go into that because the various levels of dimming
+% need to be in the CLUT so I don't think I'm going to mess with that right
+% now. We also need a variable to indicate whether this is indeed a
+% "release on fixation offset" trial or a "release after reward" trial.
+p.trVarsInit.propRelTrials       = 1;           % proportion of trials on which joystick release after fixation offset is required.
+p.trVarsInit.maxJoyRelLatency    = 10;          % time in seconds after fixation offset that the monkey has to release the joystick to get reward.
+p.trVarsInit.isRelOnFixOffTrial  = false;       % variable tracking whether the current trial is a "release on fixation offset" trial or not.
 
 % geometry/stimulus vars:
 p.trVarsInit.speedDelta          = (pi/8);      % motion magniutde
@@ -242,8 +246,8 @@ p.trVarsInit.stimRadius          = 3.25;        % aperture radius in deg
 p.trVarsInit.motionDir           = 30;          % Motion direction in degrees
 p.trVarsInit.fixDegX             = 0;           % fixation X location in degrees
 p.trVarsInit.fixDegY             = 0;           % fixation Y location in degrees
-p.trVarsInit.fixLocRandX         = 24;          % random variation in X location of fixation point
-p.trVarsInit.fixLocRandY         = 16;          % random variation in X location of fixation point
+p.trVarsInit.fixLocRandX         = 15;          % random variation in X location of fixation point
+p.trVarsInit.fixLocRandY         = 10;          % random variation in X location of fixation point
 
 % the following three variables determine how fixation dimming works. In
 % each trial we will choose with equal probability whether the fixation
@@ -252,9 +256,9 @@ p.trVarsInit.fixLocRandY         = 16;          % random variation in X location
 % relative to the background. A value of 0 would mean the fixation is
 % completely extinguished (off), a value of 1 would mean the fixation
 % remains at a fixed brightness.
-p.trVarsInit.lowDimVal           = 0.75;          % minimum brightness ABOVE background level of fixation after dimming
-p.trVarsInit.midDimVal           = 0.825;         % middle brightness ABOVE background level of fixation after dimming
-p.trVarsInit.highDimVal          = 0.9;        % high brightness ABOVE background level of fixation after dimming
+p.trVarsInit.lowDimVal           = 0.85;           % minimum brightness ABOVE background level of fixation after dimming
+p.trVarsInit.midDimVal           = 0.9;         % middle brightness ABOVE background level of fixation after dimming
+p.trVarsInit.highDimVal          = 0.95;         % high brightness ABOVE background level of fixation after dimming
 
 % times/latencies/durations:
 p.trVarsInit.rewardDurationMs        = 200;      % reward duration
@@ -268,9 +272,9 @@ p.trVarsInit.chgWinDur               = 3;        % time window during which a ch
 p.trVarsInit.rewardDelay             = 0.1;      % delay between cued change and reward delivery for hits.
 p.trVarsInit.joyMinLatency           = 0.2;      % minimum acceptable joystick release latency.
 p.trVarsInit.joyMaxLatency           = 1;        % maximum acceptable joystick release latency.
-p.trVarsInit.timeoutAfterFa          = 1;        % timeout duration following false alarm.
-p.trVarsInit.timeoutAfterFoilFa      = 0;        % timeout duration following false alarm.
-p.trVarsInit.timeoutAfterMiss        = 0;        % timeout duration following miss
+p.trVarsInit.timeoutAfterFa          = 2;        % timeout duration following false alarm.
+p.trVarsInit.timeoutAfterFoilFa      = 3;        % timeout duration following false alarm.
+p.trVarsInit.timeoutAfterMiss        = 1;        % timeout duration following miss
 p.trVarsInit.timeoutAfterFixBreak    = 0.1;      % timeout duration following fixation break
 p.trVarsInit.joyWaitDur              = 5;        % how long to wait for the subject to press the joystick at the beginning of a trial?
 p.trVarsInit.fixWaitDur              = 5;        % how long to wait after initial joystick press for the subject to acquire fixation?
@@ -291,8 +295,8 @@ p.trVarsInit.cueIsOn          = 0;  % is the cue ring currently being presented?
 p.trVarsInit.cueStimIsOn      = false;  % is the cued stimulus (eg motion dots) currently being presented?
 p.trVarsInit.foilStimIsOn     = false;  % is the foil stimulus (eg motion dots) currently being presented?
 
-p.trVarsInit.fixWinWidthDeg       = 4;        % fixation window width in degrees
-p.trVarsInit.fixWinHeightDeg      = 4;        % fixation window height in degrees
+p.trVarsInit.fixWinWidthDeg       = 6;        % fixation window width in degrees
+p.trVarsInit.fixWinHeightDeg      = 6;        % fixation window height in degrees
 p.trVarsInit.fixPointRadPix       = 20;       % fixation point "radius" in pixels
 p.trVarsInit.fixPointLinePix      = 12;       % fixation point line weight in pixels
 
@@ -334,6 +338,7 @@ p.trVarsInit.postFlip.varNames        = cell(0);
 % (in the 'next' function) updates the trVars!
 
 p.trVarsGuiComm = p.trVarsInit;
+
 
 %% trData - These are variables that acquire their values during the trial.
 % These variables need to be initialized to specific values prior to each
@@ -437,7 +442,10 @@ p.draw.clutIdx.expMutGreen_subMutGreen   = 10;
 p.draw.clutIdx.expGreen_subBg            = 11;
 p.draw.clutIdx.expBlack_subBg            = 12;
 p.draw.clutIdx.expOldGreen_subOldGreen   = 13;
-p.draw.clutIdx.expFixDim_subFixDim       = 14;
+p.draw.clutIdx.expWhite20_subWhite20     = 14;
+p.draw.clutIdx.expWhite40_subWhite40     = 15;
+p.draw.clutIdx.expWhite60_subWhite60     = 16;
+p.draw.clutIdx.expWhite80_subWhite80     = 17;
 
 %% COLORS 
 % here we just init them. They get updated in the run function as a 

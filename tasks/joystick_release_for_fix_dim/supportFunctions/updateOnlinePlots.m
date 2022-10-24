@@ -22,17 +22,11 @@ plotInd = 0;
 switch p.trData.trialEndState
     case {p.state.hit, p.state.cr}
         
-        % what's the new "X" data value? Since the last trial was a hit, we
-        % use the difference between the time when the joystick hold
-        % duration requirement was met and the time that the joystick hold
-        % began, note that this value is a little bit larger than the
-        % actual hold duration requirement since the program can only log
-        % that the requirement has been met at certain intervals dictated
-        % by the "loop" (drawing, etc).
+        % what's the new "X" data value? It's the time that the fixation
+        % hold duration requirement was met:
         newX = p.trData.timing.fixHoldReqMet - p.trData.timing.fixAq;
 
-        % if this was a "release after fix off" trial, use one plotInd. If
-        % this was a "release after reward" trial, use another:
+        % The "plotInd" depends on whether this was a change trial or not:
         if p.trVars.isChangeTrial
             plotInd = 4;
         else
@@ -110,8 +104,12 @@ if isnan(xMax) || isempty(xMax) || xMax == 0
     xMax = 1;
 end
 
+try
 % assign new X / Y limits:
 set(p.draw.onlinePlotAxes, 'XLim', xMax*[-0.1 1], 'YLim', [0 newY + 1]);
+catch me
+    keyboard
+end
 
 % get eye X & Y data both before and after fixation acquisition RELATIVE TO
 % FIXATION LOCATION. If fixation wasn't acquired in this trial, assign 

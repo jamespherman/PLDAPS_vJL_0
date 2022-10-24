@@ -22,9 +22,14 @@ plotInd = 0;
 switch p.trData.trialEndState
     case {p.state.hit, p.state.cr}
         
-        % what's the new "X" data value? It depends on whether this was a
-        % "hit" or a "cr" (change trial or not). The "plotInd" also depends
-        % on the same thing:
+        % what's the new "X" data value? Since the last trial was a hit, we
+        % use the difference between the time when the joystick hold
+        % duration requirement was met and the time that the joystick hold
+        % began, note that this value is a little bit larger than the
+        % actual hold duration requirement since the program can only log
+        % that the requirement has been met at certain intervals dictated
+        % by the "loop" (drawing, etc).
+        newX = p.trData.timing.fixHoldReqMet - p.trData.timing.fixAq;
 
         % if this was a "release after fix off" trial, use one plotInd. If
         % this was a "release after reward" trial, use another:
@@ -105,12 +110,8 @@ if isnan(xMax) || isempty(xMax) || xMax == 0
     xMax = 1;
 end
 
-try
 % assign new X / Y limits:
 set(p.draw.onlinePlotAxes, 'XLim', xMax*[-0.1 1], 'YLim', [0 newY + 1]);
-catch me
-    keyboard
-end
 
 % get eye X & Y data both before and after fixation acquisition RELATIVE TO
 % FIXATION LOCATION. If fixation wasn't acquired in this trial, assign 
@@ -225,20 +226,10 @@ if nDimVals > 0
     for i = 1:length(uniqueDimVals)
 
         % if the dimVal is 0, we count "hits" differently since correct
-        % performance with a dimVal of 0 is a CR:
-        if uniqueDimVals(i) == 0
-            % count CRs and total trials for currently considered dimVal
-            hitCount    = nnz(tempStates == p.state.cr & ...
-                tempDimVals == uniqueDimVals(i));
-            totalCount  = nnz(tempStates > 20 & ...
-                tempDimVals == uniqueDimVals(i));
-        else
-            % count hits and total trials for currently considered dimVal
-            hitCount    = nnz(tempStates == p.state.hit & ...
-                tempDimVals == uniqueDimVals(i));
-            totalCount  = nnz(tempStates > 20 & ...
-                tempDimVals == uniqueDimVals(i));
-        end
+        % performance with a dimVal of 0 is 
+        % count hits and total trials for currently considered dimVal
+        hitCount    = nnz(tempStates == 21 & tempDimVals == uniqueDimVals(i));
+        totalCount  = nnz(tempStates > 20 & tempDimVals == uniqueDimVals(i));
 
         % compute performance and confidence interval:
         [perf, pci] = binofit(hitCount, totalCount);

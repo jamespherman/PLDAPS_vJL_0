@@ -33,7 +33,7 @@ p.init.trialArrayColumnNames = {...
     'contrast', ...             % 12
     'primary', ...              % 13 for making sure the stimuli have different start values
     'no of trials', ...         % 14
-    'stimcode', ...             % 15
+    'trialCode', ...             % 15
     'trial seed', ...           % 16 seed value to make trial params reproducible
     'stim seed'};               % 17 seed value to make stimulus properties reproducible
 
@@ -73,9 +73,9 @@ switch p.init.exptType
         
     case 'saturation increase no single'
         table = tableDefSatInc_noSingle;
-
-    case 'fourStimTest'
-        table = tableDef_fourStimTest;
+        
+    case 'saturation increase no single cue chg only'
+        table = tableDefSatInc_noSingle_cueChgOnly;
         
     otherwise
         table = tableDefault;
@@ -143,16 +143,6 @@ end
 
 % saturation increases only & also for psychometric curve measurement  
 % YGC 04/03/19
-function table = tableDef_fourStimTest
-table =           [1   4   1   0   1   0   0   0   1   0   0   0   1   10   23021; % cue side 1, single stimulus, saturation increase on side 1, side 1 starts purple
-                   2   4   1   0   1   0   0   0   1   0   0   0   1   10   23022; % cue side 1, single stimulus, saturation increase on side 1, side 2 starts purple
-                   3   4   1   0   1   0   0   0   1   0   0   0   1   10   23021; % cue side 1, single stimulus, saturation increase on side 1, side 1 starts purple
-                   4   4   1   0   1   0   0   0   1   0   0   0   1   10   23022; % cue side 1, single stimulus, saturation increase on side 1, side 2 starts purple
-                 ];
-end
-
-% saturation increases only & also for psychometric curve measurement  
-% YGC 04/03/19
 function table = tableDefSatIncPsychometric
 table =           [     1   1   1   0   1   0   0   0   1   0   0   0   1   4   23001; % cue side 1, single stimulus, saturation increase on side 1, side 1 starts purple
                         1   1   1   0   1   0   0   0   1   0   0   0   2   4   23002; % cue side 1, single stimulus, saturation increase on side 1, side 2 starts purple
@@ -193,6 +183,21 @@ table =           [
                         2   2   1   1   1   0   0   0   1   0   0   0   2   3   23018; % cue side 2, two stimuli, saturation increase on side 1, side 2 starts purple
                         2   2   1   1   0   0   0   0   0   0   0   0   1   2   23019; % cue side 2, two stimuli, no change, side 1 starts purple
                         2   2   1   1   0   0   0   0   0   0   0   0   2   2   23020; % cue side 2, two stimuli, no change, side 2 starts purple
+                 ];
+end
+
+% saturation increases only, no single patch trials
+function table = tableDefSatInc_noSingle_cueChgOnly
+table =           [
+                        1   2   1   1   1   0   0   0   1   0   0   0   1   10   23005; % cue side 1, two stimuli, saturation increase on side 1, side 1 starts purple
+                        1   2   1   1   1   0   0   0   1   0   0   0   2   10   23006; % cue side 1, two stimuli, saturation increase on side 1, side 2 starts purple
+                        1   2   1   1   2   0   0   0   1   0   0   0   1   1   23007; % cue side 1, two stimuli, saturation increase on side 2, side 1 starts purple
+                        1   2   1   1   2   0   0   0   1   0   0   0   2   1   23008; % cue side 1, two stimuli, saturation increase on side 2, side 2 starts purple
+                        
+                        2   2   1   1   2   0   0   0   1   0   0   0   1   10   23015; % cue side 2, two stimuli, saturation increase on side 2, side 1 starts purple
+                        2   2   1   1   2   0   0   0   1   0   0   0   2   10   23016; % cue side 2, two stimuli, saturation increase on side 2, side 2 starts purple
+                        2   2   1   1   1   0   0   0   1   0   0   0   1   1   23017; % cue side 2, two stimuli, saturation increase on side 1, side 1 starts purple
+                        2   2   1   1   1   0   0   0   1   0   0   0   2   1   23018; % cue side 2, two stimuli, saturation increase on side 1, side 2 starts purple
                  ];
 end
 
@@ -292,14 +297,14 @@ table =           [
                         1   2   1   1   1   0   0   0   1   0   0   0   1   5   23005; % cue side 1, two stimuli, saturation increase on side 1, side 1 starts purple
                         1   2   1   1   1   0   0   0   1   0   0   0   2   5   23006; % cue side 1, two stimuli, saturation increase on side 1, side 2 starts purple
                         
-                        1   2   1   1   2   0   0   0   1   0   0   0   1   1   23007; % cue side 1, two stimuli, saturation increase on side 2, side 1 starts purple
-                        1   2   1   1   2   0   0   0   1   0   0   0   2   1   23008; % cue side 1, two stimuli, saturation increase on side 2, side 2 starts purple                
+                        1   2   1   1   2   0   0   0   1   0   0   0   1   2   23007; % cue side 1, two stimuli, saturation increase on side 2, side 1 starts purple
+                        1   2   1   1   2   0   0   0   1   0   0   0   2   2   23008; % cue side 1, two stimuli, saturation increase on side 2, side 2 starts purple                
                         
                         2   2   1   1   2   0   0   0   1   0   0   0   1   5   23015; % cue side 2, two stimuli, saturation increase on side 2, side 1 starts purple
                         2   2   1   1   2   0   0   0   1   0   0   0   2   5   23016; % cue side 2, two stimuli, saturation increase on side 2, side 2 starts purple
                         
-                        2   2   1   1   1   0   0   0   1   0   0   0   1   1   23017; % cue side 2, two stimuli, saturation increase on side 1, side 1 starts purple
-                        2   2   1   1   1   0   0   0   1   0   0   0   2   1   23018; % cue side 2, two stimuli, saturation increase on side 1, side 2 starts purple
+                        2   2   1   1   1   0   0   0   1   0   0   0   1   2   23017; % cue side 2, two stimuli, saturation increase on side 1, side 1 starts purple
+                        2   2   1   1   1   0   0   0   1   0   0   0   2   2   23018; % cue side 2, two stimuli, saturation increase on side 1, side 2 starts purple
                  ];
 end
 
@@ -309,14 +314,14 @@ table =           [
                         1   2   1   1   1   0   0   0   0   0   0   1   1   5   23005; % cue side 1, two stimuli, CONTRAST increase on side 1, side 1 starts purple
                         1   2   1   1   1   0   0   0   0   0   0   1   2   5   23006; % cue side 1, two stimuli, CONTRAST increase on side 1, side 2 starts purple
                         
-                        1   2   1   1   2   0   0   0   0   0   0   1   1   1   23007; % cue side 1, two stimuli, CONTRAST increase on side 2, side 1 starts purple
-                        1   2   1   1   2   0   0   0   0   0   0   1   2   1   23008; % cue side 1, two stimuli, CONTRAST increase on side 2, side 2 starts purple
+                        1   2   1   1   2   0   0   0   0   0   0   1   1   2   23007; % cue side 1, two stimuli, CONTRAST increase on side 2, side 1 starts purple
+                        1   2   1   1   2   0   0   0   0   0   0   1   2   2   23008; % cue side 1, two stimuli, CONTRAST increase on side 2, side 2 starts purple
 
                         2   2   1   1   2   0   0   0   0   0   0   1   1   5   23015; % cue side 2, two stimuli, CONTRAST increase on side 2, side 1 starts purple
                         2   2   1   1   2   0   0   0   0   0   0   1   2   5   23016; % cue side 2, two stimuli, CONTRAST increase on side 2, side 2 starts purple
 
-                        2   2   1   1   1   0   0   0   0   0   0   1   1   1   23017; % cue side 2, two stimuli, CONTRAST increase on side 1, side 1 starts purple
-                        2   2   1   1   1   0   0   0   0   0   0   1   2   1   23018; % cue side 2, two stimuli, CONTRAST increase on side 1, side 2 starts purple
+                        2   2   1   1   1   0   0   0   0   0   0   1   1   2   23017; % cue side 2, two stimuli, CONTRAST increase on side 1, side 1 starts purple
+                        2   2   1   1   1   0   0   0   0   0   0   1   2   2   23018; % cue side 2, two stimuli, CONTRAST increase on side 1, side 2 starts purple
                  ];
 end
 
@@ -381,15 +386,16 @@ table =           [     2   1   1   0   2   0   0   0   1   0   0   0   1   4   
                  ];
 end
 
+
 % an equal number of trials with cued changes of all features
 function table = tableDefault
-table =           [     %1   2   1   1   1   1   0   0   0   0   0   0   1   1   23001; % cue in, speed increase in RF
-%                         1   2   1   1   1   0   1   0   0   0   0   0   1   1   23001; % cue in, orientation incrase in RF
-%                         1   2   1   1   1   0   0   1   0   0   0   0   1   1   23001; % cue in, spatial frequency increase in RF
-                        1   2   1   1   1   0   0   0   1   0   0   0   1   10   23001; % cue in, saturation increase in RF
-%                         1   2   1   1   1   0   0   0   0   1   0   0   1   1   23001; % cue in, hue increase in RF
-%                         1   2   1   1   1   0   0   0   0   0   1   0   1   1   23001; % cue in, luminance increase in RF
-                        1   2   1   1   1   0   0   0   0   0   0   1   1   10   23001; % cue in, contrast increase in RF
+table =           [     1   2   1   1   0   0   0   0   0   0   1   4   23001; % cue in, speed increase in RF
+                        1   2   1   0   1   0   0   0   0   0   1   4   23001; % cue in, orientation incrase in RF
+                        1   2   1   0   0   1   0   0   0   0   1   4   23001; % cue in, spatial frequency increase in RF
+                        1   2   1   0   0   0   1   0   0   0   1   4   23001; % cue in, saturation increase in RF
+                        1   2   1   0   0   0   0   1   0   0   1   4   23001; % cue in, hue increase in RF
+                        1   2   1   0   0   0   0   0   1   0   1   4   23001; % cue in, luminance increase in RF
+                        1   2   1   0   0   0   0   0   0   1   1   4   23001; % cue in, contrast increase in RF
                  ];
 end
 
