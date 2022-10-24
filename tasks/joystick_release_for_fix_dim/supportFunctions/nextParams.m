@@ -36,31 +36,31 @@ end
 g = p.status.trialsArrayRowsPossible;
 
     
-% 1st: cue side 1, single patch trials
-if any(p.init.trialsArray(:, 1) == 1 & p.init.trialsArray(:, 2) == 1 & ...
-        p.status.trialsArrayRowsPossible)
-    g = p.init.trialsArray(:, 1) == 1 & p.init.trialsArray(:, 2) == 1 & ...
-        p.status.trialsArrayRowsPossible;
-    
-    % 2nd: cue side 1, two patch trials
-elseif any(p.init.trialsArray(:, 1) == 1 & p.init.trialsArray(:, 2) > 1 & ...
-        p.status.trialsArrayRowsPossible)
-    g = p.init.trialsArray(:, 1) == 1 & p.init.trialsArray(:, 2) > 1 & ...
-        p.status.trialsArrayRowsPossible;
-    
-    % 3rd: cue side 2, single patch trials
-elseif any(p.init.trialsArray(:, 1) == 2 & p.init.trialsArray(:, 2) == 1 & ...
-        p.status.trialsArrayRowsPossible)
-    g = p.init.trialsArray(:, 1) == 2 & p.init.trialsArray(:, 2) == 1 & ...
-        p.status.trialsArrayRowsPossible;
-    
-    
-    % 4th: cue side 2, two patch trials
-elseif any(p.init.trialsArray(:, 1) == 2 & p.init.trialsArray(:, 2) > 1 & ...
-        p.status.trialsArrayRowsPossible)
-    g = p.init.trialsArray(:, 1) == 2 & p.init.trialsArray(:, 2) > 1 & ...
-        p.status.trialsArrayRowsPossible;
-end
+% % 1st: cue side 1, single patch trials
+% if any(p.init.trialsArray(:, 1) == 1 & p.init.trialsArray(:, 2) == 1 & ...
+%         p.status.trialsArrayRowsPossible)
+%     g = p.init.trialsArray(:, 1) == 1 & p.init.trialsArray(:, 2) == 1 & ...
+%         p.status.trialsArrayRowsPossible;
+%     
+%     % 2nd: cue side 1, two patch trials
+% elseif any(p.init.trialsArray(:, 1) == 1 & p.init.trialsArray(:, 2) > 1 & ...
+%         p.status.trialsArrayRowsPossible)
+%     g = p.init.trialsArray(:, 1) == 1 & p.init.trialsArray(:, 2) > 1 & ...
+%         p.status.trialsArrayRowsPossible;
+%     
+%     % 3rd: cue side 2, single patch trials
+% elseif any(p.init.trialsArray(:, 1) == 2 & p.init.trialsArray(:, 2) == 1 & ...
+%         p.status.trialsArrayRowsPossible)
+%     g = p.init.trialsArray(:, 1) == 2 & p.init.trialsArray(:, 2) == 1 & ...
+%         p.status.trialsArrayRowsPossible;
+%     
+%     
+%     % 4th: cue side 2, two patch trials
+% elseif any(p.init.trialsArray(:, 1) == 2 & p.init.trialsArray(:, 2) > 1 & ...
+%         p.status.trialsArrayRowsPossible)
+%     g = p.init.trialsArray(:, 1) == 2 & p.init.trialsArray(:, 2) > 1 & ...
+%         p.status.trialsArrayRowsPossible;
+% end
 
 % choose 1st available row after shuffling list of available rows.
 tempList = shuff(find(g));

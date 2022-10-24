@@ -49,7 +49,7 @@ p.draw.clut.expColors = ...
     mutGreen;           % 10
     greenISH;           % 11
     0, 0, 0;            % 12
-    oldGreen];           % 17
+    oldGreen];           % 13
 
 % colors for subject's display
 % black                     0
@@ -77,7 +77,7 @@ p.draw.clut.subColors = ...
     mutGreen;           % 10
     bgRGB;              % 11
     bgRGB;              % 12
-    oldGreen];           % 17
+    oldGreen];           % 13
 
 assert(size(p.draw.clut.subColors,1)==size(p.draw.clut.expColors,1), 'ERROR-- exp & sub Colors must have equal length')
 

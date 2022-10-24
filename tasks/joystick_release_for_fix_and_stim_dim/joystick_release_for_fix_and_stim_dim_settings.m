@@ -1,6 +1,5 @@
 function p = joystick_release_for_fix_and_stim_dim_settings
 %  p = joystick_release_for_fix_and_stim_dim_settings
-%
 %  On some proportion of trials, the fixation point turns off without
 %  reward delivery or "boop", monkey must release joystick to get reward on
 %  those trials. On the remaining trials, the "boop" and reward are
@@ -45,7 +44,7 @@ p.init.rigConfigFile     = which('rigConfigFiles.rigConfig_rig1'); % rig config 
 
 %% define task name and related files:
 
-p.init.taskName         = 'joystick_release_for_fix_dim';
+p.init.taskName         = 'joystick_release_for_fix_and_stim_dim';
 p.init.taskType         = 1;                            % poorly defined numerical index for the task "type"
 p.init.pldapsFolder     = pwd;                          % pldaps gui takes us to taks folder automatically once we choose a settings file
 p.init.protocol_title   = [p.init.taskName '_task'];    % Define Banner text to identify the experimental protocol
@@ -188,7 +187,7 @@ p.rig.guiVars = {...
 %% INIT VARIABLES 
 % vars that are only set once
 
-p.init.exptType         = 'joystick_release_on_fix_dim';  % Which experiment are we running? The full version with all trial types? The single-stimulus-only version? Something else?
+p.init.exptType         = 'joystick_release_for_fix_and_stim_dim';  % Which experiment are we running? The full version with all trial types? The single-stimulus-only version? Something else?
 
 
 %% TRIAL VARIABLES
@@ -232,7 +231,7 @@ p.trVarsInit.contDelta           = 0.2;         % contrast
 p.trVarsInit.orientDelta         = 10;          % orientation
 p.trVarsInit.freqDelta           = 0.2;         % spatial frequency (cycles per degree)
 p.trVarsInit.satDelta            = 0.038;       % color saturation
-p.trVarsInit.lumDelta            = 0.1;         % luminance
+p.trVarsInit.lumDelta            = -0.3;         % luminance
 p.trVarsInit.hueDelta            = 15;          % hue (color angle)
 p.trVarsInit.stimLoc1Elev        = 0;           % Stimulus location (angle of elevation).
 p.trVarsInit.stimLoc1Ecc         = 10;          % Stimulus location (eccentricity in degrees).
@@ -288,8 +287,7 @@ p.trVarsInit.numTrialsForPerfCalc    = 100;      % how many of the most recently
 p.trVarsInit.currentState     = p.state.trialBegun;  % initialize "state" variable.
 p.trVarsInit.exitWhileLoop    = false;  % do we want to exit the "run" while loop?
 p.trVarsInit.cueIsOn          = 0;  % is the cue ring currently being presented?
-p.trVarsInit.cueStimIsOn      = false;  % is the cued stimulus (eg motion dots) currently being presented?
-p.trVarsInit.foilStimIsOn     = false;  % is the foil stimulus (eg motion dots) currently being presented?
+p.trVarsInit.stimIsOn         = false;  % are stimuli currently being presented?
 
 p.trVarsInit.fixWinWidthDeg       = 4;        % fixation window width in degrees
 p.trVarsInit.fixWinHeightDeg      = 4;        % fixation window height in degrees
@@ -306,11 +304,11 @@ p.trVarsInit.fixColorIndex          = 0;
 % the magnitude of change (delta) for each feature are defined above under
 % "p.trVarsInit" so they can be adjusted in the GUI.
 p.trVarsInit.speedInit                = 0;        % initial motion magniutde
-p.trVarsInit.contInit                 = 0;        % initial contrast
+p.trVarsInit.ctrstInit                = 0.2;      % initial contrast
 p.trVarsInit.orientInit               = 30;       % initial orientation
 p.trVarsInit.freqInit                 = 0.2;      % initial spatial frequency (cycles per degree)
 p.trVarsInit.satInit                  = 0.1;      % initial color saturation
-p.trVarsInit.lumInit                  = 0;        % initial luminance
+p.trVarsInit.lumInit                  = 0.3;      % initial luminance
 p.trVarsInit.hueInit                  = 90;       % initial hue (color angle)
 p.trVarsInit.boxSizePix               = 18;       % diameter of each "check" in pixels
 p.trVarsInit.boxLifetime              = 8;        % "check" lifetime in frams
@@ -318,8 +316,8 @@ p.trVarsInit.nPatches                 = 2;        % number of stimuli
 p.trVarsInit.nEpochs                  = 2;        % just one "pre-change" and one "post-change" epoch for now
 p.trVarsInit.orientVar                = 0;        % variability in orientation
 p.trVarsInit.hueVar                   = 0.00;     % variability in hue (angle)
-p.trVarsInit.lumVar                   = 0.05;     % variability in luminance
-p.trVarsInit.satVar                   = 0.05;     % variability in saturation
+p.trVarsInit.lumVar                   = 0.02;     % variability in luminance
+p.trVarsInit.satVar                   = 0.01;     % variability in saturation
 
 % substructure for marking stimulus-events after each flip
 p.trVarsInit.postFlip.logical         = false;
@@ -414,7 +412,7 @@ p.rig.dp.dacChannelOut         = 0;        % Which channel to use for DAC outpt 
 % to each of the features. For example, p.trVars should have a field called
 % "contDelta" referring to the magnitude of contrast change (when a
 % contrast change trial occurs).
-p.stim.featureValueNames = {'speed', 'cont', 'orient', 'freq', 'sat', 'lum', 'hue'};
+p.stim.featureValueNames = {'speed', 'ctrst', 'orient', 'freq', 'sat', 'lum', 'hue'};
 p.stim.nFeatures         = length(p.stim.featureValueNames);
 
 %% CLUT - Color Look Up Table
@@ -437,10 +435,7 @@ p.draw.clutIdx.expMutGreen_subMutGreen   = 10;
 p.draw.clutIdx.expGreen_subBg            = 11;
 p.draw.clutIdx.expBlack_subBg            = 12;
 p.draw.clutIdx.expOldGreen_subOldGreen   = 13;
-p.draw.clutIdx.expWhite20_subWhite20     = 14;
-p.draw.clutIdx.expWhite40_subWhite40     = 15;
-p.draw.clutIdx.expWhite60_subWhite60     = 16;
-p.draw.clutIdx.expWhite80_subWhite80     = 17;
+p.draw.clutIdx.expFixDim_subFixDim       = 14;
 
 %% COLORS 
 % here we just init them. They get updated in the run function as a 

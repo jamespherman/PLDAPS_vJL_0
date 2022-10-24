@@ -46,6 +46,10 @@ repCol = find(strcmp(p.init.trialArrayColumnNames, 'no of trials'));
 
 % table definition
 switch p.init.exptType
+
+    case 'joystick_release_for_fix_and_stim_dim'
+        table = tableDef_fixAndStimDim;
+
     case 'saturationIncreasePsychometric'   % YGC 04/03/19
         table = tableDefSatIncPsychometric;
         
@@ -139,6 +143,19 @@ p.init.trialsArray = trialsArray;
 p.init.blockLength = size(p.init.trialsArray, 1);
 
 % keyboard
+end
+
+% Fixation + peripheral stimulus dimming. There's only ever a single
+% stimulus, it stays in one location for several trials then switches to
+% another location for several trials. Eventually we want to have 4
+% stimulus locations at least so we must modify the code but for now we'll
+% keep the "cue / foil" dichotomy to simplify some coding.
+function table = tableDef_fixAndStimDim
+table =           [1   1   1   0   1   0   0   0   0   0   1   0   1   8   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   1   1   1   0   0   0   0   0   0   0   0   0   1   2   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   2   1   1   0   1   0   0   0   0   0   1   0   1   8   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   2   1   1   0   0   0   0   0   0   0   0   0   1   2   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                 ];
 end
 
 % saturation increases only & also for psychometric curve measurement  

@@ -1,6 +1,5 @@
 function p = joystick_release_for_fix_and_stim_dim_run(p)
-%   p = joystick_release_for_fix_off_run(p)
-%
+%   p = joystick_release_for_fix_and_stim_dim_run(p)
 % Part of the quintet of pldpas functions:
 %   settings function
 %   init function
@@ -175,6 +174,19 @@ switch p.trVars.currentState
         % Calculate elapsed time since fixation acquisition
         timeFromFixAq = timeNow - p.trData.timing.fixAq;
 
+        % Determine if peripheral stimuli should be on. If it/they should
+        % and we haven't already indicated that "stimOn" should be defined
+        % after the next flip, indicate that "stimOn" should be defined
+        % after the next flip and strobe "stimOn" after the next flip.
+        if timeFromFixAq >= p.trVars.fix2StimOnIntvl && ...
+                timeFromFixAq < p.trVars.fix2StimOffIntvl && ...
+                ~ismember('stimOn', p.trVars.postFlip.varNames)
+            p.trVars.postFlip.logical           = true;
+            p.trVars.postFlip.varNames{end + 1} = 'stimOn';
+            p.init.strb.addValueOnce(p.init.codes.stimOn);
+            p.trVars.stimIsOn                = true;
+        end
+        
         % If fixation has been held for the requisite duration and the
         % joystick has not been released:
         % (1) On a "release after fixation dim" trial, dim fixation and go
@@ -189,13 +201,14 @@ switch p.trVars.currentState
 
                 % dim fixation, mark time that dimming occurred and go to 
                 % next state (make decision):
-                p.trData.timing.fixHoldReqMet = timeNow;
-                p.trVars.currentState      = p.state.makeDecision;
-                p.draw.color.fix           = p.draw.fixDimClutId;
+                p.trData.timing.fixHoldReqMet   = timeNow;
+                p.trVars.currentState           = p.state.makeDecision;
+                p.draw.color.fix                = 13;
 
             elseif pds.joyHeld(p)
 
                 % this is a correct reject:
+                p.trData.timing.fixHoldReqMet   = timeNow;
                 p.init.strb.addValue(p.init.codes.cr);
                 p.trVars.currentState      = p.state.cr;
                 p = playTone(p, 'high');
@@ -300,7 +313,6 @@ switch p.trVars.currentState
 
         %% CORRECT REJECT
         p = playTone(p, 'high');
-        p.trVars.exitWhileLoop = true;
 
         % 	DELIVER REWARD AFTER SOME DELAY
         % if the delay for reward delivery has elapsed and reward delivery
@@ -399,6 +411,31 @@ if timeNow > p.trData.timing.lastFrameTime + ...
         [-1 -1 1 1]*p.draw.eyePosWidth + repmat(p.draw.middleXY, 1, 2);
     Screen('FillRect', p.draw.window, p.draw.color.eyePos, gazePosition);
     
+    % calculate which stimulus frame we're in based on time since
+    % stimulus onset - stimuli should be drawn in the frame that their
+    % onset time is defined ("p.trData.timing.stimOn") for this reason,
+    % we force "stimFrameIdx" to a value of "1" until the stimulus
+    % onset time has been defined.
+    p.trVars.stimFrameIdx  = ...
+        (fix((timeNow - p.trData.timing.stimOn) / ...
+        p.rig.frameDuration)) * (p.trData.timing.stimOn > 0) + 1;
+    
+    % if stimuli should be drawn (based on time in trial), draw them.
+    if p.trVars.stimIsOn && ...
+            (p.trVars.stimFrameIdx <= p.trVars.stimFrames)
+
+        % Push (possibly new) color look-up table to ViewPIXX based on
+        % current frame (frame determined based on time in trial).
+        Datapixx('SetVideoClut', p.draw.myCLUTs(:, : , ...
+            p.trVars.stimFrameIdx));
+        
+        % draw FIXED textures to screen (one per stimulus)
+        for i = 1:p.stim.nStim
+            Screen('DrawTexture', p.draw.window, p.draw.stimTex{i}, [], ...
+                p.trVars.stimRects(i,:));
+        end
+    end
+
     % draw fixation spot
     Screen('FrameRect',p.draw.window, p.draw.color.fix, ...
         p.draw.fixPointRect, p.draw.fixPointWidth);
@@ -450,6 +487,5 @@ if timeNow > p.trData.timing.lastFrameTime + ...
     % increment flip index
     p.trVars.flipIdx = p.trVars.flipIdx + 1;
 end
-
 
 end

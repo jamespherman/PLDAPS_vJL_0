@@ -47,7 +47,7 @@ p   = pds.initDataPixx(p);
 p   = pds.initAudio(p);
 
 % (6) define trial structure
-% p   = initTrialStructure(p);
+p   = initTrialStructure(p);
 
 % (7) define online-plotting windows (and reposition others).
 p   = plotWindowSetup(p);
