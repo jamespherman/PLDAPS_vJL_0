@@ -233,7 +233,7 @@ for i = 1:nLoop
             assocArray(cpeint(1, j, i):cpeint(2, j, i), 4);
         
         % generate gabor part (gaussian windowed sinusoid).
-        gaborVals = p.stim.contArray(j,i) * ...
+        gaborVals = p.stim.ctrstArray(j,i) * ...
             gf(X, Y, phase, freq, orient, winStd);
         
         % draw the color values for each patch in each epoch, defining
