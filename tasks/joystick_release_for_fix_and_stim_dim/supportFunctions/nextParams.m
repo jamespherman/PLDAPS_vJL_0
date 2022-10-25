@@ -71,41 +71,6 @@ end
 %%
 function p = trialTypeInfo(p)
 
-% Will this be a release on fixation dim trial or a release after reward
-% trial?
-p.trVars.isChangeTrial = rand < p.trVars.propChangeTrials;
-
-% If this is a change trial, we choose among "lowDimVal", "midDimVal", and
-% "highDimVal" with equal probability. If this is isn't a change trial, we
-% set "p.trData.dimVal" to 0.
-if p.trVars.isChangeTrial
-    tempRand = rand;
-    if tempRand < 1/3
-        p.trData.dimVal = p.trVars.lowDimVal;
-    elseif tempRand < 2/3
-        p.trData.dimVal = p.trVars.midDimVal;
-    else
-        p.trData.dimVal = p.trVars.highDimVal;
-    end
-else p.trData.dimVal = 0;
-end
-
-% Based on the "dimVal", we generate a new RGB triplet for the appearance
-% of the fixation after dimming. The first step is to retrieve the
-% background RGB value from the CLUT, then we take the difference between
-% the default / initial fixation RGB and the background RGB, multiply it by
-% the "dimVal", then add it back to the background RGB. Once we've
-% generated that value, we need to update the CLUT on the VIEWPixx.
-bgRGB = p.draw.clut.combinedClut(p.draw.clutIdx.expBg_subBg + 1, :);
-fxRGB = p.draw.clut.combinedClut(p.draw.clutIdx.expWhite_subWhite + 1, :);
-fxDimRGB = bgRGB + p.trData.dimVal*(fxRGB-bgRGB);
-myClut = p.draw.clut.combinedClut;
-myClut(13:14, :) = repmat(fxDimRGB, 2, 1);
-p.draw.clut.expColors(13:14, :) = repmat(fxDimRGB, 2, 1);
-p.draw.clut.subColors(13:14, :) = repmat(fxDimRGB, 2, 1);
-Datapixx('SetVideoClut', myClut);
-p.draw.clut.combinedClut = myClut;
-
 % keyboard
 
 % June 19th, 2019
@@ -223,6 +188,42 @@ p.trVars.isFoilChangeTrial   = stimChgIdx ~= p.stim.cueSide && ...
     stimChgIdx ~= 0;
 p.trVars.isNoChangeTrial     = stimChgIdx == 0;
 
+% Will this be a release on fixation dim trial or a release after reward
+% trial?
+p.trVars.isChangeTrial = ~p.trVars.isNoChangeTrial;
+
+% If this is a change trial, we choose among "lowDimVal", "midDimVal", and
+% "highDimVal" with equal probability. If this is isn't a change trial, we
+% set "p.trData.dimVal" to 0.
+if p.trVars.isChangeTrial
+    tempRand = rand;
+    if tempRand < 1/3
+        p.trData.dimVal = p.trVars.lowDimVal;
+    elseif tempRand < 2/3
+        p.trData.dimVal = p.trVars.midDimVal;
+    else
+        p.trData.dimVal = p.trVars.highDimVal;
+    end
+else
+    p.trData.dimVal = 0;
+end
+
+% Based on the "dimVal", we generate a new RGB triplet for the appearance
+% of the fixation after dimming. The first step is to retrieve the
+% background RGB value from the CLUT, then we take the difference between
+% the default / initial fixation RGB and the background RGB, multiply it by
+% the "dimVal", then add it back to the background RGB. Once we've
+% generated that value, we need to update the CLUT on the VIEWPixx.
+bgRGB = p.draw.clut.combinedClut(p.draw.clutIdx.expBg_subBg + 1, :);
+fxRGB = p.draw.clut.combinedClut(p.draw.clutIdx.expWhite_subWhite + 1, :);
+fxDimRGB = bgRGB + p.trData.dimVal*(fxRGB-bgRGB);
+myClut = p.draw.clut.combinedClut;
+myClut(13:14, :) = repmat(fxDimRGB, 2, 1);
+p.draw.clut.expColors(13:14, :) = repmat(fxDimRGB, 2, 1);
+p.draw.clut.subColors(13:14, :) = repmat(fxDimRGB, 2, 1);
+Datapixx('SetVideoClut', myClut);
+p.draw.clut.combinedClut = myClut;
+
 % define a variable indicating if this is a contrast change trial
 p.trVars.isContrastChangeTrial = ...
     p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
@@ -321,7 +322,8 @@ function p = timingInfo(p)
 % choose how long the joystick hold duration required for the upcoming
 % trial will be:
 p.trVars.fixDurReq = p.trVars.fixDurReqMin + ...
-    (p.trVars.fixDurReqMax - p.trVars.fixDurReqMin)*rand;
+    (p.trVars.fixDurReqMax - p.trVars.fixDurReqMin)*rand + ...
+    (~p.trVars.isChangeTrial)*0.5;
 
 % log fixDurReq as a status variable:
 p.status.fixDurReq = p.trVars.fixDurReq;

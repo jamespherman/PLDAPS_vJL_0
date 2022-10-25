@@ -151,10 +151,10 @@ end
 % stimulus locations at least so we must modify the code but for now we'll
 % keep the "cue / foil" dichotomy to simplify some coding.
 function table = tableDef_fixAndStimDim
-table =           [1   1   1   0   1   0   0   0   0   0   1   0   1   8   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   1   1   1   0   0   0   0   0   0   0   0   0   1   2   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   2   1   1   0   1   0   0   0   0   0   1   0   1   8   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   2   1   1   0   0   0   0   0   0   0   0   0   1   2   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+table =           [1   1   1   0   1   0   0   0   0   0   1   0   1   5   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   1   1   1   0   0   0   0   0   0   0   0   0   1   5   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   2   1   1   0   1   0   0   0   0   0   1   0   1   5   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   2   1   1   0   0   0   0   0   0   0   0   0   1   5   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
                  ];
 end
 
