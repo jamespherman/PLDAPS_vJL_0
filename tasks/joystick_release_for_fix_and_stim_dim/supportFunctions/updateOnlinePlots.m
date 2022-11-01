@@ -1,9 +1,12 @@
 function p               = updateOnlinePlots(p)
 
-% keep a running log of trial end states and reaction times:
+% keep a running log of trial end states, reaction times, and dimVals. If
+% only the peripheral stimulus dimmed on this trial, define this as a
+% "negative" dimVal for the purposes of plotting:
 p.status.trialEndStates(p.status.iTrial)    = p.trData.trialEndState;
 p.status.reactionTimes(p.status.iTrial)     = p.trData.timing.reactionTime;
-p.status.dimVals(p.status.iTrial)           = p.trData.dimVal;
+p.status.dimVals(p.status.iTrial)           = p.trData.dimVal * ...
+    (-1)^p.trVars.isStimDimOnlyTrial;
 
 % the new Y value for updating the appropriate plot object is always the
 % same, the trial index:
@@ -20,7 +23,7 @@ plotInd = 0;
 % rather than keeping it in "p". We need to log trial end state and
 % reaction time.
 switch p.trData.trialEndState
-    case {p.state.hit, p.state.cr}
+    case p.state.hit
         
         % what's the new "X" data value? Since the last trial was a hit, we
         % use the difference between the time when the joystick hold
@@ -29,15 +32,20 @@ switch p.trData.trialEndState
         % actual hold duration requirement since the program can only log
         % that the requirement has been met at certain intervals dictated
         % by the "loop" (drawing, etc).
-        newX = p.trData.timing.fixHoldReqMet - p.trData.timing.fixAq;
+        newX = p.trData.timing.joyRelease - p.trData.timing.fixAq;
+        plotInd = 4;
 
-        % if this was a "release after fix off" trial, use one plotInd. If
-        % this was a "release after reward" trial, use another:
-        if p.trVars.isChangeTrial
-            plotInd = 4;
-        else
-            plotInd = 1;
-        end
+    case p.state.cr
+
+        % what's the new "X" data value? Since the last trial was a hit, we
+        % use the difference between the time when the joystick hold
+        % duration requirement was met and the time that the joystick hold
+        % began, note that this value is a little bit larger than the
+        % actual hold duration requirement since the program can only log
+        % that the requirement has been met at certain intervals dictated
+        % by the "loop" (drawing, etc).
+        newX = p.trData.timing.fixHoldReqMet - p.trData.timing.fixAq;
+        plotInd = 1;
 
     case p.state.fixBreak
         

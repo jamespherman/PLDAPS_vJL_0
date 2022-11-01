@@ -47,6 +47,9 @@ repCol = find(strcmp(p.init.trialArrayColumnNames, 'no of trials'));
 % table definition
 switch p.init.exptType
 
+    case 'joystick_release_for_fix_and_stim_dim_majorityChange'
+        table = tableDef_fixAndStimDim_majorityChange;
+
     case 'joystick_release_for_fix_and_stim_dim'
         table = tableDef_fixAndStimDim;
 
@@ -145,16 +148,22 @@ p.init.blockLength = size(p.init.trialsArray, 1);
 % keyboard
 end
 
-% Fixation + peripheral stimulus dimming. There's only ever a single
-% stimulus, it stays in one location for several trials then switches to
-% another location for several trials. Eventually we want to have 4
-% stimulus locations at least so we must modify the code but for now we'll
-% keep the "cue / foil" dichotomy to simplify some coding.
+% Fixation + peripheral stimulus dimming with an equal number of change and
+% no-change trials.
 function table = tableDef_fixAndStimDim
 table =           [1   1   1   0   1   0   0   0   0   0   1   0   1   5   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
                    1   1   1   0   0   0   0   0   0   0   0   0   1   5   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
                    2   1   1   0   1   0   0   0   0   0   1   0   1   5   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
                    2   1   1   0   0   0   0   0   0   0   0   0   1   5   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                 ];
+end
+
+% Fixation + peripheral stimulus dimming with mostly change trials.
+function table = tableDef_fixAndStimDim_majorityChange
+table =           [1   1   1   0   1   0   0   0   0   0   1   0   1   9   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   1   1   1   0   0   0   0   0   0   0   0   0   1   1   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   2   1   1   0   1   0   0   0   0   0   1   0   1   9   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   2   1   1   0   0   0   0   0   0   0   0   0   1   1   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
                  ];
 end
 

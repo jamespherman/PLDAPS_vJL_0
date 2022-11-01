@@ -193,9 +193,12 @@ p.trVars.isNoChangeTrial     = stimChgIdx == 0;
 p.trVars.isChangeTrial = ~p.trVars.isNoChangeTrial;
 
 % If this is a change trial, we choose among "lowDimVal", "midDimVal", and
-% "highDimVal" with equal probability. If this is isn't a change trial, we
-% set "p.trData.dimVal" to 0.
+% "highDimVal" with equal probability. We also need to choose whether the
+% peripheral stimulus AND the fixation will dim or only the peripheral
+% stimulus. If this is isn't a change trial, we set "p.trData.dimVal" to 0.
 if p.trVars.isChangeTrial
+    
+    % draw random number to decide which dimVal is selected:
     tempRand = rand;
     if tempRand < 1/3
         p.trData.dimVal = p.trVars.lowDimVal;
@@ -204,6 +207,13 @@ if p.trVars.isChangeTrial
     else
         p.trData.dimVal = p.trVars.highDimVal;
     end
+
+    % draw random number to decide whether peripheral stimulus and fixation
+    % will both dim or if peripheral stimulus only will dim:
+    tempRand = rand;
+    p.trVars.isStimDimOnlyTrial = ...
+        tempRand < p.trVars.propPeriphDimOnly;
+
 else
     p.trData.dimVal = 0;
 end

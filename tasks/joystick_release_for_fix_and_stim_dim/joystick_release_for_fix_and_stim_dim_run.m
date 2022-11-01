@@ -199,11 +199,15 @@ switch p.trVars.currentState
             % if this is a "release after fixation dim" trial:
             if p.trVars.isChangeTrial
 
-                % dim fixation, mark time that dimming occurred and go to 
-                % next state (make decision):
+                % If fixation and peripheral stimulus should both be
+                % dimmed, dim fixation, if not, just mark time that
+                % peripheral stimulus dimming ocurred and move to next
+                % state:
                 p.trData.timing.fixHoldReqMet   = timeNow;
                 p.trVars.currentState           = p.state.makeDecision;
-                p.draw.color.fix                = 13;
+                if ~p.trVars.isStimDimOnlyTrial
+                    p.draw.color.fix                = 13; % this is a hack fix it (jph - 11/1/2022)
+                end
 
             elseif pds.joyHeld(p)
 
