@@ -151,10 +151,10 @@ end
 % Fixation + peripheral stimulus dimming with an equal number of change and
 % no-change trials.
 function table = tableDef_fixAndStimDim
-table =           [1   1   1   0   1   0   0   0   0   0   1   0   1   5   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   1   1   1   0   0   0   0   0   0   0   0   0   1   5   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   2   1   1   0   1   0   0   0   0   0   1   0   1   5   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   2   1   1   0   0   0   0   0   0   0   0   0   1   5   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+table =           [1   1   1   0   1   0   0   0   0   0   1   0   1   7   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   1   1   1   0   0   0   0   0   0   0   0   0   1   3   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   2   1   1   0   1   0   0   0   0   0   1   0   1   7   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   2   1   1   0   0   0   0   0   0   0   0   0   1   3   23001; % cue side 1, single stimulus, luminance decrease on side 1, side 1 starts purple
                  ];
 end
 
