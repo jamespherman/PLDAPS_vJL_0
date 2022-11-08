@@ -2,16 +2,18 @@ function p               = updateOnlinePlots(p)
 
 % keep a running log of trial end states, reaction times, and dimVals. If
 % only the peripheral stimulus dimmed on this trial, define this as a
-% "negative" dimVal for the purposes of plotting:
+% "negative" dimVal for the purposes of plotting, if this was a no-change
+% trial, instead define the dimVal as 0.
 p.status.trialEndStates(p.status.iTrial)    = p.trData.trialEndState;
 p.status.reactionTimes(p.status.iTrial)     = p.trData.timing.reactionTime;
 p.status.dimVals(p.status.iTrial)           = p.trData.dimVal * ...
-    (-1)^p.trVars.isStimChgNoDim;
+    ((-1)^p.trVars.isStimChgNoDim) * p.trVars.isStimChangeTrial;
 
 % the new Y value for updating the appropriate plot object is always the
 % same, the trial index:
 newY = p.status.iTrial;
 
+% make sure plotInd is defined (just in case?).
 plotInd = 0;
 
 % Was the last trial a hit, a miss, or a non-start? Depending on which
@@ -25,77 +27,66 @@ plotInd = 0;
 switch p.trData.trialEndState
     case p.state.hit
         
-        % what's the new "X" data value? Since the last trial was a hit, we
-        % use the difference between the time when the joystick hold
-        % duration requirement was met and the time that the joystick hold
-        % began, note that this value is a little bit larger than the
-        % actual hold duration requirement since the program can only log
-        % that the requirement has been met at certain intervals dictated
-        % by the "loop" (drawing, etc).
-        newX = p.trData.timing.joyRelease - p.trData.timing.fixAq;
-        plotInd = 4;
+        % what's the new "X" data value?
+        newX = p.trData.timing.reactionTime;
+
+        % plotInd determines which existing plot object we're going to add
+        % the current trial's data to:
+        plotInd = 1;
+
+    case p.state.miss
+
+        % Where are we plotting this trial's datapoint?
+        newX = 0;
+
+        % plotInd determines which existing plot object we're going to add
+        % the current trial's data to:
+        plotInd = 2;
 
     case p.state.cr
 
-        % what's the new "X" data value? Since the last trial was a hit, we
-        % use the difference between the time when the joystick hold
-        % duration requirement was met and the time that the joystick hold
-        % began, note that this value is a little bit larger than the
-        % actual hold duration requirement since the program can only log
-        % that the requirement has been met at certain intervals dictated
-        % by the "loop" (drawing, etc).
-        newX = p.trData.timing.fixHoldReqMet - p.trData.timing.fixAq;
-        plotInd = 1;
+        % Where are we plotting this trial's datapoint?
+        newX = 0;
+
+        % plotInd determines which existing plot object we're going to add
+        % the current trial's data to:
+        plotInd = 3;
+
+    case p.state.fa
+
+        % Where are we plotting this trial's datapoint?
+        newX = p.trData.timing.reactionTime;
+
+        % plotInd determines which existing plot object we're going to add
+        % the current trial's data to:
+        plotInd = 4;
 
     case p.state.fixBreak
-        
-        % if he never started fixating, we don't code this the same way:
-        if p.trData.timing.fixAq < 0
-            newX = 0;
-            plotInd = 3;
-        else
-            % what's the new "X" data value? Since the last trial was a miss,
-            % we use the time that the joystick was released:
-            try
-                newX = p.trData.timing.fixBreak  - p.trData.timing.fixAq;
-            catch me
-                keyboard
-            end
-            plotInd = 2;
-        end
-        
-    case {p.state.joyBreak, p.state.fa}
-        
-        % if he never started fixating, we don't code this the same way:
-        if p.trData.timing.fixAq < 0
-            newX = 0;
-            plotInd = 3;
-        else
-            % what's the new "X" data value? Since the last trial was a miss,
-            % we use the time that the joystick was released:
-            try
-                newX = p.trData.timing.joyRelease - p.trData.timing.fixAq;
-            catch me
-                keyboard
-            end
-            plotInd = 2;
-        end
-    
-    case p.state.miss
 
-        % if this was a miss, set the x value to 0
+        % Where are we plotting this trial's datapoint?
         newX = 0;
 
         % plotInd determines which existing plot object we're going to add
         % the current trial's data to:
         plotInd = 5;
+
+    case p.state.joyBreak
+        
+        % Where are we plotting this trial's datapoint?
+        newX = p.trData.timing.reactionTime;
+
+        % plotInd determines which existing plot object we're going to add
+        % the current trial's data to:
+        plotInd = 6;
         
     case p.state.nonStart
         
-        % what's the new "X" data value? Since the last trial was a
-        % non-start we set the x-value to 0;
+        % Where are we plotting this trial's datapoint?
         newX = 0;
-        plotInd = 3;
+
+        % plotInd determines which existing plot object we're going to add
+        % the current trial's data to:
+        plotInd = 7;
 end
 
 % get existing X & Y values for plot object to be updated:
@@ -112,14 +103,24 @@ set(p.draw.onlinePlotObj(plotInd), ...
 % value across plot objects and multiply by 1.1 to set X-max.
 xVals = cell2mat(get(p.draw.onlinePlotObj, 'XData')');
 xMax = max(xVals(~isnan(xVals)));
+xMin = min(xVals(~isnan(xVals)));
 
 % if xMax is either empty, NaN, or 0, set it to 1
-if isnan(xMax) || isempty(xMax) || xMax == 0
+if isnan(xMax) || isempty(xMax) || xMax == 0 || isinf(xMax)
     xMax = 1;
 end
 
+% if xMin is either empty, NaN, or 0, set it to 1
+if isnan(xMin) || isempty(xMin) || xMin == 0 || isinf(xMin)
+    xMin = -1;
+end
+
 % assign new X / Y limits:
-set(p.draw.onlinePlotAxes, 'XLim', xMax*[-0.1 1], 'YLim', [0 newY + 1]);
+try
+set(p.draw.onlinePlotAxes, 'XLim', 1.1*[xMin, xMax], 'YLim', [0 newY + 1]);
+catch me
+    keyboard
+end
 
 % get eye X & Y data both before and after fixation acquisition RELATIVE TO
 % FIXATION LOCATION. If fixation wasn't acquired in this trial, assign 

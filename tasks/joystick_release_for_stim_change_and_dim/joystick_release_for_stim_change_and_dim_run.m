@@ -171,6 +171,10 @@ switch p.trVars.currentState
             p.init.strb.addValue(p.init.codes.joyRelease);
             p.trData.timing.joyRelease = timeNow;
             p.trVars.currentState      = p.state.joyBreak;
+
+            % Compute "reaction time"
+            p.trData.timing.reactionTime    = ...
+                    p.trData.timing.joyRelease - p.trVars.stimChangeTime;
             
             % hide fixation point
             p.draw.color.fix                = p.draw.clutIdx.expBg_subBg;
@@ -256,21 +260,32 @@ switch p.trVars.currentState
             p.init.strb.addValue(p.init.codes.noChange);
             
         elseif ~pds.eyeInWindow(p)
+
             p.init.strb.addValue(p.init.codes.fixBreak);
             p.trData.timing.fixBreak   = timeNow;
             p.trVars.currentState      = p.state.fixBreak;
             
         elseif ~pds.joyHeld(p)
+
+            % strobe joy release and mark time
             p.init.strb.addValue(p.init.codes.joyRelease);
             p.trData.timing.joyRelease    = timeNow;
+
+            % Compute "reaction time"
+            p.trData.timing.reactionTime    = ...
+                    p.trData.timing.joyRelease - p.trVars.stimChangeTime;
             
-            
+            % if stimuli are on, this is a false alarm, otherwise it's a
+            % joy break:
             if p.trVars.stimIsOn && ...
                     ((timeNow - p.trData.timing.fixAq) > ...
                     (p.trVars.fix2StimOnIntvl + p.trVars.joyMinLatency))
+
                 p.trVars.currentState  = p.state.fa;
             else
+
                 p.trVars.currentState  = p.state.joyBreak;
+
             end
             
         end
@@ -552,6 +567,12 @@ if timeNow > p.trData.timing.lastFrameTime + ...
         [-1 -1 1 1]*p.draw.eyePosWidth + repmat(p.draw.middleXY, 1, 2);
     Screen('FillRect', p.draw.window, p.draw.color.eyePos, gazePosition);
     
+    % draw the cue-ring (if desired)
+    if p.trVars.cueIsOn
+        Screen('FrameOval', p.draw.window, p.draw.color.cueRing, ...
+            p.draw.cueRingRect, p.draw.ringThickPix);
+    end
+
     % calculate which stimulus frame we're in based on time since
     % stimulus onset - stimuli should be drawn in the frame that their
     % onset time is defined ("p.trData.timing.stimOn") for this reason,

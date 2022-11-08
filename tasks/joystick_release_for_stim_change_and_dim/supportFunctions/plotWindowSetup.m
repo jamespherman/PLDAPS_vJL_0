@@ -60,7 +60,7 @@ if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
     
     % add X / Y axis labels:
     set(p.draw.onlinePlotAxes.XAxis.Label, ...
-        'String', 'Fixation Hold Duration (s)', ...
+        'String', 'Time from stimulus change (s)', ...
         'FontSize', 16 ...
         );
     set(p.draw.onlinePlotAxes.YAxis.Label, ...
@@ -68,28 +68,59 @@ if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
         'FontSize', 16 ...
         );
     
-    % make plot objects: (1) green filled squares for "hits" on "release
-    % after reward" trials, (2) red Xs for fixation or joybreaks on
-    % "release after reward" trials, (3) grey circles for non-starts, (4)
-    % blue filled squares for "hits" on "release after fix off" trials, and
-    % (5) orange Xs for "misses" on "release after fix off" trials.
+    % Make plot objects for several trial outcomes:
+    % (1) Hits              - Green filled squares
+    % (2) Misses            - Red empty squares
+    % (3) Correct Rejects   - Blue filled triangles
+    % (4) False Alarms      - Orange empty triangles
+    % (5) Fixation Breaks   - Black empty stars
+    % (6) Joystick Breaks   - Black empty circles
+    % (7) Non-starts        - Black empty diamonds
     p.draw.onlinePlotObj(1) = plot(p.draw.onlinePlotAxes, NaN, NaN);
     p.draw.onlinePlotObj(2) = plot(p.draw.onlinePlotAxes, NaN, NaN);
     p.draw.onlinePlotObj(3) = plot(p.draw.onlinePlotAxes, NaN, NaN);
     p.draw.onlinePlotObj(4) = plot(p.draw.onlinePlotAxes, NaN, NaN);
     p.draw.onlinePlotObj(5) = plot(p.draw.onlinePlotAxes, NaN, NaN);
+    p.draw.onlinePlotObj(6) = plot(p.draw.onlinePlotAxes, NaN, NaN);
+    p.draw.onlinePlotObj(7) = plot(p.draw.onlinePlotAxes, NaN, NaN);
     
-    % set plot object properties:
+    % (1) Hits              - Green filled squares
     set(p.draw.onlinePlotObj(1), 'LineStyle', 'none', 'Marker', 's', ...
-        'MarkerFaceColor', [0.1 1 0.1], 'MarkerEdgeColor', 'None');
-    set(p.draw.onlinePlotObj(2), 'LineStyle', 'none', 'Marker', 'x', ...
-        'MarkerEdgeColor', [1 0.1 0.1], 'LineWidth', 2);
+        'MarkerFaceColor', [0.1020 0.5216 1], 'MarkerEdgeColor', 'None');
+
+    % (2) Misses            - Red empty squares
+    set(p.draw.onlinePlotObj(2), 'LineStyle', 'none', 'Marker', 's', ...
+        'MarkerEdgeColor', [0.8627 0.1961 0.1255], ...
+        'MarkerFaceColor', [1 1 1], 'LineWidth', 1);
+
+    % (3) Correct Rejects   - Blue filled triangles
     set(p.draw.onlinePlotObj(3), 'LineStyle', 'none', 'Marker', 'o', ...
-        'MarkerEdgeColor', 0.8 * [1 1 1], 'LineWidth', 1);
+        'MarkerEdgeColor', 'none', 'MarkerFaceColor', ...
+        [0.1020 0.5216 1.0000]);
+
+    % (4) False Alarms      - Orange empty triangles
     set(p.draw.onlinePlotObj(4), 'LineStyle', 'none', 'Marker', 's', ...
-        'MarkerFaceColor', [0.1 0.1 1], 'MarkerEdgeColor', 'None');
-    set(p.draw.onlinePlotObj(5), 'LineStyle', 'none', 'Marker', 'x', ...
-        'MarkerEdgeColor', [1 0.5 0], 'LineWidth', 1);
+        'MarkerEdgeColor', [1 0.7608 0.0392], 'MarkerFaceColor', ...
+        [1 1 1], 'LineWidth', 1);
+
+    % (5) Fixation Breaks   - Black empty stars
+    set(p.draw.onlinePlotObj(5), 'LineStyle', 'none', 'Marker', 'p', ...
+        'MarkerEdgeColor', [0 0 0], 'MarkerFaceColor', [1 1 1], ...
+        'LineWidth', 1);
+
+    % (6) Joystick Breaks   - Black empty circles
+    set(p.draw.onlinePlotObj(6), 'LineStyle', 'none', 'Marker', 'o', ...
+        'MarkerEdgeColor', [0 0 0], 'MarkerFaceColor', [1 1 1], ...
+        'LineWidth', 1);
+
+    % (7) Non-starts        - Black empty diamonds
+    set(p.draw.onlinePlotObj(7), 'LineStyle', 'none', 'Marker', 'd', ...
+        'MarkerEdgeColor', [0 0 0],  'MarkerFaceColor', [1 1 1], ...
+        'LineWidth', 1);
+
+    % define legend entries for plot objects:
+    p.draw.onlinePlotLegendStrings = {'Hit', 'Miss', 'CR', 'FA', ...
+        'Fix Break', 'Joy Break', 'Non Start'};
 
     % make axes for plotting eye position:
     p.draw.onlineEyePlotAxes = axes(...
