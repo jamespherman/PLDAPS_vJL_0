@@ -84,15 +84,25 @@ p.trVars.trialSeed = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
 % use trialSeed to determine following pseudorandom number sequence
 rng(p.trVars.trialSeed);
 
+% Which stimulus is changing on the current trial?
+stimChgIdx = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
+    strcmp(p.init.trialArrayColumnNames, 'stim chg'));
+
+% which stimulus location is the "cued" location?
+p.stim.cueLoc  = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
+    strcmp(p.init.trialArrayColumnNames, 'cue loc'));
+
+% set a couple simple variables that will be helpful during "run"
+p.trVars.isNoChangeTrial    = stimChgIdx == 0;
+p.trVars.isStimChangeTrial  = ~p.trVars.isNoChangeTrial;
+
 % On a certain proportion of trials, we want the peripheral stimulus to
 % change in some feature without dimming. We use a random number draw to
-% decide which trials this should happen on. First let's check to make sure
-% the variable that governs this behavior is actually here, then do the
-% random draw:
-if isfield(p.trVars, 'propHueChgOnly')
-    featureChangeOnly = rand < p.propHueChgOnly;
+% decide which trials this should happen on. Do this here:
+if p.trVars.isStimChangeTrial
+    p.trVars.isStimChgNoDim = rand < p.trVars.propHueChgOnly;
 else
-    featureChangeOnly = false;
+    p.trVars.isStimChgNoDim = false;
 end
 
 % how many stimuli will be shown on this trial?
@@ -102,12 +112,18 @@ p.stim.nStim = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
 % randomize gabor orientation
 p.trVars.orientInit = randi(360);
 
-% Define stimulus arrays for all features EXCEPT hue which has to be
-% handled slightly differently.
-arrayEvalString = ...
-    'p.stim.FEATUREArray = p.trVars.FEATUREInit * ones(p.trVars.nPatches, p.trVars.nEpochs);';
-varArrayEvalString = ...
-    'p.stim.FEATUREVarArray = p.trVars.FEATUREVar * ones(p.trVars.nPatches, p.trVars.nEpochs);';
+% Define stimulus arrays for several features. We do this by defining a
+% generic string with "FEATURE" in certain places that gets replaced by
+% regexp in the loop below. We furthe break down each string into a 1st and
+% 2nd part (this is mostly to make it possible to keep our code organized
+% but also, the 1st part of the string contains the "FEATURE" bit to be
+% replaced and the 2nd part of the string doesn't).
+arrayEvalString1 = ...
+    'p.stim.FEATUREArray = p.trVars.FEATUREInit * ';
+arrayEvalString2 = 'ones(p.trVars.nPatches, p.trVars.nEpochs);';
+varArrayEvalString1 = ...
+    'p.stim.FEATUREVarArray = p.trVars.FEATUREVar * ';
+varArrayEvalString2 = 'ones(p.trVars.nPatches, p.trVars.nEpochs);';
 patternString = 'FEATURE';
 varArrayFeatures = {'orient', 'hue', 'lum', 'sat'};
 
@@ -118,25 +134,25 @@ for i = 1:p.stim.nFeatures
     % don't evaluate the arrayEvalString if the currently considered
     % feature is "hue"
     if ~strcmp(p.stim.featureValueNames{i}, 'hue')
-        eval(regexprep(arrayEvalString, patternString, ...
-            p.stim.featureValueNames{i}));
+        eval([regexprep(arrayEvalString1, patternString, ...
+            p.stim.featureValueNames{i}), arrayEvalString2]);
     end
     
     % evaluate the varArrayEvalString if the currently considered feature
     % is "orientation", "hue", "luminance", or "saturation"
     if any(strcmp(varArrayFeatures, p.stim.featureValueNames{i}))
-        eval(regexprep(varArrayEvalString, patternString, ...
-            p.stim.featureValueNames{i}));
+        eval([regexprep(varArrayEvalString1, patternString, ...
+            p.stim.featureValueNames{i}), varArrayEvalString2]);
     end
 end
 
 % Determine which stimulus is "primary"
-p.stim.primStim     = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
+p.stim.primStim     = p.init.trialsArray(p.trVars.currentTrialsArrayRow,...
     strcmp(p.init.trialArrayColumnNames, 'primary'));
 
 % Redefine Hue array so that each patch has a unique hue:
 p.stim.hueArray = repmat(...
-    circshift(p.trVars.huInit + [0; 90; 180; 270], ...
+    circshift(p.trVars.hueInit + [0; 90; 180; 270], ...
     p.stim.primStim - 1), 1, p.trVars.nEpochs);
 
 % Redefine orientation array so that each patch has a unique orientation:
@@ -144,18 +160,10 @@ p.stim.orientArray = repmat(...
     circshift(p.trVars.orientInit + [0; 45; 90; 135], ...
     p.stim.primStim - 1), 1, p.trVars.nEpochs);
 
-% which stimulus location is the "cued" location?
-p.stim.cueLoc  = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
-    strcmp(p.init.trialArrayColumnNames, 'cue loc'));
-
 % depending on the info present in the current row of the trials array
 % ("p.init.trialsArray"), define the "stimulus feature value arrays."
 % These have one entry for each stimulus patch (one row per patch) and
 % each "epoch" (one column per epoch).
-
-% First, which stimulus is changing on the current trial?
-stimChgIdx = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
-    strcmp(p.init.trialArrayColumnNames, 'stim chg'));
 
 try
 % loop over stimulus features
@@ -169,7 +177,8 @@ for i = 1:p.stim.nFeatures
     % if this is a trial in which we want to force only the stimulus
     % feature to change with no dimming, adjust the "tempDelta" for
     % luminance here:
-    if featureChangeOnly && strcmp(p.stim.featureValueNames{i}, 'lum')
+    if p.trVars.isStimChgNoDim && ...
+            strcmp(p.stim.featureValueNames{i}, 'lum')
         tempDelta = 0;
     end
     
@@ -206,57 +215,14 @@ p.trVars.stimOnList = find(...
     p.trVars.stim3On, p.trVars.stim4On, ...
     ]);
 
-% set a couple simple variable that will be helpful during "run"
-p.trVars.isCueChangeTrial    = stimChgIdx == p.stim.cueLoc;
-p.trVars.isFoilChangeTrial   = stimChgIdx ~= p.stim.cueLoc && ...
-    stimChgIdx ~= 0;
-p.trVars.isNoChangeTrial     = stimChgIdx == 0;
-
-% Will this be a release on fixation dim trial or a release after reward
-% trial?
-p.trVars.isChangeTrial = ~p.trVars.isNoChangeTrial;
-
-% If this is a change trial, we choose among "lowDimVal", "midDimVal", and
-% "highDimVal" with equal probability. We also need to choose whether the
-% peripheral stimulus AND the fixation will dim or only the peripheral
-% stimulus. If this is isn't a change trial, we set "p.trData.dimVal" to 0.
-if p.trVars.isChangeTrial
-    
-    % draw random number to decide which dimVal is selected:
-    tempRand = rand;
-    if tempRand < 1/3
-        p.trData.dimVal = p.trVars.lowDimVal;
-    elseif tempRand < 2/3
-        p.trData.dimVal = p.trVars.midDimVal;
-    else
-        p.trData.dimVal = p.trVars.highDimVal;
-    end
-
-    % draw random number to decide whether peripheral stimulus and fixation
-    % will both dim or if peripheral stimulus only will dim:
-    tempRand = rand;
-    p.trVars.isStimDimOnlyTrial = ...
-        tempRand < p.trVars.propPeriphDimOnly;
-
+% If this is a change trial, we set "dimVal" to 1, otherwise to 0. This is
+% left over from the previous training step. It's a hack (of course). We
+% need to change this. JPH (11/7/2022).
+if p.trVars.isStimChangeTrial
+    p.trData.dimVal = 1;
 else
     p.trData.dimVal = 0;
 end
-
-% Based on the "dimVal", we generate a new RGB triplet for the appearance
-% of the fixation after dimming. The first step is to retrieve the
-% background RGB value from the CLUT, then we take the difference between
-% the default / initial fixation RGB and the background RGB, multiply it by
-% the "dimVal", then add it back to the background RGB. Once we've
-% generated that value, we need to update the CLUT on the VIEWPixx.
-bgRGB = p.draw.clut.combinedClut(p.draw.clutIdx.expBg_subBg + 1, :);
-fxRGB = p.draw.clut.combinedClut(p.draw.clutIdx.expWhite_subWhite + 1, :);
-fxDimRGB = bgRGB + p.trData.dimVal*(fxRGB-bgRGB);
-myClut = p.draw.clut.combinedClut;
-myClut(13:14, :) = repmat(fxDimRGB, 2, 1);
-p.draw.clut.expColors(13:14, :) = repmat(fxDimRGB, 2, 1);
-p.draw.clut.subColors(13:14, :) = repmat(fxDimRGB, 2, 1);
-Datapixx('SetVideoClut', myClut);
-p.draw.clut.combinedClut = myClut;
 
 % define a variable indicating if this is a contrast change trial
 p.trVars.isContrastChangeTrial = ...
@@ -371,71 +337,65 @@ end
 
 %%
 function p = timingInfo(p)
+%
+% p = timingInfo(p)
+%
+% In which we calculate the timing of stimulus and reward events. The
+% majority of these are calculated relative to the time that fixation is
+% aquired.
 
-% choose how long the joystick hold duration required for the upcoming
-% trial will be:
-p.trVars.fixDurReq = p.trVars.fixDurReqMin + ...
-    (p.trVars.fixDurReqMax - p.trVars.fixDurReqMin)*rand + ...
-    (~p.trVars.isChangeTrial)*0.5;
+% Time between acquiring fixation and stimulus onset in seconds.
+p.trVars.fix2StimOnIntvl = p.trVars.fix2CueIntvl + p.trVars.cueDur + ...
+    p.trVars.cue2StimItvl;
 
-% log fixDurReq as a status variable:
-p.status.fixDurReq = p.trVars.fixDurReq;
+% Stimulus change time; regardless of whether there actually is a stimulus
+% change in the current trial, we calculate a change time to keep the
+% distributions of stimulus presentation durations and reward timings the
+% same between change and no-change trials.
+p.trVars.stimChangeTime  = p.trVars.fix2StimOnIntvl + ...
+    p.trVars.stim2ChgIntvl + p.trVars.chgWinDur * rand;
 
-% depending on how long the fixation will be illuminated for, define when
-% the peripheral stimulus is illuminated. To start with let's have the
-% peripheral stimulus on for 75% of the time that the fixation will be
-% illuminated:
-p.trVars.fix2StimOnIntvl = 0.25 * p.trVars.fixDurReq;
-
-% Time between acquiring fixation and stim onset in seconds.
-% p.trVars.fix2StimOnIntvl = p.trVars.fix2CueIntvl + p.trVars.cueDur + p.trVars.cue2StimItvl;
-
-% Calculate a time for the motion-direction-change to occur for both cue
-% and foil stimulus (relative to fixation acquisition).
-% p.trVars.cueChangeTime  = p.trVars.fix2StimOnIntvl + p.trVars.stim2ChgIntvl + p.trVars.chgWinDur * rand;
-% p.trVars.foilChangeTime = p.trVars.fix2StimOnIntvl + p.trVars.stim2ChgIntvl + p.trVars.chgWinDur * rand;
+% Compute latest acceptable joystick release time relative to stimulus
+% change. This is computed multiple times in "run", so it's useful to
+% compute it once per trial here:
+p.trVars.joyMaxLatencyAfterChange = p.trVars.stimChangeTime + ...
+    p.trVars.joyMaxLatency;
 
 % Reward timing:
-% Cued change   - reward is delivered 1s after change
-% Foil change   - reward is delivered 1s after (unseen) cue change time.
-% No change     - reward is delivered 1s after (unseen) cue change time.
+% Stimulus change   - reward is delivered 1s after change (for a hit)
+% No change         - reward is delivered 1s after (unseen) change.
 %
 % Calculate reward delivery time for hits and correct rejects. Hit reward
 % time is determined by cued change time, CR reward is randomly delivered
 % some time between "max latency" and max stimulus display time.
-% p.trVars.hitRwdTime        = p.trVars.cueChangeTime + p.trVars.rewardDelay;
-% p.trVars.corrRejRwdTime    = p.trVars.foilChangeTime + p.trVars.joyMaxLatency + ...
-%     rand*(p.trVars.chgWinDur + p.trVars.stim2ChgIntvl + ...
-%     p.trVars.fix2StimOnIntvl - p.trVars.foilChangeTime - p.trVars.joyMaxLatency);
+p.trVars.hitRwdTime        = p.trVars.stimChangeTime + ...
+    p.trVars.rewardDelay;
+p.trVars.corrRejRwdTime    = p.trVars.stimChangeTime + ...
+    p.trVars.joyMaxLatency + ...
+    rand*(p.trVars.chgWinDur + p.trVars.stim2ChgIntvl + ...
+    p.trVars.fix2StimOnIntvl - p.trVars.stimChangeTime - ...
+    p.trVars.joyMaxLatency);
 
-% How long to display dots? Depends on trial type:
-% (1) cue change trials - change time + max latency
-% (2) foil change trials - reward time
-% (3) no change trials - reward time
-% we also need to know which change time to use for calculating the change
-% "frame"
-% if p.trVars.isCueChangeTrial
-%     p.trVars.fix2StimOffIntvl = p.trVars.cueChangeTime + p.trVars.joyMaxLatency;
-% else
-%     p.trVars.fix2StimOffIntvl = p.trVars.corrRejRwdTime;
-% end
-p.trVars.fix2StimOffIntvl = p.trVars.fixDurReqMax;
+% When should stimuli turn off? Depends on trial type:
+% (1) Stimulus change trials - change time + max latency
+% (3) No change trials - reward time
+if p.trVars.isStimChangeTrial
+    p.trVars.fix2StimOffIntvl = p.trVars.stimChangeTime + ...
+        p.trVars.joyMaxLatency;
+else
+    p.trVars.fix2StimOffIntvl = p.trVars.corrRejRwdTime;
+end
 
-% what's the maximum posisble stimulus display duration in seconds?
-% p.trVars.stimDur = p.trVars.stim2ChgIntvl + p.trVars.chgWinDur + p.trVars.joyMaxLatency;
-p.trVars.stimDur    = p.trVars.fixDurReqMax + p.trVars.joyMaxLatency;
+% What's the maximum posisble stimulus display duration in seconds?
+p.trVars.stimDur = p.trVars.stim2ChgIntvl + p.trVars.chgWinDur + ...
+    p.trVars.joyMaxLatency;
 
-% for stimulus generation, we need to know the duration of each "epoch" in
-% frames. specify that here:
-% if p.trVars.isCueChangeTrial
-%     stimOnToStimChgIntvl = p.trVars.cueChangeTime - p.trVars.fix2StimOnIntvl;
-% elseif p.trVars.isFoilChangeTrial
-%     stimOnToStimChgIntvl = p.trVars.foilChangeTime - p.trVars.fix2StimOnIntvl;
-% else
-%     stimOnToStimChgIntvl = p.trVars.cueChangeTime - p.trVars.fix2StimOnIntvl;
-% end
-stimOnToStimChgIntvl = p.trVars.fixDurReq - p.trVars.fix2StimOnIntvl;
-
+% For stimulus generation, we need to know the duration of each "epoch" in
+% frames. An "epoch" is some duration over which the features of the
+% stimuli don't change (e.g. the hue distribution doesn't change). We first
+% calculate the duration of each "epoch" in seconds then convert to frames:
+stimOnToStimChgIntvl = p.trVars.stimChangeTime - ...
+    p.trVars.fix2StimOnIntvl;
 stimChgToStimOffIntvl = p.trVars.stimDur - stimOnToStimChgIntvl;
 p.stim.epochFrames = fix(...
     [stimOnToStimChgIntvl,  stimChgToStimOffIntvl] / p.rig.frameDuration);

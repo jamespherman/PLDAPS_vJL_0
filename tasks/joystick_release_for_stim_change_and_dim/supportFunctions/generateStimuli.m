@@ -2,7 +2,33 @@ function p = generateStimuli(p)
 
 % p = generateStimuli(p)
 %
-% generate stimuli
+% Generate circularly windowed dynamic "checkerboard" stimuli. 
+%
+% November 8th, 2022 - JPH
+% The way this function works currently is: we always generate the maximum
+% number of possible stimuli, then we show only what's needed, but is this
+% efficient? I guess let's check first then worry about it? One concern is
+% that when we store the stimulus information it might be hard to
+% reconstruct which color values were actually displayed. I think for now
+% let's keep it inefficient and we can revisit this later. If we want to
+% revisit it, what we need to figure out is: how to modify the code so that
+% colors are only generated for the stimuli that will be displayed on a
+% given trial. I think this involves using "p.trVars.stimOnlist", and
+% looping over whatever number of stimuli is in that list rather than
+% looping over 1:p.trVars.nPatches.
+%
+% Another point: we currently generate the textures for each stimulus in
+% each trial. This seems "doubly" inefficient: because we're generating the
+% colors for all four stimuli even when we're not displaying them, the
+% textures themselves could be generated once at the beginning of the
+% experiment and never again. However, I think we didn't use this approach
+% in the past because it would involve duplicating some of the calculations
+% below at an earlier stage. Let's check into this later too (maybe).
+%
+% Stimulus generation is very fast - currently it takes about 30
+% milliseconds to generate all the stimuli. Maybe this would take
+% marginally longer if we were generating a larger number of textures but
+% that sort of increase in duration is unavoidable.
 
 % use stimSeed to determine following pseudorandom number sequence
 rng(p.trVars.stimSeed);
@@ -13,12 +39,12 @@ rng(p.trVars.stimSeed);
     p.stim.patchDiamBox/2, p.stim.patchDiamBox));
 
 % X array with x indicies for each box in each "frame" (3rd dim)
-p.stim.X             = p.stim.funs.repFr(repmat(xt, 1, p.trVars.nPatches), ...
-    p.trVars.stimFrames);
+p.stim.X             = p.stim.funs.repFr(...
+    repmat(xt, 1, p.trVars.nPatches), p.trVars.stimFrames);
 
 % Y array with y indicies for each box in each "frame" (3rd dim)
-p.stim.Y             = p.stim.funs.repFr(repmat(yt, 1, p.trVars.nPatches), ...
-    p.trVars.stimFrames);
+p.stim.Y             = p.stim.funs.repFr(...
+    repmat(yt, 1, p.trVars.nPatches), p.trVars.stimFrames);
 
 % number of color-boxes used across all patches
 p.stim.nBoxTot      = p.trVars.nPatches * p.stim.patchDiamBox^2;    
@@ -27,18 +53,23 @@ p.stim.nBoxTot      = p.trVars.nPatches * p.stim.patchDiamBox^2;
 % "initial lifetimes array": assign a random initial value for lifetime.
 % This ensures that the color-boxes change at random relative "phases"
 % rather than all together.
-ili                             = randi([1, p.trVars.boxLifetime], p.stim.patchDiamBox, p.trVars.nPatches*p.stim.patchDiamBox);
+ili                             = randi([1, p.trVars.boxLifetime], ...
+    p.stim.patchDiamBox, p.trVars.nPatches*p.stim.patchDiamBox);
 
 % "frame count index": a linear count of frames along the 3rd dimension
 % repeated at each row x column position.
-fci                             = repmat(reshape(0:(p.trVars.stimFrames - 1), 1, 1, p.trVars.stimFrames), p.stim.patchDiamBox, p.trVars.nPatches*p.stim.patchDiamBox);
+fci                             = repmat(...
+    reshape(0:(p.trVars.stimFrames - 1), 1, 1, p.trVars.stimFrames), ...
+    p.stim.patchDiamBox, p.trVars.nPatches*p.stim.patchDiamBox);
 
-% "box lifetime index": adding together ili and fci, dividing by p.trVars.boxLifetime
-% and rounding to the ceiling gives us a count of lifetimes for each box.
-% That is, along the 3rd dimension of bli, each row x column element tracks
-% a box from lifetime #1 up to its maximum value, changing each 8 frames
-% (after the random initial number of frames).
-bli                             = ceil(bsxfun(@plus, ili, fci) / p.trVars.boxLifetime);
+% "box lifetime index": adding together ili and fci, dividing by 
+% p.trVars.boxLifetime and rounding to the ceiling gives us a count of
+% lifetimes for each box. That is, along the 3rd dimension of bli, each
+% row x column element tracks a box from lifetime #1 up to its maximum
+% value, changing each 8 frames (after the random initial number of 
+% frames).
+bli                             = ceil(...
+    bsxfun(@plus, ili, fci) / p.trVars.boxLifetime);
 
 % "unique color index": our goal is to assign a unique numerical index for
 % each unique color value needed. This is the placeholder for those unique
@@ -87,9 +118,9 @@ for i = 1:nLoop
             % frame. Use this information to calculate where the count
             % should start for each box.
             tempuni     = reshape([0, cumsum(p.stim.funs.flatchp(...
-                bli(:,:,tempChgFramesIndex)))], p.stim.patchDiamBox, ...
+                bli(:, :, tempChgFramesIndex)))], p.stim.patchDiamBox, ...
                 p.trVars.nPatches * p.stim.patchDiamBox);
-            
+
             % make a logical color epoch index (cei) marking which portions
             % of each box's lifetime count belong to the current epoch.
             tempcei     = bli <= p.stim.funs.repFr( ...
@@ -124,7 +155,7 @@ for i = 1:nLoop
                 p.stim.speedArray(:, i)', 'UniformOutput', false)), ...
                 p.trVars.stimFrames);
     
-        case nLoop
+        case nLoop % last epoch
             % just as above
             tempuni     = reshape(...
                 [0, cumsum(p.stim.funs.flatchp(bli(:,:,end) - ...
@@ -147,7 +178,9 @@ for i = 1:nLoop
             
             % just as above except we now subtract the box lifetime-count
             % of the previous change-frame
-            cpppe(i,:)  = p.stim.funs.fidiff(tempuni(end,patchEndCols) + bli(end,patchEndCols,end) - bli(end,patchEndCols,p.stim.chgFrames(i-1)));
+            cpppe(i,:)  = p.stim.funs.fidiff(tempuni(end,patchEndCols) ...
+                + bli(end,patchEndCols,end) - ...
+                bli(end,patchEndCols,p.stim.chgFrames(i-1)));
             
             % use bli to construct p.stim.upi which holds lifetime
             % multiplied by "speed", but must be offset by phase in
@@ -165,7 +198,7 @@ for i = 1:nLoop
                 p.stim.speedArray(:, i))', 'UniformOutput', false)), ...
                 p.trVars.stimFrames);
             
-        otherwise
+        otherwise % middle (not first or last) epochs
             % just as above
             tempuni     = reshape([0, cumsum(p.stim.funs.flatchp(bli(:,:,p.stim.chgFrames(i)) - bli(:,:,p.stim.chgFrames(i-1))))],p.stim.patchDiamBox,p.trVars.nPatches*p.stim.patchDiamBox);
             
@@ -244,9 +277,9 @@ for i = 1:nLoop
             p.stim.tempB(currInd, :)] = ...
             dkl2rgb([...
             p.stim.funs.unfrnd(...
-            p.stim.lumArray(j,i) - p.stim.lumVarArray(j,i), p.stim.lumArray(j,i) + p.stim.lumVarArray(j,i), [1,cpppe(i,j)]) + gaborVals'; ...
-            p.stim.funs.rotVcts([p.stim.funs.nrmrnd(p.stim.satArray(j,i), p.stim.satVarArray(j,i), [1, cpppe(i,j)]); ...
-            p.stim.funs.nrmrnd(0, p.stim.hueVarArray(j,i), [1, cpppe(i,j)])], p.stim.hueArray(j,i))]);
+            p.stim.lumArray(j, i) - p.stim.lumVarArray(j, i), p.stim.lumArray(j, i) + p.stim.lumVarArray(j,i), [1,cpppe(i, j)]) + gaborVals'; ...
+            p.stim.funs.rotVcts([p.stim.funs.nrmrnd(p.stim.satArray(j, i), p.stim.satVarArray(j, i), [1, cpppe(i, j)]); ...
+            p.stim.funs.nrmrnd(0, p.stim.hueVarArray(j, i), [1, cpppe(i, j)])], p.stim.hueArray(j, i))]);
         
         % dkl2rgb takes a 3 x n array of DKL-space colors, first row is
         % luminance, 2nd row is red/green, 3rd row is blue/yellow. we're
@@ -257,12 +290,12 @@ for i = 1:nLoop
     end
 end
 
-% make p.trVars.nPatches textures (image pointers to be displayed based on CLUT
-% animation).
+% make p.trVars.nPatches textures (image pointers to be displayed based on
+% CLUT animation).
 p = makeTex(p);
 
-% we can reshape p.stim.uci from an M x N x frames array into an M*N x frames
-% array, then use the index values from the rows found using
+% we can reshape p.stim.uci from an M x N x frames array into an M*N x
+% frames array, then use the index values from the rows found using
 % p.stim.colorRowSelector to populate the CLUT. This should work...
 p.stim.ucir = reshape(p.stim.uci, ...
     size(p.stim.uci,1) * size(p.stim.uci,2), size(p.stim.uci,3));
@@ -322,35 +355,34 @@ p.stim.colorRowSelector = repmat(ismember(unscaledIm(:), scaledIm(:)), ...
 
 % Loop over possible stimulus locations. For each possible stimulus
 % location, if the stimulus will be present in the current trial, make the
-% array to generate the texture for displaying the stimulus:
+% array to generate the texture for displaying the stimulus. However, even 
 for i = 1:p.trVars.nPatches
 
-    % if the currently considered stimulus patch is displayed in the
-    % current trial, do one thing, otherwise do another:
-    if any(p.trVars.stimOnList == i)
+    % The range of CLUT indexes for each stimulus patch is distinct and
+    % sequential. To select the right range of indexes for the current
+    % patch, we calculate an "offset" that sets the bottom of the range
+    % above the index values that are dedicated to other patches / fixed
+    % CLUT values.
+    if i > 1
+        offsetVal = max(p.stim.stimArray{i - 1}(:)) + 1;
+    else
+        offsetVal = p.draw.nColors;
+    end
 
-        % If this isn't the "1st" stimulus patch in the list, we need to
-        % offset the values we're using to index the array holding the
-        % check color/intensity. To determine how much to offset the values
-        % by, we need to see what the maximum value was in the "previous"
-        % patch. First check to see if the currently considered patch is
-        % the first one in the "list" (p.trVars.stimOnList):
-        if i > p.trVars.stimOnList(1)
-            offsetVal = max(p.stim.stimArray{...
-                p.trVars.stimOnList(i - 1)}(:)) + 1;
-        else
-            offsetVal = p.draw.nColors;
-        end
-        p.stim.stimArray{i}  = (reshape(unindex(hw.*...
+    % generate the stimulus array for the currently considered patch:
+    p.stim.stimArray{i}  = (reshape(unindex(hw.*...
             arrayScale(unscaledIm, p.trVars.boxSizePix)), ...
             p.stim.patchDiamPix, p.stim.patchDiamPix) - 2 + ...
             offsetVal).*hw + (~hw)*p.draw.color.background;
+
+    % If the currently considered stimulus patch is displayed in the
+    % current trial, generate a tecture for it. If the stimulus patch
+    % won't be displayed, populate the texture with "empty" ("[]").
+    if any(p.trVars.stimOnList == i)
         p.draw.stimTex{i}    = Screen('MakeTexture', p.draw.window, ...
             p.stim.stimArray{i});
     else
-        % store empty arrays for patches that are not shown in the current
-        % trial:
-        p.stim.stimArray{i}  = [];
+        % store empty array for patches not shown in the current trial:
         p.draw.stimTex{i}    = [];
     end
 end

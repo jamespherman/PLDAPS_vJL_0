@@ -151,6 +151,14 @@ codes.miss                      = 6016; % this trial ended in a miss
 codes.foilFa                    = 6017; % this trial ended in a foil FA
 codes.cr                        = 6018; % this trial ended in a CR
 codes.fa                        = 6019; % this trial ended in a FA
+codes.stimChange                = 6020;
+codes.noChange                  = 6021;
+codes.isStimChangeTrial         = 6022;
+codes.isNoChangeTrial           = 6023;
+codes.stimLoc1On                = 6024; % stimulus at location one was on in this trial
+codes.stimLoc2On                = 6025; % stimulus at location one was on in this trial
+codes.stimLoc3On                = 6026; % stimulus at location one was on in this trial
+codes.stimLoc4On                = 6027; % stimulus at location one was on in this trial
 codes.stimChangeTrial           = 16003;
 codes.changeLoc                 = 16004;
 

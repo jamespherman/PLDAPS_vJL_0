@@ -1,4 +1,4 @@
-function p = joystick_release_for_fix_and_stim_dim_settings
+function p = joystick_release_for_fix_and_stim_dim_settings_TEST
 %  p = joystick_release_for_fix_and_stim_dim_settings
 %  On some proportion of trials, the fixation point turns off without
 %  reward delivery or "boop", monkey must release joystick to get reward on
@@ -50,6 +50,8 @@ p.init.pldapsFolder     = pwd;                          % pldaps gui takes us to
 p.init.protocol_title   = [p.init.taskName '_task'];    % Define Banner text to identify the experimental protocol
 p.init.date             = datestr(now,'yyyymmdd');
 p.init.time             = datestr(now,'HHMM');
+
+p.init.exptType         = 'joystick_release_for_fix_and_stim_dim_TEST';  % Which experiment are we running? The full version with all trial types? The single-stimulus-only version? Something else?
 
 p.init.date_1yyyy       = str2double(['1' datestr(now,'yyyy')]); % gotta add a '1' otherwise date/times starting with zero lose that zero in conversion to double.
 p.init.date_1mmdd       = str2double(['1' datestr(now,'mmdd')]);
@@ -187,7 +189,7 @@ p.rig.guiVars = {...
 %% INIT VARIABLES 
 % vars that are only set once
 
-p.init.exptType         = 'joystick_release_for_fix_and_stim_dim';  % Which experiment are we running? The full version with all trial types? The single-stimulus-only version? Something else?
+
 
 
 %% TRIAL VARIABLES

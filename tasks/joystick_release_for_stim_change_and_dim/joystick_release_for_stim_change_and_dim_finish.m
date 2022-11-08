@@ -1,6 +1,6 @@
-function p = joystick_release_for_fix_and_stim_dim_finish(p)
+function p = joystick_release_for_stim_change_and_dim_finish(p)
 %
-%   p = joystick_release_for_fix_off_finish(p)
+%   p = joystick_release_for_stim_change_and_dim_finish(p)
 %
 % Part of the quintet of pldpas functions:
 %   settings function

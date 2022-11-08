@@ -205,8 +205,10 @@ switch p.trVars.currentState
                 % state:
                 p.trData.timing.fixHoldReqMet   = timeNow;
                 p.trVars.currentState           = p.state.makeDecision;
+
+                % this is a hack fix it (jph - 11/1/2022)
                 if ~p.trVars.isStimDimOnlyTrial
-                    p.draw.color.fix                = 13; % this is a hack fix it (jph - 11/1/2022)
+                    p.draw.color.fix             = 13;
                 end
 
             elseif pds.joyHeld(p)
@@ -268,6 +270,7 @@ switch p.trVars.currentState
             p.trVars.currentState           = p.state.hit;
             p.trData.timing.joyRelease      = timeNow;
             p.trData.timing.reactionTime    = timeFromFixHoldMet;
+            p = playTone(p, 'high');
         end
 
         
@@ -277,26 +280,23 @@ switch p.trVars.currentState
     case p.state.hit
         %% HIT!
 
-        % play tone:
-        p = playTone(p, 'high');
-
-        % hide fixation point
-        p.draw.color.fix                = p.draw.clutIdx.expBg_subBg;
-
-        % 	DELIVER REWARD AFTER SOME DELAY
+        % DELIVER REWARD AFTER SOME DELAY
         % if the delay for reward delivery has elapsed and reward delivery
         % hasn't yet been triggered, deliver the reward.
         if (timeNow - p.trData.timing.fixHoldReqMet) > ...
                 p.trVars.rewardDelay && p.trData.timing.reward < 0
             p = pds.deliverReward(p);
 
-            % if reward delivery has been triggered and the interval to wait
-            % after reward delivery has elapsed, it's time to exit the
-            % while-loop.
+        % if reward delivery has been triggered and the interval to wait
+        % after reward delivery has elapsed, it's time to exit the
+        % while-loop.
         elseif p.trData.timing.reward > 0 && ...
                 (timeNow - p.trData.timing.reward) > ...
                 (p.trVars.postRewardDuration + p.rig.dp.dacPadDur + ...
                 (p.trVars.rewardDurationMs/1000))
+
+            % hide fixation point
+            p.draw.color.fix                = p.draw.clutIdx.expBg_subBg;
             p.trVars.exitWhileLoop = true;
         end
 
@@ -316,7 +316,6 @@ switch p.trVars.currentState
     case p.state.cr
 
         %% CORRECT REJECT
-        p = playTone(p, 'high');
 
         % 	DELIVER REWARD AFTER SOME DELAY
         % if the delay for reward delivery has elapsed and reward delivery
@@ -434,7 +433,10 @@ if timeNow > p.trData.timing.lastFrameTime + ...
             p.trVars.stimFrameIdx));
         
         % draw FIXED textures to screen (one per stimulus)
-        for i = 1:p.stim.nStim
+        for i = p.trVars.stimOnList
+            if isempty(p.draw.stimTex{i})
+                keyboard
+            end
             Screen('DrawTexture', p.draw.window, p.draw.stimTex{i}, [], ...
                 p.trVars.stimRects(i,:));
         end
