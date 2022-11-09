@@ -197,14 +197,14 @@ end
 % going to implement a hacky way of allowing some trials to only include a
 % stimulus feature change and no dimming:
 function table = tableDef_stimDimPlusChange
-table =           [1   1   1   0   0   0   1   0   0   0   0   1   1   0   1   9   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   1   1   1   0   0   0   0   0   0   0   0   0   0   0   1   1   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   2   1   0   1   0   0   2   0   0   0   0   1   1   0   1   9   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   2   1   0   1   0   0   0   0   0   0   0   0   0   0   1   1   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   3   1   0   0   1   0   3   0   0   0   0   1   1   0   1   9   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   3   1   0   0   1   0   0   0   0   0   0   0   0   0   1   1   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   4   1   0   0   0   1   4   0   0   0   0   1   1   0   1   9   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   4   1   0   0   0   1   0   0   0   0   0   0   0   0   1   1   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
+table =           [1   1   1   0   0   0   1   0   0   0   0   1   1   0   1   7   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   1   1   1   0   0   0   0   0   0   0   0   0   0   0   1   3   23002; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   2   1   0   1   0   0   2   0   0   0   0   1   1   0   1   7   23003; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   2   1   0   1   0   0   0   0   0   0   0   0   0   0   1   3   23004; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   3   1   0   0   1   0   3   0   0   0   0   1   1   0   1   7   23005; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   3   1   0   0   1   0   0   0   0   0   0   0   0   0   1   3   23006; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   4   1   0   0   0   1   4   0   0   0   0   1   1   0   1   7   23007; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   4   1   0   0   0   1   0   0   0   0   0   0   0   0   1   3   23008; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
                  ];
 end
 

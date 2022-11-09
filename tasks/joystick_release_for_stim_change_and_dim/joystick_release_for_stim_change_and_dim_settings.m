@@ -222,8 +222,8 @@ p.trVarsInit.eyePixY             = 0;
 % indicate whether the current trial is a "change" or a "no change" trial.
 % The above is old - update it (jph - 11/1/2022).
 
-p.trVarsInit.propHueChgOnly      = 0.2;         % proportion of trials in which the peripheral stimulus only changes hue with no dimming
-p.trVarsInit.isStimChangeTrial   = false;       % variable tracking whether the current trial is a "change" or "no change" trial.
+p.trVarsInit.propHueChgOnly      = 1;         % proportion of trials in which the peripheral stimulus only changes hue with no dimming
+p.trVarsInit.isStimChangeTrial   = false;     % variable tracking whether the current trial is a "change" or "no change" trial.
 
 % Stimulus geometry variables. There can be up to 4 stimuli shown
 % stimultaneously. We specify stimulus location 1 by an angle
@@ -249,8 +249,8 @@ p.trVarsInit.stimLoc4Ecc         = 0;           % Stimulus location (eccentricit
 % Fixation location variables:
 p.trVarsInit.fixDegX             = 0;           % fixation X location in degrees
 p.trVarsInit.fixDegY             = 0;           % fixation Y location in degrees
-p.trVarsInit.fixLocRandX         = 24;          % random variation in X location of fixation point
-p.trVarsInit.fixLocRandY         = 16;          % random variation in X location of fixation point
+p.trVarsInit.fixLocRandX         = 8;           % random variation in X location of fixation point
+p.trVarsInit.fixLocRandY         = 4;           % random variation in X location of fixation point
 
 % the following three variables determine how fixation dimming works. In
 % each trial we will choose with equal probability whether the fixation
@@ -296,11 +296,11 @@ p.trVarsInit.nEpochs                  = 2;        % just one "pre-change" and on
 
 % times/latencies/durations:
 p.trVarsInit.rewardDurationMs        = 200;      % reward duration
-p.trVarsInit.fix2CueIntvl            = 0.0;     % Time delay between acquiring fixation and cue onset.
-p.trVarsInit.cueDur                  = 0.0;    % Duration of cue presentaiton.
-p.trVarsInit.cue2StimItvl            = 0.25;    % time between cue offset and stimulus onset (stimulus onset asynchrony).
-p.trVarsInit.stim2ChgIntvl           = 1;        % minimum time between stimulus onset and change.
-p.trVarsInit.chgWinDur               = 1;        % time window during which a change is possible.
+p.trVarsInit.fix2CueIntvl            = 0.0;      % Time delay between acquiring fixation and cue onset.
+p.trVarsInit.cueDur                  = 0.0;      % Duration of cue presentaiton.
+p.trVarsInit.cue2StimItvl            = 0.25;     % time between cue offset and stimulus onset (stimulus onset asynchrony).
+p.trVarsInit.stim2ChgIntvl           = 0.5;      % minimum time between stimulus onset and change.
+p.trVarsInit.chgWinDur               = 0.5;      % time window during which a change is possible.
 p.trVarsInit.rewardDelay             = 0.5;      % delay between cued change and reward delivery for hits.
 p.trVarsInit.joyMinLatency           = 0.2;      % minimum acceptable joystick release latency.
 p.trVarsInit.joyMaxLatency           = 1;        % maximum acceptable joystick release latency.
