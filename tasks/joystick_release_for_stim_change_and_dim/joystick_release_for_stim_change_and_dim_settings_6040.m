@@ -1,5 +1,5 @@
-function p = joystick_release_for_stim_change_and_dim_settings
-%  p = joystick_release_for_stim_change_and_dim_settings
+function p = joystick_release_for_stim_change_and_dim_settings_6040
+%  p = joystick_release_for_stim_change_and_dim_settings_6040
 %  On some proportion of trials, the fixation point turns off without
 %  reward delivery or "boop", monkey must release joystick to get reward on
 %  those trials. On the remaining trials, the "boop" and reward are
@@ -51,7 +51,7 @@ p.init.protocol_title   = [p.init.taskName '_task'];    % Define Banner text to 
 p.init.date             = datestr(now,'yyyymmdd');
 p.init.time             = datestr(now,'HHMM');
 
-p.init.exptType         = 'joystick_release_for_stim_dim_and_feature_change';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
+p.init.exptType         = 'joystick_release_for_stim_dim_and_feature_change_6040';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
 
 p.init.date_1yyyy       = str2double(['1' datestr(now,'yyyy')]); % gotta add a '1' otherwise date/times starting with zero lose that zero in conversion to double.
 p.init.date_1mmdd       = str2double(['1' datestr(now,'mmdd')]);
@@ -222,7 +222,7 @@ p.trVarsInit.eyePixY             = 0;
 % indicate whether the current trial is a "change" or a "no change" trial.
 % The above is old - update it (jph - 11/1/2022).
 
-p.trVarsInit.propHueChgOnly      = 1;         % proportion of trials in which the peripheral stimulus only changes hue with no dimming
+p.trVarsInit.propHueChgOnly      = 0.5;       % proportion of trials in which the peripheral stimulus only changes hue with no dimming
 p.trVarsInit.isStimChangeTrial   = false;     % variable tracking whether the current trial is a "change" or "no change" trial.
 
 % Stimulus geometry variables. There can be up to 4 stimuli shown

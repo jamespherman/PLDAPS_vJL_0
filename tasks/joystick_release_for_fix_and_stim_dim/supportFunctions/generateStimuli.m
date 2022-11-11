@@ -322,35 +322,34 @@ p.stim.colorRowSelector = repmat(ismember(unscaledIm(:), scaledIm(:)), ...
 
 % Loop over possible stimulus locations. For each possible stimulus
 % location, if the stimulus will be present in the current trial, make the
-% array to generate the texture for displaying the stimulus:
+% array to generate the texture for displaying the stimulus. However, even 
 for i = 1:p.trVars.nPatches
 
-    % if the currently considered stimulus patch is displayed in the
-    % current trial, do one thing, otherwise do another:
-    if any(p.trVars.stimOnList == i)
+    % The range of CLUT indexes for each stimulus patch is distinct and
+    % sequential. To select the right range of indexes for the current
+    % patch, we calculate an "offset" that sets the bottom of the range
+    % above the index values that are dedicated to other patches / fixed
+    % CLUT values.
+    if i > 1
+        offsetVal = max(p.stim.stimArray{i - 1}(:)) + 1;
+    else
+        offsetVal = p.draw.nColors;
+    end
 
-        % If this isn't the "1st" stimulus patch in the list, we need to
-        % offset the values we're using to index the array holding the
-        % check color/intensity. To determine how much to offset the values
-        % by, we need to see what the maximum value was in the "previous"
-        % patch. First check to see if the currently considered patch is
-        % the first one in the "list" (p.trVars.stimOnList):
-        if i > p.trVars.stimOnList(1)
-            offsetVal = max(p.stim.stimArray{...
-                p.trVars.stimOnList(i - 1)}(:)) + 1;
-        else
-            offsetVal = p.draw.nColors;
-        end
-        p.stim.stimArray{i}  = (reshape(unindex(hw.*...
+    % generate the stimulus array for the currently considered patch:
+    p.stim.stimArray{i}  = (reshape(unindex(hw.*...
             arrayScale(unscaledIm, p.trVars.boxSizePix)), ...
             p.stim.patchDiamPix, p.stim.patchDiamPix) - 2 + ...
             offsetVal).*hw + (~hw)*p.draw.color.background;
+
+    % If the currently considered stimulus patch is displayed in the
+    % current trial, generate a tecture for it. If the stimulus patch
+    % won't be displayed, populate the texture with "empty" ("[]").
+    if any(p.trVars.stimOnList == i)
         p.draw.stimTex{i}    = Screen('MakeTexture', p.draw.window, ...
             p.stim.stimArray{i});
     else
-        % store empty arrays for patches that are not shown in the current
-        % trial:
-        p.stim.stimArray{i}  = [];
+        % store empty array for patches not shown in the current trial:
         p.draw.stimTex{i}    = [];
     end
 end

@@ -277,6 +277,11 @@ if nDimVals > 0
     % update axis x / y limits?
 end
 
+% update ticks:
+set([p.draw.onlinePerfPlotAxes, p.draw.onlineRtPlotAxes], 'XTick', ...
+    [-1 0 1], 'XTickLabel', ...
+    {'hue change only', 'no change', 'dim + hue change'});
+
 % update figure windows:
 drawnow;
 

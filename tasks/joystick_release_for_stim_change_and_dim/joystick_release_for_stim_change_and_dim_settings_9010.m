@@ -1,5 +1,5 @@
-function p = joystick_release_for_fix_and_stim_dim_settings
-%  p = joystick_release_for_fix_and_stim_dim_settings
+function p = joystick_release_for_stim_change_and_dim_settings_9010
+%  p = joystick_release_for_stim_change_and_dim_settings_9010
 %  On some proportion of trials, the fixation point turns off without
 %  reward delivery or "boop", monkey must release joystick to get reward on
 %  those trials. On the remaining trials, the "boop" and reward are
@@ -44,12 +44,14 @@ p.init.rigConfigFile     = which('rigConfigFiles.rigConfig_rig1'); % rig config 
 
 %% define task name and related files:
 
-p.init.taskName         = 'joystick_release_for_fix_and_stim_dim';
+p.init.taskName         = 'joystick_release_for_stim_change_and_dim';
 p.init.taskType         = 1;                            % poorly defined numerical index for the task "type"
 p.init.pldapsFolder     = pwd;                          % pldaps gui takes us to taks folder automatically once we choose a settings file
 p.init.protocol_title   = [p.init.taskName '_task'];    % Define Banner text to identify the experimental protocol
 p.init.date             = datestr(now,'yyyymmdd');
 p.init.time             = datestr(now,'HHMM');
+
+p.init.exptType         = 'joystick_release_for_stim_dim_and_feature_change_9010';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
 
 p.init.date_1yyyy       = str2double(['1' datestr(now,'yyyy')]); % gotta add a '1' otherwise date/times starting with zero lose that zero in conversion to double.
 p.init.date_1mmdd       = str2double(['1' datestr(now,'mmdd')]);
@@ -171,24 +173,21 @@ p.rig.guiStatVals = {...
 % The list of vars should be in string format eg 'p.trVarsInit.cueDelta'
 
 p.rig.guiVars = {...
-    'rewardDurationMs'; ...   %1
-    'rewardDelay'; ...
-    'fixDurReqMin'; ...
-    'fixDurReqMax'; ...
-    'lowDimVal'; ...
-    'midDimVal'; ...
-    'highDimVal'; ...       % 6
-    'propPeriphDimOnly'; ...
-    'joyMinLatency'; ...
-    'joyMaxLatency'; ...
-    'passJoy'; ...          
-    'passEye'};              % 12
+    'rewardDurationMs'; ...     % 1
+    'rewardDelay'; ...          % 2
+    'stim2ChgIntvl'; ...        % 3
+    'chgWinDur'; ...            % 4
+    'stimLoc1Elev'; ...         % 5
+    'hueDelta'; ...             % 6
+    'lumDelta'; ...             % 7
+    'propHueChgOnly'; ...       % 8
+    'joyMinLatency'; ...        % 9
+    'joyMaxLatency'; ...        % 10
+    'passJoy'; ...              % 11
+    'passEye'};                 % 12
 
 %% INIT VARIABLES 
 % vars that are only set once
-
-p.init.exptType         = 'joystick_release_for_fix_and_stim_dim';  % Which experiment are we running? The full version with all trial types? The single-stimulus-only version? Something else?
-
 
 %% TRIAL VARIABLES
 % vars that may change throughout an experimental session and are therefore
@@ -223,9 +222,8 @@ p.trVarsInit.eyePixY             = 0;
 % indicate whether the current trial is a "change" or a "no change" trial.
 % The above is old - update it (jph - 11/1/2022).
 
-p.trVarsInit.propPeriphDimOnly  = 1;         % proportion of trials on the fixation dims.
-p.trVarsInit.isChangeTrial      = false;       % variable tracking whether the current trial is a "change" or "no change" trial.
-p.trVarsInit.isStimDimOnlyTrial = false;       % variable tracking whether the peripheral stimulus and the fixation dims on the current trial or only the peripheral stimulus
+p.trVarsInit.propHueChgOnly      = 0.5;         % proportion of trials in which the peripheral stimulus only changes hue with no dimming
+p.trVarsInit.isStimChangeTrial   = false;     % variable tracking whether the current trial is a "change" or "no change" trial.
 
 % Stimulus geometry variables. There can be up to 4 stimuli shown
 % stimultaneously. We specify stimulus location 1 by an angle
@@ -239,7 +237,7 @@ p.trVarsInit.isStimDimOnlyTrial = false;       % variable tracking whether the p
 % variables are 0, we do nothing, but if those variables are nonzero, we
 % replace the automatically calculated elevations and eccentricities with
 % the specified values:
-p.trVarsInit.stimLoc1Elev        = 0;           % Stimulus location (angle of elevation).
+p.trVarsInit.stimLoc1Elev        = 25;           % Stimulus location (angle of elevation).
 p.trVarsInit.stimLoc1Ecc         = 10;          % Stimulus location (eccentricity in degrees).
 p.trVarsInit.stimLoc2Elev        = 0;           % Stimulus location (angle of elevation).
 p.trVarsInit.stimLoc2Ecc         = 0;           % Stimulus location (eccentricity in degrees).
@@ -251,8 +249,8 @@ p.trVarsInit.stimLoc4Ecc         = 0;           % Stimulus location (eccentricit
 % Fixation location variables:
 p.trVarsInit.fixDegX             = 0;           % fixation X location in degrees
 p.trVarsInit.fixDegY             = 0;           % fixation Y location in degrees
-p.trVarsInit.fixLocRandX         = 24;          % random variation in X location of fixation point
-p.trVarsInit.fixLocRandY         = 16;          % random variation in X location of fixation point
+p.trVarsInit.fixLocRandX         = 8;           % random variation in X location of fixation point
+p.trVarsInit.fixLocRandY         = 4;           % random variation in X location of fixation point
 
 % the following three variables determine how fixation dimming works. In
 % each trial we will choose with equal probability whether the fixation
@@ -265,16 +263,45 @@ p.trVarsInit.lowDimVal           = 0.75;          % minimum brightness ABOVE bac
 p.trVarsInit.midDimVal           = 0.825;         % middle brightness ABOVE background level of fixation after dimming
 p.trVarsInit.highDimVal          = 0.9;        % high brightness ABOVE background level of fixation after dimming
 
+% Initial / base values for each stimulus feature.
+p.trVarsInit.speedInit                = 0.1;      % initial motion magniutde
+p.trVarsInit.ctrstInit                = 0.2;      % initial contrast
+p.trVarsInit.orientInit               = 30;       % initial orientation
+p.trVarsInit.freqInit                 = 0.2;      % initial spatial frequency (cycles per degree)
+p.trVarsInit.satInit                  = 0.4;      % initial color saturation
+p.trVarsInit.lumInit                  = 0.3;      % initial luminance
+p.trVarsInit.hueInit                  = 20;       % initial hue (color angle)
+
+% Variance of feature dimensions that can be variable in this way:
+p.trVarsInit.orientVar                = 0;        % variability in orientation
+p.trVarsInit.hueVar                   = 0.00;     % variability in hue (angle)
+p.trVarsInit.lumVar                   = 0.02;     % variability in luminance
+p.trVarsInit.satVar                   = 0.01;     % variability in saturation
+
+% Magnitude of stimulus delta if desired:
+p.trVarsInit.speedDelta               = (pi/8);   % motion magniutde
+p.trVarsInit.contDelta                = 0.2;      % contrast
+p.trVarsInit.orientDelta              = 10;       % orientation
+p.trVarsInit.freqDelta                = 0.2;      % spatial frequency (cycles per degree)
+p.trVarsInit.satDelta                 = 0.038;    % color saturation
+p.trVarsInit.lumDelta                 = -0.3;     % luminance
+p.trVarsInit.hueDelta                 = 90;       % hue (color angle)
+
+% spatial properties of "checkerboard":
+p.trVarsInit.stimRadius               = 3.25;     % aperture radius in deg
+p.trVarsInit.boxSizePix               = 24;       % diameter of each "check" in pixels
+p.trVarsInit.boxLifetime              = 8;        % "check" lifetime in frams
+p.trVarsInit.nPatches                 = 4;        % number of stimuli 
+p.trVarsInit.nEpochs                  = 2;        % just one "pre-change" and one "post-change" epoch for now
+
 % times/latencies/durations:
 p.trVarsInit.rewardDurationMs        = 200;      % reward duration
-p.trVarsInit.fixDurReqMin            = 0.2;      % minimum possible duration of joystick press required
-p.trVarsInit.fixDurReqMax            = 0.5;      % maximum possible duration of joystick press required
-p.trVarsInit.fix2CueIntvl            = 0.25;     % Time delay between acquiring fixation and cue ring onset.
-p.trVarsInit.cueDur                  = 0.133;    % Duration of ring presentaiton.
-p.trVarsInit.cue2StimItvl            = 0.567;    % time between ring offset and motion onset (stimulus onset asynchrony).
-p.trVarsInit.stim2ChgIntvl           = 1;        % minimum time between stimulus onset and change.
-p.trVarsInit.chgWinDur               = 3;        % time window during which a change is possible.
-p.trVarsInit.rewardDelay             = 0.1;      % delay between cued change and reward delivery for hits.
+p.trVarsInit.fix2CueIntvl            = 0.0;      % Time delay between acquiring fixation and cue onset.
+p.trVarsInit.cueDur                  = 0.0;      % Duration of cue presentaiton.
+p.trVarsInit.cue2StimItvl            = 0.25;     % time between cue offset and stimulus onset (stimulus onset asynchrony).
+p.trVarsInit.stim2ChgIntvl           = 0.5;      % minimum time between stimulus onset and change.
+p.trVarsInit.chgWinDur               = 0.5;      % time window during which a change is possible.
+p.trVarsInit.rewardDelay             = 0.5;      % delay between cued change and reward delivery for hits.
 p.trVarsInit.joyMinLatency           = 0.2;      % minimum acceptable joystick release latency.
 p.trVarsInit.joyMaxLatency           = 1;        % maximum acceptable joystick release latency.
 p.trVarsInit.timeoutAfterFa          = 1;        % timeout duration following false alarm.
@@ -286,6 +313,7 @@ p.trVarsInit.fixWaitDur              = 5;        % how long to wait after initia
 p.trVarsInit.freeDur                 = 0;        % time before start of joystick press check
 p.trVarsInit.trialMax                = 15;       % max length of the trial
 p.trVarsInit.joyReleaseWaitDur       = 5;        % how long to wait after trial end to start flickering the screen if the joystick hasn't been released
+
 p.trVarsInit.stimFrameIdx            = 1;        % stimulus (eg dots) frame display index
 p.trVarsInit.flipIdx                 = 1;        % index of
 p.trVarsInit.postRewardDuration      = 0;        % how long should the trial last AFTER reward delivery? This lets us record the neuronal response to reward.
@@ -309,35 +337,6 @@ p.trVarsInit.useCellsForDraw        = false;
 p.trVarsInit.wantEndFlicker         = false;     % have screen flicker / low tone play repeatedly while waiting for joystick release?
 p.trVarsInit.wantOnlinePlots        = true;     % use online plotting window?
 p.trVarsInit.fixColorIndex          = 0;
-
-% initial / base values for each stimulus feature. Variables that hold
-% the magnitude of change (delta) for each feature are defined above under
-% "p.trVarsInit" so they can be adjusted in the GUI.
-p.trVarsInit.speedInit                = 0;        % initial motion magniutde
-p.trVarsInit.ctrstInit                = 0.2;      % initial contrast
-p.trVarsInit.orientInit               = 30;       % initial orientation
-p.trVarsInit.freqInit                 = 0.2;      % initial spatial frequency (cycles per degree)
-p.trVarsInit.satInit                  = 0.1;      % initial color saturation
-p.trVarsInit.lumInit                  = 0.3;      % initial luminance
-p.trVarsInit.hueInit                  = 90;       % initial hue (color angle)
-p.trVarsInit.orientVar                = 0;        % variability in orientation
-p.trVarsInit.hueVar                   = 0.00;     % variability in hue (angle)
-p.trVarsInit.lumVar                   = 0.02;     % variability in luminance
-p.trVarsInit.satVar                   = 0.01;     % variability in saturation
-p.trVarsInit.speedDelta               = (pi/8);   % motion magniutde
-p.trVarsInit.contDelta                = 0.2;      % contrast
-p.trVarsInit.orientDelta              = 10;       % orientation
-p.trVarsInit.freqDelta                = 0.2;      % spatial frequency (cycles per degree)
-p.trVarsInit.satDelta                 = 0.038;    % color saturation
-p.trVarsInit.lumDelta                 = -0.3;     % luminance
-p.trVarsInit.hueDelta                 = 15;       % hue (color angle)
-
-% spatial properties of "checkerboard":
-p.trVarsInit.stimRadius               = 3.25;     % aperture radius in deg
-p.trVarsInit.boxSizePix               = 24;       % diameter of each "check" in pixels
-p.trVarsInit.boxLifetime              = 8;        % "check" lifetime in frams
-p.trVarsInit.nPatches                 = 4;        % number of stimuli 
-p.trVarsInit.nEpochs                  = 2;        % just one "pre-change" and one "post-change" epoch for now
 
 % substructure for marking stimulus-events after each flip
 p.trVarsInit.postFlip.logical         = false;
@@ -374,8 +373,7 @@ p.init.trDataInitList = {...
     'p.trData.timing.stimOff',          '-1'; ...   % time of stimulus offset
     'p.trData.timing.cueOn',            '-1'; ...   % time of cur ring onset
     'p.trData.timing.cueOff',           '-1'; ...   % time of cue ring offset
-    'p.trData.timing.cueChg',           '-1'; ...   % time of cue change
-    'p.trData.timing.foilChg',          '-1'; ...   % time of foil change
+    'p.trData.timing.stimChg',          '-1'; ...   % time of stimulus change
     'p.trData.timing.noChg',            '-1'; ...   % time of no change
     'p.trData.timing.brokeFix',         '-1'; ...   % time of fixation break
     'p.trData.timing.brokeJoy',         '-1'; ...   % time of joystick release
