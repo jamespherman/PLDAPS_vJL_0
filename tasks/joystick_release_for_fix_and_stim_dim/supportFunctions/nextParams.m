@@ -251,10 +251,14 @@ end
 bgRGB = p.draw.clut.combinedClut(p.draw.clutIdx.expBg_subBg + 1, :);
 fxRGB = p.draw.clut.combinedClut(p.draw.clutIdx.expWhite_subWhite + 1, :);
 fxDimRGB = bgRGB + p.trData.dimVal*(fxRGB-bgRGB);
+p.draw.clut.expColors(p.draw.clutIdx.expFixDim_subFixDim + 1, :) = ...
+    fxDimRGB;
+p.draw.clut.subColors(p.draw.clutIdx.expFixDim_subFixDim + 1, :) = ...
+    fxDimRGB;
 myClut = p.draw.clut.combinedClut;
-myClut(13:14, :) = repmat(fxDimRGB, 2, 1);
-p.draw.clut.expColors(13:14, :) = repmat(fxDimRGB, 2, 1);
-p.draw.clut.subColors(13:14, :) = repmat(fxDimRGB, 2, 1);
+myClut([p.draw.clutIdx.expFixDim_subFixDim + 1; ...
+    256 + p.draw.clutIdx.expFixDim_subFixDim + 1], :) = ...
+    repmat(fxDimRGB, 2, 1);
 Datapixx('SetVideoClut', myClut);
 p.draw.clut.combinedClut = myClut;
 

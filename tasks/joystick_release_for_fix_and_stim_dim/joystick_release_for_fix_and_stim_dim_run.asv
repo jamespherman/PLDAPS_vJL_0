@@ -444,6 +444,7 @@ if timeNow > p.trData.timing.lastFrameTime + ...
     end
 
     % draw fixation spot
+    p.draw.color.fix
     Screen('FrameRect',p.draw.window, p.draw.color.fix, ...
         p.draw.fixPointRect, p.draw.fixPointWidth);
     

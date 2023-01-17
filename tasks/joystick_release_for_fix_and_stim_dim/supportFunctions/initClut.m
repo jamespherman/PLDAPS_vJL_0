@@ -84,7 +84,7 @@ assert(size(p.draw.clut.subColors,1)==size(p.draw.clut.expColors,1), 'ERROR-- ex
 %%
 
 % fill the remaining LUT slots with background RGB.
-p.draw.nColors                                          = size(p.draw.clut.subColors,1);
+p.draw.nColors                                          = size(p.draw.clut.subColors,1) + 1;
 nTotalColors                                            = 256;
 p.draw.clut.expColors(p.draw.nColors+1:nTotalColors, :) = [...
     linspace(bgRGB(1), 1, nTotalColors - p.draw.nColors)', ...
