@@ -218,10 +218,12 @@ switch p.trVars.currentState
         timeFromFixHoldMet = timeNow - p.trData.timing.fixHoldReqMet;
 
         % if maximum allowed duration after fixation hold duration
-        % requirement has been reached, this is a miss, go to miss state:
+        % requirement has been reached, it's a miss - go to miss state.
+        % Otherwise if joystick has been released or if passEye is true,
+        % it's a hit - go to hit state and play high tone.
         if timeFromFixHoldMet > p.trVars.maxJoyRelLatency
             p.trVars.currentState = p.state.miss;
-        elseif ~pds.joyHeld(p)
+        elseif ~pds.joyHeld(p) || p.trVars.passJoy
             p.init.strb.addValue(p.init.codes.hit);
             p.trVars.currentState      = p.state.hit;
             p = playTone(p, 'high');

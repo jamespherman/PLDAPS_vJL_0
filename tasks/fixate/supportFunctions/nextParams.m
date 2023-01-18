@@ -222,6 +222,13 @@ function p = locationInfo(p)
 p.draw.fixPointPix      =  p.draw.middleXY + [1, -1] .* ...
     pds.deg2pix([p.trVars.fixDegX, p.trVars.fixDegY], p);
 
+% define fixation point radius from trVars, fixation point line weight
+% from trVars, and fixation point rectangle.
+p.draw.fixPointRadius = p.trVars.fixPointRadPix;
+p.draw.fixPointWidth = p.trVars.fixPointLinePix;
+p.draw.fixPointRect = repmat(p.draw.fixPointPix, 1, 2) + ...
+    p.draw.fixPointRadius*[-1 -1 1 1];
+
 end
 
 %%

@@ -222,7 +222,7 @@ p.trVarsInit.eyePixY             = 0;
 % indicate whether the current trial is a "change" or a "no change" trial.
 % The above is old - update it (jph - 11/1/2022).
 
-p.trVarsInit.propHueChgOnly      = 0.5;       % proportion of trials in which the peripheral stimulus only changes hue with no dimming
+p.trVarsInit.propHueChgOnly      = 1;       % proportion of trials in which the peripheral stimulus only changes hue with no dimming
 p.trVarsInit.isStimChangeTrial   = false;     % variable tracking whether the current trial is a "change" or "no change" trial.
 
 % Stimulus geometry variables. There can be up to 4 stimuli shown
@@ -285,7 +285,7 @@ p.trVarsInit.orientDelta              = 10;       % orientation
 p.trVarsInit.freqDelta                = 0.2;      % spatial frequency (cycles per degree)
 p.trVarsInit.satDelta                 = 0.038;    % color saturation
 p.trVarsInit.lumDelta                 = -0.3;     % luminance
-p.trVarsInit.hueDelta                 = 90;       % hue (color angle)
+p.trVarsInit.hueDelta                 = 50;       % hue (color angle)
 
 % spatial properties of "checkerboard":
 p.trVarsInit.stimRadius               = 3.25;     % aperture radius in deg
@@ -300,7 +300,7 @@ p.trVarsInit.fix2CueIntvl            = 0.0;      % Time delay between acquiring 
 p.trVarsInit.cueDur                  = 0.0;      % Duration of cue presentaiton.
 p.trVarsInit.cue2StimItvl            = 0.25;     % time between cue offset and stimulus onset (stimulus onset asynchrony).
 p.trVarsInit.stim2ChgIntvl           = 0.5;      % minimum time between stimulus onset and change.
-p.trVarsInit.chgWinDur               = 0.5;      % time window during which a change is possible.
+p.trVarsInit.chgWinDur               = 1.5;      % time window during which a change is possible.
 p.trVarsInit.rewardDelay             = 0.5;      % delay between cued change and reward delivery for hits.
 p.trVarsInit.joyMinLatency           = 0.2;      % minimum acceptable joystick release latency.
 p.trVarsInit.joyMaxLatency           = 1;        % maximum acceptable joystick release latency.
