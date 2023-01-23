@@ -49,6 +49,9 @@ repCol = find(strcmp(p.init.trialArrayColumnNames, 'no of trials'));
 % table definition
 switch p.init.exptType
 
+    case 'joystick_release_for_stim_dim_and_feature_change_TEST'
+        table = tableDef_fixAndStimDim_test;
+
     case 'joystick_release_for_stim_dim_and_feature_change_9010'
         table = tableDef_stimDimPlusChange_9010;
 
@@ -162,39 +165,61 @@ p.init.blockLength = size(p.init.trialsArray, 1);
 % keyboard
 end
 
+% column descriptions (19 columns) REMINDER
+% p.init.trialArrayColumnNames = {...
+%     'cue loc', ...              % 1 which stimulus location is the cued location on this trial?
+%     'n stim', ...               % 2 how many stimulus patches to show on this trial?
+%     'stim1 on', ...             % 3 is the 1st stimulus presented on this trial?
+%     'stim2 on', ...             % 4 is the 2nd stimulus presented on this trial?
+%     'stim3 on', ...             % 5 is the 3rd stimulus presented on this trial?
+%     'stim4 on', ...             % 6 is the 4th stimulus presented on this trial?
+%     'stim chg', ...             % 7 which stimulus changes? (1 - n)
+%     'speed', ...                % 8 does speed change?
+%     'orientation', ...          % 9 does ... change?
+%     'spatial frequency', ...    % 10 ...
+%     'saturation', ...           % 11
+%     'hue', ...                  % 12
+%     'luminance', ...            % 13
+%     'contrast', ...             % 14
+%     'primary', ...              % 15 for making sure the stimuli have different start values
+%     'no of trials', ...         % 16
+%     'trialCode', ...            % 17
+%     'trial seed', ...           % 18 seed value to make trial params reproducible
+%     'stim seed'};               % 19 seed value to make stimulus properties reproducible
+
 % Peripheral stimulus dimming in one of multiple possible stimuli:
 function table = tableDef_fixAndStimDim_test
-table =           [1   4   1   1   1   1   1   0   0   0   0   0   1   0   1   9   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   1   4   1   1   1   1   1   0   0   0   0   0   0   0   1   1   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   2   4   1   1   1   1   2   0   0   0   0   0   1   0   1   9   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
+table =           [1   4   1   1   1   1   1   0   0   0   0   1   1   0   1   9   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   1   4   1   1   1   1   0   0   0   0   0   0   0   0   1   1   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   2   4   1   1   1   1   2   0   0   0   0   1   1   0   1   9   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
                    2   4   1   1   1   1   0   0   0   0   0   0   0   0   1   1   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   3   4   1   1   1   1   3   0   0   0   0   0   1   0   1   9   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   3   4   1   1   1   1   3   0   0   0   0   1   1   0   1   9   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
                    3   4   1   1   1   1   0   0   0   0   0   0   0   0   1   1   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   4   4   1   1   1   1   4   0   0   0   0   0   1   0   1   9   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   4   4   1   1   1   1   4   0   0   0   0   1   1   0   1   9   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
                    4   4   1   1   1   1   0   0   0   0   0   0   0   0   1   1   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   1   4   1   1   1   1   1   0   0   0   0   0   1   0   2   9   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   1   4   1   1   1   1   1   0   0   0   0   1   1   0   2   9   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
                    1   4   1   1   1   1   0   0   0   0   0   0   0   0   2   1   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   2   4   1   1   1   1   2   0   0   0   0   0   1   0   2   9   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   2   4   1   1   1   1   2   0   0   0   0   1   1   0   2   9   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
                    2   4   1   1   1   1   0   0   0   0   0   0   0   0   2   1   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   3   4   1   1   1   1   3   0   0   0   0   0   1   0   2   9   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   3   4   1   1   1   1   3   0   0   0   0   1   1   0   2   9   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
                    3   4   1   1   1   1   0   0   0   0   0   0   0   0   2   1   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   4   4   1   1   1   1   4   0   0   0   0   0   1   0   2   9   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   4   4   1   1   1   1   4   0   0   0   0   1   1   0   2   9   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
                    4   4   1   1   1   1   0   0   0   0   0   0   0   0   2   1   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   1   4   1   1   1   1   1   0   0   0   0   0   1   0   3   9   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   1   4   1   1   1   1   1   0   0   0   0   1   1   0   3   9   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
                    1   4   1   1   1   1   0   0   0   0   0   0   0   0   3   1   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   2   4   1   1   1   1   2   0   0   0   0   0   1   0   3   9   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   2   4   1   1   1   1   2   0   0   0   0   1   1   0   3   9   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
                    2   4   1   1   1   1   0   0   0   0   0   0   0   0   3   1   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   3   4   1   1   1   1   3   0   0   0   0   0   1   0   3   9   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   3   4   1   1   1   1   3   0   0   0   0   1   1   0   3   9   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
                    3   4   1   1   1   1   0   0   0   0   0   0   0   0   3   1   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   4   4   1   1   1   1   4   0   0   0   0   0   1   0   3   9   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   4   4   1   1   1   1   4   0   0   0   0   1   1   0   3   9   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
                    4   4   1   1   1   1   0   0   0   0   0   0   0   0   3   1   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   1   4   1   1   1   1   1   0   0   0   0   0   1   0   4   9   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   1   4   1   1   1   1   1   0   0   0   0   1   1   0   4   9   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
                    1   4   1   1   1   1   0   0   0   0   0   0   0   0   4   1   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   2   4   1   1   1   1   2   0   0   0   0   0   1   0   4   9   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   2   4   1   1   1   1   2   0   0   0   0   1   1   0   4   9   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
                    2   4   1   1   1   1   0   0   0   0   0   0   0   0   4   1   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   3   4   1   1   1   1   3   0   0   0   0   0   1   0   4   9   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   3   4   1   1   1   1   3   0   0   0   0   1   1   0   4   9   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
                    3   4   1   1   1   1   0   0   0   0   0   0   0   0   4   1   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   4   4   1   1   1   1   4   0   0   0   0   0   1   0   4   9   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   4   4   1   1   1   1   4   0   0   0   0   1   1   0   4   9   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
                    4   4   1   1   1   1   0   0   0   0   0   0   0   0   4   1   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
                  ];
 end

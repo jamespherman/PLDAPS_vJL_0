@@ -171,8 +171,8 @@ for i = 1:p.stim.nFeatures
     
     % does the presently considered feature change on this trial?
     tempDelta = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
-        ~cellfun(@isempty, strfind(p.init.trialArrayColumnNames, ...
-        p.stim.featureValueNames{i})));
+        contains(p.init.trialArrayColumnNames, ...
+        p.stim.featureValueNames{i}));
 
     % if this is a trial in which we want to force only the stimulus
     % feature to change with no dimming, adjust the "tempDelta" for
