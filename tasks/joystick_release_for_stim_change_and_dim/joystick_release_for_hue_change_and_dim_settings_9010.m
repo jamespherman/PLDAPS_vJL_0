@@ -1,5 +1,5 @@
-function p = joystick_release_for_stim_change_and_dim_settings_7030
-%  p = joystick_release_for_stim_change_and_dim_settings_7030
+function p = joystick_release_for_hue_change_and_dim_settings_9010
+%  p = joystick_release_for_hue_change_and_dim_settings_9010
 %  On some proportion of trials, the fixation point turns off without
 %  reward delivery or "boop", monkey must release joystick to get reward on
 %  those trials. On the remaining trials, the "boop" and reward are
@@ -51,7 +51,7 @@ p.init.protocol_title   = [p.init.taskName '_task'];    % Define Banner text to 
 p.init.date             = datestr(now,'yyyymmdd');
 p.init.time             = datestr(now,'HHMM');
 
-p.init.exptType         = 'joystick_release_for_stim_dim_and_feature_change_7030';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
+p.init.exptType         = 'joystick_release_for_stim_dim_and_hue_change_9010';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
 
 p.init.date_1yyyy       = str2double(['1' datestr(now,'yyyy')]); % gotta add a '1' otherwise date/times starting with zero lose that zero in conversion to double.
 p.init.date_1mmdd       = str2double(['1' datestr(now,'mmdd')]);

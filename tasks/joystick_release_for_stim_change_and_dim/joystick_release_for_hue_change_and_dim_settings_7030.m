@@ -1,5 +1,5 @@
-function p = joystick_release_for_stim_change_and_dim_settings_6040
-%  p = joystick_release_for_stim_change_and_dim_settings_6040
+function p = joystick_release_for_hue_change_and_dim_settings_7030
+%  p = joystick_release_for_hue_change_and_dim_settings_7030
 %  On some proportion of trials, the fixation point turns off without
 %  reward delivery or "boop", monkey must release joystick to get reward on
 %  those trials. On the remaining trials, the "boop" and reward are
@@ -51,7 +51,7 @@ p.init.protocol_title   = [p.init.taskName '_task'];    % Define Banner text to 
 p.init.date             = datestr(now,'yyyymmdd');
 p.init.time             = datestr(now,'HHMM');
 
-p.init.exptType         = 'joystick_release_for_stim_dim_and_feature_change_6040';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
+p.init.exptType         = 'joystick_release_for_stim_dim_and_hue_change_7030';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
 
 p.init.date_1yyyy       = str2double(['1' datestr(now,'yyyy')]); % gotta add a '1' otherwise date/times starting with zero lose that zero in conversion to double.
 p.init.date_1mmdd       = str2double(['1' datestr(now,'mmdd')]);
@@ -222,7 +222,7 @@ p.trVarsInit.eyePixY             = 0;
 % indicate whether the current trial is a "change" or a "no change" trial.
 % The above is old - update it (jph - 11/1/2022).
 
-p.trVarsInit.propHueChgOnly      = 1;       % proportion of trials in which the peripheral stimulus only changes hue with no dimming
+p.trVarsInit.propHueChgOnly      = 0.5;         % proportion of trials in which the peripheral stimulus only changes hue with no dimming
 p.trVarsInit.isStimChangeTrial   = false;     % variable tracking whether the current trial is a "change" or "no change" trial.
 
 % Stimulus geometry variables. There can be up to 4 stimuli shown
@@ -237,7 +237,7 @@ p.trVarsInit.isStimChangeTrial   = false;     % variable tracking whether the cu
 % variables are 0, we do nothing, but if those variables are nonzero, we
 % replace the automatically calculated elevations and eccentricities with
 % the specified values:
-p.trVarsInit.stimLoc1Elev        = 75;           % Stimulus location (angle of elevation).
+p.trVarsInit.stimLoc1Elev        = 25;           % Stimulus location (angle of elevation).
 p.trVarsInit.stimLoc1Ecc         = 10;          % Stimulus location (eccentricity in degrees).
 p.trVarsInit.stimLoc2Elev        = 0;           % Stimulus location (angle of elevation).
 p.trVarsInit.stimLoc2Ecc         = 0;           % Stimulus location (eccentricity in degrees).
@@ -285,7 +285,7 @@ p.trVarsInit.orientDelta              = 10;       % orientation
 p.trVarsInit.freqDelta                = 0.2;      % spatial frequency (cycles per degree)
 p.trVarsInit.satDelta                 = 0.038;    % color saturation
 p.trVarsInit.lumDelta                 = -0.3;     % luminance
-p.trVarsInit.hueDelta                 = 50;       % hue (color angle)
+p.trVarsInit.hueDelta                 = 90;       % hue (color angle)
 
 % spatial properties of "checkerboard":
 p.trVarsInit.stimRadius               = 3.25;     % aperture radius in deg
@@ -300,7 +300,7 @@ p.trVarsInit.fix2CueIntvl            = 0.0;      % Time delay between acquiring 
 p.trVarsInit.cueDur                  = 0.0;      % Duration of cue presentaiton.
 p.trVarsInit.cue2StimItvl            = 0.25;     % time between cue offset and stimulus onset (stimulus onset asynchrony).
 p.trVarsInit.stim2ChgIntvl           = 0.5;      % minimum time between stimulus onset and change.
-p.trVarsInit.chgWinDur               = 1.5;      % time window during which a change is possible.
+p.trVarsInit.chgWinDur               = 0.5;      % time window during which a change is possible.
 p.trVarsInit.rewardDelay             = 0.5;      % delay between cued change and reward delivery for hits.
 p.trVarsInit.joyMinLatency           = 0.2;      % minimum acceptable joystick release latency.
 p.trVarsInit.joyMaxLatency           = 1;        % maximum acceptable joystick release latency.
