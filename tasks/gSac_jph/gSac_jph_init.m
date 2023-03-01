@@ -36,7 +36,11 @@ p   = pds.defineGridLines(p);
 % set task codes:
 p.init.codes = pds.initCodes;
 
-p   = initTargetLocationList(p);
+% initialize target locations list:
+p = initTargetLocationList(p);
+
+% initialize connection to Ripple:
+p = pds.initRipple(p);
 
 %% define 'strb' as classyStrboe
 % this is a class.

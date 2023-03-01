@@ -51,9 +51,9 @@ p           = pds.waitForJoystickRelease(p);
 % ADDITIONAL time out.
 postTrialTimeOut(p);
 
-% retreive data from omniplex PC if desired.
-if p.rig.connectToOmniplex
-    p = pds.getOmniplexData(p);
+% retreive data from ripple "NIP" if connected:
+if p.rig.ripple.status
+    p = pds.getRippleData(p);
 end
 
 % calculate saccade parameters (start & end point, peak velocity, reaction
@@ -85,29 +85,65 @@ end
 %%
 function p = postTrialGui(p)
 
-% if the last trial was a success, update the list of upcoming target
-% locations accordingly.
+% If the last trial was a success, update the list of upcoming target
+% locations accordingly, and pass spike / event data to GUI.
 if p.trData.trialEndState == p.state.sacComplete
-    
+
     % If the saccade target location used in the just-completed trial is
     % already present in "sacDataArray", find what row it's in, add the
     % saccade parameters from the current trial and mark the row as
     % complete. Otherwise, add the data to the end of the array.
-    rowIndex = p.init.guiData.sacDataArray(:, 1) == p.trVars.targDegX & ...
-        p.init.guiData.sacDataArray(:, 2) == p.trVars.targDegY;
+    rowIndex = p.rig.guiData.sacDataArray(:, 1) == p.trVars.targDegX & ...
+        p.rig.guiData.sacDataArray(:, 2) == p.trVars.targDegY;
     if any(rowIndex)
-        p.init.guiData.sacDataArray(rowIndex, 3:end) = [...
+        p.rig.guiData.sacDataArray(rowIndex, 3:end) = [...
             p.trData.preSacXY, p.trData.postSacXY, ...
             p.trData.peakVel, p.trData.SRT, true];
     else
         try
-        p.init.guiData.sacDataArray(end + 1, :) = [...
+        p.rig.guiData.sacDataArray(end + 1, :) = [...
             p.trVars.targDegX, p.trVars.targDegY, p.trData.preSacXY, ...
         p.trData.postSacXY, p.trData.peakVel, p.trData.SRT, true];
         catch me
             keyboard
         end
-    end    
+    end
+
+    % JPH - 2 / 22 / 2023
+    % here we will get existing spike times / event values / event times
+    % from the GUI, then append the ones from the just-completed trial,
+    % then assign them to "p.rig.guiData.spikesAndEvents" all at once to
+    % trigger a single update of the spike plot(s).
+
+    % first, logically index all the spike times from the current trial.
+    % This is necessary because Ripple's buffer includes the last 1024
+    % spikes regardless of how recently we've retreived them so we want to
+    % make sure we''re keeping only new spikes:
+    if ~isempty(p.trData.spikeTimes)
+        newSpikes = p.trData.spikeTimes(...
+            p.trData.spikeTimes > p.trData.eventTimes(1) & ...
+            p.trData.spikeTimes < p.trData.eventTimes(end));
+    end
+
+    % if p.rig.guiData.spikesAndEvents is empty, this is the first
+    % successful trial and we're going to populate spikesAndEvents with
+    % several cell arrays for the first time. Otherwise we're going to
+    % append the new data to those existing cell arrays:
+    if isempty(p.rig.guiData.spikesAndEvents)
+        tempSAE = struct;
+        tempSAE.spikeTimes = {newSpikes};
+        tempSAE.eventTimes = {p.trData.eventTimes};
+        tempSAE.eventValues = {p.trData.eventValues};
+    else
+        tempSAE = p.rig.guiData.spikesAndEvents;
+        tempSAE.spikeTimes(end+1) = {newSpikes};
+        tempSAE.eventTimes(end+1) = {p.trData.eventTimes};
+        tempSAE.eventValues(end+1) = {p.trData.eventValues};
+    end
+
+    % assign "tempSAE" to p.rig.guiData.spikesAndEvents:
+    p.rig.guiData.spikesAndEvents = tempSAE;
+
 end
    
 end

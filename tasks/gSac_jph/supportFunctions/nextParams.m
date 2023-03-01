@@ -72,22 +72,22 @@ if p.trVars.setTargLocViaGui
     
     % if the gui button indicating a specified target location should be
     % used next, grab that position.
-    if get(p.init.guiData.handles.hSpecTgtButton, 'Value')
+    if get(p.rig.guiData.handles.hSpecTgtButton, 'Value')
         p.trVars.targDegX = ...
-            str2double(get(p.init.guiData.handles.hXVal, 'String'));
+            str2double(get(p.rig.guiData.handles.hXVal, 'String'));
         p.trVars.targDegY = ...
-            str2double(get(p.init.guiData.handles.hYVal, 'String'));
+            str2double(get(p.rig.guiData.handles.hYVal, 'String'));
     else
         % Logically index which rows of "sacDataArray" contain target
         % locations that have not been visited (or have been marked as
         % unvisited by the experimenter).
-        availRows = ~p.init.guiData.sacDataArray(:, end);
+        availRows = ~p.rig.guiData.sacDataArray(:, end);
         
         % if there are any unvisited locations, choose one at random to use
         % in the next rtrial.
         if any(availRows)
-            Xtemp = p.init.guiData.sacDataArray(availRows, 1);
-            Ytemp = p.init.guiData.sacDataArray(availRows, 2);
+            Xtemp = p.rig.guiData.sacDataArray(availRows, 1);
+            Ytemp = p.rig.guiData.sacDataArray(availRows, 2);
             p.trVars.targDegX = Xtemp(1);
             p.trVars.targDegY = Ytemp(1);
         else %if ~p.trData.trialRepeatFlag

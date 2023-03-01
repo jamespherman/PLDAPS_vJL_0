@@ -316,20 +316,20 @@ p.init.trDataInitList = {...
     'p.trData.timing.lastFrameTime',    '0'; ...    % time at which last video frame was displayed
     'p.trData.timing.fixOn',            '-1'; ...   % time of fixation onset
     'p.trData.timing.fixAq',            '-1'; ...   % time of fixation acquisition
-    'p.trData.timing.fixOff',           '-1'; ...   % time of fixation offset
     'p.trData.timing.targetOn'          '-1'; ...   % time of target onset
-    'p.trData.timing.targetOff',        '-1'; ...   % time of target offset
-    'p.trData.timing.targetReillum',    '-1'; ...   % time of target reillumination (memsac)
-    'p.trData.timing.targetAq',         '-1'; ...   % time of target acquisition
-    'p.trData.timing.saccadeOnset',     '-1'; ...   % time of saccade start
-    'p.trData.timing.saccadeOffset',    '-1'; ...   % time of saccade end
+    'p.trData.timing.stimOff',          '-1'; ...   % time of stimulus offset
+    'p.trData.timing.cueOn',            '-1'; ...   % time of cur ring onset
+    'p.trData.timing.cueOff',           '-1'; ...   % time of cue ring offset
+    'p.trData.timing.stimChg',          '-1'; ...   % time of stimulus change
+    'p.trData.timing.noChg',            '-1'; ...   % time of no change
     'p.trData.timing.brokeFix',         '-1'; ...   % time of fixation break
+    'p.trData.timing.brokeJoy',         '-1'; ...   % time of joystick release
     'p.trData.timing.reward',           '-1'; ...   % time of reward delivery
     'p.trData.timing.tone',             '-1'; ...   % time of audio feedback delivery
-    'p.trData.timing.trialBegin',       '-1'; ...   % time of trial begin
-    'p.trData.timing.trialStartPTB'     '-1'; ...   % time of joystick release relative to dimming
-    'p.trData.timing.trialStartDP',     '-1'; ...   % time that fixation hold duration was met (also time of fixation dimming)
-    'p.trData.timing.frameNow',         '-1'; ...   % current frame number
+    'p.trData.timing.joyPress',         '-1'; ...   % time of joystick press
+    'p.trData.timing.joyRelease',       '-1'; ...   % time of joystick release
+    'p.trData.timing.reactionTime'      '-1'; ...   % time of joystick release relative to dimming
+    'p.trData.timing.fixHoldReqMet',    '-1'; ...   % time that fixation hold duration was met (also time of fixation dimming)
     };
 
 % since the list above is fixed, count its rows now for looping over later.

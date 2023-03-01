@@ -113,13 +113,13 @@ switch p.trVars.currentState
         %   JOYSTICK IS HELD, SO SHOW FIXATION POINT AND WAIT FOR
         %   SUBJECT TO ACQUIRE FIXATION.
         
-        % show fixatoin point & fixation window on exp-display
+        % show fixation point & fixation window on exp-display
         p.draw.color.fix    = p.draw.clutIdx.expWhite_subWhite;
 
         p.draw.color.fixWin         = p.draw.clutIdx.expGrey70_subBg;
         p.draw.fixWinPenDraw        = p.draw.fixWinPenThin;
         
-        % we only want to strobe this once:
+        % strobe fixation onset (we only want to strobe this once):
         p.init.strb.addValueOnce(p.init.codes.fixOn);
         
         % note time of fixation onset if it hasn't yet been set
@@ -220,7 +220,7 @@ switch p.trVars.currentState
                 (p.trData.timing.fixOff + p.trVars.goLatencyMin) && ...
                 timeNow < ...
                 (p.trData.timing.fixOff + p.trVars.goLatencyMax) && ...
-                gazeVelThreshCheck(p, timeNow)) || p.trVars.passEye;
+                gazeVelThreshCheck(p, timeNow)) || p.trVars.passEye
             
             % strobe saccade onset, mark time of strobe and set state
             % "checkLanding".
@@ -480,15 +480,36 @@ if p.trData.timing.fixAq > 0
     % Determine if target should be on:
     if (timeFromFixAq >= p.trVars.timeTargOnset && ...
             timeFromFixAq < p.trVars.timeTargOffset)
+
+        % target should be on, set "targetIsOn" to true, strobe target
+        % onset, and log target onset time:
         p.trVars.targetIsOn       = true;
         p.init.strb.addValueOnce(p.init.codes.targetOn);
+        p.trData.timing.targetOn = timeNow;
+
     elseif (~p.trVars.isVisSac && ...
-            p.trVars.currentState == p.state.holdTarg);
+            p.trVars.currentState == p.state.holdTarg)
+
+        % if this is a MemSac trial (e.g. NOT VisSac) and it's time to
+        % reilluminate the target after the primary saccade, set
+        % "targetIsOn" to true, strobe target reillumination, and log
+        % target reillumination time:
         p.trVars.targetIsOn       = true;
         p.init.strb.addValueOnce(p.init.codes.targetReillum);
+        p.trData.timing.targetReillum = timeNow;
     else
+
+        % if the target shouldn't be on set "targetIsOn" to false, strobe
+        % target offset, and log time of target offset (if it's not already
+        % set).
         p.trVars.targetIsOn       = false;
         p.init.strb.addValueOnce(p.init.codes.targetOff);
+
+        % check to see that target offset time has not already been
+        % defined before we set it:
+        if p.trData.timing.targetOff < 0
+            p.trData.timing.targetOff = timeNow;
+        end
     end
     
 end
