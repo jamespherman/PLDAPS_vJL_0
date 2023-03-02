@@ -123,26 +123,27 @@ if p.trData.trialEndState == p.state.sacComplete
         newSpikes = p.trData.spikeTimes(...
             p.trData.spikeTimes > p.trData.eventTimes(1) & ...
             p.trData.spikeTimes < p.trData.eventTimes(end));
-    end
 
-    % if p.rig.guiData.spikesAndEvents is empty, this is the first
-    % successful trial and we're going to populate spikesAndEvents with
-    % several cell arrays for the first time. Otherwise we're going to
-    % append the new data to those existing cell arrays:
-    if isempty(p.rig.guiData.spikesAndEvents)
-        tempSAE = struct;
-        tempSAE.spikeTimes = {newSpikes};
-        tempSAE.eventTimes = {p.trData.eventTimes};
-        tempSAE.eventValues = {p.trData.eventValues};
-    else
-        tempSAE = p.rig.guiData.spikesAndEvents;
-        tempSAE.spikeTimes(end+1) = {newSpikes};
-        tempSAE.eventTimes(end+1) = {p.trData.eventTimes};
-        tempSAE.eventValues(end+1) = {p.trData.eventValues};
-    end
 
-    % assign "tempSAE" to p.rig.guiData.spikesAndEvents:
-    p.rig.guiData.spikesAndEvents = tempSAE;
+        % if p.rig.guiData.spikesAndEvents is empty, this is the first
+        % successful trial and we're going to populate spikesAndEvents with
+        % several cell arrays for the first time. Otherwise we're going to
+        % append the new data to those existing cell arrays:
+        if isempty(p.rig.guiData.spikesAndEvents)
+            tempSAE = struct;
+            tempSAE.spikeTimes = {newSpikes};
+            tempSAE.eventTimes = {p.trData.eventTimes};
+            tempSAE.eventValues = {p.trData.eventValues};
+        else
+            tempSAE = p.rig.guiData.spikesAndEvents;
+            tempSAE.spikeTimes(end+1) = {newSpikes};
+            tempSAE.eventTimes(end+1) = {p.trData.eventTimes};
+            tempSAE.eventValues(end+1) = {p.trData.eventValues};
+        end
+
+        % assign "tempSAE" to p.rig.guiData.spikesAndEvents:
+        p.rig.guiData.spikesAndEvents = tempSAE;
+    end
 
 end
    
