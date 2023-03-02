@@ -37,7 +37,7 @@ p.init.strb.strobeNow(p.init.codes.trialEnd);
 p.trData.strobed = p.init.strb.strobedList;
 
 % (3) pause ephys
-pds.stopOmniPlex;
+% pds.stopOmniPlex;
 
 
 % wait for joystick release
@@ -119,7 +119,7 @@ if p.trData.trialEndState == p.state.sacComplete
     % This is necessary because Ripple's buffer includes the last 1024
     % spikes regardless of how recently we've retreived them so we want to
     % make sure we''re keeping only new spikes:
-    if ~isempty(p.trData.spikeTimes)
+    if ~isempty(p.trData.spikeTimes) && ~isempty(p.trData.eventValues)
         newSpikes = p.trData.spikeTimes(...
             p.trData.spikeTimes > p.trData.eventTimes(1) & ...
             p.trData.spikeTimes < p.trData.eventTimes(end));
