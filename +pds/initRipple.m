@@ -7,9 +7,10 @@ function p = initRipple(p)
 
 % Initialize xippmex
 p.rig.ripple.status = pds.xippmex;
-if p.rig.ripple.status ~= 1; warning('Not connected to Ripple');  end
 
-% get recording channels:
-p.rig.ripple.recChans = ...
-    [pds.xippmex('elec','micro'), ...
-    pds.xippmex('elec','nano')];
+% get recording channels (if ripple is connected):
+if p.rig.ripple.status
+    p.rig.ripple.recChans = ...
+        [pds.xippmex('elec','micro'), ...
+        pds.xippmex('elec','nano')];
+end

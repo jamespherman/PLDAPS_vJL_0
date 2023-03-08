@@ -1340,8 +1340,12 @@ repPts  = @(x,y)repmat(x,y,1);
 newCData    = [];
 
 % map types list: (1) saccade peak velocity ("pkv"), (2) saccade reaction
-% time ("srt"), (3) spike counts ("spk").
-mapTypes    = {'pkv', 'srt', 'spk'};
+% time ("srt"), (3) spike counts ("spk"), but only if ripple is connected:
+if uiData.pldapsData.p.rig.ripple.status
+    mapTypes    = {'pkv', 'srt', 'spk'};
+else
+    mapTypes    = {'pkv', 'srt'};
+end
 nMapTypes   = length(mapTypes);
 
 % if more than 2 trials are complete, make maps
@@ -1378,7 +1382,9 @@ if nnz(uiData.sacDataArray(:, 9)) > 2
         % get target radius and theta for each trial's spike data, then
         % convert to target X / target Y. Then we need to get the spike
         % counts in the time window specified in the "choose spike map data
-        % source" panel:
+        % source" panel. But we only do this if we have spike times to work
+        % with:
+        if uiData.pldapsData.p.rig.ripple.status
         tRad = double(cellfun(...
             @(x)x(circshift(...
             x == uiData.pldapsData.p.init.codes.targetRadius, 1)), ...
@@ -1400,6 +1406,7 @@ if nnz(uiData.sacDataArray(:, 9)) > 2
             uiData.spikesAndEvents.eventTimes, ...
             'UniformOutput', false), ...
             'UniformOutput', false))';
+        end
         
         % loop over map types and define interpolant funcitons.
         for i = 1:nMapTypes
@@ -1457,8 +1464,10 @@ end
 
 function updateSpikePlots(uiData)
 
-% Check to see that there is spike data to plot:
-if ~isempty(uiData.spikesAndEvents)
+% Check to see that there is spike data to plot, and that ripple is
+% connected:
+if ~isempty(uiData.spikesAndEvents) && ...
+        uiData.pldapsData.p.rig.ripple.status
 
     % We store several bits of information that are useful for plotting
     % rasters in the "UserData" field of hRasterLine. Retreive whatever is

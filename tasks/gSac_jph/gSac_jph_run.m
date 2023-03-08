@@ -212,9 +212,9 @@ switch p.trVars.currentState
             p.trData.timing.fixBreak    = timeNow;
             p.trVars.currentState       = p.state.fixBreak;
             
-            % if left window within specified time window, that's great! We
-            % note that as the real-time estimate of saccade onset.
-            % strobe/note saccade onset and move to next state
+        % if left window within specified time window, that's great! We
+        % note that as the real-time estimate of saccade onset.
+        % strobe/note saccade onset and move to next state
         elseif (~pds.eyeInWindow(p) && ...
                 timeNow > ...
                 (p.trData.timing.fixOff + p.trVars.goLatencyMin) && ...
@@ -260,7 +260,8 @@ switch p.trVars.currentState
         sacInFlight     = gazeVelThreshCheck(p, timeNow);
         
         % (2) logically index all times since fixation offset, then check
-        % if eye position has exceeded 35 in any of those samples
+        % if eye position has exceeded 35 in any of those samples to check
+        % for blinks:
         sinceFixOffLogical = p.trData.onlineGaze(:,3) > ...
             p.trData.timing.fixOff & p.trData.onlineGaze(:,3) < timeNow;
         blinkDetected   = any(any(...
@@ -310,42 +311,13 @@ switch p.trVars.currentState
             % and thin up that targWin:
             p.draw.targWinPenDraw = p.draw.targWinPenThin;
         end
-       
-%         if (eyeInTargetWin && (timeNow < p.trData.timing.saccadeOnset + p.trVars.maxSacDurationToAccept)) || p.trVars.passEye
-% % if the eyes entered the target window we consdier that
-% % the real-time estiamte of saccade offset:
-% p.init.strb.addValue(p.init.codes.saccadeOffset);
-% p.trData.timing.saccadeOffset    = timeNow;
-% p.trVars.currentState           = p.state.holdTarg;
-% % and 'target acquired':
-% p.init.strb.addValue(p.init.codes.targetAq);
-% p.trData.timing.targetAq        = timeNow;
-% 
-% % and thicken up that targWin:
-% p.draw.targWinPenDraw = p.draw.targWinPenThick;
-%         
-%         elseif (eyeInTargetWin && (timeNow > p.trData.timing.saccadeOnset + p.trVars.maxSacDurationToAccept)) || ~p.trVars.passEye
-% % this means subject got into the target win too late. Likely
-% % performed an intermediate saccade. This is unacceptable. 
-% p.init.strb.addValue(p.init.codes.fixBreak);
-% p.trData.timing.fixBreak    = timeNow;
-% p.trVars.currentState       = p.state.fixBreak;
-% 
-% % and thin up that targWin:
-% p.draw.targWinPenDraw = p.draw.targWinPenThin;
-% 
-%         end
-        
-         
            
       case p.state.holdTarg
         %% STATE 7:
         %   HOLD TARGET FIXATION!
-        % Subject has saccaded, sure, but we have yet to check where! This
-        % state checks whether he has landed in the target window and
-        % whether he maintains it for long enough in order to move to the
-        % final state- saccadeCompleted.
-        % joystick should be held throughout. 
+        % Subject has made a saccade into the target window, check to see
+        % if target fixation is maintained for sufficient duration to count
+        % the saccade as "completed"; joystick should be held throughout. 
         
         % if joystick is broken then to hell with all this
         if ~pds.joyHeld(p)
@@ -360,7 +332,6 @@ switch p.trVars.currentState
        
         % check if eyes are in target window:
         eyeInTargetWin = pds.eyeInWindow(p, 'target');
-        
         
         % if eyes stayed on target for full duration, bravo!
         if eyeInTargetWin && timeNow > p.trData.timing.saccadeOffset + ...
@@ -476,10 +447,10 @@ if p.trData.timing.fixAq > 0
     
     % time elapsed from fixation acquisition:
     timeFromFixAq = timeNow - p.trData.timing.fixAq;
-    
+
     % Determine if target should be on:
-    if (timeFromFixAq >= p.trVars.timeTargOnset && ...
-            timeFromFixAq < p.trVars.timeTargOffset)
+    if timeFromFixAq >= p.trVars.timeTargOnset && ...
+            timeFromFixAq < p.trVars.timeTargOffset
 
         % target should be on, set "targetIsOn" to true, strobe target
         % onset, and log target onset time:
@@ -487,16 +458,26 @@ if p.trData.timing.fixAq > 0
         p.init.strb.addValueOnce(p.init.codes.targetOn);
         p.trData.timing.targetOn = timeNow;
 
-    elseif (~p.trVars.isVisSac && ...
-            p.trVars.currentState == p.state.holdTarg)
+    elseif ~p.trVars.isVisSac && ...
+            (p.trVars.currentState == p.state.holdTarg || ...
+            (p.trData.timing.fixOff > 0 && ...
+            p.trVars.targTrainingDelay >= 0 && ...
+            timeNow > (p.trData.timing.fixOff + ...
+            p.trVars.targTrainingDelay)))
 
         % if this is a MemSac trial (e.g. NOT VisSac) and it's time to
-        % reilluminate the target after the primary saccade, set
-        % "targetIsOn" to true, strobe target reillumination, and log
-        % target reillumination time:
+        % reilluminate the target (either after the primary saccade in a
+        % fully trained animal, or after fixation offset + a delay in an
+        % animal undergoing training), set "targetIsOn" to true, strobe
+        % target reillumination, and log target reillumination time:
         p.trVars.targetIsOn       = true;
-        p.init.strb.addValueOnce(p.init.codes.targetReillum);
-        p.trData.timing.targetReillum = timeNow;
+
+        % only strobe / assign target reillumination time once:
+        if p.trData.timing.targetReillum < 0
+            p.init.strb.addValueOnce(p.init.codes.targetReillum);
+            p.trData.timing.targetReillum = timeNow;
+        end
+
     else
 
         % if the target shouldn't be on set "targetIsOn" to false, strobe
