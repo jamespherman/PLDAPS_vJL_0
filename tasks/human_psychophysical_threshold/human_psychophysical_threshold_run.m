@@ -44,14 +44,14 @@ i = 0;
 while ~p.trVars.exitWhileLoop
     
     % Get latest eye / joystick position:
-    p = pds.getEyeJoy(p);
+    p = pds.getEyelink(p);
 
     % iterate counter
     i = i + 1;
 
     % store most recent eye position samples
-    p.trData.onlineEyeX(i) = p.trVars.eyeDegX;
-    p.trData.onlineEyeY(i) = p.trVars.eyeDegY;
+    p.trData.onlineEyeX(i) = p.trVars.eyePixX;
+    p.trData.onlineEyeY(i) = p.trVars.eyePixY;
     
     % STATE DEPENDENT section
     p = stateMachine(p);
@@ -98,22 +98,7 @@ switch p.trVars.currentState
         % strobing trial start time and onward to state 0.1.
         p.init.strb.addValue(p.init.codes.trialBegin);
         p.trData.timing.trialBegin      = timeNow;
-        p.trVars.currentState           = p.state.waitForJoy;
-        
-    case p.state.waitForJoy
-        %% STATE 2:
-        %   WAITING FOR SUBJECT TO HOLD JOYSTICK DOWN
-        
-        % If joystick is held down, onwards to state "showFix"
-        % If not, onward to state 3.3 (non-start)
-        if pds.joyHeld(p)
-            p.init.strb.addValue(p.init.codes.joyPress);
-            p.trData.timing.joyPress    = timeNow;
-            p.trVars.currentState       = p.state.showFix;
-            
-        elseif ~pds.joyHeld(p) && (timeNow > p.trVars.joyWaitDur)
-            p.trVars.currentState       = p.state.nonStart;
-        end
+        p.trVars.currentState           = p.state.showFix;
         
     case p.state.showFix
         %% STATE 3:
@@ -123,6 +108,10 @@ switch p.trVars.currentState
         % Show fixation point
         p.draw.color.fix                = p.draw.clutIdx.expWhite_subWhite;
         
+        % Write message to EDF file to mark the start time of stimulus
+        % presentation.
+        Eyelink('Message', 'FIX_ONSET');   
+
         % Set fixation window color depending on trial type and display it
         % on experimenter display:
         % Orange for peripheral stimulus change with no dimming

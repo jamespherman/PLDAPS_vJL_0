@@ -73,9 +73,12 @@ p.init.taskFiles.finish = [p.init.taskName '_finish.m'];
 % We need to know that this is a "human" experiment rather than a monkey
 % experiment. Define a variable in "init" for this purpose. Using PLDAPS
 % for human experiments means we might or we might not be using the
-% VIEWPixx. Set a variable for that too:
+% VIEWPixx. Set a variable for that too. Finally, set a variable indicating
+% whether we are using "dummy mode" for the Eyelink (if dummy mode is set
+% to "1", the tracker need not be physically connected).
 p.init.subjType         = 'Human';
 p.init.useVPixx         = false;
+p.init.elDummyMode      = 0;
 
 %% Define the Action M-files
 % User-defined actions that are either within the task folder under
@@ -122,35 +125,7 @@ p.status.iTrial                     = 0; % ITERATOR for current trial count
 p.status.iGoodTrial                 = 0; % count of all trials that have ended in hit, miss, cr, foil fa (no fix or joy breaks, no fa)
 p.status.trialsLeftInBlock          = 0; % how many trials remain in the current block?
 p.status.blockNumber                = 0; % what block are we in?
-
-p.status.fixDurReq                  = 0; % how long was the monkey required to hold down the joystick on the last trial?
-
-p.status.hr1Loc1                    = 0; % hit rate for single patch at location 1
-p.status.cr1Loc1                    = 0; % correct reject rate for single patch at location 1
-p.status.hr1Loc2                    = 0; % hit rate for single patch at location 2
-p.status.cr1Loc2                    = 0; % correct reject rate for single patch at location 2
-p.status.hr2Loc1                    = 0; % hit rate for two patch at location 1
-p.status.cr2Loc1                    = 0; % correct reject rate for two patch at location 1
-p.status.hr2Loc2                    = 0; % hit rate for two patch at location 2
-p.status.cr2Loc2                    = 0; % correct reject rate for two patch at location 2
-
-p.status.hc1Loc1                    = 0; % hit count for single patch at location 1
-p.status.crc1Loc1                   = 0; % correct reject count for single patch at location 1
-p.status.hc1Loc2                    = 0; % hit count for single patch at location 2
-p.status.crc1Loc2                   = 0; % correct reject count for single patch at location 2
-p.status.hc2Loc1                    = 0; % hit count for two patch at location 1
-p.status.crc2Loc1                   = 0; % correct reject count for two patch at location 1
-p.status.hc2Loc2                    = 0; % hit count for two patch at location 2
-p.status.crc2Loc2                   = 0; % correct reject count for two patch at location 2
-
-p.status.cue1CtLoc1                 = 0; % count of single patch cue change trials at location 1
-p.status.foil1CtLoc1                = 0; % count of single patch foil change trials at location 1
-p.status.cue1CtLoc2                 = 0; % count of single patch cue change trials at location 2
-p.status.foil1CtLoc2                = 0; % count of single patch foil change trials at location 2
-p.status.cue2CtLoc1                 = 0; % count of two patch cue change trials at location 1
-p.status.foil2CtLoc1                = 0; % count of two patch foil change trials at location 1
-p.status.cue2CtLoc2                 = 0; % count of two patch cue change trials at location 2
-p.status.foil2CtLoc2                = 0; % count of two patch foil change trials at location 2
+p.status.totalTrials                = 0; % how many trials will we run in total?
 
 p.status.missedFrames               = 0; % count of missed frames as reported by psychtoolbox
 

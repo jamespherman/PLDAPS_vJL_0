@@ -41,10 +41,10 @@ p   = pds.initRigConfigFile(p);
 p   = initClut(p);
 
 % (4) initialize PsychToolbox:
-p = initPsychToolbox(p);
+p = pds.initPsychToolbox(p);
 
-% (5) initialize connection to EyeLink:
-p.init.eyeLinkStatus = Eyelink('Initialize');
+% (5) initialize EyeLink:
+p = pds.initEyelink(p);
 
 % (6) define trial structure
 p   = initTrialStructure(p);

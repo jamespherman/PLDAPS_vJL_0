@@ -56,8 +56,41 @@ p   = generateStimuli(p);
 % (8) record save the stim details (ie dot XYCW)
 % p.trVars.stim = p.stim;
 
-% (9) Start ephys recording and ADC schedules
-pds.startEphysAndSchedules;
+% (9) Send trial number information to Eyelink for EDF file:
+% Write TRIALID message to EDF file: marking the start of a trial for
+% DataViewer. See DataViewer manual section: Protocol for EyeLink Data to
+% Viewer Integration > Defining the Start and End of a Trial:
+Eyelink('Message', 'TRIALID %d', p.status.iTrial);
+
+% Write !V CLEAR message to EDF file: creates blank backdrop for DataViewer
+% See DataViewer manual section: Protocol for EyeLink Data to Viewer
+% Integration > Simple Drawing
+Eyelink('Message', '!V CLEAR %d %d %d', p.init.el.backgroundcolour(1), ...
+    p.init.el.backgroundcolour(2), p.init.el.backgroundcolour(3));
+
+% Supply the trial number as a line of text on Host PC screen
+Eyelink('Command', 'record_status_message "TRIAL %d/%d"', ...
+    p.status.iTrial, p.status.totalTrials);
+
+% (10) % Perform a drift check / correction. Optionally provide x y target
+% location, otherwise target is presented on screen centre
+EyelinkDoDriftCorrection(p.init.el, p.draw.middleXY(1), ...
+    p.draw.middleXY(2));
+
+% Put tracker in idle/offline mode before recording.
+Eyelink('SetOfflineMode');
+
+% Start tracker recording
+Eyelink('StartRecording');
+
+% Check which eye is available online. Returns 0 (left), 1 (right)
+% or 2 (binocular)
+p.init.el.eyeUsed = Eyelink('EyeAvailable');
+
+% Get events from right eye if binocular
+if p.init.el.eyeUsed == 2
+    p.init.el.eyeUsed = 1;
+end
 
 
 end

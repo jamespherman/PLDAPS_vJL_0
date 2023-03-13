@@ -13,6 +13,8 @@ AssertOpenGL;
 PsychImaging('PrepareConfiguration');
 
 [p.draw.window, p.draw.screenRect]  = PsychImaging('OpenWindow', 1, [0 0 0]);
+p.draw.middleXY                     = [p.draw.screenRect(3)/2, ...
+    p.draw.screenRect(4)/2];
 
 % MUST FIGURE OUT HOW WE'RE GOING TO DO THIS PART:
 % Screen('LoadNormalizedGammaTable', p.draw.window, p.draw.clut.combinedClut, 2);
