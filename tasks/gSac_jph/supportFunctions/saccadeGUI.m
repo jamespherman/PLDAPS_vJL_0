@@ -1341,7 +1341,8 @@ newCData    = [];
 
 % map types list: (1) saccade peak velocity ("pkv"), (2) saccade reaction
 % time ("srt"), (3) spike counts ("spk"), but only if ripple is connected:
-if uiData.pldapsData.p.rig.ripple.status
+if isfield(uiData.pldapsData.p.rig, 'ripple') && ...
+        uiData.pldapsData.p.rig.ripple.status
     mapTypes    = {'pkv', 'srt', 'spk'};
 else
     mapTypes    = {'pkv', 'srt'};
@@ -1384,7 +1385,8 @@ if nnz(uiData.sacDataArray(:, 9)) > 2
         % counts in the time window specified in the "choose spike map data
         % source" panel. But we only do this if we have spike times to work
         % with:
-        if uiData.pldapsData.p.rig.ripple.status
+        if isfield(uiData.pldapsData.p.rig, 'ripple') && ...
+                uiData.pldapsData.p.rig.ripple.status
         tRad = double(cellfun(...
             @(x)x(circshift(...
             x == uiData.pldapsData.p.init.codes.targetRadius, 1)), ...
