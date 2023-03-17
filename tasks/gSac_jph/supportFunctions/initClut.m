@@ -9,7 +9,7 @@ function c                      = initClut(c)
 
 
 % set Bg to 0.5 0.5 0.5:
-bgRGB       = 0.45*[1 1 1];
+bgRGB       = 0.2*[1 1 1];
 % define muted green (mutGreen):
 % mutGreen    = [0.3953 0.7459 0.5244];
 mutGreen    = [0.5 0.9 0.4];
