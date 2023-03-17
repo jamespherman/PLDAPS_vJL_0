@@ -172,9 +172,9 @@ if p.trVars.passEye
 elseif p.trData.trialEndState == p.state.sacComplete
     
     % get ADC buffered gaze X, Y & T.
-    T   = p.trData.eyeT - p.trData.timing.trialStartPTB;
-    X  = -4 * p.trData.eyeX;
-    Y  = -4 * p.trData.eyeY;
+    T   = p.trData.timing.trialStartPTB + p.trData.eyeT - p.trData.eyeT(1);
+    X  = 4 * p.trData.eyeX;
+    Y  = 4 * p.trData.eyeY;
     
     % compute total velocity using "smoothdiff"
     Vsd = ((1000*smoothdiff(X)).^2 + (1000*smoothdiff(Y)).^2).^0.5;
@@ -182,9 +182,10 @@ elseif p.trData.trialEndState == p.state.sacComplete
     % separately index all the samples before and after saccade onset where
     % eye velocity is below (offline) velocity threshold).
     preSacFix   = Vsd < p.trVars.eyeVelThreshOffline & ...
-        T < p.trData.timing.saccadeOnset;
-    postSacFix  = Vsd < p.trVarsInit.eyeVelThreshOffline & ...
-        T > p.trData.timing.saccadeOnset;
+        T < (p.trData.timing.saccadeOnset + p.trData.timing.trialStartPTB);
+    postSacFix  = Vsd < p.trVars.eyeVelThreshOffline & ...
+        T > (p.trData.timing.saccadeOnset + ...
+        p.trData.timing.trialStartPTB + 0.01);
     
     % compute time of last sample before saccade and first sample after
     % saccade

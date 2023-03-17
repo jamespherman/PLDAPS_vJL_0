@@ -213,7 +213,7 @@ p.trVarsInit.targDegX            = 0;
 p.trVarsInit.targDegY            = 0;
 
 % times/latencies/durations:
-p.trVarsInit.rewardDurationMs        = 150; % reward duration
+p.trVarsInit.rewardDurationMs        = 189; % reward duration
 p.trVarsInit.rewardDelay             = 0;        % delay between cued change and reward delivery for hits.
 p.trVarsInit.timeoutAfterFa          = 2;        % timeout duration following false alarm.
 p.trVarsInit.joyWaitDur              = 15;        % how long to wait for the subject to press the joystick at the beginning of a trial?
@@ -276,7 +276,7 @@ p.trVarsInit.whileLoopIdx           = 0;    % numerical index to current iterati
 p.trVarsInit.eyeVelFiltTaps         = 5;    % length in samples of online velocity filter
 p.trVarsInit.eyeVelThresh           = 25;   % threshold in deg/s for online saccade detection
 p.trVarsInit.useVelThresh           = true; % does the experimenter want to use the velocity threshold to check saccade onset / offset?
-p.trVarsInit.eyeVelThreshOffline    = 10;   % gaze velocity threshold in deg/s for offline saccade detection (cleaner signal, lower threshold).
+p.trVarsInit.eyeVelThreshOffline    = 100;   % gaze velocity threshold in deg/s for offline saccade detection (cleaner signal, lower threshold).
 
 p.trVarsInit.connectPLX             = false;
 
@@ -417,15 +417,15 @@ p.draw.color.mouseCursor    = p.draw.clutIdx.expCyan_subBg;                % mou
 % the boring stuff, like width and height of stuff that gets drawn.
 
 % fixation point and fixation point win:
-p.draw.fixPointWidth        = 8;        % fixation point indicator line width in pixels
-p.draw.fixPointRadius       = 24;        % fixation point "radius" in pixels
+p.draw.fixPointWidth        = 6;        % fixation point indicator line width in pixels
+p.draw.fixPointRadius       = 16;        % fixation point "radius" in pixels
 p.draw.fixWinPenThin        = 4;        % fixation window width (prior to 'go' signal).
 p.draw.fixWinPenThick       = 8;        % fixation window width (post 'go' signal).
 p.draw.fixWinPenDraw        = [];       % gets assigned either the pre or the post during the run function 
 
 % target and target win:
-p.draw.targWidth            = 8;        % fixation point indicator line width in pixels
-p.draw.targRadius           = 24;        % fixation point "radius" in pixels
+p.draw.targWidth            = 6;        % fixation point indicator line width in pixels
+p.draw.targRadius           = 16;        % fixation point "radius" in pixels
 p.draw.targWinPenThin       = 4;        % fixation window width (prior to 'go' signal).
 p.draw.targWinPenThick      = 8;        % fixation window width (post 'go' signal).
 p.draw.targWinPenDraw       = [];       % gets assigned either the pre or the post during the run function
