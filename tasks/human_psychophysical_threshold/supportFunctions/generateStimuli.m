@@ -316,13 +316,19 @@ g1              = radval > (ms - 0.5);
 
 % Build the "hard window"
 hw(g1)          = 0;
-hw              = repmat(squeeze(hw), 1, p.trVars.nPatches);
+hw              = repmat(hw, 1, p.trVars.nPatches);
+
+% compute the background portion of the textures (the chunk outside the
+% "hard window). This doesn't change over stimulus frames:
+txBgnd = 255 * permute(tensorprod(...
+    p.draw.clut.expColors(p.draw.color.background+1, :)', ...
+    double(~hw), 2, 1), [3 2 1]);
 
 % loop over stimulus frames to make textures:
 for i = 1:p.trVars.stimFrames
     p.stim.stimTextures(i) = Screen('MakeTexture', p.draw.window, ...
-        255*hw.*(arrayScale(p.stim.imagesOut(:, :, :, i), ...
-        p.trVars.boxSizePix)) + (~hw)*p.draw.color.background);
+        255 * permute(repmat(hw, 3, 1, 1), [3 2 1]) .* (arrayScale(...
+        p.stim.imagesOut(:, :, :, i), p.trVars.boxSizePix)) + txBgnd);
 end
 
 end

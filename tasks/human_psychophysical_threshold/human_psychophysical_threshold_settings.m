@@ -119,6 +119,9 @@ p.state.miss            = 23;
 p.state.foilFa          = 24;
 p.state.fa              = 25;
 
+% end states - completed:
+p.state.trialCompleted  = 26;
+
 %% STATUS VALUES
 
 p.status.iTrial                     = 0; % ITERATOR for current trial count
@@ -211,7 +214,7 @@ p.trVarsInit.isStimChangeTrial   = false;     % variable tracking whether the cu
 % variables are 0, we do nothing, but if those variables are nonzero, we
 % replace the automatically calculated elevations and eccentricities with
 % the specified values:
-p.trVarsInit.stimLoc1Elev        = 25;           % Stimulus location (angle of elevation).
+p.trVarsInit.stimLoc1Elev        = 45;          % Stimulus location (angle of elevation).
 p.trVarsInit.stimLoc1Ecc         = 10;          % Stimulus location (eccentricity in degrees).
 p.trVarsInit.stimLoc2Elev        = 0;           % Stimulus location (angle of elevation).
 p.trVarsInit.stimLoc2Ecc         = 0;           % Stimulus location (eccentricity in degrees).
@@ -223,8 +226,8 @@ p.trVarsInit.stimLoc4Ecc         = 0;           % Stimulus location (eccentricit
 % Fixation location variables:
 p.trVarsInit.fixDegX             = 0;           % fixation X location in degrees
 p.trVarsInit.fixDegY             = 0;           % fixation Y location in degrees
-p.trVarsInit.fixLocRandX         = 8;           % random variation in X location of fixation point
-p.trVarsInit.fixLocRandY         = 4;           % random variation in X location of fixation point
+p.trVarsInit.fixLocRandX         = 0;           % random variation in X location of fixation point
+p.trVarsInit.fixLocRandY         = 0;           % random variation in X location of fixation point
 
 % the following three variables determine how fixation dimming works. In
 % each trial we will choose with equal probability whether the fixation
@@ -303,8 +306,8 @@ p.trVarsInit.stimIsOn         = false;  % are stimuli currently being presented?
 
 p.trVarsInit.fixWinWidthDeg       = 4;        % fixation window width in degrees
 p.trVarsInit.fixWinHeightDeg      = 4;        % fixation window height in degrees
-p.trVarsInit.fixPointRadPix       = 20;       % fixation point "radius" in pixels
-p.trVarsInit.fixPointLinePix      = 12;       % fixation point line weight in pixels
+p.trVarsInit.fixPointRadPix       = 10;       % fixation point "radius" in pixels
+p.trVarsInit.fixPointLinePix      = 6;        % fixation point line weight in pixels
 
 % variables related to how the experiment is run / what is shown, etc.
 p.trVarsInit.useCellsForDraw        = false;

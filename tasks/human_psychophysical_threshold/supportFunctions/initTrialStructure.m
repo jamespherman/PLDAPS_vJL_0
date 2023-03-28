@@ -164,7 +164,8 @@ trialsArray(:, strcmp(p.init.trialArrayColumnNames, 'stim seed')) = ...
 
 % if this is one of the versions of NFL where we want repeats of trial
 % conditions (reverse-correlation purposes), duplicate the trials table;
-dupExpts = {'nfl', 'saturation increase no single', 'nfl_50', 'nfl_shortBlocks'};
+dupExpts = {'nfl', 'saturation increase no single', 'nfl_50', ...
+    'nfl_shortBlocks', 'human_psychophysics_hue_discrimination'};
 if any(strcmp(dupExpts, p.init.exptType))
     trialsArray = repmat(trialsArray, 2, 1);
 end

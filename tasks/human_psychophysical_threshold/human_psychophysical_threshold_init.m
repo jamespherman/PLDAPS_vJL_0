@@ -55,6 +55,9 @@ p   = plotWindowSetup(p);
 % (8) define in-line functions
 p   = inLineDefs(p);
 
+% create keyboard queue to collect subject responses:
+p   = makeKbQueue(p);
+
 % set task codes:
 p.init.codes = pds.initCodes;
 

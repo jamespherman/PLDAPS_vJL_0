@@ -170,6 +170,12 @@ switch p.trVars.currentState
             p.trVars.postFlip.varNames{end + 1} = 'stimOn';
             % p.init.strb.addValueOnce(p.init.codes.stimOn);
             p.trVars.stimIsOn                = true;
+
+            % Flush and start KbQueue for subject's response collection
+            % device:
+            KbQueueFlush(p.init.respDevIdx);
+            KbQueueStart(p.init.respDevIdx);
+
         elseif timeFromFixAq > p.trVars.fix2StimOffIntvl
             p.trVars.postFlip.logical           = true;
             p.trVars.postFlip.varNames{end + 1} = 'stimOff';
@@ -186,6 +192,8 @@ switch p.trVars.currentState
             p.trVars.currentState      = p.state.fixBreak;
         end
 
+        % 
+
     case p.state.makeDecision
 
         %% STATE 5:
@@ -193,114 +201,47 @@ switch p.trVars.currentState
         %   Stimulus presentation has concluded. Collect a response from
         %   the subject.
 
-        if p.trVars.stimFrameIdx <= p.trVars.stimFrames
-        else
-            p.trVars.currentState = p.state.hit;
-        end
+        % check if a key has been pressed:
+        [pressed, firstPress] = ...
+            KbQueueCheck(p.init.respDevIdx);
 
-        % INSERT CODE HERE to collect response. I'm quite uncertain about
-        % this because we want the experimenter to be able to use the
-        % keyboard. Maybe we should be using the button box?
-        KbWait
+        % if a response has been made, store it and move on to 
+        % "trialCompleted" state:
+        if pressed
+            
+            % get last keypress time and which key was pressed, and store.
+            p.trData.timing.responseTime = firstPress(logical(firstPress));
+            p.trData.responseValue = KbName(firstPress);
+
+            % tell eyelink which key was pressed
+            Eyelink('Message', ['RSP_' p.trData.responseValue]);
+            
+            % stop KbQueue
+            KbQueueStop(p.init.respDevIdx);
+
+            % move on to "trialCompleted" state
+            p.trVars.currentState = p.state.trialCompleted;
+        end
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%% end states: trial COMPLETED %%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    case p.state.hit
-        %% HIT!
-        % DELIVER REWARD AFTER SOME DELAY AND WAIT UNTIL POST REWARD
-        % DURATION HAS ELAPSED, THEN EXIT LOOP
-
-        % if the delay for reward delivery has elapsed and reward delivery
-        % hasn't yet been triggered, deliver the reward.
-        if (timeNow - p.trData.timing.fixAq) > p.trVars.hitRwdTime && ...
-                p.trData.timing.reward < 0
-%             p = pds.deliverReward(p);
-                
-        % if reward delivery has been triggered and the interval to wait
-        % after reward delivery has elapsed, it's time to exit the
-        % while-loop.
-        elseif p.trData.timing.reward > 0 && ...
-                (timeNow - p.trData.timing.reward) > ...
-                (p.trVars.postRewardDuration + p.rig.dp.dacPadDur + ...
-                (p.trVars.rewardDurationMs/1000))
-            p.trVars.exitWhileLoop = true;
-        end
-
-        
-        % if the delay for reward delivery has elapsed and reward delivery
-        % hasn't yet been triggered, deliver the reward.
-        if (timeNow - p.trData.timing.fixHoldReqMet) > ...
-                p.trVars.rewardDelay && p.trData.timing.reward < 0
-
-%             p = pds.deliverReward(p);
-
-        % if reward delivery has been triggered and the interval to wait
-        % after reward delivery has elapsed, it's time to exit the
-        % while-loop.
-        elseif p.trData.timing.reward > 0 && ...
-                (timeNow - p.trData.timing.reward) > ...
-                (p.trVars.postRewardDuration + p.rig.dp.dacPadDur + ...
-                (p.trVars.rewardDurationMs/1000))
-
-            p.trVars.exitWhileLoop = true;
-
-        end
-
-    case p.state.miss
-
-        %% MISS
-        % state 23 = play low tone, then turn things off and move on
-%         p = playTone(p, 'low');
+    case  p.state.trialCompleted
         p.trVars.exitWhileLoop = true;
-
-    case p.state.fa
-
-        %% FALSE ALARM
-%         p = playTone(p, 'noise');
-        p.trVars.exitWhileLoop = true;
-
-    case p.state.cr
-
-        %% CORRECT REJECT
-
-        % 	DELIVER REWARD AFTER SOME DELAY
-        % if the delay for reward delivery has elapsed and reward delivery
-        % hasn't yet been triggered, deliver the reward.
-        if (timeNow - p.trData.timing.fixHoldReqMet) > ...
-                p.trVars.rewardDelay && p.trData.timing.reward < 0
-
-            p = pds.deliverReward(p);
-
-        % if reward delivery has been triggered and the interval to wait
-        % after reward delivery has elapsed, it's time to exit the
-        % while-loop.
-        elseif p.trData.timing.reward > 0 && ...
-                (timeNow - p.trData.timing.reward) > ...
-                (p.trVars.postRewardDuration + p.rig.dp.dacPadDur + ...
-                (p.trVars.rewardDurationMs/1000))
-
-            p.trVars.exitWhileLoop = true;
-        end
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%% end states: trial ABORTED %%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     case p.state.fixBreak
         %% FIXATION BREAK
-        p = playTone(p, 'low');
-        p.trVars.exitWhileLoop = true;
-
-    case p.state.joyBreak
-        %% JOYSTICK BREAK (MISS)
-        p = playTone(p, 'low');
+        % p = playTone(p, 'low');
         p.trVars.exitWhileLoop = true;
         
     case p.state.nonStart
         %% NON-START
         % subject did not hold the joystick within the alloted time and
         % trila is considered a non-start.
-%         p = playTone(p, 'low');
+        % p = playTone(p, 'low');
         p.trVars.exitWhileLoop = true;
 end
 
@@ -321,7 +262,7 @@ if p.trVars.exitWhileLoop
         p.trVars.stimIsOn                   = false;
         p.trVars.postFlip.logical           = true;
         p.trVars.postFlip.varNames{end + 1} = 'stimOff';
-        p.init.strb.addValueOnce(p.init.codes.stimOff);
+        % p.init.strb.addValueOnce(p.init.codes.stimOff);
     end
     
     % turn off fixation and fixation window:
@@ -332,8 +273,9 @@ if p.trVars.exitWhileLoop
     p.trData.trialEndState = p.trVars.currentState;
     
     % and strobe end of trial once:
-    p.init.strb.addValueOnce(p.init.codes.trialEnd);
+    % p.init.strb.addValueOnce(p.init.codes.trialEnd);
     p.trData.timing.trialEnd   = timeNow;
+    Eyelink('Message', 'TRIAL_END');
 end
 % Done with state-dependent section
 
@@ -350,7 +292,7 @@ if timeNow > p.trData.timing.lastFrameTime + ...
 
     % Fill the window with the background color.
     Screen('FillRect', p.draw.window, ...
-        p.draw.clut.subColors(p.draw.color.background + 1, :));
+        fix(255*p.draw.clut.subColors(p.draw.color.background + 1, :)));
 
     % calculate which stimulus frame we're in based on time since
     % stimulus onset - stimuli should be drawn in the frame that their
@@ -360,25 +302,40 @@ if timeNow > p.trData.timing.lastFrameTime + ...
     p.trVars.stimFrameIdx  = ...
         (fix((timeNow - p.trData.timing.stimOn) / ...
         p.rig.frameDuration)) * (p.trData.timing.stimOn > 0) + 1;
-    disp(p.trVars.stimFrameIdx)
     
     % if stimuli should be drawn (based on time in trial), draw them.
     if p.trVars.stimIsOn && ...
             (p.trVars.stimFrameIdx <= p.trVars.stimFrames)
         
         % draw FIXED textures to screen (one per stimulus)
-        for i = p.trVars.nPatches
-            Screen('DrawTexture', p.draw.window, ...
+        % for i = p.trVars.nPatches
+        %     Screen('DrawTexture', p.draw.window, ...
+        %         p.stim.stimTextures(p.trVars.stimFrameIdx), ...
+        %         p.stim.sourceRects(i, :), ...
+        %         p.trVars.stimRects(i,:));
+        % end
+        Screen('DrawTexture', p.draw.window, ...
                 p.stim.stimTextures(p.trVars.stimFrameIdx), ...
-                p.stim.sourceRects(i, :), ...
-                p.trVars.stimRects(i,:));
-        end
+                p.stim.sourceRects(1, :), ...
+                p.trVars.stimRects(1,:));
+        Screen('DrawTexture', p.draw.window, ...
+                p.stim.stimTextures(p.trVars.stimFrameIdx), ...
+                p.stim.sourceRects(2, :), ...
+                p.trVars.stimRects(2,:));
+        Screen('DrawTexture', p.draw.window, ...
+                p.stim.stimTextures(p.trVars.stimFrameIdx), ...
+                p.stim.sourceRects(3, :), ...
+                p.trVars.stimRects(3,:));
+        Screen('DrawTexture', p.draw.window, ...
+                p.stim.stimTextures(p.trVars.stimFrameIdx), ...
+                p.stim.sourceRects(4, :), ...
+                p.trVars.stimRects(4,:));
     end
 
     % draw fixation spot
     Screen('FrameRect',p.draw.window, ...
-        p.draw.clut.subColors(p.draw.color.fix + 1, :), ...
-        p.draw.fixPointRect, p.draw.fixPointWidth);
+        fix(255*p.draw.clut.subColors(p.draw.color.fix + 1, :)), ...
+        p.draw.fixPointRect, 6);
 
     % flip and store time of flip.
     [p.trData.timing.flipTime(p.trVars.flipIdx), ~, ~, ~] = ...
@@ -386,24 +343,24 @@ if timeNow > p.trData.timing.lastFrameTime + ...
     p.trData.timing.lastFrameTime   = ...
         p.trData.timing.flipTime(p.trVars.flipIdx) - ...
         p.trData.timing.trialStartPTB;
-    
-    % strobe all values that are in the strobe list with the
-    % classyStrobe class:
-    if p.init.strb.armedToStrobe
-        p.init.strb.strobeList;
-    end
-    
+
     % if a stimulus event has occurred, mark the time of that event based
     % on the previously recorded fliptime.
     if p.trVars.postFlip.logical
         
         % loop over the "varNames" field of "p.trVars.postFlip" and assign
         % "p.trData.timing.lastFrameTime" to
-        % "p.trData.timing.(varNames{j})".
+        % "p.trData.timing.(varNames{j})", and send a message to eyelink
+        % indicating the event has occurred:
         for j = 1:length(p.trVars.postFlip.varNames)
             if p.trData.timing.(p.trVars.postFlip.varNames{j}) < 0
+
+                % log time
                 p.trData.timing.(p.trVars.postFlip.varNames{j}) = ...
                     p.trData.timing.lastFrameTime;
+
+                % send message to eyelink:
+                Eyelink('Message', p.trVars.postFlip.varNames{j}); 
             end
         end
         
