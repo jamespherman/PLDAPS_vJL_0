@@ -84,7 +84,12 @@ p.trVars.trialSeed = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
 % use trialSeed to determine following pseudorandom number sequence
 rng(p.trVars.trialSeed);
 
-% Which stimulus is changing on the current trial?
+% Which stimulus is changing on the current trial? Note, in this "human
+% psychophysical threshold task", NO STIMULI ARE CHANGING. Instead, one
+% stimulus has a different feature value than the others. I think we can
+% hijack our usual way of doing things so we can retain the existing system
+% for tracking which stimulus is changing and use it to track which
+% stimulus is different instead.
 stimChgIdx = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
     strcmp(p.init.trialArrayColumnNames, 'stim chg'));
 
@@ -95,15 +100,6 @@ p.stim.cueLoc  = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
 % set a couple simple variables that will be helpful during "run"
 p.trVars.isNoChangeTrial    = stimChgIdx == 0;
 p.trVars.isStimChangeTrial  = ~p.trVars.isNoChangeTrial;
-
-% On a certain proportion of trials, we want the peripheral stimulus to
-% change in some feature without dimming. We use a random number draw to
-% decide which trials this should happen on. Do this here:
-if p.trVars.isStimChangeTrial
-    p.trVars.isStimChgNoDim = rand < p.trVars.propHueChgOnly;
-else
-    p.trVars.isStimChgNoDim = false;
-end
 
 % how many stimuli will be shown on this trial?
 p.stim.nStim = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
@@ -131,12 +127,9 @@ varArrayFeatures = {'orient', 'hue', 'lum', 'sat'};
 % / or "varArrayEvalString" as needed for each feature.
 for i = 1:p.stim.nFeatures
     
-    % don't evaluate the arrayEvalString if the currently considered
-    % feature is "hue"
-    if ~strcmp(p.stim.featureValueNames{i}, 'hue')
-        eval([regexprep(arrayEvalString1, patternString, ...
-            p.stim.featureValueNames{i}), arrayEvalString2]);
-    end
+    % evaluate the arrayEvalString
+    eval([regexprep(arrayEvalString1, patternString, ...
+        p.stim.featureValueNames{i}), arrayEvalString2]);
     
     % evaluate the varArrayEvalString if the currently considered feature
     % is "orientation", "hue", "luminance", or "saturation"
@@ -151,14 +144,14 @@ p.stim.primStim     = p.init.trialsArray(p.trVars.currentTrialsArrayRow,...
     strcmp(p.init.trialArrayColumnNames, 'primary'));
 
 % Redefine Hue array so that each patch has a unique hue:
-p.stim.hueArray = repmat(...
-    circshift(p.trVars.hueInit + [0; 90; 180; 270], ...
-    p.stim.primStim - 1), 1, p.trVars.nEpochs);
+% p.stim.hueArray = repmat(...
+%     circshift(p.trVars.hueInit + [0; 90; 180; 270], ...
+%     p.stim.primStim - 1), 1, p.trVars.nEpochs);
 
 % Redefine orientation array so that each patch has a unique orientation:
-p.stim.orientArray = repmat(...
-    circshift(p.trVars.orientInit + [0; 45; 90; 135], ...
-    p.stim.primStim - 1), 1, p.trVars.nEpochs);
+% p.stim.orientArray = repmat(...
+%     circshift(p.trVars.orientInit + [0; 45; 90; 135], ...
+%     p.stim.primStim - 1), 1, p.trVars.nEpochs);
 
 % depending on the info present in the current row of the trials array
 % ("p.init.trialsArray"), define the "stimulus feature value arrays."
@@ -173,14 +166,6 @@ for i = 1:p.stim.nFeatures
     tempDelta = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
         contains(p.init.trialArrayColumnNames, ...
         p.stim.featureValueNames{i}));
-
-    % if this is a trial in which we want to force only the stimulus
-    % feature to change with no dimming, adjust the "tempDelta" for
-    % luminance here:
-    if p.trVars.isStimChgNoDim && ...
-            strcmp(p.stim.featureValueNames{i}, 'lum')
-        tempDelta = 0;
-    end
     
     % if "tempDelta" is non-zero, add the corresponding feature delta
     % to the appropriate entry of the feature array
@@ -192,9 +177,9 @@ for i = 1:p.stim.nFeatures
         
         % add to stim array
         p.stim.([p.stim.featureValueNames{i} ...
-            'Array'])(stimChgIdx, 2) = ...
+            'Array'])(stimChgIdx, 1) = ...
             p.stim.([p.stim.featureValueNames{i} ...
-            'Array'])(stimChgIdx, 2) + featureDelta;
+            'Array'])(stimChgIdx, 1) + featureDelta;
     end
 end
 catch me
@@ -303,7 +288,17 @@ end
 %     p.trVars.foilEccDeg     = p.trVars.stimLoc1Ecc;
 % end
 
-% loop over stimulus locations:
+% calculate "source rectangles" - we generate a single texture that
+% contains all the stimulus patches, then we draw portions of that texture
+% to distinct "destination rectangles" defined below:
+p.stim.sourceRects = [(1:p.stim.patchDiamPix:p.stim.patchDiamPix * ...
+    (p.trVars.nPatches - 1) + 1)', ones(p.trVars.nPatches, 1), ...
+    (1:p.stim.patchDiamPix:p.stim.patchDiamPix * ...
+    (p.trVars.nPatches - 1) + 1)' + p.stim.patchDiamPix-1, ...
+    p.stim.patchDiamPix * ones(p.trVars.nPatches, 1)];
+
+% loop over stimulus locations to compute "destination rectangles" for
+% drawing stimulus patches:
 for i = 1:length(p.trVars.stimElevs)
 
     % calculate locations of stimulus patches in cartesian coordinates.
@@ -352,14 +347,22 @@ p.trVars.fix2StimOnIntvl = p.trVars.fix2CueIntvl + p.trVars.cueDur + ...
 % change in the current trial, we calculate a change time to keep the
 % distributions of stimulus presentation durations and reward timings the
 % same between change and no-change trials.
-p.trVars.stimChangeTime  = p.trVars.fix2StimOnIntvl + ...
-    p.trVars.stim2ChgIntvl + p.trVars.chgWinDur * rand;
+if p.trVars.chgWinDur == 0
+    p.trVars.stimChangeTime = -1;
+else
+    p.trVars.stimChangeTime  = p.trVars.fix2StimOnIntvl + ...
+        p.trVars.stim2ChgIntvl + p.trVars.chgWinDur * rand;
+end
 
 % Compute latest acceptable joystick release time relative to stimulus
 % change. This is computed multiple times in "run", so it's useful to
 % compute it once per trial here:
-p.trVars.joyMaxLatencyAfterChange = p.trVars.stimChangeTime + ...
-    p.trVars.joyMaxLatency;
+if p.trVars.chgWinDur == 0
+    p.trVars.joyMaxLatencyAfterChange = -1;
+else
+    p.trVars.joyMaxLatencyAfterChange = p.trVars.stimChangeTime + ...
+        p.trVars.joyMaxLatency;
+end
 
 % Reward timing:
 % Stimulus change   - reward is delivered 1s after change (for a hit)
@@ -368,6 +371,11 @@ p.trVars.joyMaxLatencyAfterChange = p.trVars.stimChangeTime + ...
 % Calculate reward delivery time for hits and correct rejects. Hit reward
 % time is determined by cued change time, CR reward is randomly delivered
 % some time between "max latency" and max stimulus display time.
+if p.trVars.joyMaxLatencyAfterChange == -1
+    p.trVars.hitRwdTime        = p.trVars.fix2StimOnIntvl + ...
+        p.trVars.stim2ChgIntvl + p.trVars.rewardDelay;
+    p.trVars.corrRejRwdTime    = p.trVars.hitRwdTime;
+else
 p.trVars.hitRwdTime        = p.trVars.stimChangeTime + ...
     p.trVars.rewardDelay;
 p.trVars.corrRejRwdTime    = p.trVars.stimChangeTime + ...
@@ -375,11 +383,15 @@ p.trVars.corrRejRwdTime    = p.trVars.stimChangeTime + ...
     rand*(p.trVars.chgWinDur + p.trVars.stim2ChgIntvl + ...
     p.trVars.fix2StimOnIntvl - p.trVars.stimChangeTime - ...
     p.trVars.joyMaxLatency);
+end
 
 % When should stimuli turn off? Depends on trial type:
 % (1) Stimulus change trials - change time + max latency
 % (3) No change trials - reward time
-if p.trVars.isStimChangeTrial
+if p.trVars.chgWinDur == 0
+    p.trVars.fix2StimOffIntvl = p.trVars.fix2StimOnIntvl + ...
+        p.trVars.stim2ChgIntvl;
+elseif p.trVars.isStimChangeTrial
     p.trVars.fix2StimOffIntvl = p.trVars.stimChangeTime + ...
         p.trVars.joyMaxLatency;
 else
@@ -394,11 +406,17 @@ p.trVars.stimDur = p.trVars.stim2ChgIntvl + p.trVars.chgWinDur + ...
 % frames. An "epoch" is some duration over which the features of the
 % stimuli don't change (e.g. the hue distribution doesn't change). We first
 % calculate the duration of each "epoch" in seconds then convert to frames:
+if p.trVars.chgWinDur == 0
+    stimOnToStimChgIntvl = p.trVars.stim2ChgIntvl;
+    p.stim.epochFrames = fix(...
+    stimOnToStimChgIntvl / p.rig.frameDuration);
+else
 stimOnToStimChgIntvl = p.trVars.stimChangeTime - ...
     p.trVars.fix2StimOnIntvl;
 stimChgToStimOffIntvl = p.trVars.stimDur - stimOnToStimChgIntvl;
 p.stim.epochFrames = fix(...
     [stimOnToStimChgIntvl,  stimChgToStimOffIntvl] / p.rig.frameDuration);
+end
 
 % number of frames up to the "end-1"th epoch (not useful when there are
 % only 2 epochs but very useful when there are more epochs).

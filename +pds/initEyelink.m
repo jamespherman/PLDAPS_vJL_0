@@ -20,7 +20,7 @@ p.init.el = EyelinkInitDefaults(p.draw.window);
 p.init.el.calibrationtargetsize = 3;% Outer tgt size as % of screen pxls
 p.init.el.calibrationtargetwidth = 0.7;% Inner tgt size as % of screen pxls
 p.init.el.backgroundcolour = ...
-    p.draw.clut.expColors(p.draw.color.background + 1, :);
+    fix(p.draw.clut.expColors(p.draw.color.background + 1, :)*255);
 p.init.el.calibrationtargetcolour = [0 0 0];% RGB black
 
 % Set "Camera Setup" instructions text colour different from background

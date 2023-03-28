@@ -154,6 +154,8 @@ for i = 1:nLoop
                 cell2mat(arrayfun(@(x)x*ones(p.stim.patchDiamBox), ...
                 p.stim.speedArray(:, i)', 'UniformOutput', false)), ...
                 p.trVars.stimFrames);
+
+            
     
         case nLoop % last epoch
             % just as above
@@ -277,9 +279,14 @@ for i = 1:nLoop
             p.stim.tempB(currInd, :)] = ...
             dkl2rgb([...
             p.stim.funs.unfrnd(...
-            p.stim.lumArray(j, i) - p.stim.lumVarArray(j, i), p.stim.lumArray(j, i) + p.stim.lumVarArray(j,i), [1,cpppe(i, j)]) + gaborVals'; ...
-            p.stim.funs.rotVcts([p.stim.funs.nrmrnd(p.stim.satArray(j, i), p.stim.satVarArray(j, i), [1, cpppe(i, j)]); ...
-            p.stim.funs.nrmrnd(0, p.stim.hueVarArray(j, i), [1, cpppe(i, j)])], p.stim.hueArray(j, i))]);
+            p.stim.lumArray(j, i) - p.stim.lumVarArray(j, i), ...
+            p.stim.lumArray(j, i) + p.stim.lumVarArray(j,i), ...
+            [1,cpppe(i, j)]) + gaborVals'; ...
+            p.stim.funs.rotVcts(...
+            [p.stim.funs.nrmrnd(p.stim.satArray(j, i), ...
+            p.stim.satVarArray(j, i), [1, cpppe(i, j)]); ...
+            p.stim.funs.nrmrnd(0, p.stim.hueVarArray(j, i), ...
+            [1, cpppe(i, j)])], p.stim.hueArray(j, i))]);
         
         % dkl2rgb takes a 3 x n array of DKL-space colors, first row is
         % luminance, 2nd row is red/green, 3rd row is blue/yellow. we're
@@ -290,36 +297,33 @@ for i = 1:nLoop
     end
 end
 
-% make p.trVars.nPatches textures (image pointers to be displayed based on
-% CLUT animation).
-p = makeTex(p);
+% define a 4D placeholder for the output "images":
+p.stim.imagesOut = zeros(p.stim.patchDiamBox, p.trVars.nPatches * ...
+    p.stim.patchDiamBox, 3, p.trVars.stimFrames);
 
-% we can reshape p.stim.uci from an M x N x frames array into an M*N x
-% frames array, then use the index values from the rows found using
-% p.stim.colorRowSelector to populate the CLUT. This should work...
-p.stim.ucir = reshape(p.stim.uci, ...
-    size(p.stim.uci,1) * size(p.stim.uci,2), size(p.stim.uci,3));
+% populate image placeholder array:
+p.stim.imagesOut(:,:,1,:) = p.stim.tempR(p.stim.uci+1);
+p.stim.imagesOut(:,:,2,:) = p.stim.tempG(p.stim.uci+1);
+p.stim.imagesOut(:,:,3,:) = p.stim.tempB(p.stim.uci+1);
 
-% placeholder for myCLUTs 
-p.draw.myCLUTs = zeros(512, 3, p.trVars.stimFrames);
+% make a hard-edged circular window for the "checkerboard" stimulus
+% patches. First some helpful variables.
+ms              = p.stim.patchDiamPix / 2 - 0.5;
+[x,y]           = meshgrid(-ms:ms, -ms:ms);
+hw              = ones(1, p.stim.patchDiamPix, p.stim.patchDiamPix);
+radval          = (x.^2 + y.^2).^0.5;
+g1              = radval > (ms - 0.5);
 
-% how much zero padding do we need at the end?
-zpad = 256 - p.draw.nColors - nnz(p.stim.colorRowSelector);
-blah = {'tempR', 'tempG', 'tempB'};
+% Build the "hard window"
+hw(g1)          = 0;
+hw              = repmat(squeeze(hw), 1, p.trVars.nPatches);
 
-% loop over frames
+% loop over stimulus frames to make textures:
 for i = 1:p.trVars.stimFrames
-    % loop over "guns" (r, g, b).
-    for j = 1:3
-        p.draw.myCLUTs(:, j, i) = [...
-            p.draw.clut.subColors(1:p.draw.nColors, j); ...
-            p.stim.(blah{j})(p.stim.ucir(p.stim.colorRowSelector, i)); ...
-            zeros(zpad, 1); p.draw.clut.expColors(1:p.draw.nColors, j); ...
-            p.stim.(blah{j})(p.stim.ucir(p.stim.colorRowSelector, i)); ...
-            zeros(zpad, 1)];
-    end
+    p.stim.stimTextures(i) = Screen('MakeTexture', p.draw.window, ...
+        255*hw.*(arrayScale(p.stim.imagesOut(:, :, :, i), ...
+        p.trVars.boxSizePix)) + (~hw)*p.draw.color.background);
 end
-
 
 end
 

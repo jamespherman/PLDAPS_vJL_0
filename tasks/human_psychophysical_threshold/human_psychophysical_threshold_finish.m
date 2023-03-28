@@ -31,7 +31,7 @@ if ~isfield(p.draw, 'movie')
 end
 
 % read buffered ADC and DIN data from DATAPixx
-p           = pds.readDatapixxBuffers(p);
+% p           = pds.readDatapixxBuffers(p);
 
 % Was the previous trial aborted?
 p.trData.trialRepeatFlag = (p.trData.trialEndState > 10) & ...
@@ -39,25 +39,21 @@ p.trData.trialRepeatFlag = (p.trData.trialEndState > 10) & ...
 
 %% strobes:
 % strobe trial data:
-p           = pds.strobeTrialData(p);
+% p           = pds.strobeTrialData(p);
 
 % strobe and mark end of trial:
 timeNow = GetSecs - p.trData.timing.trialStartPTB; % timeNow is relative to trial Start
 p.trData.timing.trialEnd   = timeNow;
-p.init.strb.strobeNow(p.init.codes.trialEnd);
-
-% (3) mark end time in PTB & DP time:
-[p.trData.timing.trialEndPTB, p.trData.timing.trialEndDP] = pds.getTimes;
 
 % save strobed codes:
-p.trData.strobed = p.init.strb.strobedList;
+% p.trData.strobed = p.init.strb.strobedList;
 
 % flush strobe "veto" & "strobed" list
-p.init.strb.flushVetoList;
-p.init.strb.flushStrobedList;
+% p.init.strb.flushVetoList;
+% p.init.strb.flushStrobedList;
 
 % (3) pause ephys
-pds.stopOmniPlex;
+% pds.stopOmniPlex;
 
 % wait for joystick release
 p           = pds.waitForJoystickRelease(p);
@@ -68,12 +64,7 @@ p           = pds.waitForJoystickRelease(p);
 % monkey has held the joystick down for a "long time" since the end of the
 % last trial, the "time-out" window has passed and there won't be an
 % ADDITIONAL time out.
-postTrialTimeOut(p);
-
-% retreive data from omniplex PC if desired.
-if p.rig.connectToOmniplex
-    p = pds.getOmniplexData(p);
-end
+% postTrialTimeOut(p);
 
 % % % p.trData.spikeAndStrobeTimes(p.trData.spikeAndStrobeTimes(:,1)==4, 3)
 % % % 

@@ -95,15 +95,14 @@ switch p.trVars.currentState
         %% STATE 1:
         %   TRIAL HAS BEGUN!
         
-        % strobing trial start time and onward to state 0.1.
+        % strobing trial start time and onward to state 3 - Show Fixation
         p.init.strb.addValue(p.init.codes.trialBegin);
         p.trData.timing.trialBegin      = timeNow;
         p.trVars.currentState           = p.state.showFix;
         
     case p.state.showFix
         %% STATE 3:
-        %   JOYSTICK IS HELD, SHOW FIXATION POINT AND WAIT FOR
-        %   SUBJECT TO ACQUIRE FIXATION.
+        %   SHOW FIXATION POINT AND WAIT FOR SUBJECT TO ACQUIRE FIXATION.
         
         % Show fixation point
         p.draw.color.fix                = p.draw.clutIdx.expWhite_subWhite;
@@ -111,20 +110,6 @@ switch p.trVars.currentState
         % Write message to EDF file to mark the start time of stimulus
         % presentation.
         Eyelink('Message', 'FIX_ONSET');   
-
-        % Set fixation window color depending on trial type and display it
-        % on experimenter display:
-        % Orange for peripheral stimulus change with no dimming
-        % Blue for peripheral stimulus change + dimming
-        % Black for no change
-        if p.trVars.isStimChgNoDim
-            p.draw.color.fixWin         = p.draw.clutIdx.expOrange_subBg;
-        elseif p.trVars.isFoilChangeTrial
-            p.draw.color.fixWin         = p.draw.clutIdx.expBlue_subBg;
-        else
-            p.draw.color.fixWin         = p.draw.clutIdx.expBlack_subBg;
-        end
-        p.draw.fixWinPenDraw = p.draw.fixWinPenPre;
 
         % If "fixOn" time hasn't been defined, and we haven't already
         % indicated that "fixOn" should be defined after the next flip,
@@ -134,251 +119,89 @@ switch p.trVars.currentState
         if p.trData.timing.fixOn < 0 ...
                 && ~ismember('fixOn', p.trVars.postFlip.varNames)
 
-            % Do we need to add strobe values to "postFlip" and to
-            % "addValueOnce"? (11/8/2022 - JPH)
+            % I don't think we want to strobe anything, but I do think it
+            % makes sense to write messages to the Eyelink "EDF" file after
+            % the "next" flip.
             p.draw.color.fix = p.draw.clutIdx.expWhite_subWhite;
             p.trVars.postFlip.logical           = true;
             p.trVars.postFlip.varNames{end + 1} = 'fixOn';
-            p.init.strb.addValueOnce(p.init.codes.fixOn);
+            % p.init.strb.addValueOnce(p.init.codes.fixOn);
         end
         
-        % If fixation is aquired within alotted time, and joystick is
-        % still held, onwards to p.state.dontMove:
-        if pds.eyeInWindow(p) && pds.joyHeld(p) && ...
+        % If fixation is aquired within alotted time move onwards next
+        % state.
+        if pds.eyeInWindow(p) && ...
                 timeNow < (p.trData.timing.fixOn + p.trVars.fixWaitDur)
-                
-            p.init.strb.addValue(p.init.codes.fixAq);
+            
+            Eyelink('Message', 'FIX_ACQ');
             p.trData.timing.fixAq      = timeNow;
             p.trVars.currentState      = p.state.dontMove;
-            
-        elseif ~pds.joyHeld(p)
-
-            % joystick released early; in this case, it's a joystick break
-            % "joyBreak" since he hasn't yet acquired fixation. As soon as
-            % the subject acquires fixation, joystick release becomes a
-            % false alarm:
-            p.init.strb.addValue(p.init.codes.joyRelease);
-            p.trData.timing.joyRelease = timeNow;
-            p.trVars.currentState      = p.state.joyBreak;
-
-            % Compute "reaction time"
-            p.trData.timing.reactionTime    = ...
-                    p.trData.timing.joyRelease - p.trVars.stimChangeTime;
-            
-            % hide fixation point
-            p.draw.color.fix                = p.draw.clutIdx.expBg_subBg;
             
         elseif p.trData.timing.fixOn > 0 && timeNow > ...
                 (p.trData.timing.fixOn + p.trVars.fixWaitDur) 
             % fixation was never acquired
-            p.init.strb.addValue(p.init.codes.nonStart);
+            Eyelink('Message', 'FIX_ACQ');
             p.trData.timing.joyRelease = timeNow;
             p.trVars.currentState      = p.state.nonStart;
         end
         
     case p.state.dontMove
         %% STATE 4:
-        % "DON'T MOVE" - SUBJECT HOLDS FIXATION AND JOYSTICK.
-        % STUFF HAPPENS ON SCREEN (eg cue flashes, stimulus appears,
-        % but these are determined in the time-dependent section,
-        % below). HERE, THE KEY THING IS THAT THE SUBJECT SHOULD NOT
-        % DO A SINGLE THING.
-        %
+        % "DON'T MOVE" - SUBJECT HOLDS FIXATION WHILE STIMULI ARE
+        % PRESENTED.
+
         % The next state (STATE 5 - MAKE DECISION) is the money time,
         % where subject is to either respond or not, and the outcome of
         % the trial is determiend.
         
         % Calculate elapsed time since fixation acquisition
         timeFromFixAq = timeNow - p.trData.timing.fixAq;
-
-        % Determine if cue should be on. If it should and we haven't
-        % already indicated that "cueOn" should be defined after the next
-        % flip, indicate that "cueOn" should be defined after the next flip
-        % and strobe "cueOn" after the next flip. Conversely, also
-        % determine if the cue should be off, etc.
-        if timeFromFixAq >= p.trVars.fix2CueIntvl && ...
-                timeFromFixAq < ...
-                (p.trVars.fix2CueIntvl + p.trVars.cueDur) && ...
-                ~ismember('cueOn', p.trVars.postFlip.varNames)
-            p.trVars.cueIsOn                    = true;
-            p.trVars.postFlip.logical           = true;
-            p.trVars.postFlip.varNames{end + 1} = 'cueOn';
-            p.init.strb.addValueOnce(p.init.codes.cueOn);
-            
-        elseif ~ismember('cueOff', p.trVars.postFlip.varNames)
-            p.trVars.cueIsOn                    = false;
-            p.trVars.postFlip.logical           = true;
-            p.trVars.postFlip.varNames{end + 1} = 'cueOff';
-            p.init.strb.addValueOnce(p.init.codes.cueOff);
-        end
         
         % Determine if peripheral stimuli should be on. If it/they should
         % and we haven't already indicated that "stimOn" should be defined
         % after the next flip, indicate that "stimOn" should be defined
-        % after the next flip and strobe "stimOn" after the next flip.
+        % after the next flip and strobe "stimOn" after the next flip. Then
+        % stay in this state until stimulus presentation has concluded, and
+        % move on to the "makeDecision" state.
         if timeFromFixAq >= p.trVars.fix2StimOnIntvl && ...
                 timeFromFixAq < p.trVars.fix2StimOffIntvl && ...
                 ~ismember('stimOn', p.trVars.postFlip.varNames)
             p.trVars.postFlip.logical           = true;
             p.trVars.postFlip.varNames{end + 1} = 'stimOn';
-            p.init.strb.addValueOnce(p.init.codes.stimOn);
+            % p.init.strb.addValueOnce(p.init.codes.stimOn);
             p.trVars.stimIsOn                = true;
+        elseif timeFromFixAq > p.trVars.fix2StimOffIntvl
+            p.trVars.postFlip.logical           = true;
+            p.trVars.postFlip.varNames{end + 1} = 'stimOff';
+            p.trVars.currentState               = p.state.makeDecision;
+            p.trVars.stimIsOn                   = false;
         end
 
-        % Hang out in this state until a stimChangeTime has passed, then go
-        % to "makeDecision". If at any time the monkey breaks fixation or
-        % joystick, go to appropriate terminal state.
-        if p.trVars.isStimChangeTrial && ...
-                ((timeNow - p.trData.timing.fixAq) >= ...
-                p.trVars.stimChangeTime) && ...
-                ~ismember('cueChg', p.trVars.postFlip.varNames)
-            
-            p.trVars.currentState               = p.state.makeDecision;
-            p.trVars.postFlip.logical           = true;
-            p.trVars.postFlip.varNames{end + 1} = 'stimChg';
-            p.init.strb.addValue(p.init.codes.stimChange);
-            
-        elseif p.trVars.isNoChangeTrial && ...
-                ((timeNow - p.trData.timing.fixAq) >= ...
-                p.trVars.stimChangeTime) && ...
-                ~ismember('noChg', p.trVars.postFlip.varNames)
-            
-            p.trVars.currentState               = p.state.makeDecision;
-            p.trVars.postFlip.logical           = true;
-            p.trVars.postFlip.varNames{end + 1} = 'noChg';
-            p.init.strb.addValue(p.init.codes.noChange);
-            
-        elseif ~pds.eyeInWindow(p)
+        % If subject breaks fixation, abort.
+        if ~pds.eyeInWindow(p)
 
-            p.init.strb.addValue(p.init.codes.fixBreak);
+            Eyelink('Message', 'FIX_BREAK');
+            % p.init.strb.addValue(p.init.codes.fixBreak);
             p.trData.timing.fixBreak   = timeNow;
             p.trVars.currentState      = p.state.fixBreak;
-            
-        elseif ~pds.joyHeld(p)
-
-            % strobe joy release and mark time
-            p.init.strb.addValue(p.init.codes.joyRelease);
-            p.trData.timing.joyRelease    = timeNow;
-
-            % Compute "reaction time"
-            p.trData.timing.reactionTime    = ...
-                    p.trData.timing.joyRelease - p.trVars.stimChangeTime;
-            
-            % if stimuli are on, this is a false alarm, otherwise it's a
-            % joy break:
-            if p.trVars.stimIsOn && ...
-                    ((timeNow - p.trData.timing.fixAq) > ...
-                    (p.trVars.fix2StimOnIntvl + p.trVars.joyMinLatency))
-
-                p.trVars.currentState  = p.state.fa;
-            else
-
-                p.trVars.currentState  = p.state.joyBreak;
-
-            end
-            
         end
 
     case p.state.makeDecision
 
         %% STATE 5:
         %   MAKE A DECISON!
-        %   THE STIMULUS CHANGE (OR LACK THEREOF) HAS OCCURED, AND
-        %   MONKEY IS REQUIRED TO DECIDE WHETHER TO RESPOND OR NOT
-        %
-        % Either the cue or foil patch have changed, or neither (ie the
-        % psuedo-change time has passed).
-        %
-        % In order to evaluate which state should follow, we inspect
-        % animal joystick behavior (release/hold) within a prescribed
-        % tempoarl window (eg "from 0.1s to 0.5s post change") for each
-        % trial type:
-        %
-        % Joy is released:
-        %   if in stim-change --> Hit
-        %   if in noChange --> FA
-        %
-        % Joy is held:
-        %   if in stim-change --> Miss
-        %   if in noChange --> CR
-        %
-        % And of course, evaluation depends on the temporal range
-        % within a response
-        
-        % change the thickness of the fixation window to inform
-        % the experimenter that a change has happened.
-        p.draw.fixWinPenDraw = p.draw.fixWinPenPost;
+        %   Stimulus presentation has concluded. Collect a response from
+        %   the subject.
 
-        % If fixation is broken, no need to check other cases:
-        if ~pds.eyeInWindow(p)
-            p.init.strb.addValue(p.init.codes.fixBreak);
-            p.trData.timing.fixBreak   = timeNow;
-            p.trVars.currentState      = p.state.fixBreak;
-            
-        % If joystick is released, evaluate trial type & time to decide
-        % what happens next:
-        elseif ~pds.joyHeld(p)
-
-            % Strobe joyRelease and mark time.  and calculate time of
-            % joyRelease relative to fixation acquisition:
-            p.init.strb.addValue(p.init.codes.joyRelease);
-            p.trData.timing.joyRelease  = timeNow;
-
-            % Compute time of joyRelease relative to fixation acquisition:
-            joyRelFromFixAqTime         = p.trData.timing.joyRelease - ...
-                p.trData.timing.fixAq;
-
-            % Compute "reaction time"
-            p.trData.timing.reactionTime    = ...
-                    p.trData.timing.joyRelease - p.trVars.stimChangeTime;
-            
-            % If joystick is released after a change but before the
-            % "p.trVars.joyMinLatency", or if this is a no-change trial,
-            % this is a fa (false alarm).
-            if ((p.trVars.isStimChangeTrial && ...
-                    joyRelFromFixAqTime < ...
-                (p.trVars.stimChangeTime + p.trVars.joyMinLatency)) || ...
-                    p.trVars.isNoChangeTrial)
-                
-                % Move on to next state:
-                p.trVars.currentState               = p.state.fa;
-                
-            % If joystick is released after a change and within
-            % the tepmoral window (ie between min & max latency),
-            % it's a Hit!
-            elseif p.trVars.isStimChangeTrial && ...
-                    joyRelFromFixAqTime > ...
-                    (p.trVars.stimChangeTime + p.trVars.joyMinLatency) ...
-                    && (joyRelFromFixAqTime <  ...
-                    p.trVars.joyMaxLatencyAfterChange ...
-                    || p.trVars.passJoy)
-
-                % Move on to next state and play tone indicating that this
-                % was a hit.
-                p.trVars.currentState           = p.state.hit;
-                p = playTone(p, 'high');
-
-            end
-            
-        % If joystick is held:
+        if p.trVars.stimFrameIdx <= p.trVars.stimFrames
         else
-
-            % If this is a stimulus change trial - Miss!
-            if p.trVars.isStimChangeTrial && ...
-                    (timeNow - p.trData.timing.fixAq) > ...
-                    p.trVars.joyMaxLatencyAfterChange
-                
-                p.trVars.currentState      = p.state.miss;
-                
-            % If this is a no-change trial - CR!
-            elseif p.trVars.isNoChangeTrial && ...
-                    (timeNow - p.trData.timing.fixAq) > ...
-                    p.trVars.joyMaxLatencyAfterChange
-
-                p.trVars.currentState      = p.state.cr;
-
-            end
+            p.trVars.currentState = p.state.hit;
         end
+
+        % INSERT CODE HERE to collect response. I'm quite uncertain about
+        % this because we want the experimenter to be able to use the
+        % keyboard. Maybe we should be using the button box?
+        KbWait
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%% end states: trial COMPLETED %%%
@@ -392,7 +215,7 @@ switch p.trVars.currentState
         % hasn't yet been triggered, deliver the reward.
         if (timeNow - p.trData.timing.fixAq) > p.trVars.hitRwdTime && ...
                 p.trData.timing.reward < 0
-            p = pds.deliverReward(p);
+%             p = pds.deliverReward(p);
                 
         % if reward delivery has been triggered and the interval to wait
         % after reward delivery has elapsed, it's time to exit the
@@ -410,7 +233,7 @@ switch p.trVars.currentState
         if (timeNow - p.trData.timing.fixHoldReqMet) > ...
                 p.trVars.rewardDelay && p.trData.timing.reward < 0
 
-            p = pds.deliverReward(p);
+%             p = pds.deliverReward(p);
 
         % if reward delivery has been triggered and the interval to wait
         % after reward delivery has elapsed, it's time to exit the
@@ -428,13 +251,13 @@ switch p.trVars.currentState
 
         %% MISS
         % state 23 = play low tone, then turn things off and move on
-        p = playTone(p, 'low');
+%         p = playTone(p, 'low');
         p.trVars.exitWhileLoop = true;
 
     case p.state.fa
 
         %% FALSE ALARM
-        p = playTone(p, 'noise');
+%         p = playTone(p, 'noise');
         p.trVars.exitWhileLoop = true;
 
     case p.state.cr
@@ -521,46 +344,13 @@ function p = drawMachine(p)
 % timeNow is relative to trial Start
 timeNow = GetSecs - p.trData.timing.trialStartPTB;
 
-% Given joystick state, determine color for joystick indicator:
-[~, joyState] = pds.joyHeld(p);
-if isnan(joyState)
-    p.draw.color.joyInd = p.draw.clutIdx.expGrey25_subBg;   % neither press nor released
-elseif joyState == 0
-    p.draw.color.joyInd = p.draw.clutIdx.expGrey70_subBg;   % released
-elseif joyState == -1
-    p.draw.color.joyInd = p.draw.clutIdx.expBlue_subBg;   % pressed in low voltage
-elseif joyState == 1
-    p.draw.color.joyInd = p.draw.clutIdx.expOrange_subBg;   % pressed in high voltage
-end
-
-% now calculate size of joystick-fill rectangle
-joyRectNow = pds.joyRectFillCalc(p);
-
 % if we're close enouframegh in time to the next screen flip, start drawing.
 if timeNow > p.trData.timing.lastFrameTime + ...
         p.rig.frameDuration - p.rig.magicNumber
 
     % Fill the window with the background color.
-    Screen('FillRect', p.draw.window, p.draw.color.background);
-    
-    % Draw the grid
-    Screen('DrawLines', p.draw.window, p.draw.gridXY, [], ...
-        p.draw.color.gridMajor);
-    
-    % Draw the gaze position, MUST DRAW THE GAZE BEFORE THE
-    % FIXATION. Otherwise, when the gaze indicator goes over any
-    % stimuli it will change the occluded stimulus' color!
-    gazePosition = ...
-        [p.trVars.eyePixX p.trVars.eyePixY ...
-        p.trVars.eyePixX p.trVars.eyePixY] + ...
-        [-1 -1 1 1]*p.draw.eyePosWidth + repmat(p.draw.middleXY, 1, 2);
-    Screen('FillRect', p.draw.window, p.draw.color.eyePos, gazePosition);
-    
-    % draw the cue-ring (if desired)
-    if p.trVars.cueIsOn
-        Screen('FrameOval', p.draw.window, p.draw.color.cueRing, ...
-            p.draw.cueRingRect, p.draw.ringThickPix);
-    end
+    Screen('FillRect', p.draw.window, ...
+        p.draw.clut.subColors(p.draw.color.background + 1, :));
 
     % calculate which stimulus frame we're in based on time since
     % stimulus onset - stimuli should be drawn in the frame that their
@@ -570,40 +360,25 @@ if timeNow > p.trData.timing.lastFrameTime + ...
     p.trVars.stimFrameIdx  = ...
         (fix((timeNow - p.trData.timing.stimOn) / ...
         p.rig.frameDuration)) * (p.trData.timing.stimOn > 0) + 1;
+    disp(p.trVars.stimFrameIdx)
     
     % if stimuli should be drawn (based on time in trial), draw them.
     if p.trVars.stimIsOn && ...
             (p.trVars.stimFrameIdx <= p.trVars.stimFrames)
-
-        % Push (possibly new) color look-up table to ViewPIXX based on
-        % current frame (frame determined based on time in trial).
-        Datapixx('SetVideoClut', p.draw.myCLUTs(:, : , ...
-            p.trVars.stimFrameIdx));
         
         % draw FIXED textures to screen (one per stimulus)
-        for i = p.trVars.stimOnList
-            if isempty(p.draw.stimTex{i})
-                keyboard
-            end
-            Screen('DrawTexture', p.draw.window, p.draw.stimTex{i}, [], ...
+        for i = p.trVars.nPatches
+            Screen('DrawTexture', p.draw.window, ...
+                p.stim.stimTextures(p.trVars.stimFrameIdx), ...
+                p.stim.sourceRects(i, :), ...
                 p.trVars.stimRects(i,:));
         end
     end
 
     % draw fixation spot
-    Screen('FrameRect',p.draw.window, p.draw.color.fix, ...
+    Screen('FrameRect',p.draw.window, ...
+        p.draw.clut.subColors(p.draw.color.fix + 1, :), ...
         p.draw.fixPointRect, p.draw.fixPointWidth);
-    
-    % draw fixation window
-    Screen('FrameRect',p.draw.window, p.draw.color.fixWin, ...
-        repmat(p.draw.fixPointPix, 1, 2) +  ...
-        [-p.draw.fixWinWidthPix -p.draw.fixWinHeightPix ...
-        p.draw.fixWinWidthPix p.draw.fixWinHeightPix], ...
-        p.draw.fixWinPenDraw)
-    
-    % Draw the joystick-bar graphic.
-    Screen('FrameRect', p.draw.window, p.draw.color.joyInd, p.draw.joyRect);
-    Screen('FillRect',  p.draw.window, p.draw.color.joyInd, joyRectNow);
 
     % flip and store time of flip.
     [p.trData.timing.flipTime(p.trVars.flipIdx), ~, ~, ~] = ...

@@ -109,6 +109,10 @@ switch p.init.exptType
         
     case 'saturation increase no single cue chg only'
         table = tableDefSatInc_noSingle_cueChgOnly;
+
+    case 'human_psychophysics_hue_discrimination'
+
+        table = tableDef_humanPsychophysicsHueDiscrimination;
         
     otherwise
         table = tableDefault;
@@ -195,6 +199,15 @@ end
 %     'trialCode', ...            % 17
 %     'trial seed', ...           % 18 seed value to make trial params reproducible
 %     'stim seed'};               % 19 seed value to make stimulus properties reproducible
+
+% Four stimulus patches, one might have a different hue than the others (on
+% average). Human psychophysics:
+function table = tableDef_humanPsychophysicsHueDiscrimination
+table =            [1   4   1   1   1   1   1   0   0   0   0   1   0   0   1   10   23901;
+                    2   4   1   1   1   1   2   0   0   0   0   1   0   0   2   10   23902;
+                    3   4   1   1   1   1   3   0   0   0   0   1   0   0   3   10   23903;
+                    4   4   1   1   1   1   4   0   0   0   0   1   0   0   4   10   23904;];
+end
 
 % Peripheral stimulus dimming in one of multiple possible stimuli:
 function table = tableDef_fixAndStimDim_test

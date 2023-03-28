@@ -119,7 +119,7 @@ end
 try
 set(p.draw.onlinePlotAxes, 'XLim', 1.1*[xMin, xMax], 'YLim', [0 newY + 1]);
 catch me
-    keyboard
+%     keyboard
 end
 
 % get eye X & Y data both before and after fixation acquisition RELATIVE TO

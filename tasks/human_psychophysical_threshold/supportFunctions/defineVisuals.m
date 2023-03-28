@@ -27,12 +27,10 @@ for i = 1:length(gridY)
 end
 
 % define fixation window color depending on trial type:
-if p.trVars.isStimChgNoDim
+if p.trVars.isStimChangeTrial
     p.draw.color.fixWin = p.draw.clutIdx.expOrange_subBg;
-elseif p.trVars.isStimChangeTrial
-    p.draw.color.fixWin = p.draw.clutIdx.expBlue_subBg;
 else
-    p.draw.color.fixWin = p.draw.clutIdx.expGrey25_subBg;
+    p.draw.color.fixWin = p.draw.clutIdx.expBlue_subBg;
 end
 
 end

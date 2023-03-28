@@ -52,7 +52,7 @@ p.init.protocol_title   = [p.init.taskName '_task'];    % Define Banner text to 
 p.init.date             = datestr(now,'yyyymmdd');
 p.init.time             = datestr(now,'HHMM');
 
-p.init.exptType         = 'human_psychophysical_threshold_hue';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
+p.init.exptType         = 'human_psychophysics_hue_discrimination';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
 
 p.init.date_1yyyy       = str2double(['1' datestr(now,'yyyy')]); % gotta add a '1' otherwise date/times starting with zero lose that zero in conversion to double.
 p.init.date_1mmdd       = str2double(['1' datestr(now,'mmdd')]);
@@ -78,7 +78,7 @@ p.init.taskFiles.finish = [p.init.taskName '_finish.m'];
 % to "1", the tracker need not be physically connected).
 p.init.subjType         = 'Human';
 p.init.useVPixx         = false;
-p.init.elDummyMode      = 0;
+p.init.elDummyMode      = 1;
 
 %% Define the Action M-files
 % User-defined actions that are either within the task folder under
@@ -139,15 +139,6 @@ p.rig.guiStatVals = {...
     'iTrial'; ...   
     'iGoodTrial'; ...
     'trialsLeftInBlock'; ...
-    'fixDurReq'; ...
-    'hr2Loc1'; ...
-    'hr1Loc2'; ...
-    'hr2Loc2'; ...
-    'cr1Loc1'; ...
-    'cr2Loc1'; ...
-    'cr1Loc2'; ...
-    'cr2Loc2'; ...
-%     'missedFrames'; ...
     };    
 
 %% user determines the 12 variables are shown in gui upon init
@@ -248,16 +239,16 @@ p.trVarsInit.highDimVal          = 0.9;        % high brightness ABOVE backgroun
 
 % Initial / base values for each stimulus feature.
 p.trVarsInit.speedInit                = 0.1;      % initial motion magniutde
-p.trVarsInit.ctrstInit                = 0.325;    % initial contrast
+p.trVarsInit.ctrstInit                = 0.0;      % initial contrast
 p.trVarsInit.orientInit               = 30;       % initial orientation
-p.trVarsInit.freqInit                 = 0.25;      % initial spatial frequency (cycles per degree)
+p.trVarsInit.freqInit                 = 0.25;     % initial spatial frequency (cycles per degree)
 p.trVarsInit.satInit                  = 0.4;      % initial color saturation
 p.trVarsInit.lumInit                  = 0.3;      % initial luminance
 p.trVarsInit.hueInit                  = 20;       % initial hue (color angle)
 
 % Variance of feature dimensions that can be variable in this way:
 p.trVarsInit.orientVar                = 8;        % variability in orientation
-p.trVarsInit.hueVar                   = 0.00;     % variability in hue (angle)
+p.trVarsInit.hueVar                   = 0.05;     % variability in hue (angle)
 p.trVarsInit.lumVar                   = 0.02;     % variability in luminance
 p.trVarsInit.satVar                   = 0.01;     % variability in saturation
 
@@ -267,15 +258,15 @@ p.trVarsInit.contDelta                = 0.2;      % contrast
 p.trVarsInit.orientDelta              = 45;       % orientation
 p.trVarsInit.freqDelta                = 0.25;     % spatial frequency (cycles per degree)
 p.trVarsInit.satDelta                 = 0.038;    % color saturation
-p.trVarsInit.lumDelta                 = -0.3;     % luminance
-p.trVarsInit.hueDelta                 = 90;       % hue (color angle)
+p.trVarsInit.lumDelta                 = 0;     % luminance
+p.trVarsInit.hueDelta                 = 45;       % hue (color angle)
 
 % spatial properties of "checkerboard":
 p.trVarsInit.stimRadius               = 3.25;     % aperture radius in deg
 p.trVarsInit.boxSizePix               = 24;       % diameter of each "check" in pixels
 p.trVarsInit.boxLifetime              = 8;        % "check" lifetime in frams
 p.trVarsInit.nPatches                 = 4;        % number of stimuli 
-p.trVarsInit.nEpochs                  = 2;        % just one "pre-change" and one "post-change" epoch for now
+p.trVarsInit.nEpochs                  = 1;        % just one epoch with all four stimuli present.
 
 % times/latencies/durations:
 p.trVarsInit.rewardDurationMs        = 200;      % reward duration
@@ -283,7 +274,7 @@ p.trVarsInit.fix2CueIntvl            = 0.0;      % Time delay between acquiring 
 p.trVarsInit.cueDur                  = 0.0;      % Duration of cue presentaiton.
 p.trVarsInit.cue2StimItvl            = 0.25;     % time between cue offset and stimulus onset (stimulus onset asynchrony).
 p.trVarsInit.stim2ChgIntvl           = 0.5;      % minimum time between stimulus onset and change.
-p.trVarsInit.chgWinDur               = 0.5;      % time window during which a change is possible.
+p.trVarsInit.chgWinDur               = 0.0;      % time window during which a change is possible.
 p.trVarsInit.rewardDelay             = 0.5;      % delay between cued change and reward delivery for hits.
 p.trVarsInit.joyMinLatency           = 0.2;      % minimum acceptable joystick release latency.
 p.trVarsInit.joyMaxLatency           = 1;        % maximum acceptable joystick release latency.
@@ -318,7 +309,7 @@ p.trVarsInit.fixPointLinePix      = 12;       % fixation point line weight in pi
 % variables related to how the experiment is run / what is shown, etc.
 p.trVarsInit.useCellsForDraw        = false;
 p.trVarsInit.wantEndFlicker         = false;     % have screen flicker / low tone play repeatedly while waiting for joystick release?
-p.trVarsInit.wantOnlinePlots        = true;     % use online plotting window?
+p.trVarsInit.wantOnlinePlots        = false;     % use online plotting window?
 p.trVarsInit.fixColorIndex          = 0;
 
 % substructure for marking stimulus-events after each flip
