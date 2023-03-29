@@ -103,7 +103,7 @@ function figSave_callback(hObject, eventdata, uiData)
 
 fileNameBox = uiData.handles.hFigFileNameBox;
 fileName    = [uiData.pldapsData.paths.pldapsDir '/output/', ...
-    get(fileNameBox, 'String'), '.mat'];
+    get(fileNameBox, 'String'), '.fig'];
 
 disp('Saving Figure file...')
 hgsave(uiData.handles.hGui, fileName)

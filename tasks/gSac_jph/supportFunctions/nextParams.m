@@ -35,7 +35,7 @@ end
 
 end
 
-%
+
 % function p = setTargetLocation(p)
 function p = setLocations(p)
 % set fixation and target locations for next trial.
@@ -170,7 +170,8 @@ end
 function p = timingInfo(p)
 
 % time of target onset wrt fixAcq:
-p.trVars.timeTargOnset          = unifrnd(p.trVars.targOnsetMin, p.trVars.targOnsetMax);
+p.trVars.timeTargOnset          = unifrnd(p.trVars.targOnsetMin, ...
+    p.trVars.targOnsetMax);
 
 % time of target offset wrt fixAcq:
 if p.trVars.isVisSac
@@ -178,7 +179,8 @@ if p.trVars.isVisSac
     p.trVars.timeTargOffset     = Inf;
 else
     % flash for mem:
-    p.trVars.timeTargOffset     = p.trVars.timeTargOnset + p.trVars.targetFlashDuration;
+    p.trVars.timeTargOffset     = p.trVars.timeTargOnset + ...
+        p.trVars.targetFlashDuration;
 end
 
 % time of fix offset wrt fix acquired:

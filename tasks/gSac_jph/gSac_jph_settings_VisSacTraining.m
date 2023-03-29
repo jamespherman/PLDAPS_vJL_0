@@ -256,8 +256,8 @@ p.trVarsInit.staticTargAmp           = 12;  % fixed target amplitude
 p.trVarsInit.maxHorzTargAmp          = 20;  % when using the "rectangular annulus" method of specifying target locations, we need separate horizontal and vertical max amps
 p.trVarsInit.maxVertTargAmp          = 12;  % "rectangular annulus" method of specifying target amplitude
         
-p.trVarsInit.fixWinWidthDeg       = 4;        % fixation window width in degrees
-p.trVarsInit.fixWinHeightDeg      = 4;        % fixation window height in degrees
+p.trVarsInit.fixWinWidthDeg       = 2;        % fixation window width in degrees
+p.trVarsInit.fixWinHeightDeg      = 2;        % fixation window height in degrees
 p.trVarsInit.targWinWidthDeg      = 8;        % target window width in degrees
 p.trVarsInit.targWinHeightDeg     = 8;        % target window height in degrees
 
