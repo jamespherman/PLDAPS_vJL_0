@@ -130,7 +130,7 @@ switch p.trVars.currentState
         % If fixation is aquired within alotted time, and joystick is
         % still held, onwards to p.state.dontMove:
         if pds.eyeInWindow(p) && pds.joyHeld(p) && ...
-    timeNow < (p.trData.timing.fixOn + p.trVars.fixWaitDur)
+            timeNow < (p.trData.timing.fixOn + p.trVars.fixWaitDur)
     
             p.init.strb.addValue(p.init.codes.fixAq);
             p.trData.timing.fixAq      = timeNow;
@@ -597,7 +597,8 @@ if p.trVars.whileLoopIdx > p.trVarsInit.eyeVelFiltTaps
     % compute diff of gaze position / sample time array
     tempDiff = diff(...
         p.trData.onlineGaze(...
-        (p.trVars.whileLoopIdx - p.trVarsInit.eyeVelFiltTaps + 1):p.trVars.whileLoopIdx, 1:3));
+        (p.trVars.whileLoopIdx - ...
+        p.trVarsInit.eyeVelFiltTaps + 1):p.trVars.whileLoopIdx, 1:3));
     
     % compute rectified total gaze velocity (combined across X & Y).
     p.trData.onlineGaze(p.trVars.whileLoopIdx, 4) = ...
@@ -624,6 +625,6 @@ function logOut = gazeVelThreshCheck(p, timeNow)
 % velocity threshold, or if we're not using the velocity threshold, that
 % the time since saccade onset 
 logOut = (p.trData.onlineGaze(p.trVars.whileLoopIdx, 4) > ...
-    p.trVarsInit.eyeVelThresh);
+    p.trVars.eyeVelThresh);
 
 end

@@ -274,11 +274,14 @@ p.trVarsInit.postMemSacTargOn = false;  % do we want the target on because a mem
 % variables related to online tracking of gaze position / velocity
 p.trVarsInit.whileLoopIdx           = 0;    % numerical index to current iteration of run while-loop
 p.trVarsInit.eyeVelFiltTaps         = 5;    % length in samples of online velocity filter
-p.trVarsInit.eyeVelThresh           = 25;   % threshold in deg/s for online saccade detection
+p.trVarsInit.eyeVelThresh           = 100;   % threshold in deg/s for online saccade detection
 p.trVarsInit.useVelThresh           = true; % does the experimenter want to use the velocity threshold to check saccade onset / offset?
 p.trVarsInit.eyeVelThreshOffline    = 100;   % gaze velocity threshold in deg/s for offline saccade detection (cleaner signal, lower threshold).
 
 p.trVarsInit.connectPLX             = false;
+
+% do we want online plots?
+p.trVarsInit.wantOnlinePlots        = true;
 
 %% end of trVarsInit
 % once all trial variables have been initialized in trVarsInit, we copy 

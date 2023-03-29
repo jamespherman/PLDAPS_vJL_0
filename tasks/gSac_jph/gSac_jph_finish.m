@@ -39,7 +39,6 @@ p.trData.strobed = p.init.strb.strobedList;
 % (3) pause ephys
 % pds.stopOmniPlex;
 
-
 % wait for joystick release
 p           = pds.waitForJoystickRelease(p);
 
@@ -65,6 +64,12 @@ pds.saveP(p);
 
 % (6) update status variables
 p           = updateStatusVariables(p);
+
+% update online plots:
+if p.trData.trialEndState == p.state.sacComplete && ...
+        p.trVars.wantOnlinePlots
+    p           = updateOnlinePlots(p);
+end
 
 % (7) update trials list IF we're using the trials array.
 if p.trVars.setTargLocViaTrialArray
@@ -172,7 +177,8 @@ if p.trVars.passEye
 elseif p.trData.trialEndState == p.state.sacComplete
     
     % get ADC buffered gaze X, Y & T.
-    T   = p.trData.timing.trialStartPTB + p.trData.eyeT - p.trData.eyeT(1);
+    T   = p.trData.timing.trialStartPTB + p.trData.eyeT - ...
+        p.trData.timing.trialStartDP;
     X  = 4 * p.trData.eyeX;
     Y  = 4 * p.trData.eyeY;
     
