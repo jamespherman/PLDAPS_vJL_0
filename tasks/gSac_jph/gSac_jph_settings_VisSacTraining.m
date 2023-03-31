@@ -45,7 +45,7 @@ p = struct;
 % rigConfigFile has information per a particular rig/monkey setup. Info you
 % might expect to find inlcudes screen dimensions, screen refresh rate, 
 % joystick voltages, datapixx schedules, and many more...
-p.init.rigConfigFile     =  which('rigConfigFiles.rigConfig_ramsey_rigF_20190517'); % rig config file has subject/rig-specific details (eg distance from screen)
+p.init.rigConfigFile     =  which('rigConfigFiles.rigConfig_rig1'); % rig config file has subject/rig-specific details (eg distance from screen)
 
 
 %% define task name and related files:

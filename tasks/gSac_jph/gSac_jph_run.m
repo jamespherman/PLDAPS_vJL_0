@@ -450,7 +450,8 @@ if p.trData.timing.fixAq > 0
 
     % Determine if target should be on:
     if timeFromFixAq >= p.trVars.timeTargOnset && ...
-            timeFromFixAq < p.trVars.timeTargOffset
+            timeFromFixAq < p.trVars.timeTargOffset && ...
+            p.trData.timing.targetOn < 0
 
         % target should be on, set "targetIsOn" to true, strobe target
         % onset, and log target onset time:
@@ -478,7 +479,7 @@ if p.trData.timing.fixAq > 0
             p.trData.timing.targetReillum = timeNow;
         end
 
-    else
+    elseif ~(timeFromFixAq < p.trVars.timeTargOffset)
 
         % if the target shouldn't be on set "targetIsOn" to false, strobe
         % target offset, and log time of target offset (if it's not already
@@ -488,7 +489,7 @@ if p.trData.timing.fixAq > 0
 
         % check to see that target offset time has not already been
         % defined before we set it:
-        if p.trData.timing.targetOff < 0
+        if p.trData.timing.targetOff < 0 && p.trData.timing.targetOn > 0
             p.trData.timing.targetOff = timeNow;
         end
     end
@@ -566,6 +567,7 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     % flip and record time of flip.
     [p.trData.timing.flipTime(p.trVars.flipIdx), ~, ~, frMs] = Screen('Flip', p.draw.window, GetSecs + 0.00);
     p.trData.timing.lastFrameTime   = p.trData.timing.flipTime(p.trVars.flipIdx) - p.trData.timing.trialStartPTB;
+    p.init.rigConfigFile     = which('rigConfigFiles.rigConfig_rig1'); 
     
     % strobe all values that are in the strobe list with the
     % classyStrobe class:
