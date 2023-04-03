@@ -44,7 +44,11 @@ p   = initClut(p);
 p = pds.initPsychToolbox(p);
 
 % (5) initialize EyeLink:
+setGuiMessage(...
+    'Eyelink Setup. Init Continues After Eyelink Interaction Is Done');
 p = pds.initEyelink(p);
+setGuiMessage(...
+    'Eyelink Setup Complete!');
 
 % (6) define trial structure
 p   = initTrialStructure(p);
@@ -125,6 +129,13 @@ p.stim.funs.fidiff  = @(x)[x(1) diff(x)];
 % returns "true" (1) for even integers and "false" (0) for odds
 p.stim.funs.iseven  = @(x)round(x/2) == x/2;
 
+end
+
+function setGuiMessage(messageString)
+    uiData = guidata(findall(0, 'Name', 'PLDAPS_vK2_GUI'));
+    set(uiData.handles.uiStatusString, 'String', ...
+        messageString);
+    drawnow;
 end
 
 

@@ -26,7 +26,8 @@ function p = human_psychophysical_threshold_finish(p)
 
 % (1) fill screen with background color (if we're not playing a movie)
 if ~isfield(p.draw, 'movie')
-    Screen('FillRect', p.draw.window, p.draw.color.background);
+    Screen('FillRect', p.draw.window, ...
+        fix(255*p.draw.clut.subColors(p.draw.color.background + 1, :)));
     Screen('Flip', p.draw.window);
 end
 
@@ -54,9 +55,6 @@ p.trData.timing.trialEnd   = timeNow;
 
 % (3) pause ephys
 % pds.stopOmniPlex;
-
-% wait for joystick release
-p           = pds.waitForJoystickRelease(p);
 
 % if a "time-out" is desired, make it happen here. Note: the way this works
 % at present is: we only advance from here if the desired interval of time

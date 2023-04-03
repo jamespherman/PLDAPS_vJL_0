@@ -24,8 +24,7 @@ function p = human_psychophysical_threshold_run(p)
 % % % (2d)  Wait for joystick relese.
 
 % (1) mark start time in PTB and DP time:
-[p.trData.timing.trialStartPTB, p.trData.timing.trialStartDP] = ...
-    pds.getTimes;
+p.trData.timing.trialStartPTB = GetSecs;
 
 %% (2) while-loop
 % The while loop has 3 sections:
@@ -201,6 +200,20 @@ switch p.trVars.currentState
         %   Stimulus presentation has concluded. Collect a response from
         %   the subject.
 
+        % if "passJoy" is true...
+        if p.trVars.passJoy
+
+            % generate and store random response time / value:
+            p.trData.timing.responseTime = normrnd(0.55, 0.05);
+            p.trData.responseValue = num2str(randi(4));
+
+            % tell eyelink which key was pressed
+            Eyelink('Message', ['RSP_' p.trData.responseValue]);
+
+            % move on to "trialCompleted" state
+            p.trVars.currentState = p.state.trialCompleted;
+
+        else
         % check if a key has been pressed:
         [pressed, firstPress] = ...
             KbQueueCheck(p.init.respDevIdx);
@@ -221,6 +234,7 @@ switch p.trVars.currentState
 
             % move on to "trialCompleted" state
             p.trVars.currentState = p.state.trialCompleted;
+        end
         end
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

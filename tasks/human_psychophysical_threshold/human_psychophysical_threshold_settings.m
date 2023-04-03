@@ -150,18 +150,18 @@ p.rig.guiStatVals = {...
 % The list of vars should be in string format eg 'p.trVarsInit.cueDelta'
 
 p.rig.guiVars = {...
-    'rewardDurationMs'; ...     % 1
-    'rewardDelay'; ...          % 2
-    'stim2ChgIntvl'; ...        % 3
-    'chgWinDur'; ...            % 4
-    'stimLoc1Elev'; ...         % 5
-    'hueDelta'; ...             % 6
-    'lumDelta'; ...             % 7
-    'propHueChgOnly'; ...       % 8
-    'joyMinLatency'; ...        % 9
-    'joyMaxLatency'; ...        % 10
-    'passJoy'; ...              % 11
-    'passEye'};                 % 12
+    'passJoy'; ...     % 1
+    'passEye'; ...          % 2
+    'doDriftCorrect'; ...        % 3
+    'hueDelta'; ...            % 4
+    'hueVar'; ...         % 5
+    'ctrstInit'; ...             % 6
+    'satInit'; ...             % 7
+    'satVar'; ...       % 8
+    'lumInit'; ...        % 9
+    'stimRadius'; ...        % 10
+    'boxSizePix'; ...              % 11
+    'boxLifetime'};                 % 12
 
 %% INIT VARIABLES 
 % vars that are only set once
@@ -175,8 +175,8 @@ p.rig.guiVars = {...
 % 'trVars' is the key strcutarray that gets saved on every trial.
 
 % general vars:
-p.trVarsInit.passJoy             = 0;       % pass = 1; simulate correct trials (for debugging)
-p.trVarsInit.passEye             = 0;       % pass = 1; simulate correct trials (for debugging)
+p.trVarsInit.passJoy             = 1;       % pass = 1; simulate correct trials (for debugging)
+p.trVarsInit.passEye             = 1;       % pass = 1; simulate correct trials (for debugging)
 p.trVarsInit.blockNumber         = 0;       % block number
 p.trVarsInit.repeat              = 0;       % repeat trial if true
 p.trVarsInit.rwdJoyPR            = 0;       % 0 = Give reward if Joy is pressed; 1 = Give reward if Joystick released
@@ -250,7 +250,7 @@ p.trVarsInit.lumInit                  = 0.3;      % initial luminance
 p.trVarsInit.hueInit                  = 20;       % initial hue (color angle)
 
 % Variance of feature dimensions that can be variable in this way:
-p.trVarsInit.orientVar                = 8;        % variability in orientation
+p.trVarsInit.orientVar                = 2;        % variability in orientation
 p.trVarsInit.hueVar                   = 0.05;     % variability in hue (angle)
 p.trVarsInit.lumVar                   = 0.02;     % variability in luminance
 p.trVarsInit.satVar                   = 0.01;     % variability in saturation
@@ -318,6 +318,11 @@ p.trVarsInit.fixColorIndex          = 0;
 % substructure for marking stimulus-events after each flip
 p.trVarsInit.postFlip.logical         = false;
 p.trVarsInit.postFlip.varNames        = cell(0);
+
+% do we want to be doing drift correction every trial? I think not. Maybe
+% every X trials? Maybe only when a variable is 1 and not when it's 0.
+% Let's start with the latter and go from there.
+p.trVarsInit.doDriftCorrect = false;
 
 %% end of trVarsInit
 % once all trial variables have been initialized in trVarsInit, we copy 
