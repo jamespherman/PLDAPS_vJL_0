@@ -5,7 +5,7 @@ function p = human_psychophysical_threshold_settings
 %  reward delivery or "boop", monkey must release joystick to get reward on
 %  those trials. On the remaining trials, the "boop" and reward are
 %  delivered simultaneously with fixation offset.
-%
+%4
 % Part of the quintet of pldpas functions:
 %   settings function
 %   init function
@@ -78,7 +78,7 @@ p.init.taskFiles.finish = [p.init.taskName '_finish.m'];
 % to "1", the tracker need not be physically connected).
 p.init.subjType         = 'Human';
 p.init.useVPixx         = false;
-p.init.elDummyMode      = 1;
+p.init.elDummyMode      = 0;
 
 %% Define the Action M-files
 % User-defined actions that are either within the task folder under

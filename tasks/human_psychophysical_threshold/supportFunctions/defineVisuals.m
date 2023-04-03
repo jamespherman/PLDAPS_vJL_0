@@ -11,6 +11,8 @@ function p = defineVisuals(p)
 % fixation window width and height in pixels.
 p.draw.fixWinWidthPix       = pds.deg2pix(p.trVars.fixWinWidthDeg, p);
 p.draw.fixWinHeightPix      = pds.deg2pix(p.trVars.fixWinHeightDeg, p);
+p.trVars.fixWinWidthPix     = p.draw.fixWinWidthPix;
+p.trVars.fixWinHeightPix     = p.draw.fixWinHeightPix;
 
 % make grid with "gridSpace" degree spacing
 gridX           = pds.deg2pix(-30:p.draw.gridSpacing:30, p) + p.draw.middleXY(1);

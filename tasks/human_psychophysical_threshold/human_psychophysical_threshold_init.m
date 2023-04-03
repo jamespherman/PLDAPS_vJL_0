@@ -68,28 +68,8 @@ p.init.codes = pds.initCodes;
 % initialize the random seed:
 RandStream.setGlobalStream(RandStream('mt19937ar','Seed', 0));
 
-%% define 'strb' as classyStrboe
-% this is a class.
-% It's main methods:
-%   addValue - adds a vlaue to the valueList, which will be strobed
-%              once the 'strobe' method is called
-%   strobe - when called strobes all values that are in the valueList.
-p.init.strb = pds.classyStrobe;
-
-
-%% init a mat file that will hold all data. 
-% Here I save struct p the good ol' fashioned way using 'save'. I then
-% define the mat file as an object using 'matfile' such that I may append
-% trial-by-trial data to it (in finish function). 
-
-% % % save:
-% % save(p.init.output_path, '-struct', 'p', '-v7.3')
-% % 
-% % % crate object to access saved file:
-% % p.init.mp = matfile(p.init.output_path, 'writable', true);
-
-
-
+% Maybe this is the place to start recording an EDF file? Must implement
+% this...
 
 end
 

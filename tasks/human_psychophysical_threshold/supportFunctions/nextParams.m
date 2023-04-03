@@ -235,6 +235,8 @@ tempY = p.trVars.fixDegY + (rand - 0.5)*p.trVars.fixLocRandY;
 % (Y is flipped because positive is down in psychophysics toolbox).
 p.draw.fixPointPix      =  p.draw.middleXY + [1, -1] .* ...
     pds.deg2pix([tempX, tempY], p);
+p.trVars.fixPixX = p.draw.fixPointPix(1);
+p.trVars.fixPixY = p.draw.fixPointPix(2);
 
 % define fixation point radius from trVars, fixation point line weight
 % from trVars, and fixation point rectangle.
