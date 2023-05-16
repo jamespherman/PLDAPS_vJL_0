@@ -378,7 +378,9 @@ set([uiData.handles.outputPathButton; ...
 % clear Screen, close DATAPixx / VIEWPixx, and eliminate Psychtoolbox 
 % welcome screen before user-initialization function.
 Screen('CloseAll');
-Datapixx('close');
+if uiData.p.init.useVPixx
+    Datapixx('close');
+end
 Screen('Preference','VisualDebuglevel',3);
 
 
@@ -386,7 +388,9 @@ Screen('Preference','VisualDebuglevel',3);
 
 % first, make sure Datapixx is open:
 try 
-    Datapixx('Open'); 
+    if uiData.p.init.useVPixx
+        Datapixx('Open');
+    end
 catch me 
     error(['I BET YOU 1 MILLION DOLLARS THAT YOU FORGOT TO TURN DATAPIXX ON'...
         'no gow turn it on & hit Initialize before anyone notices your ignorance']); 

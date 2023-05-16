@@ -10,7 +10,32 @@ function p                      = initEyelink(p)
 EyelinkInit(p.init.elDummyMode);
 p.init.eyeLinkStatus = Eyelink('IsConnected');
 
-% Define "el" structure, and set some default variable values.
+% Open dialog box for EyeLink Data file name entry. File name up to 8 characters
+prompt = {'Enter EDF file name (up to 8 characters)'};
+dlg_title = 'Create EDF file';
+def = {'demo'}; % Create a default edf file name
+answer = inputdlg(prompt, dlg_title, 1, def); % Prompt for new EDF file name
+% Print some text in Matlab's Command Window if a file name has not been entered
+if  isempty(answer)
+    fprintf('Session cancelled by user\n')
+    error('Session cancelled by user'); % Abort experiment (see cleanup function below)
+end
+edfFile = answer{1}; % Save file name to a variable
+% Print some text in Matlab's Command Window if file name is longer than 8 characters
+if length(edfFile) > 8
+    fprintf('Filename needs to be no more than 8 characters long (letters, numbers and underscores only)\n');
+    error('Filename needs to be no more than 8 characters long (letters, numbers and underscores only)');
+end
+
+% Open an EDF file and name it
+failOpen = Eyelink('OpenFile', edfFile);
+if failOpen ~= 0 % Abort if it fails to open
+    fprintf('Cannot create EDF file %s', edfFile); % Print some text in Matlab's Command Window
+    error('Cannot create EDF file %s', edfFile); % Print some text in Matlab's Command Window
+end
+
+% Define "el" structurecc v  
+% o, and set some default variable values.
 p.init.el = EyelinkInitDefaults(p.draw.window);
 
 % Define appearance of background and targets for calibration / validiation
@@ -27,8 +52,8 @@ p.init.el.calibrationtargetcolour = [0 0 0];% RGB black
 p.init.el.msgfontcolour = [0 0 0];% RGB black
 
 % Set calibration beeps (0 = sound off, 1 = sound on)
-p.init.el.targetbeep = 1;  % beep when a target is presented
-p.init.el.feedbackbeep = 1;  % beep after calibration or drift check
+p.init.el.targetbeep = 0;  % beep when a target is presented
+p.init.el.feedbackbeep = 0;  % beep after calibration or drift check
 
 % Make use of values defined in "el" structure:
 EyelinkUpdateDefaults(p.init.el);
@@ -50,7 +75,7 @@ Eyelink('Command', 'calibration_type = HV9'); % horz-vert 9-points
 
 % Allow a supported EyeLink Host PC button box to accept calibration or
 % drift-check/correction targets via button 5
-% Eyelink('Command', 'button_function 5 "accept_target_fixation"');
+Eyelink('Command', 'button_function 5 "accept_target_fixation"');
 
 % Hide mouse cursor
 % HideCursor(screenNumber);

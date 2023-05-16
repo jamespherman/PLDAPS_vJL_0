@@ -44,7 +44,11 @@ p   = initClut(p);
 p = pds.initPsychToolbox(p);
 
 % (5) initialize EyeLink:
+setGuiMessage(...
+    'Eyelink Setup. Init Continues After Eyelink Interaction Is Done');
 p = pds.initEyelink(p);
+setGuiMessage(...
+    'Eyelink Setup Complete!');
 
 % (6) define trial structure
 p   = initTrialStructure(p);
@@ -64,28 +68,8 @@ p.init.codes = pds.initCodes;
 % initialize the random seed:
 RandStream.setGlobalStream(RandStream('mt19937ar','Seed', 0));
 
-%% define 'strb' as classyStrboe
-% this is a class.
-% It's main methods:
-%   addValue - adds a vlaue to the valueList, which will be strobed
-%              once the 'strobe' method is called
-%   strobe - when called strobes all values that are in the valueList.
-p.init.strb = pds.classyStrobe;
-
-
-%% init a mat file that will hold all data. 
-% Here I save struct p the good ol' fashioned way using 'save'. I then
-% define the mat file as an object using 'matfile' such that I may append
-% trial-by-trial data to it (in finish function). 
-
-% % % save:
-% % save(p.init.output_path, '-struct', 'p', '-v7.3')
-% % 
-% % % crate object to access saved file:
-% % p.init.mp = matfile(p.init.output_path, 'writable', true);
-
-
-
+% Maybe this is the place to start recording an EDF file? Must implement
+% this...
 
 end
 
@@ -125,6 +109,13 @@ p.stim.funs.fidiff  = @(x)[x(1) diff(x)];
 % returns "true" (1) for even integers and "false" (0) for odds
 p.stim.funs.iseven  = @(x)round(x/2) == x/2;
 
+end
+
+function setGuiMessage(messageString)
+    uiData = guidata(findall(0, 'Name', 'PLDAPS_vK2_GUI'));
+    set(uiData.handles.uiStatusString, 'String', ...
+        messageString);
+    drawnow;
 end
 
 

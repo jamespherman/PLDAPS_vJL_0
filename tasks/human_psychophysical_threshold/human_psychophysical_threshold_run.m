@@ -24,8 +24,7 @@ function p = human_psychophysical_threshold_run(p)
 % % % (2d)  Wait for joystick relese.
 
 % (1) mark start time in PTB and DP time:
-[p.trData.timing.trialStartPTB, p.trData.timing.trialStartDP] = ...
-    pds.getTimes;
+p.trData.timing.trialStartPTB = GetSecs;
 
 %% (2) while-loop
 % The while loop has 3 sections:
@@ -43,7 +42,7 @@ i = 0;
 % Loop until the trial is over (p.trVars.exitWhileLoop == true).
 while ~p.trVars.exitWhileLoop
     
-    % Get latest eye / joystick position:
+    % Get latest gaze position:
     p = pds.getEyelink(p);
 
     % iterate counter
@@ -80,23 +79,21 @@ function p = stateMachine(p)
 %
 % Each state can do a myriad of things, sure, but let it be clear:
 % THE CRITICAL COMPONENTS OF EACH STATE ARE:
-%   (a) strobing to ehpys reocrding system
-%   (b) recording of the time at which the event occured
-%   (c) setting 'p.trVars.currentState' to the next state
+%   (1) recording of the time at which the event occured
+%   (2) setting 'p.trVars.currentState' to the next state
 %
 
 %%
 % timeNow is relative to trial Start
 timeNow = GetSecs - p.trData.timing.trialStartPTB;
 
-    %%
+%% Big SWITCH that implements state-dependency
 switch p.trVars.currentState
     case p.state.trialBegun
         %% STATE 1:
         %   TRIAL HAS BEGUN!
         
-        % strobing trial start time and onward to state 3 - Show Fixation
-        p.init.strb.addValue(p.init.codes.trialBegin);
+        % Store trial start time and move to to state 3 - Show Fixation
         p.trData.timing.trialBegin      = timeNow;
         p.trVars.currentState           = p.state.showFix;
         
@@ -130,7 +127,7 @@ switch p.trVars.currentState
         
         % If fixation is aquired within alotted time move onwards next
         % state.
-        if pds.eyeInWindow(p) && ...
+        if pds.eyeInWindowEL(p) && ...
                 timeNow < (p.trData.timing.fixOn + p.trVars.fixWaitDur)
             
             Eyelink('Message', 'FIX_ACQ');
@@ -141,7 +138,6 @@ switch p.trVars.currentState
                 (p.trData.timing.fixOn + p.trVars.fixWaitDur) 
             % fixation was never acquired
             Eyelink('Message', 'FIX_ACQ');
-            p.trData.timing.joyRelease = timeNow;
             p.trVars.currentState      = p.state.nonStart;
         end
         
@@ -184,7 +180,7 @@ switch p.trVars.currentState
         end
 
         % If subject breaks fixation, abort.
-        if ~pds.eyeInWindow(p)
+        if ~pds.eyeInWindowEL(p)
 
             Eyelink('Message', 'FIX_BREAK');
             % p.init.strb.addValue(p.init.codes.fixBreak);
@@ -201,6 +197,20 @@ switch p.trVars.currentState
         %   Stimulus presentation has concluded. Collect a response from
         %   the subject.
 
+        % if "passJoy" is true...
+        if p.trVars.passJoy
+
+            % generate and store random response time / value:
+            p.trData.timing.responseTime = normrnd(0.55, 0.05);
+            p.trData.responseValue = num2str(randi(4));
+
+            % tell eyelink which key was pressed
+            Eyelink('Message', ['RSP_' p.trData.responseValue]);
+
+            % move on to "trialCompleted" state
+            p.trVars.currentState = p.state.trialCompleted;
+
+        else
         % check if a key has been pressed:
         [pressed, firstPress] = ...
             KbQueueCheck(p.init.respDevIdx);
@@ -221,6 +231,7 @@ switch p.trVars.currentState
 
             % move on to "trialCompleted" state
             p.trVars.currentState = p.state.trialCompleted;
+        end
         end
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -272,10 +283,13 @@ if p.trVars.exitWhileLoop
     % note trial end state
     p.trData.trialEndState = p.trVars.currentState;
     
-    % and strobe end of trial once:
-    % p.init.strb.addValueOnce(p.init.codes.trialEnd);
+    % Mark time of trial completion (PTB), send a message to Eyelink
+    % indicating trial completion to be recorded in the EDF file, and stop
+    % the EDF recording (don't close out the EDF file, just "pause" the
+    % recording until the beginning of the next trial).
     p.trData.timing.trialEnd   = timeNow;
     Eyelink('Message', 'TRIAL_END');
+    Eyelink('StopRecording')
 end
 % Done with state-dependent section
 
@@ -285,7 +299,7 @@ function p = drawMachine(p)
 
 % timeNow is relative to trial Start
 timeNow = GetSecs - p.trData.timing.trialStartPTB;
-
+Eyelink('Message', 'TRIAL_END');
 % if we're close enouframegh in time to the next screen flip, start drawing.
 if timeNow > p.trData.timing.lastFrameTime + ...
         p.rig.frameDuration - p.rig.magicNumber

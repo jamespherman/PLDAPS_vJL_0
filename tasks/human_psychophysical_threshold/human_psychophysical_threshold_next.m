@@ -44,9 +44,6 @@ p  = nextParams(p);
 % (4) define visual elements (experimenter display only)
 p  = defineVisuals(p);
 
-% (5) set schedules
-p  = pds.setSchedules(p);
-
 % (6) init trial data
 p = initTrData(p);
 
@@ -72,10 +69,12 @@ Eyelink('Message', '!V CLEAR %d %d %d', p.init.el.backgroundcolour(1), ...
 Eyelink('Command', 'record_status_message "TRIAL %d/%d"', ...
     p.status.iTrial, p.status.totalTrials);
 
+if p.trVars.doDriftCorrect
 % (10) % Perform a drift check / correction. Optionally provide x y target
 % location, otherwise target is presented on screen centre
 EyelinkDoDriftCorrection(p.init.el, p.draw.middleXY(1), ...
     p.draw.middleXY(2));
+end
 
 % Put tracker in idle/offline mode before recording.
 Eyelink('SetOfflineMode');
