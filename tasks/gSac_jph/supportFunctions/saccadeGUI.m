@@ -106,7 +106,7 @@ fileName    = [uiData.pldapsData.paths.pldapsDir '/output/', ...
     get(fileNameBox, 'String'), '.fig'];
 
 disp('Saving Figure file...')
-hgsave(uiData.handles.hGui, fileName)
+savefig(uiData.handles.hGui, fileName)
 disp('HeatMap Figure Saved!')
 end
 

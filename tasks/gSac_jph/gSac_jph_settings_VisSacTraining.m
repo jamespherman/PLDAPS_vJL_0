@@ -12,7 +12,6 @@ function p = gSac_jph_settings_VisSacTraining
 % (memory-gSac), delay, fixation point disappears indicating subject to
 % make a saccade to target, reward. 
 
-
 % Part of the quintet of pldpas functions:
 %   settings function
 %   init function
@@ -133,6 +132,7 @@ p.status.iGoodMem           = 0;
 p.status.pGoodVis           = 0;
 p.status.pGoodMem           = 0;
 p.status.iTarget            = 0;
+p.status.rippleOnline       = 0;
 
 %% user determines the n status values shwon in gui upon init
 % here you just list the status vals you want to see. You do not set them,
@@ -213,11 +213,11 @@ p.trVarsInit.targDegX            = 0;
 p.trVarsInit.targDegY            = 0;
 
 % times/latencies/durations:
-p.trVarsInit.rewardDurationMs        = 189; % reward duration
+p.trVarsInit.rewardDurationMs        = 200; % reward duration
 p.trVarsInit.rewardDelay             = 0;        % delay between cued change and reward delivery for hits.
 p.trVarsInit.timeoutAfterFa          = 2;        % timeout duration following false alarm.
 p.trVarsInit.joyWaitDur              = 15;        % how long to wait for the subject to press the joystick at the beginning of a trial?
-p.trVarsInit.fixWaitDur              = 1;        % how long to wait after initial joystick press for the subject to acquire fixation?
+p.trVarsInit.fixWaitDur              = 3;        % how long to wait after initial joystick press for the subject to acquire fixation?
 p.trVarsInit.freeDur                 = 0;        % time before start of joystick press check
 p.trVarsInit.trialMax                = 15;       % max length of the trialF
 p.trVarsInit.joyReleaseWaitDur       = 3;        % how long to wait after trial end to start flickering the screen if the joystick hasn't been released
@@ -238,8 +238,8 @@ p.trVarsInit.goLatencyMax            = 1;  % maximum saccade-latency criterion
 % p.trVarsInit.preTargMax            = 1;    % maximum fixation-only time before target onset
 p.trVarsInit.targOnsetMin            = 0.75; % minimum fixation-only time before target onset
 p.trVarsInit.targOnsetMax            = 1;
-p.trVarsInit.goTimePostTargMin       = 0; % min duration from targ onset to the 'go' signal to saccade (which is fixation offset)
-p.trVarsInit.goTimePostTargMax       = 0.1; % max duration from targ onset to the 'go' signal to saccade (which is fixation offset)
+p.trVarsInit.goTimePostTargMin       = 0.3; % min duration from targ onset to the 'go' signal to saccade (which is fixation offset)
+p.trVarsInit.goTimePostTargMax       = 0.8; % max duration from targ onset to the 'go' signal to saccade (which is fixation offset)
 
 p.trVarsInit.maxFixWait              = 10;    % maximum time to wait for fixation-acquisition
 p.trVarsInit.targOnSacOnly           = 1;    % condition target reappearance on saccade?
@@ -278,7 +278,8 @@ p.trVarsInit.eyeVelThresh           = 100;   % threshold in deg/s for online sac
 p.trVarsInit.useVelThresh           = true; % does the experimenter want to use the velocity threshold to check saccade onset / offset?
 p.trVarsInit.eyeVelThreshOffline    = 100;   % gaze velocity threshold in deg/s for offline saccade detection (cleaner signal, lower threshold).
 
-p.trVarsInit.connectPLX             = false;
+p.trVarsInit.connectRipple          = true;
+p.trVarsInit.rippleChanSelect       = 1;
 
 % do we want online plots?
 p.trVarsInit.wantOnlinePlots        = true;

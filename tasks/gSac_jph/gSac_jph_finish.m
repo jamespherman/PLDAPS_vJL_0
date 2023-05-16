@@ -51,7 +51,7 @@ p           = pds.waitForJoystickRelease(p);
 postTrialTimeOut(p);
 
 % retreive data from ripple "NIP" if connected:
-if p.rig.ripple.status
+if p.rig.ripple.status 
     p = pds.getRippleData(p);
 end
 
@@ -234,7 +234,7 @@ else
         p.trData.SRT        = NaN;
 end
 catch me
-    keyboard
+%     keyboard
 end
 
 end

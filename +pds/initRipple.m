@@ -5,10 +5,16 @@ function p = initRipple(p)
 %
 %
 
-% Initialize xippmex
+% Initialize connection to ripple NIP.
 p.rig.ripple.status = pds.xippmex;
 
-% get recording channels (if ripple is connected):
+% Check to see if NIP is turned on:
+p.rig.ripple.status = pds.xippmex('led', 'f1');
+
+% if we DON'T WANT TO USE RIPPLE...
+p.rig.ripple.status = p.trVarsInit.connectRipple;
+
+% get recording channels (if ripple is connected, and we want to use it):
 if p.rig.ripple.status
     p.rig.ripple.recChans = ...
         [pds.xippmex('elec','micro'), ...

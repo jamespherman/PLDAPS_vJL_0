@@ -6,10 +6,12 @@ function c                      = initClut(c)
 % reference in other places).
 
 
+% initialize DKL conversion variables`
+initmon('LUTvpixx');
 
+% set Background color to black.
+[bgRGB(1), bgRGB(2), bgRGB(3)] = dkl2rgb([-0.8 0 0]');
 
-% set Bg to 0.5 0.5 0.5:
-bgRGB       = 0.2*[1 1 1];
 % define muted green (mutGreen):
 % mutGreen    = [0.3953 0.7459 0.5244];
 mutGreen    = [0.5 0.9 0.4];

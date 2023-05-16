@@ -8,12 +8,12 @@ function p = getRippleData(p)
 % convert to seconds:
 try
     [~, tempSpikeTimes] = xippmex('spike', ...
-        p.rig.ripple.recChans(1), 0);
+        p.rig.ripple.recChans(p.trVars.rippleChanSelect), 0);
     p.trData.spikeTimes = tempSpikeTimes{:} / 30000;
 catch me
     xippmex;
     [~, tempSpikeTimes] = xippmex('spike', ...
-        p.rig.ripple.recChans(1), 0);
+        p.rig.ripple.recChans(p.trVars.rippleChanSelect), 0);
     p.trData.spikeTimes = tempSpikeTimes{:} / 30000;
 end
 
