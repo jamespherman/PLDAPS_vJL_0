@@ -40,7 +40,7 @@ p = struct;
 % a list of paths to add (at present, for making sure directories
 % containing support functions will be in the path).
 % % p.init.pathList      = {[pwd '/supportFunctions']};
-p.init.rigConfigFile     = which('rigConfigFiles.rigConfig_rig1'); % rig config file has subject/rig-specific details (eg distance from screen)
+p.init.rigConfigFile     = which('rigConfigFiles.rigConfig_human'); % rig config file has subject/rig-specific details (eg distance from screen)
 
 
 %% define task name and related files:
@@ -77,7 +77,6 @@ p.init.taskFiles.finish = [p.init.taskName '_finish.m'];
 % whether we are using "dummy mode" for the Eyelink (if dummy mode is set
 % to "1", the tracker need not be physically connected).
 p.init.subjType         = 'Human';
-p.init.useVPixx         = false;
 p.init.elDummyMode      = 0;
 
 %% Define the Action M-files
