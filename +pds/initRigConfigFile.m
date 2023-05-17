@@ -8,3 +8,8 @@ end
 [~,tempName] = fileparts(p.init.rigConfigFile);
 
 eval(['p = rigConfigFiles.' tempName '(p);']);
+
+if isfield(p.rig, 'baseReward')
+    p.trVarsInit.rewardDurationMs = p.rig.baseReward;
+    p.trVars.rewardDurationMs = p.rig.baseReward;
+end

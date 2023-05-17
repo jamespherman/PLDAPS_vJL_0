@@ -41,32 +41,45 @@ function p = gSac_jph_settings_VisSacTraining
 %% p.init:
 p = struct;
 
-% rigConfigFile has information per a particular rig/monkey setup. Info you
-% might expect to find inlcudes screen dimensions, screen refresh rate, 
-% joystick voltages, datapixx schedules, and many more...
-p.init.rigConfigFile     =  which('rigConfigFiles.rigConfig_rig1'); % rig config file has subject/rig-specific details (eg distance from screen)
+% determine which PC we're on so we can select the appropriate reward
+% magnitude:
+if ~ispc
+    [~, p.init.pcName] = unix('hostname');
+else
+    % if this IS running on a (windows) PC that means we've neglected to
+    % account for something - figure it out now! JPH - 5/16/2023
+    keyboard
+end
+
+% rig config file has subject/rig-specific details (eg distance from
+% screen). Select rig config file depending on PC name (assuming the 2nd to
+% last characteer in the pcName string is 1 or 2):
+p.init.rigConfigFile     = which(['rigConfigFiles.rigConfig_rig' ...
+    p.init.pcName(end-1)]);
 
 
 %% define task name and related files:
 
 p.init.taskName     = 'gSac_jph';
 p                   = pds.initTaskMetadata(p); 
-% p.init.pldapsFolder     = pwd;                          % pldaps gui takes us to taks folder automatically once we choose a settings file
-% p.init.protocol_title   = [p.init.taskName '_task'];    % Define Banner text to identify the experimental protocol
-% p.init.date             = datestr(now,'yyyymmdd');
-% p.init.time             = datestr(now,'HHMM');
-% 
-% % output files:
-% p.init.outputFolder     = fullfile(p.init.pldapsFolder, 'output');
-% p.init.sessionId        = [p.init.date '_t' p.init.time '_' p.init.taskName];     % Define the prefix for the Output File
-% p.init.sessionFolder    = fullfile(p.init.outputFolder, p.init.sessionId);
-% 
-% 
-% % Define the "init", "next", "run", and "finish" ".m" files.
-% p.init.taskFiles.init   = [p.init.taskName '_init.m'];
-% p.init.taskFiles.next   = [p.init.taskName '_next.m'];
-% p.init.taskFiles.run    = [p.init.taskName '_run.m'];
-% p.init.taskFiles.finish = [p.init.taskName '_finish.m'];
+p.init.pldapsFolder     = pwd;                          % pldaps gui takes us to taks folder automatically once we choose a settings file
+p.init.protocol_title   = [p.init.taskName '_task'];    % Define Banner text to identify the experimental protocol
+p.init.date             = datestr(now,'yyyymmdd');
+p.init.time             = datestr(now,'HHMM');
+
+% output files:
+p.init.outputFolder     = fullfile(p.init.pldapsFolder, 'output');
+p.init.sessionId        = [p.init.date '_t' p.init.time '_' p.init.taskName];     % Define the prefix for the Output File
+p.init.sessionFolder    = fullfile(p.init.outputFolder, p.init.sessionId);
+
+% Define the "init", "next", "run", and "finish" ".m" files.
+p.init.taskFiles.init   = [p.init.taskName '_init.m'];
+p.init.taskFiles.next   = [p.init.taskName '_next.m'];
+p.init.taskFiles.run    = [p.init.taskName '_run.m'];
+p.init.taskFiles.finish = [p.init.taskName '_finish.m'];
+
+% are we using datapixx / viewpixx?
+p.init.useDataPixxBool = true;
 
 %% Define the Action M-files
 % User-defined actions that are either within the task folder under
@@ -94,8 +107,6 @@ p.rig.joyThreshPress    = 0.5;                  % joystick press threshold volta
 p.rig.joyThreshRelease  = 2;                    % joystick release threshold voltage (what voltages count as "joystick released"?)
 p.rig.magicNumber       = 0.008;                % time to wait for screen flip
 p.rig.joyVoltageMax     = 2.2436;
-
-
 
 %% audio:
 p.audio.audsplfq    = 48000;

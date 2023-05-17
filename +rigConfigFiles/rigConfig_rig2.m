@@ -63,7 +63,7 @@ p.rig.joyThresh.lowVoltRelease   = fracFun(p.rig.joyVoltageRest,  ...
 
 %% datapixx - vars related to datapixx schedule settings
 
-p.rig.dp.useDataPixxBool       = 1;        % using datapixx
+p.rig.dp.useDataPixxBool       = p.init.useDataPixxBool;        % using datapixx
 p.rig.dp.adcRate               = 1000;     % define ADC sampling rate (Hz).
 p.rig.dp.maxDurADC             = 15;       % what is the maximum duration to preallocate for ADC buffering?
 p.rig.dp.adcBuffAddr           = 4e6;      % VIEWPixx / DATAPixx internal ADC memory buffer address.

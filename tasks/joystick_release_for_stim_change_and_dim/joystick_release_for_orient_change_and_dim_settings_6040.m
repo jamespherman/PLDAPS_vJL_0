@@ -72,6 +72,10 @@ p.init.date_1yyyy       = str2double(['1' datestr(now,'yyyy')]); % gotta add a '
 p.init.date_1mmdd       = str2double(['1' datestr(now,'mmdd')]);
 p.init.time_1hhmm       = str2double(['1' datestr(now,'HHMM')]);
 
+
+% are we using datapixx / viewpixx?
+p.init.useDataPixxBool = true;
+
 % output files:
 p.init.outputFolder     = fullfile(p.init.pldapsFolder, 'output');
 p.init.figureFolder     = fullfile(p.init.pldapsFolder, 'output', 'figures');
@@ -83,6 +87,9 @@ p.init.taskFiles.init   = [p.init.taskName '_init.m'];
 p.init.taskFiles.next   = [p.init.taskName '_next.m'];
 p.init.taskFiles.run    = [p.init.taskName '_run.m'];
 p.init.taskFiles.finish = [p.init.taskName '_finish.m'];
+
+% are we using datapixx / viewpixx?
+p.init.useDataPixxBool = true;
 
 %% Define the Action M-files
 % User-defined actions that are either within the task folder under
@@ -310,7 +317,7 @@ p.trVarsInit.nPatches                 = 4;        % number of stimuli
 p.trVarsInit.nEpochs                  = 2;        % just one "pre-change" and one "post-change" epoch for now
 
 % times/latencies/durations:
-p.trVarsInit.rewardDurationMs        = p.rig.baseReward;      % reward duration
+p.trVarsInit.rewardDurationMs        = 200;      % reward duration
 p.trVarsInit.fix2CueIntvl            = 0.0;      % Time delay between acquiring fixation and cue onset.
 p.trVarsInit.cueDur                  = 0.0;      % Duration of cue presentaiton.
 p.trVarsInit.cue2StimItvl            = 0.25;     % time between cue offset and stimulus onset (stimulus onset asynchrony).
