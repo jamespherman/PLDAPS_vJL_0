@@ -39,7 +39,22 @@ p = struct;
 % a list of paths to add (at present, for making sure directories
 % containing support functions will be in the path).
 % % p.init.pathList      = {[pwd '/supportFunctions']};
-p.init.rigConfigFile     = which('rigConfigFiles.rigConfig_rig1'); % rig config file has subject/rig-specific details (eg distance from screen)
+
+% determine which PC we're on so we can select the appropriate reward
+% magnitude:
+if ~ispc
+    [~, p.init.pcName] = unix('hostname');
+else
+    % if this IS running on a (windows) PC that means we've neglected to
+    % account for something - figure it out now! JPH - 5/16/2023
+    keyboard
+end
+
+% rig config file has subject/rig-specific details (eg distance from
+% screen). Select rig config file depending on PC name (assuming the 2nd to
+% last characteer in the pcName string is 1 or 2):
+p.init.rigConfigFile     = which(['rigConfigFiles.rigConfig_rig' ...
+    p.init.pcName(end-1)]);
 
 
 %% define task name and related files:
@@ -295,7 +310,7 @@ p.trVarsInit.nPatches                 = 4;        % number of stimuli
 p.trVarsInit.nEpochs                  = 2;        % just one "pre-change" and one "post-change" epoch for now
 
 % times/latencies/durations:
-p.trVarsInit.rewardDurationMs        = 189;      % reward duration
+p.trVarsInit.rewardDurationMs        = p.rig.baseReward;      % reward duration
 p.trVarsInit.fix2CueIntvl            = 0.0;      % Time delay between acquiring fixation and cue onset.
 p.trVarsInit.cueDur                  = 0.0;      % Duration of cue presentaiton.
 p.trVarsInit.cue2StimItvl            = 0.25;     % time between cue offset and stimulus onset (stimulus onset asynchrony).

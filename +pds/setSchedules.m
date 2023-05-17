@@ -5,7 +5,7 @@ function p = setSchedules(p)
 % Define ("set") scheduls for analog to digital converter (ADC) and digital
 % to analog converter (DAC) on VIEWPixx / DATAPixx.
 
-if p.init.useVPixx
+if p.rig.dp.useDataPixxBool
 % Set ADC schedule with a buffer of "maxDur" seconds sampling "adcRate"
 % samples / second.
 Datapixx('SetAdcSchedule', ...

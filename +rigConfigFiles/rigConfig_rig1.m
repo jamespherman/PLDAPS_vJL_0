@@ -1,6 +1,6 @@
 function p = rigConfig_rig1(p)
 
-% this is the rig config file
+% this is the rig config file for rig 1
 % Here we note rig- and animal-specific details such as screen size or
 % distance from screen etc. 
 % 
@@ -26,6 +26,8 @@ p.rig.refreshRate       = 100;                  % display refresh rate (Hz).
 p.rig.frameDuration     = 1/p.rig.refreshRate;  % display frame duration (s);
 p.rig.magicNumber       = 0.008;                % time to wait for screen flip
 
+%% Reward (some systems have slightly different calibrations):
+p.rig.baseReward        = 189;
 
 %% Joystick
 % joystick can be either pressed down, at rest, or pressed. 
@@ -71,9 +73,6 @@ p.rig.dp.dacBuffAddr           = 10e6;     % DAC buffer base address
 p.rig.dp.dacChannelOut         = 0;        % Which channel to use for DAC outpt control of reward system.
 
 %%
-% omniplex IP address
-% p.rig.omniplexIP = xxxxxx;
-
 p.rig.connectToOmniplex   = false;
 
 % open connection to omniplex PC MATLAB instance 
