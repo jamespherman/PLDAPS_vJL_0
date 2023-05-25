@@ -34,13 +34,29 @@ function p = joystick_release_for_fix_and_stim_dim_settings_9010
 %% p.init:
 p = struct;
 
+% determine which PC we're on so we can select the appropriate reward
+% magnitude:
+if ~ispc
+    [~, p.init.pcName] = unix('hostname');
+else
+    % if this IS running on a (windows) PC that means we've neglected to
+    % account for something - figure it out now! JPH - 5/16/2023
+    keyboard
+end
 
-% define paths to add for this task
-% a list of paths to add (at present, for making sure directories
-% containing support functions will be in the path).
-% % p.init.pathList      = {[pwd '/supportFunctions']};
-p.init.rigConfigFile     = which('rigConfigFiles.rigConfig_rig1'); % rig config file has subject/rig-specific details (eg distance from screen)
+% rig config file has subject/rig-specific details (eg distance from
+% screen). Select rig config file depending on PC name (assuming the 2nd to
+% last characteer in the pcName string is 1 or 2):
+p.init.rigConfigFile     = which(['rigConfigFiles.rigConfig_rig' ...
+    p.init.pcName(end-1)]);
 
+% need to set "useDataPixxBool" to true in all settings files. We really
+% need to change how we do this in general. There should be a some master
+% list of settings that are required for all tasks to run correctly that
+% get set in every settings file without the need to duplicate lines of
+% code across all settings files, and separately a list of settings that is
+% task-specific (JPH - 05/25/2023).
+p.init.useDataPixxBool = true;
 
 %% define task name and related files:
 
