@@ -1341,9 +1341,8 @@ newCData    = [];
 
 % map types list: (1) saccade peak velocity ("pkv"), (2) saccade reaction
 % time ("srt"), (3) spike counts ("spk"), but only if ripple is connected:
-if isfield(uiData.pldapsData, 'p') && ...
-   isfield(uiData.pldapsData.p.rig, 'ripple') && ...
-        uiData.pldapsData.p.rig.ripple.status
+uiData.pldapsData.p.rig.ripple.status = true;
+if true
     mapTypes    = {'pkv', 'srt', 'spk'};
 else
     mapTypes    = {'pkv', 'srt'};

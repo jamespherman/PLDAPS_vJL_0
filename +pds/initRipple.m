@@ -10,7 +10,7 @@ p.rig.ripple.status = pds.xippmex;
 
 % Check to see if NIP is turned on (if p.rig.ripple.status is TRUE):
 if p.rig.ripple.status
-    p.rig.ripple.status = pds.xippmex('led', 'f1');
+%     p.rig.ripple.status = pds.xippmex('led', 'f1');
 end
 
 % if we DON'T WANT TO USE RIPPLE...

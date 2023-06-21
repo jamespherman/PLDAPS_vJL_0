@@ -552,7 +552,7 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     if p.trVars.targetIsOn
         
         % draw target:
-        Screen('FrameRect', p.draw.window, p.draw.color.targ, repmat(p.draw.targPointPix, 1, 2) + p.draw.targRadius*[-1 -1 1 1], p.draw.targWidth);
+        Screen('FrameRect', p.draw.window, p.draw.color.targ, repmat(p.draw.targPointPix, 1, 2) + p.trVars.targRadius*[-1 -1 1 1], p.trVars.targWidth);
         
     end
     

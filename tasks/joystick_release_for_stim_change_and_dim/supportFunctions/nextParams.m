@@ -410,6 +410,15 @@ p.trVars.stimFrames     = sum(p.stim.epochFrames);
 % how many epochs?
 p.trVars.nEpochs          = length(p.stim.epochFrames);
 
+% how long is the reward schedule including padding?
+p.trVars.rewardScheduleDur = p.trVars.rewardDurationMs/1000 + ...
+    p.rig.dp.dacPadDur;
+
+% how long to wait after reward delivery before we potentially deliver a
+% free inter-trial interval reward?
+p.trVars.postRewardDuration = rand * (p.trVars.postRewardDurMax - ...
+    p.trVars.postRewardDurMin) + p.trVars.postRewardDurMin;
+
 end
 
 %%

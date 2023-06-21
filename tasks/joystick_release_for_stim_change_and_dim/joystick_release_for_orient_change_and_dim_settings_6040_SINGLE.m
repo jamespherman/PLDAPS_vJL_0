@@ -1,5 +1,5 @@
-function p = joystick_release_for_orient_change_and_dim_settings_6040
-%  p = joystick_release_for_orient_change_and_dim_settings_6040
+function p = joystick_release_for_orient_change_and_dim_settings_6040_SINGLE
+%  p = joystick_release_for_orient_change_and_dim_settings_6040_SINGLE
 %  On some proportion of trials, the fixation point turns off without
 %  reward delivery or "boop", monkey must release joystick to get reward on
 %  those trials. On the remaining trials, the "boop" and reward are
@@ -66,7 +66,7 @@ p.init.protocol_title   = [p.init.taskName '_task'];    % Define Banner text to 
 p.init.date             = datestr(now,'yyyymmdd');
 p.init.time             = datestr(now,'HHMM');
 
-p.init.exptType         = 'joystick_release_for_stim_dim_and_orient_change_6040';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
+p.init.exptType         = 'joystick_release_for_stim_dim_and_orient_change_6040_SINGLELOCATION';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
 
 p.init.date_1yyyy       = str2double(['1' datestr(now,'yyyy')]); % gotta add a '1' otherwise date/times starting with zero lose that zero in conversion to double.
 p.init.date_1mmdd       = str2double(['1' datestr(now,'mmdd')]);
@@ -167,9 +167,6 @@ p.status.cue2CtLoc2                 = 0; % count of two patch cue change trials 
 p.status.foil2CtLoc2                = 0; % count of two patch foil change trials at location 2
 
 p.status.missedFrames               = 0; % count of missed frames as reported by psychtoolbox
-p.status.freeRwdRand                = 0; % random number drawn for deciding whether or not to deliver free reward
-p.status.freeRwdTotal               = 0; % total count of free inter trial interval rewards delivered
-p.status.freeRwdLast                = 0; % last trial in which a free reward was given.
 
 p.status.trialsArrayRowsPossible    = [];
 
@@ -182,9 +179,9 @@ p.rig.guiStatVals = {...
     'iGoodTrial'; ...
     'trialsLeftInBlock'; ...
     'fixDurReq'; ...
-    'freeRwdRand'; ...
-    'freeRwdTotal'; ...
-    'freeRwdLast'; ...
+    'hr2Loc1'; ...
+    'hr1Loc2'; ...
+    'hr2Loc2'; ...
     'cr1Loc1'; ...
     'cr2Loc1'; ...
     'cr1Loc2'; ...
@@ -341,11 +338,9 @@ p.trVarsInit.joyReleaseWaitDur       = 5;        % how long to wait after trial 
 
 p.trVarsInit.stimFrameIdx            = 1;        % stimulus (eg dots) frame display index
 p.trVarsInit.flipIdx                 = 1;        % index of
-p.trVarsInit.postRewardDurMin        = 1;      % how long should the trial last AFTER reward delivery at minimum? This lets us record the neuronal response to reward.
-p.trVarsInit.postRewardDurMax        = 1.2;      % how long should the trial last AFTER reward delivery at maximum? This lets us record the neuronal response to reward.
+p.trVarsInit.postRewardDuration      = 0;        % how long should the trial last AFTER reward delivery? This lets us record the neuronal response to reward.
 p.trVarsInit.useQuest                = false;    % use "QUEST" to determine next stimulus value?
 p.trVarsInit.numTrialsForPerfCalc    = 100;      % how many of the most recently completed trials should be used to calculate % correct / median RT?
-p.trVarsInit.freeRewardProbability   = 0.1;      % How probable is it that the monkey will get a free reward in between trials?
 
 % I don't think I need to carry these around in 'p'....
 % can't I just define them in the 'run' worksapce and forget avbout them?
@@ -410,7 +405,6 @@ p.init.trDataInitList = {...
     'p.trData.timing.joyRelease',       '-1'; ...   % time of joystick release
     'p.trData.timing.reactionTime'      '-1'; ...   % time of joystick release relative to dimming
     'p.trData.timing.fixHoldReqMet',    '-1'; ...   % time that fixation hold duration was met (also time of fixation dimming)
-    'p.trData.timing.freeReward',       '-1'; ...   % time that free reward was delivered
     };
 
 % since the list above is fixed, count its rows now for looping over later.

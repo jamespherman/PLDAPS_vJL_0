@@ -44,7 +44,14 @@ p  = nextParams(p);
 % (4) define visual elements (experimenter display only)
 p  = defineVisuals(p);
 
-% (5) set schedules
+% (5) set schedules; first make sure that no schedule is running:
+Datapixx('RegWrRd');
+dacStatus = Datapixx('GetDacStatus');
+while dacStatus.scheduleRunning
+    WaitSecs(0.05);
+    Datapixx('RegWrRd');
+    dacStatus = Datapixx('GetDacStatus');
+end
 p  = pds.setSchedules(p);
 
 % (6) init trial data

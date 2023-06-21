@@ -60,6 +60,9 @@ switch p.init.exptType
 
     case 'joystick_release_for_stim_dim_and_orient_change_6040'
         table = tableDef_stimDimPlusOrientChange_6040;
+        
+    case 'joystick_release_for_stim_dim_and_orient_change_6040_SINGLELOCATION'
+        table = tableDef_stimDimPlusOrientChange_6040_SINGLELOCATION;
 
     case 'joystick_release_for_stim_dim_and_hue_change_9010'
         table = tableDef_stimDimPlusHueChange_9010;
@@ -308,6 +311,13 @@ table =           [1   1   1   0   0   0   1   0   1   0   0   0   1   0   1   6
                    3   1   0   0   1   0   0   0   0   0   0   0   0   0   3   4   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
                    4   1   0   0   0   1   4   0   1   0   0   0   1   0   4   6   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
                    4   1   0   0   0   1   0   0   0   0   0   0   0   0   4   4   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
+                 ];
+end
+
+% Peripheral stimulus dimming + orientation change with mostly change trials.
+function table = tableDef_stimDimPlusOrientChange_6040_SINGLELOCATION
+table =           [1   1   1   0   0   0   1   0   1   0   0   0   1   0   1   6   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   1   1   1   0   0   0   0   0   0   0   0   0   0   0   1   4   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
                  ];
 end
 

@@ -271,7 +271,8 @@ p.trVarsInit.fixWinWidthDeg       = 2;        % fixation window width in degrees
 p.trVarsInit.fixWinHeightDeg      = 2;        % fixation window height in degrees
 p.trVarsInit.targWinWidthDeg      = 8;        % target window width in degrees
 p.trVarsInit.targWinHeightDeg     = 8;        % target window height in degrees
-
+p.trVarsInit.targWidth            = 6;        % fixation point indicator line width in pixels
+p.trVarsInit.targRadius           = 16;       % fixation point "radius" in pixels
 
 % I don't think I need to carry these around in 'p'....
 % can't I just define them in the 'run' worksapce and forget avbout them?
@@ -439,8 +440,6 @@ p.draw.fixWinPenThick       = 8;        % fixation window width (post 'go' signa
 p.draw.fixWinPenDraw        = [];       % gets assigned either the pre or the post during the run function 
 
 % target and target win:
-p.draw.targWidth            = 6;        % fixation point indicator line width in pixels
-p.draw.targRadius           = 16;        % fixation point "radius" in pixels
 p.draw.targWinPenThin       = 4;        % fixation window width (prior to 'go' signal).
 p.draw.targWinPenThick      = 8;        % fixation window width (post 'go' signal).
 p.draw.targWinPenDraw       = [];       % gets assigned either the pre or the post during the run function

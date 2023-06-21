@@ -85,17 +85,16 @@ WaitSecs(relTime + p.trVars.postRewardDuration - timeNow);
 % inter-trial interval reward, deliver the reward. Otherwise wait the
 % duration that the reward elivery lasts before continuing.
 p.status.freeRwdRand =rand;
-if p.status.freeRwdRand < p.trVars.freeRewardProbability
+if p.status.freeRwdRand < 0.75
 
-    % deliver free reward
-    p = pds.freeReward(p);
+    
 
-    % update count of total free rewards given:
-    p.status.freeRwdTotal = p.status.freeRwdTotal + 1;
-
-    % update last trial in which free reward was given:
-    p.status.freeRwdLast  = p.status.iTrial;
-
+    % deliver reward
+    Datapixx('StartDacSchedule');
+    Datapixx('RegWrRd');
+    p.init.strb.strobeNow(p.init.codes.freeReward);
+    p.trData.timing.freeReward = GetSecs - ...
+        p.trData.timing.trialStartPTB;
 else
 
     % wait same duration as reward schedule;
