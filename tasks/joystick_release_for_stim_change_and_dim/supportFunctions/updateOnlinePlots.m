@@ -9,155 +9,226 @@ p.status.reactionTimes(p.status.iTrial)     = p.trData.timing.reactionTime;
 p.status.dimVals(p.status.iTrial)           = p.trData.dimVal * ...
     ((-1)^p.trVars.isStimChgNoDim) * p.trVars.isStimChangeTrial;
 
-% the new Y value for updating the appropriate plot object is always the
-% same, the trial index:
-newY = p.status.iTrial;
+% for each of our 11 PSTHs, we want to check whether conditions are met
+% (e.g. event occurred in the last trial) such that we should add the spike
+% times to the across-trials list of spike times for the condition. Let's
+% make a big list of conditionals to handle that:
 
-% make sure plotInd is defined (just in case?).
-plotInd = 0;
+% (1) Fixation onset
+% (2) Stimulus onset (location 1)
+% (3) Stimulus onset (location 2)
+% (4) stimulus onset (location 3)
+% (5) Stimulus onset (location 4)
+% (6) Stimulus change (location 1)
+% (7) Stimulus change (location 2)
+% (8) Stimulus change (location 3)
+% (9) Stimulus change (location 4)
+% (10) Reward
+% (11) Free reward
 
-% Was the last trial a hit, a miss, or a non-start? Depending on which
-% state the last trial ended in, define the new "X" value and an index for
-% updating the appropriate plot object. These new "X" values and "plotInd"s
-% are for the trial-by-trial data plot. Since we also want to plot
-% aggregate data across trials, we need to store across-trials data here
-% since we save each trial's data at the end of the trial and discard it
-% rather than keeping it in "p". We need to log trial end state and
-% reaction time.
-switch p.trData.trialEndState
-    case p.state.hit
-        
-        % what's the new "X" data value?
-        newX = p.trData.timing.reactionTime;
+% fixation onset:
+if any(p.trData.eventValues == p.init.codes.fixOn)
 
-        % plotInd determines which existing plot object we're going to add
-        % the current trial's data to:
-        plotInd = 1;
+    % add the previous trial's spike times to the list of spike times we'll
+    % use to construct the PSTH:
+    p.draw.onlinePlotObj(1).UserData.spTimes = ...
+        [p.draw.onlinePlotObj(1).UserData.spTimes; ...
+        p.trData.spikeTimes(:) - ...
+        p.trData.eventTimes(p.trData.eventValues == p.init.codes.fixOn)];
 
-    case p.state.miss
+    % iterate the total trial count for this plot object:
+    p.draw.onlinePlotObj(1).UserData.trialCount = ...
+        p.draw.onlinePlotObj(1).UserData.trialCount + 1;
 
-        % Where are we plotting this trial's datapoint?
-        newX = 0;
+    % construct the PSTH:
+    [n, bins] = histcounts(p.draw.onlinePlotObj(1).UserData.spTimes, ...
+        'BinLimits', ...
+        [p.trVars.fixOnPsthMinTime, p.trVars.fixOnPsthMaxTime], ...
+        'BinWidth', p.trVars.psthBinWidth);
 
-        % plotInd determines which existing plot object we're going to add
-        % the current trial's data to:
+    % make bin centers vector:
+    binCtrs = mean([bins(1:end-1); bins(2:end)]);
+
+    % assign to plot object:
+    set(p.draw.onlinePlotObj(1), 'XData', binCtrs, 'YData', ...
+        (n/p.draw.onlinePlotObj(1).UserData.trialCount) / ...
+        p.trVars.psthBinWidth);
+end
+
+% stimulus onset (all locations):
+if any(p.trData.eventValues == p.init.codes.stimOn)
+
+    % which location did the stimulus onset happen at?
+    if any(ismember(p.trData.eventValues, [23001, 23002]))
         plotInd = 2;
-
-    case p.state.cr
-
-        % Where are we plotting this trial's datapoint?
-        newX = 0;
-
-        % plotInd determines which existing plot object we're going to add
-        % the current trial's data to:
+    elseif any(ismember(p.trData.eventValues, [23003, 23004]))
         plotInd = 3;
-
-    case p.state.fa
-
-        % Where are we plotting this trial's datapoint?
-        newX = p.trData.timing.reactionTime;
-
-        % plotInd determines which existing plot object we're going to add
-        % the current trial's data to:
+    elseif any(ismember(p.trData.eventValues, [23005, 23006]))
         plotInd = 4;
-
-    case p.state.fixBreak
-
-        % Where are we plotting this trial's datapoint?
-        newX = 0;
-
-        % plotInd determines which existing plot object we're going to add
-        % the current trial's data to:
+    elseif any(ismember(p.trData.eventValues, [23007, 23008]))
         plotInd = 5;
+    end
 
-    case p.state.joyBreak
-        
-        % Where are we plotting this trial's datapoint?
-        newX = p.trData.timing.reactionTime;
+    % add the previous trial's spike times to the list of spike times we'll
+    % use to construct the PSTH:
+    p.draw.onlinePlotObj(plotInd).UserData.spTimes = ...
+        [p.draw.onlinePlotObj(plotInd).UserData.spTimes; ...
+        p.trData.spikeTimes(:) - ...
+        p.trData.eventTimes(p.trData.eventValues == p.init.codes.stimOn)];
 
-        % plotInd determines which existing plot object we're going to add
-        % the current trial's data to:
+    % iterate the total trial count for this plot object:
+    p.draw.onlinePlotObj(plotInd).UserData.trialCount = ...
+        p.draw.onlinePlotObj(plotInd).UserData.trialCount + 1;
+
+    % construct the PSTH:
+    [n, bins] = histcounts(...
+        p.draw.onlinePlotObj(plotInd).UserData.spTimes, ...
+        'BinLimits', ...
+        [p.trVars.stimOnPsthMinTime, p.trVars.stimOnPsthMaxTime], ...
+        'BinWidth', p.trVars.psthBinWidth);
+
+    % make bin centers vector:
+    binCtrs = mean([bins(1:end-1); bins(2:end)]);
+
+    % assign to plot object:
+    set(p.draw.onlinePlotObj(plotInd), 'XData', binCtrs, 'YData', ...
+        (n/p.draw.onlinePlotObj(plotInd).UserData.trialCount) / ...
+        p.trVars.psthBinWidth);
+end
+
+% stimulus change (all locations):
+if any(p.trData.eventValues == p.init.codes.stimChange)
+
+    % which location did the stimulus onset happen at?
+    if any(ismember(p.trData.eventValues, [23001, 23002]))
         plotInd = 6;
-        
-    case p.state.nonStart
-        
-        % Where are we plotting this trial's datapoint?
-        newX = 0;
-
-        % plotInd determines which existing plot object we're going to add
-        % the current trial's data to:
+    elseif any(ismember(p.trData.eventValues, [23003, 23004]))
         plotInd = 7;
+    elseif any(ismember(p.trData.eventValues, [23005, 23006]))
+        plotInd = 8;
+    elseif any(ismember(p.trData.eventValues, [23007, 23008]))
+        plotInd = 9;
+    end
+
+    % add the previous trial's spike times to the list of spike times we'll
+    % use to construct the PSTH:
+    p.draw.onlinePlotObj(plotInd).UserData.spTimes = ...
+        [p.draw.onlinePlotObj(plotInd).UserData.spTimes; ...
+        p.trData.spikeTimes(:) - ...
+        p.trData.eventTimes(p.trData.eventValues == ...
+        p.init.codes.stimChange)];
+
+    % iterate the total trial count for this plot object:
+    p.draw.onlinePlotObj(plotInd).UserData.trialCount = ...
+        p.draw.onlinePlotObj(plotInd).UserData.trialCount + 1;
+
+    % construct the PSTH:
+    [n, bins] = histcounts(...
+        p.draw.onlinePlotObj(plotInd).UserData.spTimes, ...
+        'BinLimits', ...
+        [p.trVars.stimChgPsthMinTime, p.trVars.stimChgPsthMaxTime], ...
+        'BinWidth', p.trVars.psthBinWidth);
+
+    % make bin centers vector:
+    binCtrs = mean([bins(1:end-1); bins(2:end)]);
+
+    % assign to plot object:
+    set(p.draw.onlinePlotObj(plotInd), 'XData', binCtrs, 'YData', ...
+        (n/p.draw.onlinePlotObj(plotInd).UserData.trialCount) / ...
+        p.trVars.psthBinWidth);
 end
 
-% get existing X & Y values for plot object to be updated:
-oldX = get(p.draw.onlinePlotObj(plotInd), 'XData');
-oldY = get(p.draw.onlinePlotObj(plotInd), 'YData');
+% reward:
+if any(p.trData.eventValues == p.init.codes.reward)
 
-% update plot object by appending new X / Y data values and assigning to
-% plot object:
-set(p.draw.onlinePlotObj(plotInd), ...
-    'XData', [oldX, newX], ...
-    'YData', [oldY, newY]);
+    % add the previous trial's spike times to the list of spike times we'll
+    % use to construct the PSTH:
+    p.draw.onlinePlotObj(10).UserData.spTimes = ...
+        [p.draw.onlinePlotObj(10).UserData.spTimes; ...
+        p.trData.spikeTimes(:) - ...
+        p.trData.eventTimes(p.trData.eventValues == p.init.codes.reward)];
 
-% update plot axes to make all data nicely visible; find the maximum X
-% value across plot objects and multiply by 1.1 to set X-max.
-xVals = cell2mat(get(p.draw.onlinePlotObj, 'XData')');
-xMax = max(xVals(~isnan(xVals)));
-xMin = min(xVals(~isnan(xVals)));
+    % iterate the total trial count for this plot object:
+    p.draw.onlinePlotObj(10).UserData.trialCount = ...
+        p.draw.onlinePlotObj(10).UserData.trialCount + 1;
 
-% if xMax is either empty, NaN, or 0, set it to 1
-if isnan(xMax) || isempty(xMax) || xMax == 0 || isinf(xMax)
-    xMax = 1;
+    % construct the PSTH:
+    [n, bins] = histcounts(p.draw.onlinePlotObj(10).UserData.spTimes, ...
+        'BinLimits', ...
+        [p.trVars.rwdPsthMinTime, p.trVars.rwdPsthMaxTime], ...
+        'BinWidth', p.trVars.psthBinWidth);
+
+    % make bin centers vector:
+    binCtrs = mean([bins(1:end-1); bins(2:end)]);
+
+    % assign to plot object:
+    set(p.draw.onlinePlotObj(10), 'XData', binCtrs, 'YData', ...
+        (n/p.draw.onlinePlotObj(10).UserData.trialCount) / ...
+        p.trVars.psthBinWidth);
 end
 
-% if xMin is either empty, NaN, or 0, set it to 1
-if isnan(xMin) || isempty(xMin) || xMin == 0 || isinf(xMin)
-    xMin = -1;
+% free reward:
+if any(p.trData.eventValues == p.init.codes.freeReward)
+
+    % add the previous trial's spike times to the list of spike times we'll
+    % use to construct the PSTH:
+    p.draw.onlinePlotObj(11).UserData.spTimes = ...
+        [p.draw.onlinePlotObj(11).UserData.spTimes; ...
+        p.trData.spikeTimes(:) - ...
+        p.trData.eventTimes(p.trData.eventValues == ...
+        p.init.codes.freeReward)];
+
+    % iterate the total trial count for this plot object:
+    p.draw.onlinePlotObj(11).UserData.trialCount = ...
+        p.draw.onlinePlotObj(11).UserData.trialCount + 1;
+
+    % construct the PSTH:
+    [n, bins] = histcounts(p.draw.onlinePlotObj(11).UserData.spTimes, ...
+        'BinLimits', ...
+        [p.trVars.freeRwdPsthMinTime, p.trVars.freeRwdPsthMaxTime], ...
+        'BinWidth', p.trVars.psthBinWidth);
+
+    % make bin centers vector:
+    binCtrs = mean([bins(1:end-1); bins(2:end)]);
+
+    % assign to plot object:
+    set(p.draw.onlinePlotObj(11), 'XData', binCtrs, 'YData', ...
+        (n/p.draw.onlinePlotObj(11).UserData.trialCount) / ...
+        p.trVars.psthBinWidth);
 end
 
-% assign new X / Y limits:
-try
-set(p.draw.onlinePlotAxes, 'XLim', 1.1*[xMin, xMax], 'YLim', [0 newY + 1]);
-catch me
-%     keyboard
+% no free reward:
+if any(p.trData.eventValues == p.init.codes.noFreeReward)
+
+    % add the previous trial's spike times to the list of spike times we'll
+    % use to construct the PSTH:
+    p.draw.onlinePlotObj(12).UserData.spTimes = ...
+        [p.draw.onlinePlotObj(12).UserData.spTimes; ...
+        p.trData.spikeTimes(:) - ...
+        p.trData.eventTimes(p.trData.eventValues == ...
+        p.init.codes.noFreeReward)];
+
+    % iterate the total trial count for this plot object:
+    p.draw.onlinePlotObj(12).UserData.trialCount = ...
+        p.draw.onlinePlotObj(12).UserData.trialCount + 1;
+
+    % construct the PSTH:
+    [n, bins] = histcounts(p.draw.onlinePlotObj(12).UserData.spTimes, ...
+        'BinLimits', ...
+        [p.trVars.freeRwdPsthMinTime, p.trVars.freeRwdPsthMaxTime], ...
+        'BinWidth', p.trVars.psthBinWidth);
+
+    % make bin centers vector:
+    binCtrs = mean([bins(1:end-1); bins(2:end)]);
+
+    % assign to plot object:
+    set(p.draw.onlinePlotObj(12), 'XData', binCtrs, 'YData', ...
+        (n/p.draw.onlinePlotObj(12).UserData.trialCount) / ...
+        p.trVars.psthBinWidth);
 end
 
-% get eye X & Y data both before and after fixation acquisition RELATIVE TO
-% FIXATION LOCATION. If fixation wasn't acquired in this trial, assign 
-% "NaN" to post-fixation-aquisition eye X & Y; if fixation was acquired in
-% this trial, define a logicalindex for pre-fixation-acquisition time
-% samples:
-eyeX = 4 * p.trData.eyeX;
-eyeY = 4 * p.trData.eyeY;
-eyeT = p.trData.eyeT;
-if p.trData.timing.fixAq < 0
-    eyeX_preFixAq = eyeX - p.trVars.fixDegX;
-    eyeY_preFixAq = eyeY - p.trVars.fixDegY;
-    eyeX_postFixAq = NaN;
-    eyeY_postFixAq = NaN;
-else
-    preFixAqLogical = eyeT < p.trData.timing.fixAq;
-    eyeX_preFixAq = eyeX(preFixAqLogical) - p.trVars.fixDegX;
-    eyeY_preFixAq = eyeY(preFixAqLogical) - p.trVars.fixDegY;
-    eyeX_postFixAq = eyeX(~preFixAqLogical) - p.trVars.fixDegX;
-    eyeY_postFixAq = eyeY(~preFixAqLogical) - p.trVars.fixDegY;
-end
-    
-% update onlineEyePlots:
-set(p.draw.onlineEyePlotObj(1), ...
-    'XData', p.trVars.fixWinWidthDeg*[-1 1 1 -1 -1], ...
-    'YData', p.trVars.fixWinHeightDeg*[-1 -1 1 1 -1]);
-set(p.draw.onlineEyePlotObj(2), ...
-    'XData', eyeX_preFixAq, ...
-    'YData', eyeY_preFixAq);
-set(p.draw.onlineEyePlotObj(3), ...
-    'XData', eyeX_postFixAq, ...
-    'YData', eyeY_postFixAq);
-
-% set X & Y limits of onlineEyePlotAxes:
-set(p.draw.onlineEyePlotAxes, ...
-    'XLim', p.trVars.fixWinWidthDeg * [-1 1] + [-1 1], ...
-    'YLim', p.trVars.fixWinHeightDeg * [-1 1] + [-1 1]);
+% update plots
+drawnow;
 
 % Here we will compute aggregate performance (percent correct) and reaction
 % time. We first define which trials we're interested in numerically based

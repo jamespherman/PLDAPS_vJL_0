@@ -98,6 +98,9 @@ if p.status.freeRwdRand < p.trVars.freeRewardProbability
 
 else
 
+    % strobe time of no free reward
+    p.init.strb.strobeNow(p.init.codes.noFreeReward);
+
     % wait same duration as reward schedule;
     WaitSecs(p.trVars.rewardScheduleDur);
 end
@@ -106,6 +109,11 @@ end
 p.trData.missedFrameCount = nnz(diff(p.trData.timing.flipTime) > ...
     p.rig.frameDuration * 1.5);
 p.status.missedFrames = p.status.missedFrames + p.trData.missedFrameCount;
+
+% retreive data from ripple "NIP" if connected:
+if p.rig.ripple.status 
+    p = pds.getRippleData(p);
+end
 
 % (5) auto save backup
 pds.saveP(p);

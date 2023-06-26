@@ -266,6 +266,7 @@ codes.orn               = 25000; % this is to send stim info; for eevnt codes fo
 % reward code
 codes.reward            = 8000;
 codes.freeReward        = 8001;
+codes.noFreeReward      = 8002;
 codes.rewardDuration    = 18000;
 
 % micro stim codes

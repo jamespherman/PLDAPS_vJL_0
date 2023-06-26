@@ -44,10 +44,11 @@ p.audio.wrongTone     = tempWindow.*sin((1:p.audio.nTF)*2*pi*p.audio.wrongFreq/p
 p.audio.rightTone     = tempWindow.*sin((1:p.audio.nTF)*2*pi*p.audio.rightFreq/p.audio.freq);
 p.audio.noiseTone     = tempWindow.*((rand(1,p.audio.nTF)-0.5)*2);
 
-% Normalize the windowed sounds (keep them between -1 and 1.
+% Normalize the windowed sounds (keep them between -1 and 1. Scale down the
+% noise tone a bit because it sounds too loud relative to "rightTone".
 p.audio.wrongTone     = p.audio.wrongTone/max(abs(p.audio.wrongTone));
 p.audio.rightTone     = p.audio.rightTone/max(abs(p.audio.rightTone));
-p.audio.noiseTone     = p.audio.noiseTone/max(abs(p.audio.noiseTone));
+p.audio.noiseTone     = 0.6*(p.audio.noiseTone/max(abs(p.audio.noiseTone)));
 
 % check to make sure there's a "lineOutLevel" subfield of "p.audio", if
 % there isn't, define it. We use this value to set the output volume level

@@ -55,6 +55,9 @@ p   = plotWindowSetup(p);
 % (8) define in-line functions
 p   = inLineDefs(p);
 
+% initialize connection to Ripple:
+p = pds.initRipple(p);
+
 % set task codes:
 p.init.codes = pds.initCodes;
 

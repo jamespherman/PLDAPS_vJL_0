@@ -7,14 +7,39 @@ function p = getRippleData(p)
 % sample numbers based on a 30 kHz sample rate, so we divide by 30 kHz to
 % convert to seconds:
 try
-    [~, tempSpikeTimes] = xippmex('spike', ...
-        p.rig.ripple.recChans(p.trVars.rippleChanSelect), 0);
-    p.trData.spikeTimes = tempSpikeTimes{:} / 30000;
+    tempSpikeTimes{1} = [];
+    while isempty(tempSpikeTimes{:})
+        [~, tempSpikeTimes, ~, unitIdx] = xippmex('spike', ...
+            p.rig.ripple.recChans(p.trVars.rippleChanSelect), 0);
+    end
+
+    % if there is an online sorted unit defined, use those spiketimes only,
+    % otherwise use all spiketimes (threshold crossings).
+    if any(unitIdx{1})
+        p.trData.spikeTimes = tempSpikeTimes{unitIdx{1}} / 30000;
+    else
+        p.trData.spikeTimes = tempSpikeTimes{:} / 30000;
+    end
 catch me
     xippmex;
-    [~, tempSpikeTimes] = xippmex('spike', ...
-        p.rig.ripple.recChans(p.trVars.rippleChanSelect), 0);
-    p.trData.spikeTimes = tempSpikeTimes{:} / 30000;
+    tempSpikeTimes{1} = [];
+    while isempty(tempSpikeTimes{:})
+        [~, tempSpikeTimes, ~, unitIdx] = xippmex('spike', ...
+            p.rig.ripple.recChans(p.trVars.rippleChanSelect), 0);
+    end
+
+    % if there is an online sorted unit defined, use those spiketimes only,
+    % otherwise use all spiketimes (threshold crossings).
+    if any(unitIdx{1})
+        p.trData.spikeTimes = tempSpikeTimes{unitIdx{1}} / 30000;
+    else
+        p.trData.spikeTimes = tempSpikeTimes{:} / 30000;
+    end
+end
+
+% why is this empty?!
+if isempty(tempSpikeTimes{:})
+    keyboard
 end
 
 % get strobed event values and event times from ripple (in ripple's clock).
