@@ -19,7 +19,8 @@ Datapixx('SetDacSchedule', 0, p.rig.dp.dacRate, ...
     0, p.rig.dp.dacBuffAddr, fix(dacWaveOutDur * p.rig.dp.dacRate));
 Datapixx('RegWrRd');
 
-% deliver reward
+% deliver reward, strobe reward delivery, and record time of reward
+% delivery
 Datapixx('StartDacSchedule');
 Datapixx('RegWrRd');
 p.init.strb.strobeNow(p.init.codes.freeReward);

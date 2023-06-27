@@ -24,6 +24,15 @@ function p = joystick_release_for_stim_change_and_dim_finish(p)
 %     of transitions between blocks, etc.).
 % (8) Update online plots.
 
+% (0) get buffered spike times and event times from ripple (this might seem
+% like an odd time to do this but before you go changing it ask jph), then
+% align spikes to events for later plotting. This is currently a hack
+% because we drop the first trial's events - figure out a way around this.
+if p.rig.ripple.status && p.status.iTrial > 1
+    p = pds.getRippleData(p);
+end
+p = alignSpikes(p);
+
 % (1) fill screen with background color (if we're not playing a movie)
 if ~isfield(p.draw, 'movie')
     Screen('FillRect', p.draw.window, p.draw.color.background);
@@ -41,13 +50,7 @@ p.trData.trialRepeatFlag = (p.trData.trialEndState > 10) & ...
 % strobe trial data:
 p           = pds.strobeTrialData(p);
 
-% strobe and mark end of trial:
-timeNow = GetSecs - p.trData.timing.trialStartPTB; % timeNow is relative to trial Start
-p.trData.timing.trialEnd   = timeNow;
-p.init.strb.strobeNow(p.init.codes.trialEnd);
 
-% (3) mark end time in PTB & DP time:
-[p.trData.timing.trialEndPTB, p.trData.timing.trialEndDP] = pds.getTimes;
 
 % save strobed codes:
 p.trData.strobed = p.init.strb.strobedList;
@@ -95,7 +98,6 @@ if p.status.freeRwdRand < p.trVars.freeRewardProbability
 
     % update last trial in which free reward was given:
     p.status.freeRwdLast  = p.status.iTrial;
-
 else
 
     % strobe time of no free reward
@@ -109,11 +111,6 @@ end
 p.trData.missedFrameCount = nnz(diff(p.trData.timing.flipTime) > ...
     p.rig.frameDuration * 1.5);
 p.status.missedFrames = p.status.missedFrames + p.trData.missedFrameCount;
-
-% retreive data from ripple "NIP" if connected:
-if p.rig.ripple.status 
-    p = pds.getRippleData(p);
-end
 
 % (5) auto save backup
 pds.saveP(p);

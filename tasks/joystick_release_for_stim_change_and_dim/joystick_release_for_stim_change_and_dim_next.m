@@ -60,11 +60,7 @@ p = initTrData(p);
 % (7) generate stimuli
 p   = generateStimuli(p);
 
-% (8) record save the stim details (ie dot XYCW)
-% p.trVars.stim = p.stim;
-
-% (9) Start ephys recording and ADC schedules
+% (10) Start ephys recording and ADC schedules
 pds.startEphysAndSchedules;
-
 
 end
