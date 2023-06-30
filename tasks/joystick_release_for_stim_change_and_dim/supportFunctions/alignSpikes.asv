@@ -50,10 +50,17 @@ if any(p.trData.eventValues == p.init.codes.stimOn) && ...
         length(p.trVars.stimOnList) == 1
 
     % At which location did the SINGLE stimulus onset occur? We use that
-    % information to define a plot index ("plotInd") that refers to an
-    % element of p.draw.onlinePlotObj where we store the aligned spikes and
-    % trial counts:
-    plotInd = p.trVars.stimOnList + 1;
+    % information to define a plot index ("plotInd") so we can add the
+    % spikes 
+    if any(ismember(p.trData.eventValues, [23001, 23002]))
+        plotInd = 2;
+    elseif any(ismember(p.trData.eventValues, [23003, 23004]))
+        plotInd = 3;
+    elseif any(ismember(p.trData.eventValues, [23005, 23006]))
+        plotInd = 4;
+    elseif any(ismember(p.trData.eventValues, [23007, 23008]))
+        plotInd = 5;
+    end
 
     % time to align to; only use the last one.
     alignTime = ...
@@ -70,15 +77,19 @@ if any(p.trData.eventValues == p.init.codes.stimOn) && ...
         p.draw.onlinePlotObj(plotInd).UserData.trialCount + 1;
 end
 
-% stimulus change (all locations) with a SINGLE stimulus present:
-if any(p.trData.eventValues == p.init.codes.stimChange) && ...
-        length(p.trVars.stimOnList) == 1
+% stimulus change (all locations):
+if any(p.trData.eventValues == p.init.codes.stimChange)
 
-    % At which location did the stimulus change occur? We use that
-    % information to define a plot index ("plotInd") that refers to an
-    % element of p.draw.onlinePlotObj where we store the aligned spikes and
-    % trial counts:
-    plotInd = p.trVars.stimOnList + 5;
+    % which location did the stimulus onset happen at?
+    if any(ismember(p.trData.eventValues, [23001, 23002]))
+        plotInd = 6;
+    elseif any(ismember(p.trData.eventValues, [23003, 23004]))
+        plotInd = 7;
+    elseif any(ismember(p.trData.eventValues, [23005, 23006]))
+        plotInd = 8;
+    elseif any(ismember(p.trData.eventValues, [23007, 23008]))
+        plotInd = 9;
+    end
 
     % time to align to; only use the last one.
     alignTime = ...

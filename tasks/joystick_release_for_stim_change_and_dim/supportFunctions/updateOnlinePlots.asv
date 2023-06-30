@@ -17,10 +17,14 @@ psthLims = [...
     [p.trVars.stimOnPsthMinTime, p.trVars.stimOnPsthMaxTime]; ...   (3)
     [p.trVars.stimOnPsthMinTime, p.trVars.stimOnPsthMaxTime]; ...   (4)
     [p.trVars.stimOnPsthMinTime, p.trVars.stimOnPsthMaxTime]; ...   (5)
-    [p.trVars.stimChgPsthMinTime, p.trVars.stimChgPsthMaxTime]; ...
-
-
-    ]
+    [p.trVars.stimChgPsthMinTime, p.trVars.stimChgPsthMaxTime]; ... (6)
+    [p.trVars.stimChgPsthMinTime, p.trVars.stimChgPsthMaxTime]; ... (7)
+    [p.trVars.stimChgPsthMinTime, p.trVars.stimChgPsthMaxTime]; ... (8)
+    [p.trVars.stimChgPsthMinTime, p.trVars.stimChgPsthMaxTime]; ... (9)
+    [p.trVars.rwdPsthMinTime, p.trVars.rwdPsthMaxTime]; ...         (10)
+    [p.trVars.freeRwdPsthMinTime, p.trVars.freeRwdPsthMaxTime]; ... (11)
+    [p.trVars.freeRwdPsthMinTime, p.trVars.freeRwdPsthMaxTime]; ... (12)
+    ];
 
 % for each of our 11 online-plotted PSTHs we recompute the binned counts
 % and assign the x / y data to the plot object here.
@@ -41,9 +45,9 @@ psthLims = [...
 for i = 1:length(p.draw.onlinePlotObj)
 
     % construct the PSTH:
-    [n, bins] = histcounts(p.draw.onlinePlotObj(1).UserData.spTimes, ...
+    [n, bins] = histcounts(p.draw.onlinePlotObj(i).UserData.spTimes, ...
         'BinLimits', ...
-        psthLims(1,:), ...
+        psthLims(i,:), ...
         'BinWidth', p.trVars.psthBinWidth);
 
     % make bin centers vector:
@@ -55,96 +59,31 @@ for i = 1:length(p.draw.onlinePlotObj)
         p.trVars.psthBinWidth);
 end
 
-% reward:
-if any(p.trData.eventValues == p.init.codes.reward)
+% update legend entries for psth plots by looping over axes:
+for i = 1:length(p.draw.psthPlotAxes)
 
-    % add the previous trial's spike times to the list of spike times we'll
-    % use to construct the PSTH:
-    p.draw.onlinePlotObj(10).UserData.spTimes = ...
-        [p.draw.onlinePlotObj(10).UserData.spTimes; ...
-        p.trData.spikeTimes(:) - ...
-        p.trData.eventTimes(p.trData.eventValues == p.init.codes.reward)];
+    % loop over plots in current axes to update legend entries:
+    for j = 1:length(p.draw.psthPlotAxes(i).Children)
 
-    % iterate the total trial count for this plot object:
-    p.draw.onlinePlotObj(10).UserData.trialCount = ...
-        p.draw.onlinePlotObj(10).UserData.trialCount + 1;
+        % there is a STUPID lack of correspondence between the ordering of
+        % an axes 'children' and the legend string entries. Children are
+        % stored last to first, so we have to make a "reversed" index for
+        % the legend strings to keep everything aligned:
+        legIdx = 
 
-    % construct the PSTH:
-    [n, bins] = histcounts(p.draw.onlinePlotObj(10).UserData.spTimes, ...
-        'BinLimits', ...
-        [p.trVars.rwdPsthMinTime, p.trVars.rwdPsthMaxTime], ...
-        'BinWidth', p.trVars.psthBinWidth);
+        % what is the trial count for the current plot object? Defining
+        % this as a temporary variable lets us keep the code a bit cleaner.
+        currCount = p.draw.psthPlotAxes(i).Children(j).UserData.trialCount;
 
-    % make bin centers vector:
-    binCtrs = mean([bins(1:end-1); bins(2:end)]);
-
-    % assign to plot object:
-    set(p.draw.onlinePlotObj(10), 'XData', binCtrs, 'YData', ...
-        (n/p.draw.onlinePlotObj(10).UserData.trialCount) / ...
-        p.trVars.psthBinWidth);
+        % use "regexprep" to replace the placeholder string 'XX' with the
+        % trial count:
+        p.draw.onlinePlotLegend(i).String{j} = ...
+            regexprep(p.draw.onlinePlotLegend(i).UserData{j}, 'XX', ...
+            num2str(currCount));
+    end
 end
 
-% free reward:
-if any(p.trData.eventValues == p.init.codes.freeReward)
-
-    % add the previous trial's spike times to the list of spike times we'll
-    % use to construct the PSTH:
-    p.draw.onlinePlotObj(11).UserData.spTimes = ...
-        [p.draw.onlinePlotObj(11).UserData.spTimes; ...
-        p.trData.spikeTimes(:) - ...
-        p.trData.eventTimes(p.trData.eventValues == ...
-        p.init.codes.freeReward)];
-
-    % iterate the total trial count for this plot object:
-    p.draw.onlinePlotObj(11).UserData.trialCount = ...
-        p.draw.onlinePlotObj(11).UserData.trialCount + 1;
-
-    % construct the PSTH:
-    [n, bins] = histcounts(p.draw.onlinePlotObj(11).UserData.spTimes, ...
-        'BinLimits', ...
-        [p.trVars.freeRwdPsthMinTime, p.trVars.freeRwdPsthMaxTime], ...
-        'BinWidth', p.trVars.psthBinWidth);
-
-    % make bin centers vector:
-    binCtrs = mean([bins(1:end-1); bins(2:end)]);
-
-    % assign to plot object:
-    set(p.draw.onlinePlotObj(11), 'XData', binCtrs, 'YData', ...
-        (n/p.draw.onlinePlotObj(11).UserData.trialCount) / ...
-        p.trVars.psthBinWidth);
-end
-
-% no free reward:
-if any(p.trData.eventValues == p.init.codes.noFreeReward)
-
-    % add the previous trial's spike times to the list of spike times we'll
-    % use to construct the PSTH:
-    p.draw.onlinePlotObj(12).UserData.spTimes = ...
-        [p.draw.onlinePlotObj(12).UserData.spTimes; ...
-        p.trData.spikeTimes(:) - ...
-        p.trData.eventTimes(p.trData.eventValues == ...
-        p.init.codes.noFreeReward)];
-
-    % iterate the total trial count for this plot object:
-    p.draw.onlinePlotObj(12).UserData.trialCount = ...
-        p.draw.onlinePlotObj(12).UserData.trialCount + 1;
-
-    % construct the PSTH:
-    [n, bins] = histcounts(p.draw.onlinePlotObj(12).UserData.spTimes, ...
-        'BinLimits', ...
-        [p.trVars.freeRwdPsthMinTime, p.trVars.freeRwdPsthMaxTime], ...
-        'BinWidth', p.trVars.psthBinWidth);
-
-    % make bin centers vector:
-    binCtrs = mean([bins(1:end-1); bins(2:end)]);
-
-    % assign to plot object:
-    set(p.draw.onlinePlotObj(12), 'XData', binCtrs, 'YData', ...
-        (n/p.draw.onlinePlotObj(12).UserData.trialCount) / ...
-        p.trVars.psthBinWidth);
-end
-
-% update plots
+% update plot:
 drawnow;
 
 % Here we will compute aggregate performance (percent correct) and reaction

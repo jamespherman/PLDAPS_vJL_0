@@ -1,11 +1,10 @@
-function p = human_psychophysical_threshold_settings
-%  p = human_psychophysical_threshold_settings
-%
+function p = joystick_release_for_orient_change_and_dim_settings_TEST
+%  p = joystick_release_for_orient_change_and_dim_settings_6040
 %  On some proportion of trials, the fixation point turns off without
 %  reward delivery or "boop", monkey must release joystick to get reward on
 %  those trials. On the remaining trials, the "boop" and reward are
 %  delivered simultaneously with fixation offset.
-%4
+%
 % Part of the quintet of pldpas functions:
 %   settings function
 %   init function
@@ -40,23 +39,42 @@ p = struct;
 % a list of paths to add (at present, for making sure directories
 % containing support functions will be in the path).
 % % p.init.pathList      = {[pwd '/supportFunctions']};
-p.init.rigConfigFile     = which('rigConfigFiles.rigConfig_human'); % rig config file has subject/rig-specific details (eg distance from screen)
+
+% determine which PC we're on so we can select the appropriate reward
+% magnitude:
+if ~ispc
+    [~, p.init.pcName] = unix('hostname');
+else
+    % if this IS running on a (windows) PC that means we've neglected to
+    % account for something - figure it out now! JPH - 5/16/2023
+    keyboard
+end
+
+% rig config file has subject/rig-specific details (eg distance from
+% screen). Select rig config file depending on PC name (assuming the 2nd to
+% last characteer in the pcName string is 1 or 2):
+p.init.rigConfigFile     = which(['rigConfigFiles.rigConfig_rig' ...
+    p.init.pcName(end-1)]);
 
 
 %% define task name and related files:
 
-p.init.taskName         = 'human_psychophysical_threshold';
+p.init.taskName         = 'joystick_release_for_stim_change_and_dim';
 p.init.taskType         = 1;                            % poorly defined numerical index for the task "type"
 p.init.pldapsFolder     = pwd;                          % pldaps gui takes us to taks folder automatically once we choose a settings file
 p.init.protocol_title   = [p.init.taskName '_task'];    % Define Banner text to identify the experimental protocol
 p.init.date             = datestr(now,'yyyymmdd');
 p.init.time             = datestr(now,'HHMM');
 
-p.init.exptType         = 'human_psychophysics_hue_discrimination';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
+p.init.exptType         = 'joystick_release_for_stim_dim_and_orient_change_1to4_train_step1';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
 
 p.init.date_1yyyy       = str2double(['1' datestr(now,'yyyy')]); % gotta add a '1' otherwise date/times starting with zero lose that zero in conversion to double.
 p.init.date_1mmdd       = str2double(['1' datestr(now,'mmdd')]);
 p.init.time_1hhmm       = str2double(['1' datestr(now,'HHMM')]);
+
+
+% are we using datapixx / viewpixx?
+p.init.useDataPixxBool = true;
 
 % output files:
 p.init.outputFolder     = fullfile(p.init.pldapsFolder, 'output');
@@ -70,15 +88,8 @@ p.init.taskFiles.next   = [p.init.taskName '_next.m'];
 p.init.taskFiles.run    = [p.init.taskName '_run.m'];
 p.init.taskFiles.finish = [p.init.taskName '_finish.m'];
 
-% We need to know that this is a "human" experiment rather than a monkey
-% experiment. Define a variable in "init" for this purpose. Using PLDAPS
-% for human experiments means we might or we might not be using the
-% VIEWPixx. Set a variable for that too. Finally, set a variable indicating
-% whether we are using "dummy mode" for the Eyelink (if dummy mode is set
-% to "1", the tracker need not be physically connected).
-p.init.subjType         = 'Human';
-p.init.elDummyMode      = 0;
-p.init.useDataPixxBool  = false;
+% are we using datapixx / viewpixx?
+p.init.useDataPixxBool = true;
 
 %% Define the Action M-files
 % User-defined actions that are either within the task folder under
@@ -119,18 +130,46 @@ p.state.miss            = 23;
 p.state.foilFa          = 24;
 p.state.fa              = 25;
 
-% end states - completed:
-p.state.trialCompleted  = 26;
-
 %% STATUS VALUES
 
 p.status.iTrial                     = 0; % ITERATOR for current trial count
 p.status.iGoodTrial                 = 0; % count of all trials that have ended in hit, miss, cr, foil fa (no fix or joy breaks, no fa)
 p.status.trialsLeftInBlock          = 0; % how many trials remain in the current block?
 p.status.blockNumber                = 0; % what block are we in?
-p.status.totalTrials                = 0; % how many trials will we run in total?
+
+p.status.fixDurReq                  = 0; % how long was the monkey required to hold down the joystick on the last trial?
+
+p.status.hr1Loc1                    = 0; % hit rate for single patch at location 1
+p.status.cr1Loc1                    = 0; % correct reject rate for single patch at location 1
+p.status.hr1Loc2                    = 0; % hit rate for single patch at location 2
+p.status.cr1Loc2                    = 0; % correct reject rate for single patch at location 2
+p.status.hr2Loc1                    = 0; % hit rate for two patch at location 1
+p.status.cr2Loc1                    = 0; % correct reject rate for two patch at location 1
+p.status.hr2Loc2                    = 0; % hit rate for two patch at location 2
+p.status.cr2Loc2                    = 0; % correct reject rate for two patch at location 2
+
+p.status.hc1Loc1                    = 0; % hit count for single patch at location 1
+p.status.crc1Loc1                   = 0; % correct reject count for single patch at location 1
+p.status.hc1Loc2                    = 0; % hit count for single patch at location 2
+p.status.crc1Loc2                   = 0; % correct reject count for single patch at location 2
+p.status.hc2Loc1                    = 0; % hit count for two patch at location 1
+p.status.crc2Loc1                   = 0; % correct reject count for two patch at location 1
+p.status.hc2Loc2                    = 0; % hit count for two patch at location 2
+p.status.crc2Loc2                   = 0; % correct reject count for two patch at location 2
+
+p.status.cue1CtLoc1                 = 0; % count of single patch cue change trials at location 1
+p.status.foil1CtLoc1                = 0; % count of single patch foil change trials at location 1
+p.status.cue1CtLoc2                 = 0; % count of single patch cue change trials at location 2
+p.status.foil1CtLoc2                = 0; % count of single patch foil change trials at location 2
+p.status.cue2CtLoc1                 = 0; % count of two patch cue change trials at location 1
+p.status.foil2CtLoc1                = 0; % count of two patch foil change trials at location 1
+p.status.cue2CtLoc2                 = 0; % count of two patch cue change trials at location 2
+p.status.foil2CtLoc2                = 0; % count of two patch foil change trials at location 2
 
 p.status.missedFrames               = 0; % count of missed frames as reported by psychtoolbox
+p.status.freeRwdRand                = 0; % random number drawn for deciding whether or not to deliver free reward
+p.status.freeRwdTotal               = 0; % total count of free inter trial interval rewards delivered
+p.status.freeRwdLast                = 0; % last trial in which a free reward was given.
 
 p.status.trialsArrayRowsPossible    = [];
 
@@ -142,6 +181,15 @@ p.rig.guiStatVals = {...
     'iTrial'; ...   
     'iGoodTrial'; ...
     'trialsLeftInBlock'; ...
+    'fixDurReq'; ...
+    'freeRwdRand'; ...
+    'freeRwdTotal'; ...
+    'freeRwdLast'; ...
+    'cr1Loc1'; ...
+    'cr2Loc1'; ...
+    'cr1Loc2'; ...
+    'cr2Loc2'; ...
+%     'missedFrames'; ...
     };    
 
 %% user determines the 12 variables are shown in gui upon init
@@ -150,18 +198,18 @@ p.rig.guiStatVals = {...
 % The list of vars should be in string format eg 'p.trVarsInit.cueDelta'
 
 p.rig.guiVars = {...
-    'passJoy'; ...     % 1
-    'passEye'; ...          % 2
-    'doDriftCorrect'; ...        % 3
-    'hueDelta'; ...            % 4
-    'hueVar'; ...         % 5
-    'ctrstInit'; ...             % 6
-    'satInit'; ...             % 7
-    'satVar'; ...       % 8
-    'lumInit'; ...        % 9
-    'stimRadius'; ...        % 10
-    'boxSizePix'; ...              % 11
-    'boxLifetime'};                 % 12
+    'rewardDurationMs'; ...     % 1
+    'rewardDelay'; ...          % 2
+    'stim2ChgIntvl'; ...        % 3
+    'chgWinDur'; ...            % 4
+    'stimLoc1Elev'; ...         % 5
+    'hueDelta'; ...             % 6
+    'lumDelta'; ...             % 7
+    'propHueChgOnly'; ...       % 8
+    'joyMinLatency'; ...        % 9
+    'joyMaxLatency'; ...        % 10
+    'passJoy'; ...              % 11
+    'passEye'};                 % 12
 
 %% INIT VARIABLES 
 % vars that are only set once
@@ -175,8 +223,8 @@ p.rig.guiVars = {...
 % 'trVars' is the key strcutarray that gets saved on every trial.
 
 % general vars:
-p.trVarsInit.passJoy             = 1;       % pass = 1; simulate correct trials (for debugging)
-p.trVarsInit.passEye             = 1;       % pass = 1; simulate correct trials (for debugging)
+p.trVarsInit.passJoy             = 0;       % pass = 1; simulate correct trials (for debugging)
+p.trVarsInit.passEye             = 0;       % pass = 1; simulate correct trials (for debugging)
 p.trVarsInit.blockNumber         = 0;       % block number
 p.trVarsInit.repeat              = 0;       % repeat trial if true
 p.trVarsInit.rwdJoyPR            = 0;       % 0 = Give reward if Joy is pressed; 1 = Give reward if Joystick released
@@ -199,7 +247,7 @@ p.trVarsInit.eyePixY             = 0;
 % indicate whether the current trial is a "change" or a "no change" trial.
 % The above is old - update it (jph - 11/1/2022).
 
-p.trVarsInit.propHueChgOnly      = 0.5;         % proportion of trials in which the peripheral stimulus only changes hue with no dimming
+p.trVarsInit.propHueChgOnly      = 1;       % proportion of trials in which the peripheral stimulus only changes hue with no dimming
 p.trVarsInit.isStimChangeTrial   = false;     % variable tracking whether the current trial is a "change" or "no change" trial.
 
 % Stimulus geometry variables. There can be up to 4 stimuli shown
@@ -214,7 +262,7 @@ p.trVarsInit.isStimChangeTrial   = false;     % variable tracking whether the cu
 % variables are 0, we do nothing, but if those variables are nonzero, we
 % replace the automatically calculated elevations and eccentricities with
 % the specified values:
-p.trVarsInit.stimLoc1Elev        = 45;          % Stimulus location (angle of elevation).
+p.trVarsInit.stimLoc1Elev        = 75;           % Stimulus location (angle of elevation).
 p.trVarsInit.stimLoc1Ecc         = 10;          % Stimulus location (eccentricity in degrees).
 p.trVarsInit.stimLoc2Elev        = 0;           % Stimulus location (angle of elevation).
 p.trVarsInit.stimLoc2Ecc         = 0;           % Stimulus location (eccentricity in degrees).
@@ -226,8 +274,8 @@ p.trVarsInit.stimLoc4Ecc         = 0;           % Stimulus location (eccentricit
 % Fixation location variables:
 p.trVarsInit.fixDegX             = 0;           % fixation X location in degrees
 p.trVarsInit.fixDegY             = 0;           % fixation Y location in degrees
-p.trVarsInit.fixLocRandX         = 0;           % random variation in X location of fixation point
-p.trVarsInit.fixLocRandY         = 0;           % random variation in X location of fixation point
+p.trVarsInit.fixLocRandX         = 8;           % random variation in X location of fixation point
+p.trVarsInit.fixLocRandY         = 4;           % random variation in X location of fixation point
 
 % the following three variables determine how fixation dimming works. In
 % each trial we will choose with equal probability whether the fixation
@@ -242,7 +290,7 @@ p.trVarsInit.highDimVal          = 0.9;        % high brightness ABOVE backgroun
 
 % Initial / base values for each stimulus feature.
 p.trVarsInit.speedInit                = 0.1;      % initial motion magniutde
-p.trVarsInit.ctrstInit                = 0.0;      % initial contrast
+p.trVarsInit.ctrstInit                = 0.325;    % initial contrast
 p.trVarsInit.orientInit               = 30;       % initial orientation
 p.trVarsInit.freqInit                 = 0.25;     % initial spatial frequency (cycles per degree)
 p.trVarsInit.satInit                  = 0.4;      % initial color saturation
@@ -250,8 +298,8 @@ p.trVarsInit.lumInit                  = 0.3;      % initial luminance
 p.trVarsInit.hueInit                  = 20;       % initial hue (color angle)
 
 % Variance of feature dimensions that can be variable in this way:
-p.trVarsInit.orientVar                = 2;        % variability in orientation
-p.trVarsInit.hueVar                   = 0.05;     % variability in hue (angle)
+p.trVarsInit.orientVar                = 8;        % variability in orientation
+p.trVarsInit.hueVar                   = 0.00;     % variability in hue (angle)
 p.trVarsInit.lumVar                   = 0.02;     % variability in luminance
 p.trVarsInit.satVar                   = 0.01;     % variability in saturation
 
@@ -261,15 +309,15 @@ p.trVarsInit.contDelta                = 0.2;      % contrast
 p.trVarsInit.orientDelta              = 45;       % orientation
 p.trVarsInit.freqDelta                = 0.25;     % spatial frequency (cycles per degree)
 p.trVarsInit.satDelta                 = 0.038;    % color saturation
-p.trVarsInit.lumDelta                 = 0;     % luminance
-p.trVarsInit.hueDelta                 = 45;       % hue (color angle)
+p.trVarsInit.lumDelta                 = -0.3;     % luminance
+p.trVarsInit.hueDelta                 = 50;       % hue (color angle)
 
 % spatial properties of "checkerboard":
 p.trVarsInit.stimRadius               = 3.25;     % aperture radius in deg
 p.trVarsInit.boxSizePix               = 24;       % diameter of each "check" in pixels
 p.trVarsInit.boxLifetime              = 8;        % "check" lifetime in frams
 p.trVarsInit.nPatches                 = 4;        % number of stimuli 
-p.trVarsInit.nEpochs                  = 1;        % just one epoch with all four stimuli present.
+p.trVarsInit.nEpochs                  = 2;        % just one "pre-change" and one "post-change" epoch for now
 
 % times/latencies/durations:
 p.trVarsInit.rewardDurationMs        = 200;      % reward duration
@@ -277,7 +325,7 @@ p.trVarsInit.fix2CueIntvl            = 0.0;      % Time delay between acquiring 
 p.trVarsInit.cueDur                  = 0.0;      % Duration of cue presentaiton.
 p.trVarsInit.cue2StimItvl            = 0.25;     % time between cue offset and stimulus onset (stimulus onset asynchrony).
 p.trVarsInit.stim2ChgIntvl           = 0.5;      % minimum time between stimulus onset and change.
-p.trVarsInit.chgWinDur               = 0.0;      % time window during which a change is possible.
+p.trVarsInit.chgWinDur               = 1.5;      % time window during which a change is possible.
 p.trVarsInit.rewardDelay             = 0.5;      % delay between cued change and reward delivery for hits.
 p.trVarsInit.joyMinLatency           = 0.2;      % minimum acceptable joystick release latency.
 p.trVarsInit.joyMaxLatency           = 1;        % maximum acceptable joystick release latency.
@@ -293,9 +341,27 @@ p.trVarsInit.joyReleaseWaitDur       = 5;        % how long to wait after trial 
 
 p.trVarsInit.stimFrameIdx            = 1;        % stimulus (eg dots) frame display index
 p.trVarsInit.flipIdx                 = 1;        % index of
-p.trVarsInit.postRewardDuration      = 0;        % how long should the trial last AFTER reward delivery? This lets us record the neuronal response to reward.
+p.trVarsInit.postRewardDurMin        = 1;      % how long should the trial last AFTER reward delivery at minimum? This lets us record the neuronal response to reward.
+p.trVarsInit.postRewardDurMax        = 1.2;      % how long should the trial last AFTER reward delivery at maximum? This lets us record the neuronal response to reward.
 p.trVarsInit.useQuest                = false;    % use "QUEST" to determine next stimulus value?
 p.trVarsInit.numTrialsForPerfCalc    = 100;      % how many of the most recently completed trials should be used to calculate % correct / median RT?
+p.trVarsInit.freeRewardProbability   = 0.1;      % How probable is it that the monkey will get a free reward in between trials?
+
+p.trVarsInit.connectRipple           = true;
+p.trVarsInit.rippleChanSelect        = 1;
+
+% variables related to PSTH plotting:
+p.trVarsInit.psthBinWidth            = 0.025;
+p.trVarsInit.fixOnPsthMinTime        = -0.1;
+p.trVarsInit.fixOnPsthMaxTime        = 0.75;
+p.trVarsInit.stimOnPsthMinTime       = 0.1;
+p.trVarsInit.stimOnPsthMaxTime       = 0.75;
+p.trVarsInit.stimChgPsthMinTime      = -0.1;
+p.trVarsInit.stimChgPsthMaxTime      = 0.75;
+p.trVarsInit.rwdPsthMinTime          = -0.1;
+p.trVarsInit.rwdPsthMaxTime          = 0.75;
+p.trVarsInit.freeRwdPsthMinTime      = -0.1;
+p.trVarsInit.freeRwdPsthMaxTime      = 0.75;
 
 % I don't think I need to carry these around in 'p'....
 % can't I just define them in the 'run' worksapce and forget avbout them?
@@ -306,23 +372,18 @@ p.trVarsInit.stimIsOn         = false;  % are stimuli currently being presented?
 
 p.trVarsInit.fixWinWidthDeg       = 4;        % fixation window width in degrees
 p.trVarsInit.fixWinHeightDeg      = 4;        % fixation window height in degrees
-p.trVarsInit.fixPointRadPix       = 10;       % fixation point "radius" in pixels
-p.trVarsInit.fixPointLinePix      = 6;        % fixation point line weight in pixels
+p.trVarsInit.fixPointRadPix       = 20;       % fixation point "radius" in pixels
+p.trVarsInit.fixPointLinePix      = 12;       % fixation point line weight in pixels
 
 % variables related to how the experiment is run / what is shown, etc.
 p.trVarsInit.useCellsForDraw        = false;
 p.trVarsInit.wantEndFlicker         = false;     % have screen flicker / low tone play repeatedly while waiting for joystick release?
-p.trVarsInit.wantOnlinePlots        = false;     % use online plotting window?
+p.trVarsInit.wantOnlinePlots        = true;     % use online plotting window?
 p.trVarsInit.fixColorIndex          = 0;
 
 % substructure for marking stimulus-events after each flip
 p.trVarsInit.postFlip.logical         = false;
 p.trVarsInit.postFlip.varNames        = cell(0);
-
-% do we want to be doing drift correction every trial? I think not. Maybe
-% every X trials? Maybe only when a variable is 1 and not when it's 0.
-% Let's start with the latter and go from there.
-p.trVarsInit.doDriftCorrect = false;
 
 %% end of trVarsInit
 % once all trial variables have been initialized in trVarsInit, we copy 
@@ -346,6 +407,9 @@ p.init.trDataInitList = {...
     'p.trData.joyV',                    '[]'; ...
     'p.trData.dInValues',               '[]'; ...
     'p.trData.dInTimes',                '[]'; ...
+    'p.trData.spikeTimes',              '[]'; ...
+    'p.trData.eventTimes',              '[]'; ...
+    'p.trData.eventValues',             '[]'; ...
     'p.trData.onlineEyeX',              '[]'; ...
     'p.trData.onlineEyeY',              '[]'; ...
     'p.trData.timing.lastFrameTime',    '0'; ...    % time at which last video frame was displayed
@@ -365,6 +429,7 @@ p.init.trDataInitList = {...
     'p.trData.timing.joyRelease',       '-1'; ...   % time of joystick release
     'p.trData.timing.reactionTime'      '-1'; ...   % time of joystick release relative to dimming
     'p.trData.timing.fixHoldReqMet',    '-1'; ...   % time that fixation hold duration was met (also time of fixation dimming)
+    'p.trData.timing.freeReward',       '-1'; ...   % time that free reward was delivered
     };
 
 % since the list above is fixed, count its rows now for looping over later.
@@ -462,10 +527,22 @@ p.draw.color.joyInd     = p.draw.clutIdx.expGrey90_subBg;               % joy po
 % The function pds.strobeVars takes this list and strobes a number that 
 % identifies the variable, immidiately followed by its value.
 % eg
+% HACK ALERT - DON'T HARD CODE NUMBERS (e.g. "17" for trial code below).
+% Fix it. jph - 6/21/2023
 
 p.init.strobeList = fliplr({...                 
-    'p.init.date_1yyyy',                                                                                        'date_1yyyy';         
-    'p.init.date_1mmdd',                                                                                        'date_1mmdd';  ...      
-    'p.init.time_1hhmm',                                                                                        'time_1hhmm';
+    'p.init.date_1yyyy',                                        'date_1yyyy'; ...
+    'p.init.date_1mmdd',                                        'date_1mmdd'; ...      
+    'p.init.time_1hhmm',                                        'time_1hhmm'; ...
+    'p.init.codes.uniqueTaskCode_scd',                          'taskCode'; ...
+    'p.trVars.stimLoc1Elev',                                    'stimLoc1Elev'; ...
+    'p.trVars.stimLoc1Ecc',                                     'stimLoc1Ecc'; ...
+    'p.trVars.rewardDurationMs',                                'rewardDuration'; ...
+    'p.status.iTrial',                                          'trialCount'; ...
+    'p.status.iGoodTrial',                                      'goodTrialCount'; ...
+    'p.init.trialsArray(p.trVars.currentTrialsArrayRow, 17)',   'trialCode'; ...
+    'p.trVars.trialSeed',                                       'trialSeed'; ...
+    'p.trVars.stimSeed',                                        'stimSeed'; ...
+
     });
 end

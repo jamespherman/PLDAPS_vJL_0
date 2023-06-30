@@ -108,12 +108,7 @@ p.stim.nStim = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
 % out here:
 if p.trVars.isStimChangeTrial
 
-    % If this is a change trial with multiple stimuli, draw a random number
-    % between 0 & 1 and compare it to "propHueChgOnly" to decide if this
-    % will be a stim + dim change or just a stim change; if it's instead a
-    % change trial with 1 stimulus, it will always be a stim change with no
-    % dim.
-    if p.stim.nStim > 1 || ~p.trVars.chgAndDimOnMultiOnly
+    if p.stim.nStim > 1
         p.trVars.isStimChgNoDim = rand < p.trVars.propHueChgOnly;
     else
         p.trVars.isStimChgNoDim = true;
@@ -121,6 +116,8 @@ if p.trVars.isStimChangeTrial
 else
     p.trVars.isStimChgNoDim = false;
 end
+
+
 
 % randomize gabor orientation
 p.trVars.orientInit = randi(360);

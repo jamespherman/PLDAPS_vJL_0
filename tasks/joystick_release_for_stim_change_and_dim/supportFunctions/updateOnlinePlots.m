@@ -59,6 +59,31 @@ for i = 1:length(p.draw.onlinePlotObj)
         p.trVars.psthBinWidth);
 end
 
+% update legend entries for psth plots by looping over axes:
+for i = 1:length(p.draw.psthPlotAxes)
+
+    % loop over plots in current axes to update legend entries, number of
+    % plots is stored in 'UserData':
+    for j = 1:p.draw.psthPlotAxes(i).UserData
+
+        % there is a STUPID lack of correspondence between the ordering of
+        % an axes 'children' and the legend string entries. Children are
+        % stored last to first, so we have to make a "reversed" index for
+        % the legend strings to keep everything aligned:
+        legIdx = p.draw.psthPlotAxes(i).UserData - j + 1;
+
+        % what is the trial count for the current plot object? Defining
+        % this as a temporary variable lets us keep the code a bit cleaner.
+        currCount = p.draw.psthPlotAxes(i).Children(j).UserData.trialCount;
+
+        % use "regexprep" to replace the placeholder string 'XX' with the
+        % trial count:
+        p.draw.onlinePlotLegend(i).String{legIdx} = ...
+            regexprep(p.draw.onlinePlotLegend(i).UserData{j}, 'XX', ...
+            num2str(currCount));
+    end
+end
+
 % update plot:
 drawnow;
 

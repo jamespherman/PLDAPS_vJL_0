@@ -11,28 +11,21 @@ switch p.stim.nStim
     case 1
         if p.trVars.isStimChangeTrial
             p.status.tc1stim = p.status.tc1stim + 1;
-            p.status.hc1stim = p.status.hc1stim + (p.trData.trialEndState == p.state.hit);
-            p.status.hr1stim = p.status.hc1stim / p.status.tc1stim;
-        end
+            p.status.hc1stim = p.status.hc1stim + p.trData.trialEndState == p.state.hit
     case 2
-        if p.trVars.isStimChangeTrial
-            p.status.tc1stim = p.status.tc2stim + 1;
-            p.status.hc1stim = p.status.hc2stim + (p.trData.trialEndState == p.state.hit);
-            p.status.hr1stim = p.status.hc2stim / p.status.tc2stim;
-        end
     case 3
-        if p.trVars.isStimChangeTrial
-            p.status.tc3stim = p.status.tc3stim + 1;
-            p.status.hc3stim = p.status.hc3stim + (p.trData.trialEndState == p.state.hit);
-            p.status.hr3stim = p.status.hc3stim / p.status.tc3stim;
-        end
     case 4
-        if p.trVars.isStimChangeTrial
-            p.status.tc4stim = p.status.tc4stim + 1;
-            p.status.hc4stim = p.status.hc4stim + (p.trData.trialEndState == p.state.hit);
-            p.status.hr4stim = p.status.hc4stim / p.status.tc4stim;
-        end
 end
+p.status.hr2stim                    = 0; % hit rate for 2-stimulus trials
+p.status.hr3stim                    = 0; % hit rate for 3-stimulus trials
+p.status.hr4stim                    = 0; % hit rate for 4-stimulus trials
+
+p.status.hc2stim                    = 0; % hit count for 2-stimulus trials
+p.status.hc3stim                    = 0; % hit count for 3-stimulus trials
+p.status.hc4stim                    = 0; % hit count for 4-stimulus trials
+p.status.tc2stim                    = 0; % total count for 2-stimulus trials
+p.status.tc3stim                    = 0; % total count for 3-stimulus trials
+p.status.tc4stim                    = 0; % total count for 4-stimulus trials
 
 % % was the last trial a "two patch" trial?
 % twoPatch    = p.trVars.cueOn & p.trVars.foilOn;

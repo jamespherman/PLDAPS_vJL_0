@@ -136,37 +136,25 @@ if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
     % (12) No Free reward
     set(p.draw.onlinePlotObj(12), 'Color', 'k', 'Tag', 'No Free Reward');
 
-    % add legend objects to the PSTH axes, also store a count of the number
-    % of children for each set of axes so we don't have to count later:
+    % add legend objects to the PSTH axes:
     for i = 1:length(p.draw.psthPlotAxes)
-
-        % add legend object
         p.draw.onlinePlotLegend(i) = legend(...
             p.draw.psthPlotAxes(i), 'boxoff');
-
-        % store count of children:
-        p.draw.psthPlotAxes(i).UserData = ...
-            length(p.draw.psthPlotAxes(i).Children);
     end
 
     % When we update the online plots, we're going to update the legend
     % entries to reflect the trial count for each trace. The easist
     % way to do this is to store strings with everything except the trial
     % count in the UserData field of the legend object itself. Store those
-    % strings there now. NOTE: because axes store children in "reverse"
-    % order (last added plot is first in list), we have to reverse order
-    % the strings here to align with the ordering in that list so we can
-    % just loop over each axes children and have a correspondingly ordered
-    % list of the appropriate "base string" for the legend entry stored in
-    % "UserData"
+    % strings there now. NOTE: because axes 
     p.draw.onlinePlotLegend(1).UserData = {'Fixation Onset (XX)'};
-    p.draw.onlinePlotLegend(2).UserData = {'Stim Loc 4 (XX)', ...
-        'Stim Loc 3 (XX)', 'Stim Loc 2 (XX)', 'Stim Loc 1 (XX)'};
-    p.draw.onlinePlotLegend(3).UserData = {'Stim Loc 4 (XX)', ...
-        'Stim Loc 3 (XX)', 'Stim Loc 2 (XX)', 'Stim Loc 1 (XX)'};
+    p.draw.onlinePlotLegend(2).UserData = {'Stim Loc 1 (XX)', ...
+        'Stim Loc 2 (XX)', 'Stim Loc 3 (XX)', 'Stim Loc 4 (XX)'};
+    p.draw.onlinePlotLegend(3).UserData = {'Stim Loc 1 (XX)', ...
+        'Stim Loc 2 (XX)', 'Stim Loc 3 (XX)', 'Stim Loc 4 (XX)'};
     p.draw.onlinePlotLegend(4).UserData = {'Reward (XX)'};
-    p.draw.onlinePlotLegend(5).UserData = {'No Free Reward (XX)', ...
-        'Free Reward (XX)'};
+    p.draw.onlinePlotLegend(5).UserData = {'Free Reward (XX)', ...
+        'No Free Reward (XX)'};
 
     % make axes for plotting aggregate performance / reaction time 
     % data:

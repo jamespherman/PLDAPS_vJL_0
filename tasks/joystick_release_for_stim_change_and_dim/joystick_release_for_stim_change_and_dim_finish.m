@@ -28,7 +28,7 @@ function p = joystick_release_for_stim_change_and_dim_finish(p)
 % like an odd time to do this but before you go changing it ask jph), then
 % align spikes to events for later plotting. This is currently a hack
 % because we drop the first trial's events - figure out a way around this.
-if p.rig.ripple.status && p.status.iTrial > 1
+if p.rig.ripple.status
     p = pds.getRippleData(p);
 end
 p = alignSpikes(p);
@@ -60,7 +60,7 @@ p.init.strb.flushVetoList;
 p.init.strb.flushStrobedList;
 
 % wait for joystick release
-p           = pds.waitForJoystickRelease(p);
+% p           = pds.waitForJoystickRelease(p);
 
 % if a "time-out" is desired, make it happen here. Note: the way this works
 % at present is: we only advance from here if the desired interval of time
@@ -104,7 +104,7 @@ else
     p.init.strb.strobeNow(p.init.codes.noFreeReward);
 
     % wait same duration as reward schedule;
-    WaitSecs(p.trVars.rewardScheduleDur);
+    % WaitSecs(p.trVars.rewardScheduleDur);
 end
 
 % store missed frames count

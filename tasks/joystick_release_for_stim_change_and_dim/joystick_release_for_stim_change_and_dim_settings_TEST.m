@@ -68,6 +68,7 @@ p.init.taskFiles.init   = [p.init.taskName '_init.m'];
 p.init.taskFiles.next   = [p.init.taskName '_next.m'];
 p.init.taskFiles.run    = [p.init.taskName '_run.m'];
 p.init.taskFiles.finish = [p.init.taskName '_finish.m'];
+p.init.useDataPixxBool  = true;
 
 %% Define the Action M-files
 % User-defined actions that are either within the task folder under
