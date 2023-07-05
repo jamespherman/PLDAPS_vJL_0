@@ -12,9 +12,9 @@ function p = getRippleData(p)
 [~, tempSpikeTimes, ~, unitIdx] = pds.xippmex('spike', ...
     p.rig.ripple.recChans(p.trVars.rippleChanSelect), 0);
 
-% if there is an online sorted unit defined, use those spiketimes only,
+% if we're using online sorting, use those spike times only,
 % otherwise use all spiketimes (threshold crossings).
-if any(unitIdx{1})
+if p.trVars.useOnlineSort
     p.trData.spikeTimes = [p.trData.spikeTimes, ...
         tempSpikeTimes{1}(logical(unitIdx{1})) / 30000];
 else

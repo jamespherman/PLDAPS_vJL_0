@@ -84,11 +84,10 @@ end
 timeNow = GetSecs - p.trData.timing.trialStartPTB;
 WaitSecs(relTime + p.trVars.postRewardDuration - timeNow);
 
-% If a random number draw indicates we're going to deliver a free
-% inter-trial interval reward, deliver the reward. Otherwise wait the
-% duration that the reward elivery lasts before continuing.
-p.status.freeRwdRand =rand;
-if p.status.freeRwdRand < p.trVars.freeRewardProbability
+% If this trial has a free inter-trial-interval reward available and didn't
+% end in "repeatFlag", give a free reward:
+if p.status.freeRewardsAvailable(p.trVars.currentTrialsArrayRow) && ...
+        ~p.trData.trialRepeatFlag
 
     % deliver free reward
     p = pds.freeReward(p);

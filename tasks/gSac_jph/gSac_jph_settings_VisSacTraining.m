@@ -224,8 +224,8 @@ p.trVarsInit.targDegX            = 0;
 p.trVarsInit.targDegY            = 0;
 
 % times/latencies/durations:
-p.trVarsInit.rewardDurationMs        = 200; % reward duration
-p.trVarsInit.rewardDelay             = 0;        % delay between cued change and reward delivery for hits.
+p.trVarsInit.rewardDurationMs        = 180; % reward duration
+p.trVarsInit.rewardDelay             = 0.25;        % delay between cued change and reward delivery for hits.
 p.trVarsInit.timeoutAfterFa          = 2;        % timeout duration following false alarm.
 p.trVarsInit.joyWaitDur              = 15;        % how long to wait for the subject to press the joystick at the beginning of a trial?
 p.trVarsInit.fixWaitDur              = 3;        % how long to wait after initial joystick press for the subject to acquire fixation?
@@ -292,6 +292,7 @@ p.trVarsInit.eyeVelThreshOffline    = 100;   % gaze velocity threshold in deg/s 
 
 p.trVarsInit.connectRipple          = true;
 p.trVarsInit.rippleChanSelect       = 1;
+p.trVarsInit.useOnlineSort  	    = 1; % a boolean indicating whether we want to use spike times that have been sorted online in trellis or all threshold crossing times.
 
 % do we want online plots?
 p.trVarsInit.wantOnlinePlots        = true;

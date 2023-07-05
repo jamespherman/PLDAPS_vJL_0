@@ -35,7 +35,7 @@ p.rig.baseReward        = 189;
 % User must measure output of rig joystick and write output here. These 
 % don't actually get used, but they inform ojystick thresholds which are 
 % set in the "Joystick THresholds" section, below
-p.rig.joyVoltageMin     = 0.8540;
+p.rig.joyVoltageMin     = 0.9;
 p.rig.joyVoltageRest    = 2.7873;
 p.rig.joyVoltageMax     = 4.6079;
 

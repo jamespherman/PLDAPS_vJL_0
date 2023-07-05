@@ -61,6 +61,9 @@ switch p.init.exptType
     case 'joystick_release_for_fix_and_stim_dim_9010'
         table = tableDef_fixAndStimDim_9010;
 
+    case 'joystick_release_for_fix_and_stim_dim_1000'
+        table = tableDef_fixAndStimDim_1000;
+
     case 'joystick_release_for_fix_and_stim_dim_7030'
         table = tableDef_fixAndStimDim_7030;
 
@@ -274,6 +277,15 @@ table =           [1   1   1   0   0   0   1   0   0   0   0   0   1   0   1   9
                    3   1   0   0   1   0   0   0   0   0   0   0   0   0   3   1   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
                    4   1   0   0   0   1   4   0   0   0   0   0   1   0   4   9   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
                    4   1   0   0   0   1   0   0   0   0   0   0   0   0   4   1   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
+                 ];
+end
+
+% Fixation + peripheral stimulus dimming with mostly change trials.
+function table = tableDef_fixAndStimDim_1000
+table =           [1   1   1   0   0   0   1   0   0   0   0   0   1   0   1   9   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   2   1   0   1   0   0   2   0   0   0   0   0   1   0   2   9   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   3   1   0   0   1   0   3   0   0   0   0   0   1   0   3   9   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   4   1   0   0   0   1   4   0   0   0   0   0   1   0   4   9   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
                  ];
 end
 

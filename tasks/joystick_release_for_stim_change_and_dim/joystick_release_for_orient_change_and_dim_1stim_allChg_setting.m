@@ -371,6 +371,7 @@ p.trVarsInit.freeRewardProbability   = 0.0;      % How probable is it that the m
 
 p.trVarsInit.connectRipple           = true;
 p.trVarsInit.rippleChanSelect        = 1;
+p.trVarsInit.useOnlineSort  	     = 0; % a boolean indicating whether we want to use spike times that have been sorted online in trellis or all threshold crossing times.
 
 % variables related to PSTH plotting:
 p.trVarsInit.psthBinWidth            = 0.025;

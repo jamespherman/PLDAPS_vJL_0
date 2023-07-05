@@ -30,6 +30,17 @@ function p = chooseRow(p)
 if isempty(p.status.trialsArrayRowsPossible)
     p.status.trialsArrayRowsPossible =  true(p.init.blockLength, 1);
     p.status.blockNumber = 1;
+
+    % define a vector of booleans to determine which trials will have a
+    % free reward after they're completed and which will not:
+    p.status.freeRewardsAvailable = false(p.init.blockLength, 1);
+
+    % how many free rewards per block?
+    nFreeRewards = ceil(p.init.blockLength / 10);
+
+    % pick trials to have free rewards:
+    p.status.freeRewardsAvailable(...
+        randi(p.init.blockLength, [nFreeRewards, 1])) = true;
 end
 
 % choose a row of "p.init.trialsArray"

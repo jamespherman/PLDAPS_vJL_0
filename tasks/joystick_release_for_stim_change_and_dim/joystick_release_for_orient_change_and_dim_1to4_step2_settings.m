@@ -186,6 +186,7 @@ p.status.freeRwdTotal               = 0; % total count of free inter trial inter
 p.status.freeRwdLast                = 0; % last trial in which a free reward was given.
 
 p.status.trialsArrayRowsPossible    = [];
+p.status.freeRewardsAvailable       = [];
 
 p.status.trialEndStates             = []; % vector of trial end state values
 p.status.reactionTimes              = []; % vector of joystick release reaction times (relative to dimming).
@@ -371,6 +372,7 @@ p.trVarsInit.freeRewardProbability   = 0.1;      % How probable is it that the m
 
 p.trVarsInit.connectRipple           = true;
 p.trVarsInit.rippleChanSelect        = 1;
+p.trVarsInit.useOnlineSort  	     = 0; % a boolean indicating whether we want to use spike times that have been sorted online in trellis or all threshold crossing times.
 
 % variables related to PSTH plotting:
 p.trVarsInit.psthBinWidth            = 0.025;

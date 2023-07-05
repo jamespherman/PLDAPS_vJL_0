@@ -12,9 +12,10 @@ p.status.trialsArrayRowsPossible(p.trVars.currentTrialsArrayRow) = ...
     p.trData.trialRepeatFlag;
 
 % If all the trials in the current block have been completed, update
-% "p.status.blockNumber" and either reset "p.status.trialsArrayRowsPossible" OR
-% if a new trial structure is needed for the next block, update
-% p.init.trialsArray
+% "p.status.blockNumber" and either reset 
+% "p.status.trialsArrayRowsPossible" OR if a new trial structure is needed
+% for the next block, update p.init.trialsArray; also reset the vector of
+% trials that will have free reward available.
 if ~any(p.status.trialsArrayRowsPossible)
     
     % iterate block number
@@ -30,6 +31,17 @@ if ~any(p.status.trialsArrayRowsPossible)
     
     % reset "p.status.trialsArrayRowsPossible" to all true.
     p.status.trialsArrayRowsPossible = true(p.init.blockLength, 1);
+
+     % define a vector of booleans to determine which trials will have a
+    % free reward after they're completed and which will not:
+    p.status.freeRewardAvailable = false(p.init.blockLength, 1);
+
+    % how many free rewards per block?
+    nFreeRewards = ceil(p.init.blockLength / 10);
+
+    % pick trials to have free rewards:
+    p.status.freeRewardsAvailable(...
+        randi(p.init.blockLength, [nFreeRewards, 1])) = true;
 end
 
 end
