@@ -13,8 +13,10 @@ p.draw.fixWinWidthPix       = pds.deg2pix(p.trVars.fixWinWidthDeg, p);
 p.draw.fixWinHeightPix      = pds.deg2pix(p.trVars.fixWinHeightDeg, p);
 
 % make grid with "gridSpace" degree spacing
-gridX           = pds.deg2pix(-30:p.draw.gridSpacing:30, p) + p.draw.middleXY(1);
-gridY           = pds.deg2pix(-20:p.draw.gridSpacing:20, p) + p.draw.middleXY(2);
+gridX           = pds.deg2pix(-30:p.draw.gridSpacing:30, p) + ...
+    p.draw.middleXY(1);
+gridY           = pds.deg2pix(-20:p.draw.gridSpacing:20, p) + ...
+p.draw.middleXY(2);
 
 p.draw.gridXY   = [];
 for i = 1:length(gridX)
@@ -26,13 +28,17 @@ for i = 1:length(gridY)
         [gridX(1), gridX(end); gridY(i), gridY(i)]]; ... % vertical lines
 end
 
-% define fixation window color depending on trial type:
+% Set fixation window color depending on trial type for experimenter
+% display:
+% Orange for peripheral stimulus change + dim
+% Red for peripheral stimulus change + NO DIM
+% Blue for no change
 if p.trVars.isStimChgNoDim
-    p.draw.color.fixWin = p.draw.clutIdx.expOrange_subBg;
+    p.draw.color.fixWin         = p.draw.clutIdx.expRed_subBg;
 elseif p.trVars.isStimChangeTrial
-    p.draw.color.fixWin = p.draw.clutIdx.expBlue_subBg;
+    p.draw.color.fixWin         = p.draw.clutIdx.expOrange_subBg;
 else
-    p.draw.color.fixWin = p.draw.clutIdx.expGrey25_subBg;
+    p.draw.color.fixWin         = p.draw.clutIdx.expBlue_subBg;
 end
 
 end

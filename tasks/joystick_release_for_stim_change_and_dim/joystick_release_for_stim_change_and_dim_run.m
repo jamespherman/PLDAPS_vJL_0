@@ -95,7 +95,7 @@ switch p.trVars.currentState
         %% STATE 1:
         %   TRIAL HAS BEGUN!
         
-        % strobing trial start time and onward to state 0.1.
+        % strobing trial start time and onward to state 2.
         p.init.strb.addValue(p.init.codes.trialBegin);
         p.trData.timing.trialBegin      = timeNow;
         p.trVars.currentState           = p.state.waitForJoy;
@@ -105,7 +105,7 @@ switch p.trVars.currentState
         %   WAITING FOR SUBJECT TO HOLD JOYSTICK DOWN
         
         % If joystick is held down, onwards to state "showFix"
-        % If not, onward to state 3.3 (non-start)
+        % If not, onward to state 13 (non-start)
         if pds.joyHeld(p)
             p.init.strb.addValue(p.init.codes.joyPress);
             p.trData.timing.joyPress    = timeNow;
@@ -123,18 +123,7 @@ switch p.trVars.currentState
         % Show fixation point
         p.draw.color.fix                = p.draw.clutIdx.expWhite_subWhite;
         
-        % Set fixation window color depending on trial type and display it
-        % on experimenter display:
-        % Orange for peripheral stimulus change with no dimming
-        % Blue for peripheral stimulus change + dimming
-        % Black for no change
-        if p.trVars.isStimChgNoDim
-            p.draw.color.fixWin         = p.draw.clutIdx.expOrange_subBg;
-        elseif p.trVars.isFoilChangeTrial
-            p.draw.color.fixWin         = p.draw.clutIdx.expBlue_subBg;
-        else
-            p.draw.color.fixWin         = p.draw.clutIdx.expBlack_subBg;
-        end
+        % Set fixation window pen thickness to "pre change" (small) value:
         p.draw.fixWinPenDraw = p.draw.fixWinPenPre;
 
         % If "fixOn" time hasn't been defined, and we haven't already

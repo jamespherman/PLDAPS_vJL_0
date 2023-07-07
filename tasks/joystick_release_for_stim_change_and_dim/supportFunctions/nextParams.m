@@ -133,7 +133,7 @@ else
     p.trVars.isStimChgNoDim = false;
 end
 
-% randomize gabor orientation
+% randomize initial gabor orientation for "primary" stimulus location
 p.trVars.orientInit = randi(360);
 
 % Define stimulus arrays for several features. We do this by defining a

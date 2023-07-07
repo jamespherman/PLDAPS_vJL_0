@@ -24,6 +24,14 @@ psthLims = [...
     [p.trVars.rwdPsthMinTime, p.trVars.rwdPsthMaxTime]; ...         (10)
     [p.trVars.freeRwdPsthMinTime, p.trVars.freeRwdPsthMaxTime]; ... (11)
     [p.trVars.freeRwdPsthMinTime, p.trVars.freeRwdPsthMaxTime]; ... (12)
+    [p.trVars.stimOnPsthMinTime, p.trVars.stimOnPsthMaxTime]; ...   (13)
+    [p.trVars.stimOnPsthMinTime, p.trVars.stimOnPsthMaxTime]; ...   (14)
+    [p.trVars.stimOnPsthMinTime, p.trVars.stimOnPsthMaxTime]; ...   (15)
+    [p.trVars.stimOnPsthMinTime, p.trVars.stimOnPsthMaxTime]; ...   (16)
+    [p.trVars.stimChgPsthMinTime, p.trVars.stimChgPsthMaxTime]; ... (17)
+    [p.trVars.stimChgPsthMinTime, p.trVars.stimChgPsthMaxTime]; ... (19)
+    [p.trVars.stimChgPsthMinTime, p.trVars.stimChgPsthMaxTime]; ... (19)
+    [p.trVars.stimChgPsthMinTime, p.trVars.stimChgPsthMaxTime]; ... (20)
     ];
 
 % for each of our 11 online-plotted PSTHs we recompute the binned counts
@@ -41,6 +49,14 @@ psthLims = [...
 % (10) Reward
 % (11) Free reward
 % (12) no free reward
+% (13) Multiple stimulus onset (location 1)
+% (14) Multiple stimulus onset (location 2)
+% (15) Multiple stimulus onset (location 3)
+% (16) Multiple stimulus onset (location 4)
+% (17) Multiple stimulus change (location 1)
+% (18) Multiple stimulus change (location 2)
+% (19) Multiple stimulus change (location 3)
+% (20) Multiple stimulus change (location 4)
 
 for i = 1:length(p.draw.onlinePlotObj)
 
@@ -66,21 +82,29 @@ for i = 1:length(p.draw.psthPlotAxes)
     % plots is stored in 'UserData':
     for j = 1:p.draw.psthPlotAxes(i).UserData
 
-        % there is a STUPID lack of correspondence between the ordering of
-        % an axes 'children' and the legend string entries. Children are
-        % stored last to first, so we have to make a "reversed" index for
-        % the legend strings to keep everything aligned:
-        legIdx = p.draw.psthPlotAxes(i).UserData - j + 1;
+        % make sure there are plot objects with trial data before we try to
+        % update anything - since we have single stimulus trials and
+        % multiple stimulus trials that happen in separate parts of the
+        % block, the multiple stimulus trial plots don't update until after
+        % the single stimulus trials have been completed:
+        if p.draw.psthPlotAxes(i).Children(j).UserData.trialCount > 0
 
-        % what is the trial count for the current plot object? Defining
-        % this as a temporary variable lets us keep the code a bit cleaner.
-        currCount = p.draw.psthPlotAxes(i).Children(j).UserData.trialCount;
+            % there is a STUPID lack of correspondence between the ordering of
+            % an axes 'children' and the legend string entries. Children are
+            % stored last to first, so we have to make a "reversed" index for
+            % the legend strings to keep everything aligned:
+            legIdx = p.draw.psthPlotAxes(i).UserData - j + 1;
 
-        % use "regexprep" to replace the placeholder string 'XX' with the
-        % trial count:
-        p.draw.onlinePlotLegend(i).String{legIdx} = ...
-            regexprep(p.draw.onlinePlotLegend(i).UserData{j}, 'XX', ...
-            num2str(currCount));
+            % what is the trial count for the current plot object? Defining
+            % this as a temporary variable lets us keep the code a bit cleaner.
+            currCount = p.draw.psthPlotAxes(i).Children(j).UserData.trialCount;
+            
+            % use "regexprep" to replace the placeholder string 'XX' with the
+            % trial count:
+            p.draw.onlinePlotLegend(i).String{legIdx} = ...
+                regexprep(p.draw.onlinePlotLegend(i).UserData{j}, 'XX', ...
+                num2str(currCount));
+        end
     end
 end
 
