@@ -49,9 +49,6 @@ p.trData.trialRepeatFlag = (p.trData.trialEndState > 10) & ...
 %% strobes:
 % strobe trial data:
 p           = pds.strobeTrialData(p);
-
-
-
 % save strobed codes:
 p.trData.strobed = p.init.strb.strobedList;
 

@@ -15,7 +15,13 @@ p.status.trialsArrayRowsPossible(p.trVars.currentTrialsArrayRow) = ...
 % "p.status.blockNumber" and either reset 
 % "p.status.trialsArrayRowsPossible" OR if a new trial structure is needed
 % for the next block, update p.init.trialsArray; also reset the vector of
-% trials that will have free reward available.
+% trials that will have free reward available. At the
+% beginning of each block, we also need to calculate the probability of a
+% change event happening at the cued location so we can draw the cue
+% accordingly (proportion of cue arc colored = probability of event at
+% location). Note this cue arc proportion coloring is only for multiple
+% stimulus trials, in which there's the possibility of changes occuring
+% somewhere other than the cued location.
 if ~any(p.status.trialsArrayRowsPossible)
     
     % iterate block number
@@ -42,6 +48,26 @@ if ~any(p.status.trialsArrayRowsPossible)
     % pick trials to have free rewards:
     p.status.freeRewardsAvailable(...
         randi(p.init.blockLength, [nFreeRewards, 1])) = true;
+
+    % define cue arc color proportion based on number of change trials at
+    % cued location versus change trials at other locations; note that this
+    % assumes the proportion of change trials at the cued location is the
+    % same for all cued locations in a block. To calculate this we need to
+    % know the number of stimuli for each trial the location of the
+    % change in each trial, and the location of the cue in each trial:
+    nStim   = p.init.trialsArray(:, ...
+        strcmp(p.init.trialArrayColumnNames, 'n stim'));
+    cueLoc = p.init.trialsArray(:, ...
+        strcmp(p.init.trialArrayColumnNames, 'cue loc'));
+    chgLoc = p.init.trialsArray(:, ...
+        strcmp(p.init.trialArrayColumnNames, 'stim chg'));
+    arcAngleProp = nnz(nStim > 1 & cueLoc == chgLoc) / ...
+        nnz(nStim > 1 & chgLoc > 0);
+
+    % Here we define the proportion of the cue arc that will be colored.
+    % Later in "defineVisuals.m" we calculate the actual angles of the
+    % start & end of the colored / gray proportions.
+    p.draw.cueArcProp = arcAngleProp;
 end
 
 end

@@ -26,7 +26,13 @@ function p = chooseRow(p)
 
 % If p.status.trialsArrayRowsPossible is empty, we're at the beginning of
 % the experiment and we need to define it. This also means we're starting
-% block 1 and we should set "p.status.blockNumber" accordingly.
+% block 1 and we should set "p.status.blockNumber" accordingly. At the
+% beginning of each block, we also need to calculate the probability of a
+% change event happening at the cued location so we can draw the cue
+% accordingly (proportion of cue arc colored = probability of event at
+% location). Note this cue arc proportion coloring is only for multiple
+% stimulus trials, in which there's the possibility of changes occuring
+% somewhere other than the cued location.
 if isempty(p.status.trialsArrayRowsPossible)
     p.status.trialsArrayRowsPossible =  true(p.init.blockLength, 1);
     p.status.blockNumber = 1;
@@ -41,35 +47,75 @@ if isempty(p.status.trialsArrayRowsPossible)
     % pick trials to have free rewards:
     p.status.freeRewardsAvailable(...
         randi(p.init.blockLength, [nFreeRewards, 1])) = true;
+
+    % define cue arc color proportion based on number of change trials at
+    % cued location versus change trials at other locations; note that this
+    % assumes the proportion of change trials at the cued location is the
+    % same for all cued locations in a block. To calculate this we need to
+    % know the number of stimuli for each trial the location of the
+    % change in each trial, and the location of the cue in each trial:
+    nStim   = p.init.trialsArray(:, ...
+        strcmp(p.init.trialArrayColumnNames, 'n stim'));
+    cueLoc = p.init.trialsArray(:, ...
+        strcmp(p.init.trialArrayColumnNames, 'cue loc'));
+    chgLoc = p.init.trialsArray(:, ...
+        strcmp(p.init.trialArrayColumnNames, 'stim chg'));
+    arcAngleProp = nnz(nStim > 1 & cueLoc == chgLoc) / ...
+        nnz(nStim > 1 & chgLoc > 0);
+
+    % Here we define the proportion of the cue arc that will be colored.
+    % Later in "defineVisuals.m" we calculate the actual angles of the
+    % start & end of the colored / gray proportions.
+    p.draw.cueArcProp = arcAngleProp;
+
 end
 
-% choose a row of "p.init.trialsArray"
-g = p.status.trialsArrayRowsPossible;
-    
+% To choose a row of "p.init.trialsArray", we define a logical vector "g"
+% including all the trials that haven't been completed yet, with additional
+% ordering criteria based on number of stimuli and cue location. We first
+% check to see if there's more than one cue location defined; if there is
+% we first go through all the trials with the lowest cue location, then all
+% the trials at the next (larger) cue location, etc. Within each cue
+% location we first go through all the single stimulus trials, then all the
+% 2 stimulus trials, et cetera. Our first step is to define a vector gC
+% including the trials for the smallest available cue location:
+cueLocs = p.init.trialsArray(:, ...
+    strcmp(p.init.trialArrayColumnNames, 'cue loc'));
+if any(cueLocs == 1 & p.status.trialsArrayRowsPossible)
+    gC = cueLocs == 1 & p.status.trialsArrayRowsPossible;
+elseif any(cueLocs == 2 & p.status.trialsArrayRowsPossible)
+    gC = cueLocs == 2 & p.status.trialsArrayRowsPossible;
+elseif any(cueLocs == 3 & p.status.trialsArrayRowsPossible)
+    gC = cueLocs == 3 & p.status.trialsArrayRowsPossible;
+elseif any(cueLocs == 4 & p.status.trialsArrayRowsPossible)
+    gC = cueLocs == 4 & p.status.trialsArrayRowsPossible;
+else
+    gC = p.status.trialsArrayRowsPossible;
+end
+
+% now we further select based on number of stimuli in the trial:
+nStim = p.init.trialsArray(:, ...
+    strcmp(p.init.trialArrayColumnNames, 'n stim'));
+
 % 1st: single stimulus trials
-if any(p.init.trialsArray(:, 2) == 1 & ...
-        p.status.trialsArrayRowsPossible)
-    g = p.init.trialsArray(:, 2) == 1 & ...
-        p.status.trialsArrayRowsPossible;
+if any(nStim == 1 & p.status.trialsArrayRowsPossible & gC)
+    g = nStim == 1 & ...
+        p.status.trialsArrayRowsPossible & gC;
     
     % 2nd: two stimulus trials
-elseif any(p.init.trialsArray(:, 2) == 2 & ...
-        p.status.trialsArrayRowsPossible)
-    g = p.init.trialsArray(:, 2) == 2 & ...
-        p.status.trialsArrayRowsPossible;
+elseif any(nStim == 2 & p.status.trialsArrayRowsPossible & gC)
+    g = nStim == 2 & ...
+        p.status.trialsArrayRowsPossible & gC;
     
     % 3rd: three stimulus trials
-elseif any(p.init.trialsArray(:, 2) == 3 & ...
-        p.status.trialsArrayRowsPossible)
-    g = p.init.trialsArray(:, 2) == 3 & ...
-        p.status.trialsArrayRowsPossible;
-    
+elseif any(nStim == 3 & p.status.trialsArrayRowsPossible & gC)
+    g = nStim == 3 & ...
+        p.status.trialsArrayRowsPossible & gC;
     
     % 4th: four stimulus trials
-elseif any(p.init.trialsArray(:, 2) == 4 & ...
-        p.status.trialsArrayRowsPossible)
-    g = p.init.trialsArray(:, 2) == 4 & ...
-        p.status.trialsArrayRowsPossible;
+elseif any(nStim == 4 & p.status.trialsArrayRowsPossible & gC)
+    g = nStim == 4 & ...
+        p.status.trialsArrayRowsPossible & gC;
 end
 
 % choose 1st available row after shuffling list of available rows.

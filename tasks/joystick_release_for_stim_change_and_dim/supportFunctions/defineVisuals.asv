@@ -52,15 +52,16 @@ p.draw.color.cueRing = p.draw.clutIdx.expRwdBlue_subRwdBlue;
 % from the usual definition of angles (relative to the positive x-axis) to
 % the PTB definition (relative to the positive y axis). We also need to
 % define the arc angle of the grey proportion of the cue ring.
-cueAngle = p.trVars.stimElevs(p.stim.cueLoc);
+cueAngle = p.trVars.stimElevs(p.stim.cueLoc) - 90;
 greyPropAngle = 360 * (1 - p.draw.cueArcProp);
 
 % define "z" the opposite direction from the cue angle:
 z = 180 + cueAngle;
 
 % define cue arc angles:
-p.draw.cueArcAngles = [...
-    -z + greyPropAngle / 2 + 90, 360*p.draw.cueArcProp; ...
-    -z - greyPropAngle / 2 + 90, greyPropAngle];
+p.draw.cueArcAngles = [
+
+keyboard
+
 
 end

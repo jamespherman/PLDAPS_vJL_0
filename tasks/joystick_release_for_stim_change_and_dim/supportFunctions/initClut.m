@@ -5,18 +5,23 @@ function p                      = initClut(p)
 % also define variables as pointers to certain colors (for ease of
 % reference in other places).
 
-
 % initialize DKL conversion variables`
 initmon('LUTvpixx');
 
-% set Background color to black.
+% set Background color to dark gray.
 [bgRGB(1), bgRGB(2), bgRGB(3)] = dkl2rgb([-0.8 0 0]');
 
-% define muted green (mutGreen):
-% mutGreen    = [0.3953 0.7459 0.5244];
-mutGreen    = [0.5 0.9 0.4];
+% define colors to be used to define the spatial cue: a gray and 3
+% isoluminant equally saturated hues:
+cueColors = zeros(4, 3);
+[cueColors(:,1), cueColors(:,2), cueColors(:,3)] = ...
+    dkl2rgb(...
+    [[0 0.8 1]/norm([0, 0.8, 1]); ...           % small reward red
+    [0 -0.6 -1 ]/norm([0, -0.6, -1]); ...       % medium reward blue
+    [0 -0.95 0.25]/norm([0, -0.95, 0.25]); ...  % large reward green
+    0 0 0]');                                % grey filler
 
-% define some other useful colors
+% define some useful colors for the experimenter
 redISH      = [225 0 76]/255;
 orangeISH   = [255 146 0]/255;
 blueISH     = [11 97 164]/255;
@@ -25,15 +30,17 @@ oldGreen    = [0.45, 0.63, 0.45];
 
 % colors for exp's display
 % black                     0
-% grey-1 (grid-lines)       1
-% grey-2 (background)       2
-% grey-3 (fix-window)       3
+% gray-1 (grid-lines)       1
+% gray-2 (background)       2
+% gray-3 (fix-window)       3
 % white  (fix-point)        4
 % red                       5
 % orange                    6
 % blue                      7
-% cue ring                  8
-% muted green (fixation)    9
+% small reward cue color    8
+% medium reward cue color   9
+% large reward cue color    10
+% dark fill cue color       11
 
 p.draw.clut.expColors = ...
     [ 0, 0, 0;          % 0
@@ -44,24 +51,26 @@ p.draw.clut.expColors = ...
     redISH;             % 5
     orangeISH;          % 6
     blueISH;            % 7
-    0, 1, 1;            % 8
-    0.9,0.9,0.9;        % 9
-    mutGreen;           % 10
-    greenISH;           % 11
+    cueColors(1,:);     % 8
+    cueColors(2,:);     % 9
+    cueColors(3,:);     % 10
+    cueColors(4,:);     % 11
     0, 0, 0;            % 12
     oldGreen];           % 13
 
 % colors for subject's display
 % black                     0
-% grey-2 (grid-lines)       2
-% grey-2 (background)       2
-% grey-2 (fix-window)       3
+% gray-2 (grid-lines)       1
+% gray-2 (background)       2
+% gray-2 (fix-window)       3
 % white  (fix-point)        4
-% grey-2 (red)              2
-% grey-2 (green)            2
-% grey-2 (blue)             2
-% cuering                   8
-% muted green (fixation)    9
+% gray-2 (red)              5
+% gray-2 (green)            6
+% gray-2 (blue)             7
+% small reward cue color    8
+% medium reward cue color   9
+% large reward cue color    10
+% dark fill cue color       11
 
 p.draw.clut.subColors = ...
     [0, 0, 0;           % 0
@@ -72,10 +81,10 @@ p.draw.clut.subColors = ...
     bgRGB;              % 5
     bgRGB;              % 6
     bgRGB;              % 7
-    0, 1, 1;            % 8
-    bgRGB;              % 9
-    mutGreen;           % 10
-    bgRGB;              % 11
+    cueColors(1,:);     % 8
+    cueColors(2,:);     % 9
+    cueColors(3,:);     % 10
+    cueColors(4,:);     % 11
     bgRGB;              % 12
     oldGreen];           % 13
 

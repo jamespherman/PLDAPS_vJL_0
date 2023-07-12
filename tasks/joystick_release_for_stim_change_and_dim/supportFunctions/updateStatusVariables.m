@@ -4,32 +4,37 @@ function p = updateStatusVariables(p)
 %
 
 % iterate "good trial" count
-p.status.iGoodTrial = p.status.iGoodTrial + double(~p.trData.trialRepeatFlag);
+p.status.iGoodTrial = p.status.iGoodTrial + ...
+    double(~p.trData.trialRepeatFlag);
 
 % update count of trials with 1 / 2 / 3 / 4 stimuli:
 switch p.stim.nStim
     case 1
         if p.trVars.isStimChangeTrial
             p.status.tc1stim = p.status.tc1stim + 1;
-            p.status.hc1stim = p.status.hc1stim + (p.trData.trialEndState == p.state.hit);
+            p.status.hc1stim = p.status.hc1stim + ...
+                (p.trData.trialEndState == p.state.hit);
             p.status.hr1stim = p.status.hc1stim / p.status.tc1stim;
         end
     case 2
         if p.trVars.isStimChangeTrial
             p.status.tc1stim = p.status.tc2stim + 1;
-            p.status.hc1stim = p.status.hc2stim + (p.trData.trialEndState == p.state.hit);
+            p.status.hc1stim = p.status.hc2stim + ...
+                (p.trData.trialEndState == p.state.hit);
             p.status.hr1stim = p.status.hc2stim / p.status.tc2stim;
         end
     case 3
         if p.trVars.isStimChangeTrial
             p.status.tc3stim = p.status.tc3stim + 1;
-            p.status.hc3stim = p.status.hc3stim + (p.trData.trialEndState == p.state.hit);
+            p.status.hc3stim = p.status.hc3stim + ...
+                (p.trData.trialEndState == p.state.hit);
             p.status.hr3stim = p.status.hc3stim / p.status.tc3stim;
         end
     case 4
         if p.trVars.isStimChangeTrial
             p.status.tc4stim = p.status.tc4stim + 1;
-            p.status.hc4stim = p.status.hc4stim + (p.trData.trialEndState == p.state.hit);
+            p.status.hc4stim = p.status.hc4stim + ...
+                (p.trData.trialEndState == p.state.hit);
             p.status.hr4stim = p.status.hc4stim / p.status.tc4stim;
         end
 end
@@ -70,7 +75,7 @@ end
 % p.status.cr2Loc2                    = p.status.crc2Loc2 / p.status.foil2CtLoc2; % correct reject rate for two patch at location 2
 % 
 % % calculate how many trials are left in the block
-% p.status.trialsLeftInBlock          = nnz(p.status.trialsArrayRowsPossible);
+p.status.trialsLeftInBlock      = nnz(p.status.trialsArrayRowsPossible);
 
 
 % if we're using QUEST, update the threshold estimate
