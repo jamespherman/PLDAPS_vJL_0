@@ -19,6 +19,18 @@ function p = human_psychophysical_threshold_settings
 %   s struct has status values that change within the trial
 %   p struct has control parameters that are defined once
 
+% 7/20/2023
+%
+% Everything is working! (Almost). It seems that eyelink somehow obtains
+% control over the continued running of the experiment: regardless of
+% whether I unclick "RUN" in the PLDAPS gui, the experiment keeps running.
+% Maybe this is just about querying the state of the run button? I also
+% want to check if there's something I need to do like send Eyelink a
+% "stop" command? After that we just need to decide on how to vary stimulus
+% intensity from trial to trial. I think an adaptive method is probably the
+% best. We should try QUEST with some visualization (of estimated
+% psychometric function). We also have to check up on the data and make
+% sure we have what we need.
 
 %%
 % p.init;           % all things that are saved once except for trialVarsInit
@@ -175,8 +187,8 @@ p.rig.guiVars = {...
 % 'trVars' is the key strcutarray that gets saved on every trial.
 
 % general vars:
-p.trVarsInit.passJoy             = 1;       % pass = 1; simulate correct trials (for debugging)
-p.trVarsInit.passEye             = 1;       % pass = 1; simulate correct trials (for debugging)
+p.trVarsInit.passJoy             = 0;       % pass = 1; simulate correct trials (for debugging)
+p.trVarsInit.passEye             = 0;       % pass = 1; simulate correct trials (for debugging)
 p.trVarsInit.blockNumber         = 0;       % block number
 p.trVarsInit.repeat              = 0;       % repeat trial if true
 p.trVarsInit.rwdJoyPR            = 0;       % 0 = Give reward if Joy is pressed; 1 = Give reward if Joystick released

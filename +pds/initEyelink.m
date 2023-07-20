@@ -79,7 +79,7 @@ Eyelink('Command', 'button_function 5 "accept_target_fixation"');
 
 % Hide mouse cursor
 % HideCursor(screenNumber);
-
+              
 % Start listening for keyboard input. Suppress keypresses to Matlab windows
 % ListenChar(-1);
 
