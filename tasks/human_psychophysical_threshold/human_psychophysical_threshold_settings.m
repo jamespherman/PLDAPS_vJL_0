@@ -148,12 +148,15 @@ p.status.trialsArrayRowsPossible    = [];
 
 p.status.trialEndStates             = []; % vector of trial end state values
 p.status.reactionTimes              = []; % vector of joystick release reaction times (relative to dimming).
-p.status.dimVals                    = []; % vector of dim values.
+p.status.questThreshEst             = []; % quest's estimated threshold
+p.status.questSignalVal             = []; % last quest-suggested signal strength
 p.rig.guiStatVals = {...
     'blockNumber'; ...
     'iTrial'; ...   
     'iGoodTrial'; ...
     'trialsLeftInBlock'; ...
+    'questSignalVal'; ...
+    'questThreshEst'; ...
     };    
 
 %% user determines the 12 variables are shown in gui upon init
@@ -302,12 +305,19 @@ p.trVarsInit.fixWaitDur              = 5;        % how long to wait after initia
 p.trVarsInit.freeDur                 = 0;        % time before start of joystick press check
 p.trVarsInit.trialMax                = 15;       % max length of the trial
 p.trVarsInit.joyReleaseWaitDur       = 5;        % how long to wait after trial end to start flickering the screen if the joystick hasn't been released
+p.trVarsInit.stimChgIdx              = 0;        % which stimulus will be the outlier on the upcoming trial?
 
 p.trVarsInit.stimFrameIdx            = 1;        % stimulus (eg dots) frame display index
 p.trVarsInit.flipIdx                 = 1;        % index of
 p.trVarsInit.postRewardDuration      = 0;        % how long should the trial last AFTER reward delivery? This lets us record the neuronal response to reward.
-p.trVarsInit.useQuest                = false;    % use "QUEST" to determine next stimulus value?
 p.trVarsInit.numTrialsForPerfCalc    = 100;      % how many of the most recently completed trials should be used to calculate % correct / median RT?
+
+% variables related to "QUEST" (adaptive threshold estimation)
+p.trVarsInit.useQuest                = true;     % use "QUEST" to determine next stimulus value?
+p.trVarsInit.initQuestThreshGuess    = 10;       % initial guess of threshold value to pass to quest
+p.trVarsInit.initQuestSD             = 10;       % how many SDs to tell QUEST to search for threshold value?
+p.trVarsInit.signalStrength          = 30;       % what is the signal strength for the upcoming trial (updated during experiment). This is also the assumed suprathreshold value.
+p.trVarsInit.minSignalStrength       = 1;        % what is the smallest signal you want quest to suggest?
 
 % I don't think I need to carry these around in 'p'....
 % can't I just define them in the 'run' worksapce and forget avbout them?

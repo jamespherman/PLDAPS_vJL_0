@@ -90,7 +90,7 @@ rng(p.trVars.trialSeed);
 % hijack our usual way of doing things so we can retain the existing system
 % for tracking which stimulus is changing and use it to track which
 % stimulus is different instead.
-stimChgIdx = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
+p.trVars.stimChgIdx = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
     strcmp(p.init.trialArrayColumnNames, 'stim chg'));
 
 % which stimulus location is the "cued" location?
@@ -98,7 +98,7 @@ p.stim.cueLoc  = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
     strcmp(p.init.trialArrayColumnNames, 'cue loc'));
 
 % set a couple simple variables that will be helpful during "run"
-p.trVars.isNoChangeTrial    = stimChgIdx == 0;
+p.trVars.isNoChangeTrial    = p.trVars.stimChgIdx == 0;
 p.trVars.isStimChangeTrial  = ~p.trVars.isNoChangeTrial;
 
 % how many stimuli will be shown on this trial?
@@ -166,20 +166,27 @@ for i = 1:p.stim.nFeatures
     tempDelta = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
         contains(p.init.trialArrayColumnNames, ...
         p.stim.featureValueNames{i}));
-    
+
     % if "tempDelta" is non-zero, add the corresponding feature delta
     % to the appropriate entry of the feature array
     if tempDelta ~= 0
-        % find the right delta, and multiply by "tempDelta" to allow
-        % for "increases" and "decreases" of various features.
-        featureDelta = tempDelta * ...
-            p.trVars.([p.stim.featureValueNames{i} 'Delta']);
+
+        % if we're using QUEST run "getQuestSuggestedDelta" - this both gets a
+        % suggested signal strength AND initializes the QUEST object if it doesn't
+        % yet exist.
+        if isfield(p.trVars, 'useQuest') && p.trVars.useQuest
+            p = getQuestSuggestedDelta(p);
+        end
+
+        % Assign the QUEST-derived signal strength 
+        featureDelta = p.trVars.signalStrength;
+        p.status.questSignalVal = featureDelta;
         
         % add to stim array
         p.stim.([p.stim.featureValueNames{i} ...
-            'Array'])(stimChgIdx, 1) = ...
+            'Array'])(p.trVars.stimChgIdx, 1) = ...
             p.stim.([p.stim.featureValueNames{i} ...
-            'Array'])(stimChgIdx, 1) + featureDelta;
+            'Array'])(p.trVars.stimChgIdx, 1) + featureDelta;
     end
 end
 catch me
@@ -213,14 +220,6 @@ end
 p.trVars.isContrastChangeTrial = ...
     p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
     strcmp(p.init.trialArrayColumnNames, 'contrast')) == 1;
-
-% if we're using QUEST run "getQuestSuggestedDelta" - this both gets a
-% suggested signal strength AND initializes the QUEST object if it doesn't
-% yet exist (though it only stores the suggested signal strength if this is
-% a cue change trial).
-if isfield(p.trVars, 'useQuest') && p.trVars.useQuest
-    p = getQuestSuggestedDelta(p);
-end
     
 end
 

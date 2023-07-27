@@ -75,8 +75,7 @@ p.status.missedFrames = p.status.missedFrames + p.trData.missedFrameCount;
 
 % decide if the response was "correct"
 cVect = [7 9 1 3];
-p.trData.responseCorrect = cVect(p.trVars.stimChgIdx) == ...
-    str2double(p.trData.responseValue);
+
 
 % (5) auto save backup
 pds.saveP(p);
@@ -84,7 +83,6 @@ pds.saveP(p);
 % (6) if we're using QUEST, compute the posterior and update the parameter
 % estimates here
 p           = updateQuest(p);
-p.status.questThreshEst = p.init.questObj.tGuess ^ 10;
 
 % (8) update trials list
 p           = updateTrialsList(p);
