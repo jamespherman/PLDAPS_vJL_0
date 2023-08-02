@@ -73,9 +73,11 @@ p.trData.missedFrameCount = nnz(diff(p.trData.timing.flipTime) > ...
     p.rig.frameDuration * 1.5);
 p.status.missedFrames = p.status.missedFrames + p.trData.missedFrameCount;
 
-% decide if the response was "correct"
+% decide if the response was "correct" (if the trial completed correctly)
+if ~p.trial
 cVect = [7 9 1 3];
-
+p.trData.responseCorrect = cVect(p.trVars.stimChgIdx) == ...
+    str2double(p.trData.responseValue);
 
 % (5) auto save backup
 pds.saveP(p);
@@ -83,6 +85,9 @@ pds.saveP(p);
 % (6) if we're using QUEST, compute the posterior and update the parameter
 % estimates here
 p           = updateQuest(p);
+if isfield(p.init.questObj.threshEst)
+    p.status.questThreshEst = p.init.questObj.threshEst(end);
+end
 
 % (8) update trials list
 p           = updateTrialsList(p);
@@ -95,4 +100,17 @@ if isfield(p.trVars, 'wantOnlinePlots') && p.trVars.wantOnlinePlots
     p       = updateOnlinePlots(p);
 end
 
+% if the trialcount for the quest object is larger than
+% p.trVars.numThreshCheckTrials + 1, check whether the change in
+% threshold estimate has been below a criterion value for the last
+% p.trvars.numThreshCheckTrials trials. If it has, stop running
+% because we consider our threshold estimate to be stable.
+threshChangeCrit = (p.trVars.maxSignalStrength - ...
+    p.trVars.minSignalStrength) / 1000;
+if p.init.questObj.trialCount > p.trVars.numThreshCheckTrials
+    tempThreshChange = abs(diff(p.init.questObj.threshEst));
+    if all(tempThreshChange(end-p.trVars.numThreshCheckTrials:end) < ...
+            threshChangeCrit)
+        keyboard
+    end
 end

@@ -27,7 +27,7 @@ if ~isfield(p.init, 'questObj')
     % create QUEST object
     p.init.questObj = QuestCreate(initThresholdGuess, ...
         initThresholdGuessSD, thresholdPctCorr, ...
-        betaInit, deltaInit, gammaInit, 0.1, p.trVars.maxSignalStrength);
+        betaInit, deltaInit, gammaInit);
     
     % set the questObj to normalize the PDF
     p.init.questObj.normalizePdf   = 1;
@@ -48,9 +48,7 @@ testValRec = min([max([p.trVars.minSignalStrength, ...
 randVal = rand;
 if randVal < 0.1
     testValRec = p.trVars.supraSignalStrength;
-elseif randVal < 0.3
-    testValRec = 0;
-end
+elseif 
 
 % assign the recommended (or occasional suprathreshold) delta.
 p.trVars.signalStrength = testValRec;

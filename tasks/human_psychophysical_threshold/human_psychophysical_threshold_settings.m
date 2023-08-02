@@ -317,7 +317,10 @@ p.trVarsInit.useQuest                = true;     % use "QUEST" to determine next
 p.trVarsInit.initQuestThreshGuess    = 10;       % initial guess of threshold value to pass to quest
 p.trVarsInit.initQuestSD             = 10;       % how many SDs to tell QUEST to search for threshold value?
 p.trVarsInit.signalStrength          = 30;       % what is the signal strength for the upcoming trial (updated during experiment). This is also the assumed suprathreshold value.
-p.trVarsInit.minSignalStrength       = 1;        % what is the smallest signal you want quest to suggest?
+p.trVarsInit.minSignalStrength       = 1;        % what is the smallest signal we want to test?
+p.trVarsInit.maxSignalStrength       = 360;      % what is the largest signal we want to test?
+p.trVarsInit.supraSignalStrength     = 60;       % what is a signal strength that is very likely to be above threshold?
+p.trVarsInit.numThreshCheckTrials    = 5;        % how many trials to check for thrreshold estimate being lower than criterion?
 
 % I don't think I need to carry these around in 'p'....
 % can't I just define them in the 'run' worksapce and forget avbout them?
