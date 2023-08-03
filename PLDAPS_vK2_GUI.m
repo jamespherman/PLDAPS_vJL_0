@@ -492,7 +492,7 @@ if get(hObject, 'Value')
 %     % (necessary for eval function).
 %     eval(['cd ' uiData.paths.settingsFilePaths{currentSettingsFileIndex}]);
 
-    while true
+    while uiData.p.runFlag
         
         % get the latest "p" values from the gui
         uiData = guidata(hObject);

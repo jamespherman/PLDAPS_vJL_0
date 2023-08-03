@@ -20,18 +20,18 @@ if  isempty(answer)
     fprintf('Session cancelled by user\n')
     error('Session cancelled by user'); % Abort experiment (see cleanup function below)
 end
-edfFile = answer{1}; % Save file name to a variable
+p.init.edfFile = answer{1}; % Save file name to a variable
 % Print some text in Matlab's Command Window if file name is longer than 8 characters
-if length(edfFile) > 8
+if length(p.init.edfFile) > 8
     fprintf('Filename needs to be no more than 8 characters long (letters, numbers and underscores only)\n');
     error('Filename needs to be no more than 8 characters long (letters, numbers and underscores only)');
 end
 
 % Open an EDF file and name it
-failOpen = Eyelink('OpenFile', edfFile);
+failOpen = Eyelink('OpenFile', p.init.edfFile);
 if failOpen ~= 0 % Abort if it fails to open
-    fprintf('Cannot create EDF file %s', edfFile); % Print some text in Matlab's Command Window
-    error('Cannot create EDF file %s', edfFile); % Print some text in Matlab's Command Window
+    fprintf('Cannot create EDF file %s', p.init.edfFile); % Print some text in Matlab's Command Window
+    error('Cannot create EDF file %s', p.init.edfFile); % Print some text in Matlab's Command Window
 end
 
 % Define "el" structurecc v  
@@ -81,7 +81,7 @@ Eyelink('Command', 'button_function 5 "accept_target_fixation"');
 % HideCursor(screenNumber);
               
 % Start listening for keyboard input. Suppress keypresses to Matlab windows
-% ListenChar(-1);
+ListenChar(-1);
 
 % Clear Host PC display from any previous drawing
 Eyelink('Command', 'clear_screen 0'); 
@@ -89,5 +89,7 @@ Eyelink('Command', 'clear_screen 0');
 % Put EyeLink Host PC in Camera Setup mode for participant setup / 
 % calibration
 EyelinkDoTrackerSetup(p.init.el);
+
+disp('EyelinkDoTrackerSetup execution has completed.')
 
 end

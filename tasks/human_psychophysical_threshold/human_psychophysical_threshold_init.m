@@ -47,8 +47,10 @@ p = pds.initPsychToolbox(p);
 setGuiMessage(...
     'Eyelink Setup. Init Continues After Eyelink Interaction Is Done');
 p = pds.initEyelink(p);
+disp('pds.initEyelink execution has completed.');
 setGuiMessage(...
     'Eyelink Setup Complete!');
+ListenChar(1);
 
 % (6) define trial structure
 p   = initTrialStructure(p);
@@ -115,7 +117,7 @@ function setGuiMessage(messageString)
     uiData = guidata(findall(0, 'Name', 'PLDAPS_vK2_GUI'));
     set(uiData.handles.uiStatusString, 'String', ...
         messageString);
-    drawnow;
+%     drawnow;
 end
 
 
