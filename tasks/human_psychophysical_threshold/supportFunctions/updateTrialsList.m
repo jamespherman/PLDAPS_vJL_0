@@ -12,10 +12,15 @@ p.status.trialsArrayRowsPossible(p.trVars.currentTrialsArrayRow) = ...
     p.trData.trialRepeatFlag;
 
 % If all the trials in the current block have been completed, update
-% "p.status.blockNumber" and either reset "p.status.trialsArrayRowsPossible" OR
-% if a new trial structure is needed for the next block, update
-% p.init.trialsArray
-if ~any(p.status.trialsArrayRowsPossible)
+% "p.status.blockNumber" and  reset "p.status.trialsArrayRowsPossible". We
+% also reset these for our current way of doing human psychophysical
+% threshold estimation in which we first use quest to estimate threshold
+% and then run a fixed number of constant-signal-strength trials in a new
+% "block".
+if ~any(p.status.trialsArrayRowsPossible) || ...
+        (p.trVarsInit.fixSignalStrength && ...
+        p.trVarsInit.numTrialsSinceFixSig == 0 && ...
+        p.status.blockNumber == 1)
     
     % iterate block number
     p.status.blockNumber = p.status.blockNumber + 1;

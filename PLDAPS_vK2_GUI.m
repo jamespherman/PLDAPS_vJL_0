@@ -463,7 +463,7 @@ else
     set(hObject, 'CData', [], 'ForegroundColor', [0 0 0], ...
         'FontWeight', 'bold')
     
-    % tell the user we're RUNNING
+    % tell the user we're IDLE
     set(uiData.handles.uiStatusString, 'String', 'Idle.');
     drawnow;
 end
@@ -537,6 +537,14 @@ if get(hObject, 'Value')
             break
         end
     end
+
+    % make sure we toggle off the run button:
+    set(hObject, 'CData', [], 'ForegroundColor', [0 0 0], ...
+        'FontWeight', 'bold')
+    
+    % tell the user we're IDLE
+    set(uiData.handles.uiStatusString, 'String', 'Idle.');
+    drawnow;
 else
 end
 

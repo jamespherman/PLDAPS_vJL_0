@@ -3,20 +3,24 @@ function p = getQuestSuggestedDelta(p)
 % p = getQuestSuggestedDelta(p)
 % 
 
+p.trVarsInit.initQuestThreshGuess    = 10;       % initial guess of threshold value to pass to quest
+p.trVarsInit.initQuestSD             = 10;       % how many SDs to tell QUEST to search for threshold value?
+p.trVarsInit.initQuestBetaGuess      = 10;       % what is our initial guess for beta?
+
 % if we haven't yet created a "questObj" structure, do it now
 if ~isfield(p.init, 'questObj')
     
     % initial threshold guess (mean of the prior)
-    initThresholdGuess = 30;
+    initThresholdGuess = p.trVarsInit.initQuestThreshGuess;
     
     % SD of initial threshold guess (SD of the prior)
-    initThresholdGuessSD = 10;
+    initThresholdGuessSD = p.trVarsInit.initQuestSD;
     
     % what %-correct do we want to estimate threshold at?
     thresholdPctCorr = 0.75;
     
     % initial "slope" guess
-    betaInit    = 10;
+    betaInit    = p.trVarsInit.initQuestBetaGuess;
     
     % initial "lapse rate" guess
     deltaInit   = 0.05;
@@ -27,7 +31,7 @@ if ~isfield(p.init, 'questObj')
     % create QUEST object
     p.init.questObj = QuestCreate(initThresholdGuess, ...
         initThresholdGuessSD, thresholdPctCorr, ...
-        betaInit, deltaInit, gammaInit);
+        betaInit, deltaInit, gammaInit, 0.1, p.trVars.maxSignalStrength);
     
     % set the questObj to normalize the PDF
     p.init.questObj.normalizePdf   = 1;
@@ -48,7 +52,9 @@ testValRec = min([max([p.trVars.minSignalStrength, ...
 randVal = rand;
 if randVal < 0.1
     testValRec = p.trVars.supraSignalStrength;
-elseif 
+elseif randVal < 0.3
+    testValRec = 0;
+end
 
 % assign the recommended (or occasional suprathreshold) delta.
 p.trVars.signalStrength = testValRec;

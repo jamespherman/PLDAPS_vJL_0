@@ -118,9 +118,9 @@ switch p.init.exptType
 
         table = tableDef_humanPsychophysicsOrientationDiscrimination;
 
-    case 'human_psychophysics_speed_discrimination'
+            case 'human_psychophysics_orientation_discrimination'
 
-        table = tableDef_humanPsychophysicsSpeedDiscrimination;
+        table = tableDef_humanPsychophysicsOrientationDiscrimination;
 
     otherwise
         table = tableDefault;
@@ -229,7 +229,7 @@ end
 
 % Four stimulus patches, one might have a different hue than the others (on
 % average). Human psychophysics:
-function table = tableDef_humanPsychophysicsSpeedDiscrimination
+function table = tableDef_humanPsychophysicsSpeeedDiscrimination
 table =            [1   4   1   1   1   1   1   1   0   0   0   0   0   0   1   10   23901;
                     2   4   1   1   1   1   2   1   0   0   0   0   0   0   2   10   23902;
                     3   4   1   1   1   1   3   1   0   0   0   0   0   0   3   10   23903;

@@ -1,5 +1,5 @@
-function p = human_psychophysical_threshold_settings
-%  p = human_psychophysical_threshold_settings
+function p = human_psychophysical_threshold_settings_hue1
+%  p = human_psychophysical_threshold_settings_hue1
 %
 %  On some proportion of trials, the fixation point turns off without
 %  reward delivery or "boop", monkey must release joystick to get reward on
@@ -281,7 +281,7 @@ p.trVarsInit.hueDelta                 = 45;       % hue (color angle)
 
 % spatial properties of "checkerboard":
 p.trVarsInit.stimRadius               = 3.25;     % aperture radius in deg
-p.trVarsInit.boxSizePix               = 24;       % diameter of each "check" in pixels
+p.trVarsInit.boxSizePix               = 12;       % diameter of each "check" in pixels
 p.trVarsInit.boxLifetime              = 8;        % "check" lifetime in frams
 p.trVarsInit.nPatches                 = 4;        % number of stimuli 
 p.trVarsInit.nEpochs                  = 1;        % just one epoch with all four stimuli present.
@@ -316,11 +316,14 @@ p.trVarsInit.numTrialsForPerfCalc    = 100;      % how many of the most recently
 p.trVarsInit.useQuest                = true;     % use "QUEST" to determine next stimulus value?
 p.trVarsInit.initQuestThreshGuess    = 10;       % initial guess of threshold value to pass to quest
 p.trVarsInit.initQuestSD             = 10;       % how many SDs to tell QUEST to search for threshold value?
+p.trVarsInit.initQuestBetaGuess      = 10;       % what is our initial guess for beta?
 p.trVarsInit.signalStrength          = 30;       % what is the signal strength for the upcoming trial (updated during experiment). This is also the assumed suprathreshold value.
 p.trVarsInit.minSignalStrength       = 1;        % what is the smallest signal we want to test?
 p.trVarsInit.maxSignalStrength       = 360;      % what is the largest signal we want to test?
 p.trVarsInit.supraSignalStrength     = 60;       % what is a signal strength that is very likely to be above threshold?
 p.trVarsInit.numThreshCheckTrials    = 5;        % how many trials to check for thrreshold estimate being lower than criterion?
+p.trVarsInit.fixSignalStrength       = false;    % do we want to present a fixed stimulus strength?
+p.trVarsInit.numTrialsSinceFixSig    = 0;        % count the number of good trials since the threshold was fixed.
 
 % I don't think I need to carry these around in 'p'....
 % can't I just define them in the 'run' worksapce and forget avbout them?

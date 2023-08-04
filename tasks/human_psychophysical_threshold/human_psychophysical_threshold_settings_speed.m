@@ -1,5 +1,5 @@
-function p = human_psychophysical_threshold_settings
-%  p = human_psychophysical_threshold_settings
+function p = human_psychophysical_threshold_settings_speed
+%  p = human_psychophysical_threshold_settings_speed
 %
 %  On some proportion of trials, the fixation point turns off without
 %  reward delivery or "boop", monkey must release joystick to get reward on
@@ -64,7 +64,7 @@ p.init.protocol_title   = [p.init.taskName '_task'];    % Define Banner text to 
 p.init.date             = datestr(now,'yyyymmdd');
 p.init.time             = datestr(now,'HHMM');
 
-p.init.exptType         = 'human_psychophysics_hue_discrimination';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
+p.init.exptType         = 'human_psychophysics_speed_discrimination';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
 
 p.init.date_1yyyy       = str2double(['1' datestr(now,'yyyy')]); % gotta add a '1' otherwise date/times starting with zero lose that zero in conversion to double.
 p.init.date_1mmdd       = str2double(['1' datestr(now,'mmdd')]);
@@ -256,19 +256,19 @@ p.trVarsInit.midDimVal           = 0.825;         % middle brightness ABOVE back
 p.trVarsInit.highDimVal          = 0.9;        % high brightness ABOVE background level of fixation after dimming
 
 % Initial / base values for each stimulus feature.
-p.trVarsInit.speedInit                = 0.1;      % initial motion magniutde
-p.trVarsInit.ctrstInit                = 0.0;      % initial contrast
+p.trVarsInit.speedInit                = 1;      % initial motion magniutde
+p.trVarsInit.ctrstInit                = 0.35;      % initial contrast
 p.trVarsInit.orientInit               = 30;       % initial orientation
-p.trVarsInit.freqInit                 = 0.25;     % initial spatial frequency (cycles per degree)
-p.trVarsInit.satInit                  = 0.4;      % initial color saturation
+p.trVarsInit.freqInit                 = 0.35;     % initial spatial frequency (cycles per degree)
+p.trVarsInit.satInit                  = 0;      % initial color saturation
 p.trVarsInit.lumInit                  = 0.3;      % initial luminance
-p.trVarsInit.hueInit                  = 180;       % initial hue (color angle)
+p.trVarsInit.hueInit                  = 0;       % initial hue (color angle)
 
 % Variance of feature dimensions that can be variable in this way:
 p.trVarsInit.orientVar                = 2;        % variability in orientation
-p.trVarsInit.hueVar                   = 0.05;     % variability in hue (angle)
+p.trVarsInit.hueVar                   = 0.0;     % variability in hue (angle)
 p.trVarsInit.lumVar                   = 0.02;     % variability in luminance
-p.trVarsInit.satVar                   = 0.01;     % variability in saturation
+p.trVarsInit.satVar                   = 0.0;     % variability in saturation
 
 % Magnitude of stimulus delta if desired:
 p.trVarsInit.speedDelta               = (pi/8);   % motion magniutde
@@ -281,7 +281,7 @@ p.trVarsInit.hueDelta                 = 45;       % hue (color angle)
 
 % spatial properties of "checkerboard":
 p.trVarsInit.stimRadius               = 3.25;     % aperture radius in deg
-p.trVarsInit.boxSizePix               = 24;       % diameter of each "check" in pixels
+p.trVarsInit.boxSizePix               = 12;       % diameter of each "check" in pixels
 p.trVarsInit.boxLifetime              = 8;        % "check" lifetime in frams
 p.trVarsInit.nPatches                 = 4;        % number of stimuli 
 p.trVarsInit.nEpochs                  = 1;        % just one epoch with all four stimuli present.

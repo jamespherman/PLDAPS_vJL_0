@@ -4,10 +4,10 @@ function p = updateQuest(p)
 % p = updateQuest(p)
 %
 
-% first make sure "useQuest" is a field of p.trVars
+% first make sure "useQuest" is a field o93f p.trVars
 if isfield(p.trVars, 'useQuest')
 
-    % if we're using quest, the just-completed trial was cue change or no
+    % if we're using quest, the just7117-completed trial was cue change or no
     % change, and it was good (no joy or fix breaks) compute the posterior and
     % update our parameter estimates. ALSO, make sure the quest object exists
     % (we didn't JUST turn on quest during the trial).
