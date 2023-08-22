@@ -29,7 +29,7 @@ p.trData.timing.trialStartPTB = GetSecs;
 %% (2) while-loop
 % The while loop has 3 sections:
 %   (1) STATE-DEPENDENT section: sets variables as a function of state
-%   (2) TIME-DEPENDENT section: sets variables as a function of time 
+%   (2) TIME-DEPENDENT section: sets variables as a function of time
 %   (3) DRAW section: PTB-based drawing
 
 % hide fixation point (this shouldn't be necessrary; figure out why it is
@@ -41,7 +41,7 @@ i = 0;
 
 % Loop until the trial is over (p.trVars.exitWhileLoop == true).
 while ~p.trVars.exitWhileLoop
-    
+
     % Get latest gaze position:
     p = pds.getEyelink(p);
 
@@ -51,13 +51,13 @@ while ~p.trVars.exitWhileLoop
     % store most recent eye position samples
     p.trData.onlineEyeX(i) = p.trVars.eyePixX;
     p.trData.onlineEyeY(i) = p.trVars.eyePixY;
-    
+
     % STATE DEPENDENT section
     p = stateMachine(p);
-    
+
     % DRAW:
     p = drawMachine(p);
-     
+
 end % while loop
 
 end
@@ -92,11 +92,11 @@ switch p.trVars.currentState
     case p.state.trialBegun
         %% STATE 1:
         %   TRIAL HAS BEGUN!
-        
+
         % Store trial start time and move to to state 3 - Show Fixation
         p.trData.timing.trialBegin      = timeNow;
         p.trVars.currentState           = p.state.showFix;
-        
+
     case p.state.showFix
         %% STATE 3:
         %   SHOW FIXATION POINT AND WAIT FOR SUBJECT TO ACQUIRE FIXATION.
@@ -104,37 +104,43 @@ switch p.trVars.currentState
         % If "fixOn" time hasn't been defined, and we haven't already
         % indicated that "fixOn" should be defined after the next flip,
         % indicate that "fixOn" should be defined after the next flip and
-        % strobe "fixOn" after the next flip. This also means we need to
-        % display the fixation!
+        % send a "FIX_ON" message to eyelink. We also set the color of the
+        % fixation point ("p.draw.color.fix") to green, indicating to the
+        % subject that the state of the task is "waiting for the subject to
+        % acquire fixation".
         if p.trData.timing.fixOn < 0 ...
                 && ~ismember('fixOn', p.trVars.postFlip.varNames)
 
-            % I don't think we want to strobe anything, but I do think it
-            % makes sense to write messages to the Eyelink "EDF" file after
-            % the "next" flip.
+            % Draw green fixation
             p.draw.color.fix = p.draw.clutIdx.expMutGreen_subMutGreen;
+
+            % Do necessary steps to write "FIX_ON" message to Eyelink's EDF
+            % file after next flip.
             p.trVars.postFlip.logical           = true;
             p.trVars.postFlip.varNames{end + 1} = 'fixOn';
             p.trVars.postFlip.msgNames{end + 1} = 'FIX_ON';
-            % p.init.strb.addValueOnce(p.init.codes.fixOn);
         end
-        
-        % If fixation is aquired within alotted time move onwards next
-        % state.
+
+        % Once fixation has been illuminated, if subject acquires fixation
+        % within duration alloted for fixation acquisition, turn fixation
+        % point white to indicate to the subject that stimulus presentation
+        % is about to happen, then write "FIX_ACQ" message to Eyelink's EDF
+        % file 
         if pds.eyeInWindowEL(p) && ...
                 timeNow < (p.trData.timing.fixOn + p.trVars.fixWaitDur)
-            
+
+            p.draw.color.fix = p.draw.clutIdx.expWhite_subWhite;
             Eyelink('Message', 'FIX_ACQ');
             p.trData.timing.fixAq      = timeNow;
             p.trVars.currentState      = p.state.dontMove;
-            
+
         elseif p.trData.timing.fixOn > 0 && timeNow > ...
-                (p.trData.timing.fixOn + p.trVars.fixWaitDur) 
+                (p.trData.timing.fixOn + p.trVars.fixWaitDur)
             % fixation was never acquired
             Eyelink('Message', 'FIX_ACQ');
             p.trVars.currentState      = p.state.nonStart;
         end
-        
+
     case p.state.dontMove
         %% STATE 4:
         % "DON'T MOVE" - SUBJECT HOLDS FIXATION WHILE STIMULI ARE
@@ -143,10 +149,10 @@ switch p.trVars.currentState
         % The next state (STATE 5 - MAKE DECISION) is the money time,
         % where subject is to either respond or not, and the outcome of
         % the trial is determiend.
-        
+
         % Calculate elapsed time since fixation acquisition
         timeFromFixAq = timeNow - p.trData.timing.fixAq;
-        
+
         % Determine if peripheral stimuli should be on. If it/they should
         % and we haven't already indicated that "stimOn" should be defined
         % after the next flip, indicate that "stimOn" should be defined
@@ -158,7 +164,7 @@ switch p.trVars.currentState
                 ~ismember('stimOn', p.trVars.postFlip.varNames)
             p.trVars.postFlip.logical           = true;
             p.trVars.postFlip.varNames{end + 1} = 'stimOn';
-            p.trVars.postFlip.msgN
+            p.trVars.postFlip.msgNames{end + 1} = 'STIM_ON';
             % p.init.strb.addValueOnce(p.init.codes.stimOn);
             p.trVars.stimIsOn                = true;
 
@@ -170,8 +176,13 @@ switch p.trVars.currentState
         elseif timeFromFixAq > p.trVars.fix2StimOffIntvl
             p.trVars.postFlip.logical           = true;
             p.trVars.postFlip.varNames{end + 1} = 'stimOff';
+            p.trVars.postFlip.msgNames{end + 1} = 'STIM_OFF';
             p.trVars.currentState               = p.state.makeDecision;
             p.trVars.stimIsOn                   = false;
+
+            % change fixation point color to indicate to the subject that
+            % they should press a key to give their response:
+            p.draw.color.fix = p.draw.clutIdx.expBlue_subBg;
         end
 
         % If subject breaks fixation, abort.
@@ -183,7 +194,7 @@ switch p.trVars.currentState
             p.trVars.currentState      = p.state.fixBreak;
         end
 
-        % 
+        %
 
     case p.state.makeDecision
 
@@ -206,29 +217,33 @@ switch p.trVars.currentState
             p.trVars.currentState = p.state.trialCompleted;
 
         else
-        % check if a key has been pressed:
-        [pressed, firstPress] = ...
-            KbQueueCheck(p.init.respDevIdx);
+            % keep fixation point color to indicate to the subject that
+            % they should press a key to give their response:
+            p.draw.color.fix = p.draw.clutIdx.expBlue_subBg;
 
-        % if a response has been made, store it and move on to 
-        % "trialCompleted" state:
-        if pressed
-            
-            % get last keypress time and which key was pressed, and store.
-            p.trData.timing.responseTime = firstPress(logical(firstPress));
-            p.trData.responseValue = KbName(firstPress);
+            % check if a key has been pressed:
+            [pressed, firstPress] = ...
+                KbQueueCheck(p.init.respDevIdx);
 
-            % tell eyelink which key was pressed
-            Eyelink('Message', ['RSP_' p.trData.responseValue]);
-            
-            % stop KbQueue
-            KbQueueStop(p.init.respDevIdx);
+            % if a response has been made, store it and move on to
+            % "trialCompleted" state:
+            if pressed
 
-            % move on to "trialCompleted" state
-            p.trVars.currentState = p.state.trialCompleted;
+                % get last keypress time and which key was pressed, and store.
+                p.trData.timing.responseTime = firstPress(logical(firstPress));
+                p.trData.responseValue = KbName(firstPress);
+
+                % tell eyelink which key was pressed
+                Eyelink('Message', ['RSP_' p.trData.responseValue]);
+
+                % stop KbQueue
+                KbQueueStop(p.init.respDevIdx);
+
+                % move on to "trialCompleted" state
+                p.trVars.currentState = p.state.trialCompleted;
+            end
         end
-        end
-        
+
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%% end states: trial COMPLETED %%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -242,7 +257,7 @@ switch p.trVars.currentState
         %% FIXATION BREAK
         % p = playTone(p, 'low');
         p.trVars.exitWhileLoop = true;
-        
+
     case p.state.nonStart
         %% NON-START
         % subject did not hold the joystick within the alloted time and
@@ -261,23 +276,23 @@ if p.trVars.exitWhileLoop
 
     % Calculate elapsed time since fixation acquisition
     timeFromFixAq = timeNow - p.trData.timing.fixAq;
-    
+
     % if stimuli should be off, mark their offset
     if timeFromFixAq >= p.trVars.fix2StimOffIntvl && ...
             ~ismember('stimOff', p.trVars.postFlip.varNames)
         p.trVars.stimIsOn                   = false;
         p.trVars.postFlip.logical           = true;
         p.trVars.postFlip.varNames{end + 1} = 'stimOff';
-        % p.init.strb.addValueOnce(p.init.codes.stimOff);
+        p.trVars.postFlip.msgNames{end + 1} = 'STIM_OFF';
     end
-    
+
     % turn off fixation and fixation window:
     p.draw.color.fix          = p.draw.color.background;
     p.draw.color.fixWin       = p.draw.color.background;
 
     % note trial end state
     p.trData.trialEndState = p.trVars.currentState;
-    
+
     % Mark time of trial completion (PTB), send a message to Eyelink
     % indicating trial completion to be recorded in the EDF file, and stop
     % the EDF recording (don't close out the EDF file, just "pause" the
@@ -311,11 +326,11 @@ if timeNow > p.trData.timing.lastFrameTime + ...
     p.trVars.stimFrameIdx  = ...
         (fix((timeNow - p.trData.timing.stimOn) / ...
         p.rig.frameDuration)) * (p.trData.timing.stimOn > 0) + 1;
-    
+
     % if stimuli should be drawn (based on time in trial), draw them.
     if p.trVars.stimIsOn && ...
             (p.trVars.stimFrameIdx <= p.trVars.stimFrames)
-        
+
         % draw FIXED textures to screen (one per stimulus)
         % for i = p.trVars.nPatches
         %     Screen('DrawTexture', p.draw.window, ...
@@ -324,21 +339,21 @@ if timeNow > p.trData.timing.lastFrameTime + ...
         %         p.trVars.stimRects(i,:));
         % end
         Screen('DrawTexture', p.draw.window, ...
-                p.stim.stimTextures(p.trVars.stimFrameIdx), ...
-                p.stim.sourceRects(1, :), ...
-                p.trVars.stimRects(1,:));
+            p.stim.stimTextures(p.trVars.stimFrameIdx), ...
+            p.stim.sourceRects(1, :), ...
+            p.trVars.stimRects(1,:));
         Screen('DrawTexture', p.draw.window, ...
-                p.stim.stimTextures(p.trVars.stimFrameIdx), ...
-                p.stim.sourceRects(2, :), ...
-                p.trVars.stimRects(2,:));
+            p.stim.stimTextures(p.trVars.stimFrameIdx), ...
+            p.stim.sourceRects(2, :), ...
+            p.trVars.stimRects(2,:));
         Screen('DrawTexture', p.draw.window, ...
-                p.stim.stimTextures(p.trVars.stimFrameIdx), ...
-                p.stim.sourceRects(3, :), ...
-                p.trVars.stimRects(3,:));
+            p.stim.stimTextures(p.trVars.stimFrameIdx), ...
+            p.stim.sourceRects(3, :), ...
+            p.trVars.stimRects(3,:));
         Screen('DrawTexture', p.draw.window, ...
-                p.stim.stimTextures(p.trVars.stimFrameIdx), ...
-                p.stim.sourceRects(4, :), ...
-                p.trVars.stimRects(4,:));
+            p.stim.stimTextures(p.trVars.stimFrameIdx), ...
+            p.stim.sourceRects(4, :), ...
+            p.trVars.stimRects(4,:));
     end
 
     % draw fixation spot
@@ -356,7 +371,7 @@ if timeNow > p.trData.timing.lastFrameTime + ...
     % if a stimulus event has occurred, mark the time of that event based
     % on the previously recorded fliptime.
     if p.trVars.postFlip.logical
-        
+
         % loop over the "varNames" field of "p.trVars.postFlip" and assign
         % "p.trData.timing.lastFrameTime" to
         % "p.trData.timing.(varNames{j})", and send a message to eyelink
@@ -369,17 +384,17 @@ if timeNow > p.trData.timing.lastFrameTime + ...
                     p.trData.timing.lastFrameTime;
 
                 % send message to eyelink:
-                Eyelink('Message', p.trVars.postFlip.msgNames{j}); 
+                Eyelink('Message', p.trVars.postFlip.msgNames{j});
             end
         end
-        
+
         % reset the logical variable indicaing we have a time to log and
         % empty the list of variable names.
         p.trVars.postFlip.logical           = false;
         p.trVars.postFlip.varNames          = cell(0);
         p.trVars.postFlip.msgNames          = cell(0);
     end
-    
+
     % increment flip index
     p.trVars.flipIdx = p.trVars.flipIdx + 1;
 end

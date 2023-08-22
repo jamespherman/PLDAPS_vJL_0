@@ -35,7 +35,7 @@ function p = human_psychophysical_threshold_next(p)
 % (1) iterate trial counter
 p.status.iTrial = p.status.iTrial + 1;
 
-% (2) initialize trial variables.
+% (2) initialize trial variables.3
 p.trVars = p.trVarsGuiComm;
 
 % (3) define next trial parameters

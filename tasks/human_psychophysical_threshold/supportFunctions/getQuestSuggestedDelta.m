@@ -22,7 +22,7 @@ if ~isfield(p.init, 'questObj')
     deltaInit   = 0.05;
 
     % initial "guess rate" guess
-    gammaInit   = 0.05;
+    gammaInit   = 0.25;
 
     % create QUEST object
     p.init.questObj = QuestCreate(initThresholdGuess, ...
@@ -39,9 +39,9 @@ end
 
 % after we use quest to estimate a threshold value, we want to present that
 % fixed value for multiple trials consecutively. We use the variable named
-% "p.trVarsInit.fixSignalStrength" to decide whether we want quest to
+% "p.status.fixSignalStrength" to decide whether we want quest to
 % suggest a new stimulus strength or just to give us the threshold value:
-if p.trVarsInit.fixSignalStrength
+if p.status.fixSignalStrength
     testValRec = QuestMean(p.init.questObj);
 else
 

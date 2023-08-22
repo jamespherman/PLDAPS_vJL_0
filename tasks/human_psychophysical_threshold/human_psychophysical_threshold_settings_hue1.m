@@ -150,6 +150,8 @@ p.status.trialEndStates             = []; % vector of trial end state values
 p.status.reactionTimes              = []; % vector of joystick release reaction times (relative to dimming).
 p.status.questThreshEst             = []; % quest's estimated threshold
 p.status.questSignalVal             = []; % last quest-suggested signal strength
+p.status.fixSignalStrength          = 0;  % are we presenting a fixed signal strength or a quest-determined variable one?
+p.status.numTrialsSinceFixSig       = 0;  % running count of the number of good trials since the threshold was fixed.
 p.rig.guiStatVals = {...
     'blockNumber'; ...
     'iTrial'; ...   
@@ -157,7 +159,9 @@ p.rig.guiStatVals = {...
     'trialsLeftInBlock'; ...
     'questSignalVal'; ...
     'questThreshEst'; ...
-    };    
+    'fixSignalStrength'; ...
+    'numTrialsSinceFixSig'; ...
+    };
 
 %% user determines the 12 variables are shown in gui upon init
 % here you just list the vars you want to see. You do not set them, yet.
@@ -262,7 +266,7 @@ p.trVarsInit.orientInit               = 30;       % initial orientation
 p.trVarsInit.freqInit                 = 0.25;     % initial spatial frequency (cycles per degree)
 p.trVarsInit.satInit                  = 0.4;      % initial color saturation
 p.trVarsInit.lumInit                  = 0.3;      % initial luminance
-p.trVarsInit.hueInit                  = 180;       % initial hue (color angle)
+p.trVarsInit.hueInit                  = 0;       % initial hue (color angle)
 
 % Variance of feature dimensions that can be variable in this way:
 p.trVarsInit.orientVar                = 2;        % variability in orientation
@@ -322,8 +326,6 @@ p.trVarsInit.minSignalStrength       = 1;        % what is the smallest signal w
 p.trVarsInit.maxSignalStrength       = 360;      % what is the largest signal we want to test?
 p.trVarsInit.supraSignalStrength     = 60;       % what is a signal strength that is very likely to be above threshold?
 p.trVarsInit.numThreshCheckTrials    = 5;        % how many trials to check for thrreshold estimate being lower than criterion?
-p.trVarsInit.fixSignalStrength       = false;    % do we want to present a fixed stimulus strength?
-p.trVarsInit.numTrialsSinceFixSig    = 0;        % count the number of good trials since the threshold was fixed.
 
 % I don't think I need to carry these around in 'p'....
 % can't I just define them in the 'run' worksapce and forget avbout them?

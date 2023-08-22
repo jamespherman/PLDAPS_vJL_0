@@ -27,8 +27,14 @@ try
         if status > 0
             fprintf('EDF file size: %.1f KB\n', status/1024); % Divide file size by 1024 to convert bytes to KB
         end
+
         % Print transferred EDF file path in Matlab's Command Window
-        fprintf('Data file ''%s.edf'' can be found in ''%s''\n', p.init.edfFile, pwd);
+        fprintf('Data file ''%s.edf'' can be found in ''%s''\n', p.init.edfFile, p.init.outputFolder);
+
+        % Replace "receiving data file" text with "all done" text.
+        Screen('FillRect', p.draw.window, p.init.el.backgroundcolour); % Prepare background on backbuffer
+        Screen('DrawText', p.draw.window, 'Threshold Estimate Completed', 5, p.draw.screenRect(end)-35, 0); % Prepare text
+        Screen('Flip', p.draw.window); % Present text
     else
         fprintf('No EDF file saved in Dummy mode\n');
     end

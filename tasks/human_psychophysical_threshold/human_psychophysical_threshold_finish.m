@@ -48,9 +48,9 @@ p.trData.timing.trialEnd   = timeNow;
 
 % if we're in the phase of the experiment where we're presenting a fixed
 % signal strength, iterate our count of fixed signal strength trials.
-if p.trVarsInit.fixSignalStrength && ~p.trData.trialRepeatFlag
-    p.trVarsInit.numTrialsSinceFixSig = ...
-        p.trVarsInit.numTrialsSinceFixSig + 1;
+if p.status.fixSignalStrength && ~p.trData.trialRepeatFlag
+    p.status.numTrialsSinceFixSig = ...
+        p.status.numTrialsSinceFixSig + 1;
 end
 
 % store missed frames count
@@ -78,19 +78,33 @@ end
 % if the trialcount for the quest object is larger than
 % p.trVars.numThreshCheckTrials + 1, check whether the change in
 % threshold estimate has been below a criterion value for the last
-% p.trvars.numThreshCheckTrials trials. If it has, stop running
-% because we consider our threshold estimate to be stable.
+% p.trvars.numThreshCheckTrials trials. Also, we only check this if the
+% variable "p.status.fixSignalStrength" is false - if that variable is
+% true that means we've already decided to fix the signal strength so
+% there's no need to do this check.
 threshChangeCrit = (p.trVars.maxSignalStrength - ...
     p.trVars.minSignalStrength) / 1000;
-if p.init.questObj.trialCount > p.trVars.numThreshCheckTrials
+if ~p.status.fixSignalStrength && ...
+        (p.init.questObj.trialCount > p.trVars.numThreshCheckTrials)
+    
     tempThreshChange = abs(diff(p.init.questObj.threshEst));
+
+    if ~isempty(findall(0, 'Name', 'ThreshChangeFig'))
+        close(findall(0, 'Name', 'ThreshChangeFig'));
+    end
+    figure('Name', 'ThreshChangeFig');
+    plot(tempThreshChange);
+    hold on
+    plot(xlim, threshChangeCrit*[1 1]);
+
     if all(tempThreshChange(end-p.trVars.numThreshCheckTrials+1:end) < ...
             threshChangeCrit)
 
         % set "fixSignalStrength" to true 
-        p.trVarsInit.fixSignalStrength       = true;
+        p.status.fixSignalStrength       = true;
         
     end
+
 end
 
 % (8) update trials list
@@ -104,11 +118,11 @@ if isfield(p.trVars, 'wantOnlinePlots') && p.trVars.wantOnlinePlots
     p       = updateOnlinePlots(p);
 end
 
-% instead of stopping after the threshold estimate has stabilized, we want
+% Instead of stopping after the threshold estimate has stabilized, we want
 % to stop after 20 trials have been run FOLLOWING the stabilized threshold
 % estimate. Below is the code that should be executed once we get to that
 % point. I'm not sure what the criterion is for that.
-if p.trVarsInit.numTrialsSinceFixSig >= 20
+if p.status.numTrialsSinceFixSig >= 20
 
     % Put tracker in idle/offline mode before closing file.
     Eyelink('SetOfflineMode');
@@ -127,6 +141,34 @@ if p.trVarsInit.numTrialsSinceFixSig >= 20
 
     % stop the PLDAPS GUI:
     p.runFlag = false;
+
+    % calculate correct response rate over final "fixed signal strength"
+    % trials:
+    [pctCorrect, pctCorrectCI] = binofit(...
+        sum(p.init.questObj.response(p.init.questObj.trialCount - ...
+        p.status.numTrialsSinceFixSig:p.init.questObj.trialCount)), ...
+        p.status.numTrialsSinceFixSig);
+
+    % make error bar "fill" X & Y
+    fillX = [-0.5 0.5 0.5 -0.5 -0.5];
+    fillY = [pctCorrectCI(1) pctCorrectCI(1) pctCorrectCI(2) ...
+        pctCorrectCI(2) pctCorrectCI(1)];
+
+    % make a plot to see a summary of the data:
+    figure('MenuBar', 'None', 'ToolBar', 'None', 'NextPlot', 'Add')
+    ax(1) = axes('Position', [0.1 0.1 0.65 0.85], 'TickDir', 'Out', ...
+        'NextPlot', 'Add');
+    ax(2) = axes('Position', [0.8 0.1 0.1 0.85], 'TickDir', 'Out', ...
+        'NextPlot', 'Add', 'YAxisLocation', 'Right', 'YTick', ...
+        0:0.25:1, 'YLim', [0 1], 'XLim', [-1 1], 'XTickLabel', []);
+    plot(ax(1), p.init.questObj.threshEst)
+    plot(ax(1), (p.init.questObj.trialCount - ...
+        p.status.numTrialsSinceFixSig) * [1 1], ax(1).YLim, 'k--');
+    xlabel(ax(1), 'Trial Number')
+    ylabel(ax(1), 'Threshold Estimate (arb)')
+    fill(ax(2), fillX, fillY, 0.8*[1 1 1], 'EdgeColor', 'none');
+    plot(ax(2), [-0.55 0.55], pctCorrect*[1 1], 'k', 'LineWidth', 2)
+    ylabel(ax(2), 'Percent Correct (fixed signal)')
 end
 
 end

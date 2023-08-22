@@ -1,5 +1,5 @@
-function p = human_psychophysical_threshold_settings_speed
-%  p = human_psychophysical_threshold_settings_speed
+function p = human_psychophysical_threshold_settings_hue3
+%  p = human_psychophysical_threshold_settings_hue3
 %
 %  On some proportion of trials, the fixation point turns off without
 %  reward delivery or "boop", monkey must release joystick to get reward on
@@ -64,7 +64,7 @@ p.init.protocol_title   = [p.init.taskName '_task'];    % Define Banner text to 
 p.init.date             = datestr(now,'yyyymmdd');
 p.init.time             = datestr(now,'HHMM');
 
-p.init.exptType         = 'human_psychophysics_speed_discrimination';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
+p.init.exptType         = 'human_psychophysics_hue_discrimination';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
 
 p.init.date_1yyyy       = str2double(['1' datestr(now,'yyyy')]); % gotta add a '1' otherwise date/times starting with zero lose that zero in conversion to double.
 p.init.date_1mmdd       = str2double(['1' datestr(now,'mmdd')]);
@@ -150,7 +150,7 @@ p.status.trialEndStates             = []; % vector of trial end state values
 p.status.reactionTimes              = []; % vector of joystick release reaction times (relative to dimming).
 p.status.questThreshEst             = []; % quest's estimated threshold
 p.status.questSignalVal             = []; % last quest-suggested signal strength
-p.status.fixSignalStrength          = 0; % are we presenting a fixed signal strength or a quest-determined variable one?
+p.status.fixSignalStrength          = 0;  % are we presenting a fixed signal strength or a quest-determined variable one?
 p.status.numTrialsSinceFixSig       = 0;  % running count of the number of good trials since the threshold was fixed.
 p.rig.guiStatVals = {...
     'blockNumber'; ...
@@ -260,19 +260,19 @@ p.trVarsInit.midDimVal           = 0.825;         % middle brightness ABOVE back
 p.trVarsInit.highDimVal          = 0.9;        % high brightness ABOVE background level of fixation after dimming
 
 % Initial / base values for each stimulus feature.
-p.trVarsInit.speedInit                = 1;      % initial motion magniutde
-p.trVarsInit.ctrstInit                = 0.35;      % initial contrast
+p.trVarsInit.speedInit                = 0.1;      % initial motion magniutde
+p.trVarsInit.ctrstInit                = 0.0;      % initial contrast
 p.trVarsInit.orientInit               = 30;       % initial orientation
-p.trVarsInit.freqInit                 = 0.35;     % initial spatial frequency (cycles per degree)
-p.trVarsInit.satInit                  = 0;      % initial color saturation
+p.trVarsInit.freqInit                 = 0.25;     % initial spatial frequency (cycles per degree)
+p.trVarsInit.satInit                  = 0.4;      % initial color saturation
 p.trVarsInit.lumInit                  = 0.3;      % initial luminance
-p.trVarsInit.hueInit                  = 0;       % initial hue (color angle)
+p.trVarsInit.hueInit                  = 180;       % initial hue (color angle)
 
 % Variance of feature dimensions that can be variable in this way:
 p.trVarsInit.orientVar                = 2;        % variability in orientation
-p.trVarsInit.hueVar                   = 0.0;     % variability in hue (angle)
+p.trVarsInit.hueVar                   = 0.05;     % variability in hue (angle)
 p.trVarsInit.lumVar                   = 0.02;     % variability in luminance
-p.trVarsInit.satVar                   = 0.0;     % variability in saturation
+p.trVarsInit.satVar                   = 0.01;     % variability in saturation
 
 % Magnitude of stimulus delta if desired:
 p.trVarsInit.speedDelta               = (pi/8);   % motion magniutde
@@ -320,6 +320,7 @@ p.trVarsInit.numTrialsForPerfCalc    = 100;      % how many of the most recently
 p.trVarsInit.useQuest                = true;     % use "QUEST" to determine next stimulus value?
 p.trVarsInit.initQuestThreshGuess    = 10;       % initial guess of threshold value to pass to quest
 p.trVarsInit.initQuestSD             = 10;       % how many SDs to tell QUEST to search for threshold value?
+p.trVarsInit.initQuestBetaGuess      = 10;       % what is our initial guess for beta?
 p.trVarsInit.signalStrength          = 30;       % what is the signal strength for the upcoming trial (updated during experiment). This is also the assumed suprathreshold value.
 p.trVarsInit.minSignalStrength       = 1;        % what is the smallest signal we want to test?
 p.trVarsInit.maxSignalStrength       = 360;      % what is the largest signal we want to test?

@@ -104,35 +104,52 @@ switch p.trVars.currentState
         % If "fixOn" time hasn't been defined, and we haven't already
         % indicated that "fixOn" should be defined after the next flip,
         % indicate that "fixOn" should be defined after the next flip and
-        % strobe "fixOn" after the next flip. This also means we need to
-        % display the fixation!
+        % send a "FIX_ON" message to eyelink. We also set the color of the
+        % fixation point ("p.draw.color.fix") to green, indicating to the
+        % subject that the state of the task is "waiting for the subject to
+        % acquire fixation".
         if p.trData.timing.fixOn < 0 ...
                 && ~ismember('fixOn', p.trVars.postFlip.varNames)
 
-            % I don't think we want to strobe anything, but I do think it
-            % makes sense to write messages to the Eyelink "EDF" file after
-            % the "next" flip.
+            % Draw green fixation
             p.draw.color.fix = p.draw.clutIdx.expMutGreen_subMutGreen;
+
+            % Do necessary steps to write "FIX_ON" message to Eyelink's EDF
+            % file after next flip.
             p.trVars.postFlip.logical           = true;
             p.trVars.postFlip.varNames{end + 1} = 'fixOn';
             p.trVars.postFlip.msgNames{end + 1} = 'FIX_ON';
-            % p.init.strb.addValueOnce(p.init.codes.fixOn);
         end
 
-        % If fixation is aquired within alotted time move onwards next
-        % state. Also change fixation color to white:
+        % Once fixation has been illuminated, if subject acquires fixation
+        % within duration alloted for fixation acquisition, turn fixation
+        % point white to indicate to the subject that stimulus presentation
+        % is about to happen, then write "FIX_ACQ" message to Eyelink's EDF
+        % file, note time of fixation acquisition, and move on to next
+        % state ("dontMove").
         if pds.eyeInWindowEL(p) && ...
                 timeNow < (p.trData.timing.fixOn + p.trVars.fixWaitDur)
 
+            % Draw fixation point white instead of green
             p.draw.color.fix = p.draw.clutIdx.expWhite_subWhite;
+
+            % write FIX_ACQ message to Eyelink's EDF
             Eyelink('Message', 'FIX_ACQ');
+
+            % Note time of fixation acquisition
             p.trData.timing.fixAq      = timeNow;
+
+            % move on to next state
             p.trVars.currentState      = p.state.dontMove;
 
         elseif p.trData.timing.fixOn > 0 && timeNow > ...
                 (p.trData.timing.fixOn + p.trVars.fixWaitDur)
-            % fixation was never acquired
-            Eyelink('Message', 'FIX_ACQ');
+
+            % fixation was not acquired within alotted time. Write
+            % "FIX_NACQ" message to Eyelink's EDF.
+            Eyelink('Message', 'FIX_NACQ');
+
+            % Move on to "nonStart" state.
             p.trVars.currentState      = p.state.nonStart;
         end
 
@@ -157,10 +174,15 @@ switch p.trVars.currentState
         if timeFromFixAq >= p.trVars.fix2StimOnIntvl && ...
                 timeFromFixAq < p.trVars.fix2StimOffIntvl && ...
                 ~ismember('stimOn', p.trVars.postFlip.varNames)
+
+            % Do necessary steps to write "STIM_ON" message to Eyelink's
+            % EDF file after next flip.
             p.trVars.postFlip.logical           = true;
             p.trVars.postFlip.varNames{end + 1} = 'stimOn';
             p.trVars.postFlip.msgNames{end + 1} = 'STIM_ON';
-            % p.init.strb.addValueOnce(p.init.codes.stimOn);
+
+            % change value of boolean "stimIsOn" variable to "true" so we
+            % know we need to draw it.
             p.trVars.stimIsOn                = true;
 
             % Flush and start KbQueue for subject's response collection
@@ -169,10 +191,19 @@ switch p.trVars.currentState
             KbQueueStart(p.init.respDevIdx);
 
         elseif timeFromFixAq > p.trVars.fix2StimOffIntvl
+
+            % If it's time to turn the stimuli off, do steps necessary to
+            % write "STIM_OFF" message to Eyelink's EDF file after next
+            % flip.
             p.trVars.postFlip.logical           = true;
             p.trVars.postFlip.varNames{end + 1} = 'stimOff';
             p.trVars.postFlip.msgNames{end + 1} = 'STIM_OFF';
+
+            % Move on to next state "makeDecision"
             p.trVars.currentState               = p.state.makeDecision;
+
+            % change value of boolean "stimIsOn" variable to "false" so we
+            % know we no longer need to draw it.
             p.trVars.stimIsOn                   = false;
 
             % change fixation point color to indicate to the subject that
@@ -353,7 +384,7 @@ if timeNow > p.trData.timing.lastFrameTime + ...
 
     % draw fixation spot
     Screen('FrameRect',p.draw.window, ...
-        fix(255*p.draw.clut.subColors(p.draw.color.fix + 1, :)), ...
+        fix(255*p.draw.clut.expColors(p.draw.color.fix + 1, :)), ...
         p.draw.fixPointRect, 6);
 
     % flip and store time of flip.
@@ -364,7 +395,7 @@ if timeNow > p.trData.timing.lastFrameTime + ...
         p.trData.timing.trialStartPTB;
 
     % if a stimulus event has occurred, mark the time of that event based
-    % on the previously recorded fliptime.
+    % on the previousstrobely recorded fliptime.
     if p.trVars.postFlip.logical
 
         % loop over the "varNames" field of "p.trVars.postFlip" and assign
