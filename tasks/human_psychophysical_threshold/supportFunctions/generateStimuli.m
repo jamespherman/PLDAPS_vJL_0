@@ -255,7 +255,10 @@ for i = 1:nLoop
     % loop over patches...
     for j = 1:p.trVars.nPatches
         
-        % define inputs to gabor function ("gf").
+        % define inputs to gabor function ("gf"). Note, the way we're using
+        % the gabor function (GF), the frequency is defined as cycles /
+        % box, to convert from cycles per box to cycles per degree we need
+        % to do: cyc / box * box / pix * pix / deg
         X       = assocArray(cpeint(1,j,i):cpeint(2,j,i), 2);
         Y       = assocArray(cpeint(1,j,i):cpeint(2,j,i), 3);
         freq    = p.stim.freqArray(j,i);
@@ -427,10 +430,10 @@ switch numel(dims)
 end
 end
 
-function out                    = gf(x, y, phase, freq, orientDeg, gaussWinSD)
+function out = gf(x, y, phase, freq, orientDeg, gaussWinSD)
 
 angle   = orientDeg*pi/180; % 30 deg orientation.
-f       = freq*2*pi; % cycles/pixel
+f       = freq*2*pi; % cycles / pixel
 a       = cos(angle)*f;
 b       = sin(angle)*f;
 out     = exp(-((x/gaussWinSD).^2) - ((y/gaussWinSD).^2)) .* ...

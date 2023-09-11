@@ -10,7 +10,7 @@ function p                      = initClut(p)
 initmon('LUTvpixx');
 
 % set Background color to black.
-[bgRGB(1), bgRGB(2), bgRGB(3)] = dkl2rgb([-0.8 0 0]');
+[bgRGB(1), bgRGB(2), bgRGB(3)] = dkl2rgb([p.trVarsInit.bgLum 0 0]');
 
 % define muted green (mutGreen):
 % mutGreen    = [0.3953 0.7459 0.5244];

@@ -248,44 +248,36 @@ p.trVarsInit.fixDegY             = 0;           % fixation Y location in degrees
 p.trVarsInit.fixLocRandX         = 0;           % random variation in X location of fixation point
 p.trVarsInit.fixLocRandY         = 0;           % random variation in X location of fixation point
 
-% the following three variables determine how fixation dimming works. In
-% each trial we will choose with equal probability whether the fixation
-% will dim to the "lowDimVal", the "midDimVal", or the "highDimVal". The
-% values below determine how bright the fixation will be after dimming,
-% relative to the background. A value of 0 would mean the fixation is
-% completely extinguished (off), a value of 1 would mean the fixation
-% remains at a fixed brightness.
-p.trVarsInit.lowDimVal           = 0.75;          % minimum brightness ABOVE background level of fixation after dimming
-p.trVarsInit.midDimVal           = 0.825;         % middle brightness ABOVE background level of fixation after dimming
-p.trVarsInit.highDimVal          = 0.9;        % high brightness ABOVE background level of fixation after dimming
+% How bright should the background be in DKL colorspace?
+p.trVarsInit.bgLum                    = -0.5;
 
 % Initial / base values for each stimulus feature.
-p.trVarsInit.speedInit                = 0.1;      % initial motion magniutde
-p.trVarsInit.ctrstInit                = 0.35;      % initial contrast
+p.trVarsInit.speedInit                = 0.0;      % initial motion magniutde
+p.trVarsInit.ctrstInit                = 0.2;      % initial contrast
 p.trVarsInit.orientInit               = 30;       % initial orientation
-p.trVarsInit.freqInit                 = 0.35;     % initial spatial frequency (cycles per degree)
-p.trVarsInit.satInit                  = 0;      % initial color saturation
-p.trVarsInit.lumInit                  = 0.3;      % initial luminance
-p.trVarsInit.hueInit                  = 0;       % initial hue (color angle)
+p.trVarsInit.freqInit                 = 0.175;    % initial spatial frequency (cycles per degree)
+p.trVarsInit.satInit                  = 0;        % initial color saturation
+p.trVarsInit.lumInit                  = p.trVarsInit.bgLum;      % initial luminance
+p.trVarsInit.hueInit                  = 0;        % initial hue (color angle)
 
 % Variance of feature dimensions that can be variable in this way:
-p.trVarsInit.orientVar                = 2;        % variability in orientation
+p.trVarsInit.orientVar                = 2;       % variability in orientation
 p.trVarsInit.hueVar                   = 0.0;     % variability in hue (angle)
-p.trVarsInit.lumVar                   = 0.02;     % variability in luminance
+p.trVarsInit.lumVar                   = 0.0;     % variability in luminance
 p.trVarsInit.satVar                   = 0.0;     % variability in saturation
 
 % Magnitude of stimulus delta if desired:
 p.trVarsInit.speedDelta               = (pi/8);   % motion magniutde
-p.trVarsInit.contDelta                = 0.2;      % contrast
+p.trVarsInit.contDelta                = 0.3;      % contrast
 p.trVarsInit.orientDelta              = 45;       % orientation
 p.trVarsInit.freqDelta                = 0.25;     % spatial frequency (cycles per degree)
 p.trVarsInit.satDelta                 = 0.038;    % color saturation
-p.trVarsInit.lumDelta                 = 0;     % luminance
+p.trVarsInit.lumDelta                 = 0;        % luminance
 p.trVarsInit.hueDelta                 = 45;       % hue (color angle)
 
 % spatial properties of "checkerboard":
 p.trVarsInit.stimRadius               = 3.25;     % aperture radius in deg
-p.trVarsInit.boxSizePix               = 12;       % diameter of each "check" in pixels
+p.trVarsInit.boxSizePix               = 6;        % diameter of each "check" in pixels
 p.trVarsInit.boxLifetime              = 8;        % "check" lifetime in frams
 p.trVarsInit.nPatches                 = 4;        % number of stimuli 
 p.trVarsInit.nEpochs                  = 1;        % just one epoch with all four stimuli present.
@@ -295,7 +287,7 @@ p.trVarsInit.rewardDurationMs        = 200;      % reward duration
 p.trVarsInit.fix2CueIntvl            = 0.0;      % Time delay between acquiring fixation and cue onset.
 p.trVarsInit.cueDur                  = 0.0;      % Duration of cue presentaiton.
 p.trVarsInit.cue2StimItvl            = 0.25;     % time between cue offset and stimulus onset (stimulus onset asynchrony).
-p.trVarsInit.stim2ChgIntvl           = 0.5;      % minimum time between stimulus onset and change.
+p.trVarsInit.stim2ChgIntvl           = 1.5;      % minimum time between stimulus onset and change.
 p.trVarsInit.chgWinDur               = 0.0;      % time window during which a change is possible.
 p.trVarsInit.rewardDelay             = 0.5;      % delay between cued change and reward delivery for hits.
 p.trVarsInit.joyMinLatency           = 0.2;      % minimum acceptable joystick release latency.
@@ -326,6 +318,7 @@ p.trVarsInit.minSignalStrength       = 1;        % what is the smallest signal w
 p.trVarsInit.maxSignalStrength       = 360;      % what is the largest signal we want to test?
 p.trVarsInit.supraSignalStrength     = 60;       % what is a signal strength that is very likely to be above threshold?
 p.trVarsInit.numThreshCheckTrials    = 5;        % how many trials to check for thrreshold estimate being lower than criterion?
+p.trVarsInit.divFactorNoThreshChg    = 1000;
 
 % I don't think I need to carry these around in 'p'....
 % can't I just define them in the 'run' worksapce and forget avbout them?

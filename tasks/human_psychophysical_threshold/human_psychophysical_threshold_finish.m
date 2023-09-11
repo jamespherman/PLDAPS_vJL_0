@@ -81,9 +81,9 @@ end
 % p.trvars.numThreshCheckTrials trials. Also, we only check this if the
 % variable "p.status.fixSignalStrength" is false - if that variable is
 % true that means we've already decided to fix the signal strength so
-% there's no need to do this check.
+% there's no need3 to do this check.
 threshChangeCrit = (p.trVars.maxSignalStrength - ...
-    p.trVars.minSignalStrength) / 1000;
+    p.trVars.minSignalStrength) / p.trVarsInit.divFactorNoThreshChg;
 if ~p.status.fixSignalStrength && ...
         (p.init.questObj.trialCount > p.trVars.numThreshCheckTrials)
     
@@ -93,16 +93,17 @@ if ~p.status.fixSignalStrength && ...
         close(findall(0, 'Name', 'ThreshChangeFig'));
     end
     figure('Name', 'ThreshChangeFig');
-    plot(tempThreshChange);
+    plot(2:(length(tempThreshChange)+1), tempThreshChange);
     hold on
     plot(xlim, threshChangeCrit*[1 1]);
+    xlabel('Trial Number')
+    ylabel('Change in threshold estimate from previous trial')
 
     if all(tempThreshChange(end-p.trVars.numThreshCheckTrials+1:end) < ...
             threshChangeCrit)
 
-        % set "fixSignalStrength" to true 
+        % set "fixSignalStrength" to true 79
         p.status.fixSignalStrength       = true;
-        
     end
 
 end
@@ -154,6 +155,10 @@ if p.status.numTrialsSinceFixSig >= 20
     fillY = [pctCorrectCI(1) pctCorrectCI(1) pctCorrectCI(2) ...
         pctCorrectCI(2) pctCorrectCI(1)];
 
+    % at what trial did we fix signal strength?
+    fixSigTrialNum = (p.init.questObj.trialCount - ...
+        p.status.numTrialsSinceFixSig);
+
     % make a plot to see a summary of the data:
     figure('MenuBar', 'None', 'ToolBar', 'None', 'NextPlot', 'Add')
     ax(1) = axes('Position', [0.1 0.1 0.65 0.85], 'TickDir', 'Out', ...
@@ -162,8 +167,10 @@ if p.status.numTrialsSinceFixSig >= 20
         'NextPlot', 'Add', 'YAxisLocation', 'Right', 'YTick', ...
         0:0.25:1, 'YLim', [0 1], 'XLim', [-1 1], 'XTickLabel', []);
     plot(ax(1), p.init.questObj.threshEst)
-    plot(ax(1), (p.init.questObj.trialCount - ...
-        p.status.numTrialsSinceFixSig) * [1 1], ax(1).YLim, 'k--');
+    plot(ax(1), fixSigTrialNum* [1 1], ax(1).YLim, 'k--');
+    plot(ax(1), [fixSigTrialNum, p.init.questObj.trialCount], ...
+        p.init.questObj.fixedSignalStrength * [1 1], ':', ...
+        'Color', [1 0.1 0.1])
     xlabel(ax(1), 'Trial Number')
     ylabel(ax(1), 'Threshold Estimate (arb)')
     fill(ax(2), fillX, fillY, 0.8*[1 1 1], 'EdgeColor', 'none');

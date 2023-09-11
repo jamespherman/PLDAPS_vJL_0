@@ -42,7 +42,14 @@ end
 % "p.status.fixSignalStrength" to decide whether we want quest to
 % suggest a new stimulus strength or just to give us the threshold value:
 if p.status.fixSignalStrength
-    testValRec = QuestMean(p.init.questObj);
+
+    % check to see if we've stored a fixed signal strength. If we have, use
+    % that, if not, define it and use it.
+    if ~isfield(p.init.questObj, 'fixedSignalStrength')
+        p.init.questObj.fixedSignalStrength = ...
+            p.init.questObj.threshEst(end);
+    end
+    testValRec = p.init.questObj.fixedSignalStrength;
 else
 
     % get a recommended test-value, keeping it in our desired min / max range:

@@ -29,9 +29,15 @@ if isfield(p.trVars, 'useQuest')
         if p.init.questObj.trialsSinceBetaAnalysis >= 10
 
             try
-            p.init.questObj.beta = QuestBetaAnalysis(p.init.questObj);
+                p.init.questObj.beta = QuestBetaAnalysis(p.init.questObj);
             catch me
-                keyboard
+                % if QuestBetaAnalysis throws an error it's usually because
+                % the "supraThreshold" stimulus presentations are giving
+                % the subject problems. Maybe let's throw a warning to the
+                % experimenter about this:
+                warnText = ['Subject seems to be struggling with ' ...
+                    'suprathreshold stimulus intensities, everything ok?'];
+                warning(warnText);
             end
 
             % reset count
@@ -50,12 +56,14 @@ if isfield(p.trVars, 'useQuest')
             round(p.init.questObj.response(...
             1:p.init.questObj.trialCount));
 
-        % recompute gamma
+        % Recompute gamma but don't use it unless it's larger than 0.25.
+        % Otherwise keep it fixed at 0.25 (there are 4 stimuli and one is
+        % selected in each trial so the guess rate "should" be 0.25).
         p.init.questObj.gamma = ...
             nnz(loggedResponses(loggedIntensities == 0)) / ...
             nnz(loggedIntensities == 0);
-        if isnan(p.init.questObj.gamma)
-            p.init.questObj.gamma = 0.05;
+        if isnan(p.init.questObj.gamma) || p.init.questObj.gamma < 0.25
+            p.init.questObj.gamma = 0.25;
         end
 
         % recomute delta
