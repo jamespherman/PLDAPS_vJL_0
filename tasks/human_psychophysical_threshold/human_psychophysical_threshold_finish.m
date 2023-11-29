@@ -63,6 +63,13 @@ if ~p.trData.trialRepeatFlag
     cVect = [9 7 1 3];
     p.trData.responseCorrect = cVect(p.trVars.stimChgIdx) == ...
         str2double(p.trData.responseValue);
+
+    % play audio feedback based on response (correct / incorrect)
+    if p.trData.responseCorrect
+        sound(p.audio.rightTone, p.audio.audsplfq);
+    else
+        sound(p.audio.wrongTone, p.audio.audsplfq)
+    end
 end
 
 % (5) auto save backup

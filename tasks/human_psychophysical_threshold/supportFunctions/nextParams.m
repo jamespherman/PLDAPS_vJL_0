@@ -162,18 +162,24 @@ try
 % loop over stimulus features
 for i = 1:p.stim.nFeatures
     
-    % does the presently considered feature change on this trial?
+    % Is the presently considered feature the one that will be an outlier
+    % in this trial? If so, "tempDelta" will be non-zero.
     tempDelta = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
         contains(p.init.trialArrayColumnNames, ...
         p.stim.featureValueNames{i}));
 
     % if "tempDelta" is non-zero, add the corresponding feature delta
-    % to the appropriate entry of the feature array
+    % to the appropriate entry of the feature array. In this task, there
+    % are 3 epochs; epoch 2 is the "target" epoch, and epochs 1 and 3 are
+    % "mask" epochs. When "tempDelta" is non-zero, we not only have to
+    % modify the 2nd epoch (in the featureArray), we also modify the 1st
+    % and 3rd epochs to make them effective masks. We do this by making the
+    % 1st and 3rd epochs have large variances.
     if tempDelta ~= 0
 
-        % if we're using QUEST run "getQuestSuggestedDelta" - this both gets a
-        % suggested signal strength AND initializes the QUEST object if it doesn't
-        % yet exist.
+        % if we're using QUEST run "getQuestSuggestedDelta" - this both
+        % gets a suggested signal strength AND initializes the QUEST object
+        % if it doesn't yet exist.
         if isfield(p.trVars, 'useQuest') && p.trVars.useQuest
             p = getQuestSuggestedDelta(p);
         end
@@ -182,11 +188,23 @@ for i = 1:p.stim.nFeatures
         featureDelta = p.trVars.signalStrength;
         p.status.questSignalVal = featureDelta;
         
-        % add to stim array
+        % add to stim array IN THE SECOND EPOCH
         p.stim.([p.stim.featureValueNames{i} ...
-            'Array'])(p.trVars.stimChgIdx, 1) = ...
+            'Array'])(p.trVars.stimChgIdx, 2) = ...
             p.stim.([p.stim.featureValueNames{i} ...
-            'Array'])(p.trVars.stimChgIdx, 1) + featureDelta;
+            'Array'])(p.trVars.stimChgIdx, 2) + featureDelta;
+
+        % Set up masking intervals depending on which feature is the
+        % outlier:
+        switch p.stim.featureValueNames{i}
+            case 'hue'
+                p.stim.hueVarArray(:, [1 3]) = p.trVars.hueMaskVar;
+                p.stim.hueArray(:, [1 3]) = fix(rand(4,2)*360);
+                p.stim.satArray(:, [1 3]) = 0;
+                p.stim.satVarArray(:, [1 3]) = 0.2;
+            case 'orient'
+            case 'ctrst'
+        end
     end
 end
 catch me
@@ -365,59 +383,34 @@ else
         p.trVars.joyMaxLatency;
 end
 
-% Reward timing:
-% Stimulus change   - reward is delivered 1s after change (for a hit)
-% No change         - reward is delivered 1s after (unseen) change.
-%
-% Calculate reward delivery time for hits and correct rejects. Hit reward
-% time is determined by cued change time, CR reward is randomly delivered
-% some time between "max latency" and max stimulus display time.
-if p.trVars.joyMaxLatencyAfterChange == -1
-    p.trVars.hitRwdTime        = p.trVars.fix2StimOnIntvl + ...
-        p.trVars.stim2ChgIntvl + p.trVars.rewardDelay;
-    p.trVars.corrRejRwdTime    = p.trVars.hitRwdTime;
-else
-p.trVars.hitRwdTime        = p.trVars.stimChangeTime + ...
-    p.trVars.rewardDelay;
-p.trVars.corrRejRwdTime    = p.trVars.stimChangeTime + ...
-    p.trVars.joyMaxLatency + ...
-    rand*(p.trVars.chgWinDur + p.trVars.stim2ChgIntvl + ...
-    p.trVars.fix2StimOnIntvl - p.trVars.stimChangeTime - ...
-    p.trVars.joyMaxLatency);
-end
+% how long will mask intervals be?
+preMaskDur = rand*p.trVars.maskItvlWin + p.trVars.maskItvlMin;
+postMaskDur = rand*p.trVars.maskItvlWin + p.trVars.maskItvlMin;
 
-% When should stimuli turn off? Depends on trial type:
-% (1) Stimulus change trials - change time + max latency
-% (3) No change trials - reward time
-if p.trVars.chgWinDur == 0
-    p.trVars.fix2StimOffIntvl = p.trVars.fix2StimOnIntvl + ...
-        p.trVars.stim2ChgIntvl;
-elseif p.trVars.isStimChangeTrial
-    p.trVars.fix2StimOffIntvl = p.trVars.stimChangeTime + ...
-        p.trVars.joyMaxLatency;
-else
-    p.trVars.fix2StimOffIntvl = p.trVars.corrRejRwdTime;
-end
+% When should stimuli turn off?
+p.trVars.fix2StimOffIntvl = p.trVars.fix2StimOnIntvl + ...
+    preMaskDur + p.trVars.targetItvlDur + postMaskDur;
 
 % What's the maximum posisble stimulus display duration in seconds?
-p.trVars.stimDur = p.trVars.stim2ChgIntvl + p.trVars.chgWinDur + ...
-    p.trVars.joyMaxLatency;
+p.trVars.stimDur = preMaskDur + p.trVars.targetItvlDur + postMaskDur;
 
 % For stimulus generation, we need to know the duration of each "epoch" in
 % frames. An "epoch" is some duration over which the features of the
 % stimuli don't change (e.g. the hue distribution doesn't change). We first
 % calculate the duration of each "epoch" in seconds then convert to frames:
-if p.trVars.chgWinDur == 0
-    stimOnToStimChgIntvl = p.trVars.stim2ChgIntvl;
-    p.stim.epochFrames = fix(...
-    stimOnToStimChgIntvl / p.rig.frameDuration);
-else
-stimOnToStimChgIntvl = p.trVars.stimChangeTime - ...
-    p.trVars.fix2StimOnIntvl;
-stimChgToStimOffIntvl = p.trVars.stimDur - stimOnToStimChgIntvl;
-p.stim.epochFrames = fix(...
-    [stimOnToStimChgIntvl,  stimChgToStimOffIntvl] / p.rig.frameDuration);
-end
+p.stim.epochFrames = fix([...
+    preMaskDur, ...
+    p.trVars.targetItvlDur, ...
+    postMaskDur] ...
+    ./ p.rig.frameDuration);
+
+% What's below is how we did things for the cued stimulus change detection
+% task - just in case we need to reference it in the future.
+% stimOnToStimChgIntvl = p.trVars.stimChangeTime - ...
+%     p.trVars.fix2StimOnIntvl;
+% stimChgToStimOffIntvl = p.trVars.stimDur - stimOnToStimChgIntvl;
+% p.stim.epochFrames = fix(...
+%     [stimOnToStimChgIntvl,  stimChgToStimOffIntvl] / p.rig.frameDuration);
 
 % number of frames up to the "end-1"th epoch (not useful when there are
 % only 2 epochs but very useful when there are more epochs).

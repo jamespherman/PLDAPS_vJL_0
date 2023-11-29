@@ -260,6 +260,11 @@ p.trVarsInit.satInit                  = 0.4;      % initial color saturation
 p.trVarsInit.lumInit                  = p.trVarsInit.bgLum;      % initial luminance
 p.trVarsInit.hueInit                  = 0;        % initial hue (color angle)
 
+% Stimulus feature variances used for masking:
+p.trVarsInit.ctrstMaskVar             = 0.2;      % contrast variance for masking epoch
+p.trVarsInit.orientMaskVar            = 20;       % orientation variance for masking epoch
+p.trVarsInit.hueMaskVar               = 0.125;    % hue variance for masking epoch
+
 % Variance of feature dimensions that can be variable in this way:
 p.trVarsInit.orientVar                = 2;       % variability in orientation
 p.trVarsInit.hueVar                   = 0.05;     % variability in hue (angle)
@@ -280,14 +285,16 @@ p.trVarsInit.stimRadius               = 3.25;     % aperture radius in deg
 p.trVarsInit.boxSizePix               = 6;        % diameter of each "check" in pixels
 p.trVarsInit.boxLifetime              = 8;        % "check" lifetime in frams
 p.trVarsInit.nPatches                 = 4;        % number of stimuli 
-p.trVarsInit.nEpochs                  = 1;        % just one epoch with all four stimuli present.
+p.trVarsInit.nEpochs                  = 3;        % just one epoch with all four stimuli present.
 
 % times/latencies/durations:
 p.trVarsInit.rewardDurationMs        = 200;      % reward duration
 p.trVarsInit.fix2CueIntvl            = 0.0;      % Time delay between acquiring fixation and cue onset.
 p.trVarsInit.cueDur                  = 0.0;      % Duration of cue presentaiton.
 p.trVarsInit.cue2StimItvl            = 0.25;     % time between cue offset and stimulus onset (stimulus onset asynchrony).
-p.trVarsInit.stim2ChgIntvl           = 0.5;      % minimum time between stimulus onset and change.
+p.trVarsInit.maskItvlMin             = 0.3;      % minimum duration of masking interval
+p.trVarsInit.maskItvlWin             = 0.2;      % multiplicative scalar to determine masking interval duration (rand * win + min)
+p.trVarsInit.targetItvlDur           = 1.5;      % duratino of "target" interval
 p.trVarsInit.chgWinDur               = 0.0;      % time window during which a change is possible.
 p.trVarsInit.rewardDelay             = 0.5;      % delay between cued change and reward delivery for hits.
 p.trVarsInit.joyMinLatency           = 0.2;      % minimum acceptable joystick release latency.

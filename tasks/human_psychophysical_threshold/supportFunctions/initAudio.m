@@ -2,23 +2,9 @@ function p                      = initAudio(p)
 %% Audio Stuff
 % Variables.
 p.audio.freq          = 48000;                  % Sampling rate.
-p.audio.rightFreq     = 300;                    % A low-frequency tone to signal "WRONG"
-p.audio.wrongFreq     = 150;                    % A high-frequency tone to signal "RIGHT"
-p.audio.nTF           = round(p.audio.freq/10); % The tone-duration.
-p.audio.lrMode        = 0;                      % Mono sound on both channels.
-p.audio.beatsF1       = (1/0.0125);             % Define frequency 1 for "alpha binaural beats"
-p.audio.beatsF2       = (1/0.015);              % Define frequency 2 for "alpha binaural beats"
-p.audio.beatsDur      = 0.015*5;                % Define duration of "alpha binaural beats" audio.
-
-% time vector for "alpha binaural beats" audio
-tempTime              = 0:(1/p.audio.freq):p.audio.beatsDur;
-tempTime              = tempTime(1:end-1);
-
-% make an audio clip of "alpha binaural beats"
-p.audio.nBufferFrames = length(tempTime);
-beatsChannel1         = sin(2*pi*p.audio.beatsF1*tempTime);
-beatsChannel2         = sin(2*pi*p.audio.beatsF2*tempTime);
-p.audio.alphaBeats    = [beatsChannel1; beatsChannel2];
+p.audio.rightFreq     = 450;                    % A low-frequency tone to signal "WRONG"
+p.audio.wrongFreq     = 250;                    % A high-frequency tone to signal "RIGHT"
+p.audio.nTF           = round(p.audio.freq/4); % The tone-duration.
 
 % Make a plateau-ed window with gaussian rise and fall at the beginning and
 % end. Start by making the gaussian rise at the beginning. Use somewhat
@@ -56,22 +42,5 @@ p.audio.noiseTone     = 0.6*(p.audio.noiseTone/max(abs(p.audio.noiseTone)));
 % variable to define this.
 if ~isfield(p.audio, 'lineOutLevel')
     p.audio.lineOutLevel = 0.3;
-end
-
-% load tones into DATAPixx memory. First write "wrongTone", then
-% "rightTone" then "noiseTone". Each write operation returns the memory
-% address for the next available audio data so writing "wrongTone" returns
-% "rightBuffAdd", writing "rightTone" returns "noiseBuffAdd", writing
-% "noiseTone" returns "alphaBuffAdd", and writing "alphaBufAdd" returns
-% "nextBuffAdd"
-if p.init.useDataPixxBool
-Datapixx('InitAudio');
-Datapixx('SetAudioVolume', p.audio.lineOutLevel);
-p.audio.wrongBuffAdd  = 0; % Start-address of the first sound's buffer.
-p.audio.rightBuffAdd = Datapixx('WriteAudioBuffer', p.audio.wrongTone, p.audio.wrongBuffAdd);
-p.audio.noiseBuffAdd = Datapixx('WriteAudioBuffer', p.audio.rightTone, p.audio.rightBuffAdd);
-p.audio.alphaBuffAdd = Datapixx('WriteAudioBuffer', p.audio.noiseTone, p.audio.noiseBuffAdd);
-p.audio.nextBuffAdd  = Datapixx('WriteAudioBuffer', p.audio.alphaBeats, p.audio.alphaBuffAdd);
-Datapixx('RegWrRd');
 end
 end
