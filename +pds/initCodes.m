@@ -160,7 +160,7 @@ codes.stimLoc2On                = 6025; % stimulus at location one was on in thi
 codes.stimLoc3On                = 6026; % stimulus at location one was on in this trial
 codes.stimLoc4On                = 6027; % stimulus at location one was on in this trial
 codes.stimChangeTrial           = 16003;
-codes.changeLoc                 = 16004;
+codes.chgLoc                    = 16004;
 codes.cueLoc                    = 16005;
 
 % stimulus location & direction:
@@ -171,95 +171,6 @@ codes.stimMotDir          = 24000; % this is to send stim info; for eevnt codes 
 % code for random number generation seeds
 codes.stimSeed          = 16666;
 codes.trialSeed         = 16667;
-
-%% stimulus identity (used in pFix tasks):
-codes.stimIdentity          = 10666;
-codes.stimIdentityDots      = 10667;
-codes.stimIdentityGabor     = 10668;
-codes.stimIdentityGrating   = 10669;
-codes.stimIdentityTarget    = 10670;
-
-
-%% FA PA stuff that may or may not be relevant:
-% codes for PA motion task
-codes.loc1dir           = 16005;
-codes.loc2dir           = 16006;
-codes.loc1del           = 16007;
-codes.loc2del           = 16008;
-
-% % codes for PA orientation task
-% codes.loc1orn           = 16005;
-% codes.loc2orn           = 16006;
-% codes.loc1amp           = 16007;
-% codes.loc2amp           = 16008;
-
-%% code for TOD task
-codes.targ1LocTheta_x10         = 12001;
-codes.targ1LocRadius_x100       = 12002;
-codes.targ2LocTheta_x10         = 12003;
-codes.targ2LocRadius_x100       = 12004;
-codes.earliestTar               = 12005;
-codes.soaDuration_x1000         = 12006;
-codes.overlapDuration_x1000     = 12007;
-codes.saccadeComplete_plus10    = 12008;
-codes.chosenTarget_plus10       = 12009;
-codes.correctOrnot_plus10       = 12010;
-
-codes.gapStart                  = 12021;
-codes.targ1On                   = 12022;
-codes.targ2On                   = 12023;
-
-
-%%% BEGIN CODE I ACTUALLY USED PLEASE DO NOT MODIFY
-
-%%% CODE I USED IN pds.strobeTrialData, ALL THE CODES ARE ADDED DURING tod_settings
-
-% codes.taskCode                = 32000;          
-% codes.date_1yyyy              = 11102;
-% codes.date_1mmdd              = 11103;
-% codes.time_1hhmm              = 11104;
-% codes.rewardDuration          = 18000;
-% codes.trialCount              = 11002;
-% codes.goodTrialCount          = 11100;
-% codes.passJoy                 = 2011;
-% codes.targ1LocTheta_x10       = 12001;
-% codes.targ1LocRadius_x100     = 12002;
-% codes.targ2LocTheta_x10       = 12003;
-% codes.targ2LocRadius_x100     = 12004;
-% codes.earliestTar             = 12005;
-% codes.soaDuration_x1000       = 12006;
-% codes.overlapDuration_x1000   = 12007;
-% codes.saccadeComplete_plus10  = 12008;
-% codes.chosenTarget_plus10     = 12009;
-% codes.correctOrnot_plus10     = 12010;
-
-%%% CODE I USED IN pds.classyStrobe, ALL THE CODES ARE ADDED DURING tod_run MAYBE 1 OR 2 VALUES DURING tod_finish
-
-% codes.joyPress                = 2001;
-% codes.joyRelease              = 2002;
-% codes.saccadeOnset            = 2003;
-% codes.saccadeOffset           = 2004;
-% codes.blinkDuringSac          = 2007;
-
-% codes.fixOn                   = 3001;
-% codes.fixOff                  = 3003;
-% codes.fixAq                   = 3004;
-% codes.fixBreak                = 3005;
-
-% codes.targetAq                = 4004;
-
-% codes.gapStart                = 12021;
-% codes.targ1On                 = 12022;
-% codes.targ2On                 = 12023;
-
-% codes.nonStart                = 22004;
-
-% codes.trialBegin              = 30001; 
-% codes.trialEnd                = 30009;
-
-%%% END CODE I ACTUALLY USED PLEASE DO NOT MODIFY
-
-%%
 
 % code for orientations in orn tuning task
 codes.orn               = 25000; % this is to send stim info; for eevnt codes for each orn see trialcodes.orntun.m

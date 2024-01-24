@@ -200,7 +200,7 @@ switch p.trVars.currentState
         if timeFromFixAq >= p.trVars.fix2CueIntvl && ...
                 ~ismember('cueOn', p.trVars.postFlip.varNames) && ...
                 p.trData.timing.cueOn < 0
-            p.trVars.cueIsOn                    = true;
+            p.trVars.cueIsOn                    = p.trVars.cueDur > 0;
             p.trVars.postFlip.logical           = true;
             p.trVars.postFlip.varNames{end + 1} = 'cueOn';
             p.init.strb.addValueOnce(p.init.codes.cueOn);
