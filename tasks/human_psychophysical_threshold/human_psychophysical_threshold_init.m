@@ -61,6 +61,9 @@ p   = plotWindowSetup(p);
 % (8) define in-line functions
 p   = inLineDefs(p);
 
+% define audio waveforms
+p   = initAudio(p);
+
 % create keyboard queue to collect subject responses:
 p   = makeKbQueue(p);
 
