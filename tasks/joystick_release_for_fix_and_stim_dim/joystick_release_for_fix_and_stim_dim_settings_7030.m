@@ -329,10 +329,10 @@ p.trVarsInit.fixColorIndex          = 0;
 % the magnitude of change (delta) for each feature are defined above under
 % "p.trVarsInit" so they can be adjusted in the GUI.
 p.trVarsInit.speedInit                = 0;        % initial motion magniutde
-p.trVarsInit.ctrstInit                = 0.2;      % initial contrast
+p.trVarsInit.ctrstInit                = 0.35;      % initial contrast
 p.trVarsInit.orientInit               = 30;       % initial orientation
 p.trVarsInit.freqInit                 = 0.2;      % initial spatial frequency (cycles per degree)
-p.trVarsInit.satInit                  = 0.4;      % initial color saturation
+p.trVarsInit.satInit                  = 0.0;      % initial color saturation
 p.trVarsInit.lumInit                  = 0.3;      % initial luminance
 p.trVarsInit.hueInit                  = 90;       % initial hue (color angle)
 p.trVarsInit.orientVar                = 0;        % variability in orientation
@@ -341,7 +341,7 @@ p.trVarsInit.lumVar                   = 0.02;     % variability in luminance
 p.trVarsInit.satVar                   = 0.01;     % variability in saturation
 p.trVarsInit.speedDelta               = (pi/8);   % motion magniutde
 p.trVarsInit.contDelta                = 0.2;      % contrast
-p.trVarsInit.orientDelta              = 10;       % orientation
+p.trVarsInit.orientDelta              = 50;       % orientation
 p.trVarsInit.freqDelta                = 0.2;      % spatial frequency (cycles per degree)
 p.trVarsInit.satDelta                 = 0.038;    % color saturation
 p.trVarsInit.lumDelta                 = -0.3;     % luminance
