@@ -161,6 +161,7 @@ codes.stimLoc3On                = 6026; % stimulus at location one was on in thi
 codes.stimLoc4On                = 6027; % stimulus at location one was on in this trial
 codes.stimChangeTrial           = 16003;
 codes.changeLoc                 = 16004;
+codes.cueLoc                    = 16005;
 
 % stimulus location & direction:
 codes.stimLocRadius_x100  = 16001; % used to be named 'rfLocEcc'

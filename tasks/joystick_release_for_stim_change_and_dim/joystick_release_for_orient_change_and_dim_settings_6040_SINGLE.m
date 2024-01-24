@@ -139,6 +139,20 @@ p.status.blockNumber                = 0; % what block are we in?
 
 p.status.fixDurReq                  = 0; % how long was the monkey required to hold down the joystick on the last trial?
 
+p.status.hr1stim                    = 0; % hit rate for 1-stimulus trials
+p.status.hr2stim                    = 0; % hit rate for 2-stimulus trials
+p.status.hr3stim                    = 0; % hit rate for 3-stimulus trials
+p.status.hr4stim                    = 0; % hit rate for 4-stimulus trials
+
+p.status.hc1stim                    = 0; % hit count for 1-stimulus trials
+p.status.hc2stim                    = 0; % hit count for 2-stimulus trials
+p.status.hc3stim                    = 0; % hit count for 3-stimulus trials
+p.status.hc4stim                    = 0; % hit count for 4-stimulus trials
+p.status.tc1stim                    = 0; % total count for 1-stimulus trials
+p.status.tc2stim                    = 0; % total count for 2-stimulus trials
+p.status.tc3stim                    = 0; % total count for 3-stimulus trials
+p.status.tc4stim                    = 0; % total count for 4-stimulus trials
+
 p.status.hr1Loc1                    = 0; % hit rate for single patch at location 1
 p.status.cr1Loc1                    = 0; % correct reject rate for single patch at location 1
 p.status.hr1Loc2                    = 0; % hit rate for single patch at location 2
@@ -167,8 +181,12 @@ p.status.cue2CtLoc2                 = 0; % count of two patch cue change trials 
 p.status.foil2CtLoc2                = 0; % count of two patch foil change trials at location 2
 
 p.status.missedFrames               = 0; % count of missed frames as reported by psychtoolbox
+p.status.freeRwdRand                = 0; % random number drawn for deciding whether or not to deliver free reward
+p.status.freeRwdTotal               = 0; % total count of free inter trial interval rewards delivered
+p.status.freeRwdLast                = 0; % last trial in which a free reward was given.
 
 p.status.trialsArrayRowsPossible    = [];
+p.status.freeRewardsAvailable       = [];
 
 p.status.trialEndStates             = []; % vector of trial end state values
 p.status.reactionTimes              = []; % vector of joystick release reaction times (relative to dimming).
@@ -179,13 +197,13 @@ p.rig.guiStatVals = {...
     'iGoodTrial'; ...
     'trialsLeftInBlock'; ...
     'fixDurReq'; ...
-    'hr2Loc1'; ...
-    'hr1Loc2'; ...
-    'hr2Loc2'; ...
-    'cr1Loc1'; ...
-    'cr2Loc1'; ...
-    'cr1Loc2'; ...
-    'cr2Loc2'; ...
+    'freeRwdRand'; ...
+    'freeRwdTotal'; ...
+    'freeRwdLast'; ...
+    'hr1stim'; ...
+    'hr2stim'; ...
+    'hr3stim'; ...
+    'hr4stim'; ...
 %     'missedFrames'; ...
     };    
 
@@ -247,6 +265,14 @@ p.trVarsInit.eyePixY             = 0;
 p.trVarsInit.propHueChgOnly      = 1;       % proportion of trials in which the peripheral stimulus only changes hue with no dimming
 p.trVarsInit.isStimChangeTrial   = false;     % variable tracking whether the current trial is a "change" or "no change" trial.
 
+% for the training step in which we move from 1 stimulus to 4 stimuli, we
+% want the option to have the change + dim only on multiple stimulus
+% trials, which we have implemented, but we also want to be able to turn it
+% off so we have change + dim on ALL the trials, including the 1 stimulus
+% trials, since the monkey might get frustrated by the single stimulus
+% trials effectively being harder. Make a flag for this:
+p.trVarsInit.chgAndDimOnMultiOnly = false;
+
 % Stimulus geometry variables. There can be up to 4 stimuli shown
 % stimultaneously. We specify stimulus location 1 by an angle
 % of elevtation ("stimLoc1Elev") and an eccentricity (stimLoc1Ecc). Then we
@@ -287,10 +313,10 @@ p.trVarsInit.highDimVal          = 0.9;        % high brightness ABOVE backgroun
 
 % Initial / base values for each stimulus feature.
 p.trVarsInit.speedInit                = 0.1;      % initial motion magniutde
-p.trVarsInit.ctrstInit                = 0.325;    % initial contrast
+p.trVarsInit.ctrstInit                = 0.35;    % initial contrast
 p.trVarsInit.orientInit               = 30;       % initial orientation
 p.trVarsInit.freqInit                 = 0.25;     % initial spatial frequency (cycles per degree)
-p.trVarsInit.satInit                  = 0.4;      % initial color saturation
+p.trVarsInit.satInit                  = 0.0;      % initial color saturation
 p.trVarsInit.lumInit                  = 0.3;      % initial luminance
 p.trVarsInit.hueInit                  = 20;       % initial hue (color angle)
 
@@ -338,9 +364,24 @@ p.trVarsInit.joyReleaseWaitDur       = 5;        % how long to wait after trial 
 
 p.trVarsInit.stimFrameIdx            = 1;        % stimulus (eg dots) frame display index
 p.trVarsInit.flipIdx                 = 1;        % index of
-p.trVarsInit.postRewardDuration      = 0;        % how long should the trial last AFTER reward delivery? This lets us record the neuronal response to reward.
+p.trVarsInit.postRewardDurMin        = 1;      % how long should the trial last AFTER reward delivery at minimum? This lets us record the neuronal response to reward.
+p.trVarsInit.postRewardDurMax        = 1.2;      % how long should the trial last AFTER reward delivery at maximum? This lets us record the neuronal response to reward.
 p.trVarsInit.useQuest                = false;    % use "QUEST" to determine next stimulus value?
 p.trVarsInit.numTrialsForPerfCalc    = 100;      % how many of the most recently completed trials should be used to calculate % correct / median RT?
+p.trVarsInit.freeRewardProbability   = 0.1;      % How probable is it that the monkey will get a free reward in between trials?
+
+% variables related to PSTH plotting:
+p.trVarsInit.psthBinWidth            = 0.025;
+p.trVarsInit.fixOnPsthMinTime        = -0.1;
+p.trVarsInit.fixOnPsthMaxTime        = 0.75;
+p.trVarsInit.stimOnPsthMinTime       = -0.1;
+p.trVarsInit.stimOnPsthMaxTime       = 0.75;
+p.trVarsInit.stimChgPsthMinTime      = -0.1;
+p.trVarsInit.stimChgPsthMaxTime      = 0.75;
+p.trVarsInit.rwdPsthMinTime          = -0.1;
+p.trVarsInit.rwdPsthMaxTime          = 0.75;
+p.trVarsInit.freeRwdPsthMinTime      = -0.1;
+p.trVarsInit.freeRwdPsthMaxTime      = 0.75;
 
 % I don't think I need to carry these around in 'p'....
 % can't I just define them in the 'run' worksapce and forget avbout them?
@@ -386,6 +427,9 @@ p.init.trDataInitList = {...
     'p.trData.joyV',                    '[]'; ...
     'p.trData.dInValues',               '[]'; ...
     'p.trData.dInTimes',                '[]'; ...
+    'p.trData.spikeTimes',              '[]'; ...
+    'p.trData.eventTimes',              '[]'; ...
+    'p.trData.eventValues',             '[]'; ...
     'p.trData.onlineEyeX',              '[]'; ...
     'p.trData.onlineEyeY',              '[]'; ...
     'p.trData.timing.lastFrameTime',    '0'; ...    % time at which last video frame was displayed
@@ -405,6 +449,7 @@ p.init.trDataInitList = {...
     'p.trData.timing.joyRelease',       '-1'; ...   % time of joystick release
     'p.trData.timing.reactionTime'      '-1'; ...   % time of joystick release relative to dimming
     'p.trData.timing.fixHoldReqMet',    '-1'; ...   % time that fixation hold duration was met (also time of fixation dimming)
+    'p.trData.timing.freeReward',       '-1'; ...   % time that free reward was delivered
     };
 
 % since the list above is fixed, count its rows now for looping over later.
@@ -469,10 +514,10 @@ p.draw.clutIdx.expWhite_subWhite         = 4;
 p.draw.clutIdx.expRed_subBg              = 5;
 p.draw.clutIdx.expOrange_subBg           = 6;
 p.draw.clutIdx.expBlue_subBg             = 7;
-p.draw.clutIdx.expCyan_subCyan           = 8;
-p.draw.clutIdx.expGrey90_subBg           = 9;
-p.draw.clutIdx.expMutGreen_subMutGreen   = 10;
-p.draw.clutIdx.expGreen_subBg            = 11;
+p.draw.clutIdx.expRwdRed_subRwdRed       = 8;
+p.draw.clutIdx.expRwdBlue_subRwdBlue     = 9;
+p.draw.clutIdx.expRwdGreen_subRwdGreen   = 10;
+p.draw.clutIdx.expCueGrey_subCueGrey     = 11;
 p.draw.clutIdx.expBlack_subBg            = 12;
 p.draw.clutIdx.expOldGreen_subOldGreen   = 13;
 p.draw.clutIdx.expFixDim_subFixDim       = 14;
@@ -492,7 +537,7 @@ p.draw.color.eyePos     = p.draw.clutIdx.expBlue_subBg;                 % eye po
 p.draw.color.gridMajor  = p.draw.clutIdx.expGrey25_subBg;               % grid line CLUT index
 p.draw.color.gridMinor  = p.draw.clutIdx.expGrey25_subBg;               % grid line CLUT index
 p.draw.color.cueRing    = p.draw.clutIdx.expWhite_subWhite;             % fixation window CLUT index
-p.draw.color.joyInd     = p.draw.clutIdx.expGrey90_subBg;               % joy position indicator CLUT index
+p.draw.color.joyInd     = p.draw.clutIdx.expGrey70_subBg;               % joy position indicator CLUT index
 
 
 %% WHAT TO STROBE:

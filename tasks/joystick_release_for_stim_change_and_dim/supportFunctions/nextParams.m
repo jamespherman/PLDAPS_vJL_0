@@ -141,7 +141,7 @@ p.trVars.trialSeed = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
 rng(p.trVars.trialSeed);
 
 % Which stimulus is changing on the current trial?
-stimChgIdx = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
+p.stim.stimChgIdx = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
     strcmp(p.init.trialArrayColumnNames, 'stim chg'));
 
 % which stimulus location is the "cued" location?
@@ -149,7 +149,7 @@ p.stim.cueLoc  = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
     strcmp(p.init.trialArrayColumnNames, 'cue loc'));
 
 % set a couple simple variables that will be helpful during "run"
-p.trVars.isNoChangeTrial    = stimChgIdx == 0;
+p.trVars.isNoChangeTrial    = p.stim.stimChgIdx == 0;
 p.trVars.isStimChangeTrial  = ~p.trVars.isNoChangeTrial;
 
 % how many stimuli will be shown on this trial?
@@ -262,9 +262,9 @@ for i = 1:p.stim.nFeatures
         
         % add to stim array
         p.stim.([p.stim.featureValueNames{i} ...
-            'Array'])(stimChgIdx, 2) = ...
+            'Array'])(p.stim.stimChgIdx, 2) = ...
             p.stim.([p.stim.featureValueNames{i} ...
-            'Array'])(stimChgIdx, 2) + featureDelta;
+            'Array'])(p.stim.stimChgIdx, 2) + featureDelta;
     end
 end
 catch me

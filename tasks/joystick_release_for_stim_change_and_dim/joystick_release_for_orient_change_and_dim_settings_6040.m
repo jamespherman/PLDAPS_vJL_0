@@ -250,6 +250,14 @@ p.trVarsInit.eyePixY             = 0;
 p.trVarsInit.propHueChgOnly      = 1;       % proportion of trials in which the peripheral stimulus only changes hue with no dimming
 p.trVarsInit.isStimChangeTrial   = false;     % variable tracking whether the current trial is a "change" or "no change" trial.
 
+% for the training step in which we move from 1 stimulus to 4 stimuli, we
+% want the option to have the change + dim only on multiple stimulus
+% trials, which we have implemented, but we also want to be able to turn it
+% off so we have change + dim on ALL the trials, including the 1 stimulus
+% trials, since the monkey might get frustrated by the single stimulus
+% trials effectively being harder. Make a flag for this:
+p.trVarsInit.chgAndDimOnMultiOnly = false;
+
 % Stimulus geometry variables. There can be up to 4 stimuli shown
 % stimultaneously. We specify stimulus location 1 by an angle
 % of elevtation ("stimLoc1Elev") and an eccentricity (stimLoc1Ecc). Then we
@@ -494,10 +502,10 @@ p.draw.clutIdx.expWhite_subWhite         = 4;
 p.draw.clutIdx.expRed_subBg              = 5;
 p.draw.clutIdx.expOrange_subBg           = 6;
 p.draw.clutIdx.expBlue_subBg             = 7;
-p.draw.clutIdx.expCyan_subCyan           = 8;
-p.draw.clutIdx.expGrey90_subBg           = 9;
-p.draw.clutIdx.expMutGreen_subMutGreen   = 10;
-p.draw.clutIdx.expGreen_subBg            = 11;
+p.draw.clutIdx.expRwdRed_subRwdRed       = 8;
+p.draw.clutIdx.expRwdBlue_subRwdBlue     = 9;
+p.draw.clutIdx.expRwdGreen_subRwdGreen   = 10;
+p.draw.clutIdx.expCueGrey_subCueGrey     = 11;
 p.draw.clutIdx.expBlack_subBg            = 12;
 p.draw.clutIdx.expOldGreen_subOldGreen   = 13;
 p.draw.clutIdx.expFixDim_subFixDim       = 14;
@@ -517,7 +525,7 @@ p.draw.color.eyePos     = p.draw.clutIdx.expBlue_subBg;                 % eye po
 p.draw.color.gridMajor  = p.draw.clutIdx.expGrey25_subBg;               % grid line CLUT index
 p.draw.color.gridMinor  = p.draw.clutIdx.expGrey25_subBg;               % grid line CLUT index
 p.draw.color.cueRing    = p.draw.clutIdx.expWhite_subWhite;             % fixation window CLUT index
-p.draw.color.joyInd     = p.draw.clutIdx.expGrey90_subBg;               % joy position indicator CLUT index
+p.draw.color.joyInd     = p.draw.clutIdx.expGrey70_subBg;               % joy position indicator CLUT index
 
 
 %% WHAT TO STROBE:
