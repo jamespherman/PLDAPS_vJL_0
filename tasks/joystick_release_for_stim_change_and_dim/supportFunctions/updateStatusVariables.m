@@ -3,6 +3,15 @@ function p = updateStatusVariables(p)
 % p = updateStatusVariables(p)
 %
 
+% keep a running log of trial end states, reaction times, and dimVals. If
+% only the peripheral stimulus dimmed on this trial, define this as a
+% "negative" dimVal for the purposes of plotting, if this was a no-change
+% trial, instead define the dimVal as 0.
+p.status.trialEndStates(p.status.iTrial)    = p.trData.trialEndState;
+p.status.reactionTimes(p.status.iTrial)     = p.trData.timing.reactionTime;
+p.status.dimVals(p.status.iTrial)           = p.trData.dimVal * ...
+    ((-1)^p.trVars.isStimChgNoDim) * p.trVars.isStimChangeTrial;
+
 % iterate "good trial" count
 p.status.iGoodTrial = p.status.iGoodTrial + ...
     double(~p.trData.trialRepeatFlag);
