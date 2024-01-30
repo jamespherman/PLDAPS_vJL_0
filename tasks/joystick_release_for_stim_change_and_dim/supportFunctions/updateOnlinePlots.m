@@ -1,14 +1,5 @@
 function p               = updateOnlinePlots(p)
 
-% keep a running log of trial end states, reaction times, and dimVals. If
-% only the peripheral stimulus dimmed on this trial, define this as a
-% "negative" dimVal for the purposes of plotting, if this was a no-change
-% trial, instead define the dimVal as 0.
-p.status.trialEndStates(p.status.iTrial)    = p.trData.trialEndState;
-p.status.reactionTimes(p.status.iTrial)     = p.trData.timing.reactionTime;
-p.status.dimVals(p.status.iTrial)           = p.trData.dimVal * ...
-    ((-1)^p.trVars.isStimChgNoDim) * p.trVars.isStimChangeTrial;
-
 % make a big list of PSTH min / max times so we can make our code the most
 % efficient it can be:
 psthLims = [...
@@ -110,6 +101,156 @@ end
 
 % update plot:
 drawnow;
+
+% Cued vs. uncued stimulus change plot
+
+% update accumulators
+if p.trVars.isStimChangeTrial
+    if p.status.chgLoc(end) == 0 % No change trial, skip
+    elseif p.status.chgLoc(end) == p.stim.cueLoc % Cued change trial
+        p.status.cuedTotalCount.global = p.status.cuedTotalCount.global + 1;
+        if p.trData.trialEndState == p.state.hit % if monkey is correct
+            p.status.cuedHitCount.global = p.status.cuedHitCount.global + 1;
+        end
+    else
+        % Uncued change trial
+        p.status.uncuedTotalCount.global = p.status.uncuedTotalCount.global + 1;
+        if p.trData.trialEndState == p.state.hit
+            p.status.uncuedHitCount.global = p.status.uncuedHitCount.global + 1;
+        end
+    end
+end
+
+% Compute performance
+[cuedPerf, cuedPCI] = binofit(p.status.cuedHitCount.global, p.status.cuedTotalCount.global);
+[uncuedPerf, uncuedPCI] = binofit(p.status.uncuedHitCount.global, p.status.uncuedTotalCount.global);
+
+barHalfWidth = 0.25;
+
+% Bar colors
+cueColor = [12 123 220] / 255; % blue
+uncuedColor = [255 194 10] / 255; % gold
+
+% Update the plot objects
+fillXCued = 1 + barHalfWidth*[-1 1 1 -1 -1];
+fillXUncued = 2 + barHalfWidth*[-1 1 1 -1 -1];
+
+% Define y data for performance fill
+perfFillYCued = [cuedPCI(1) cuedPCI(1) cuedPCI(2) cuedPCI(2) cuedPCI(1)];
+perfFillYUncued = [uncuedPCI(1) uncuedPCI(1) uncuedPCI(2) uncuedPCI(2) uncuedPCI(1)];
+
+set(p.draw.onlineCuePerfFillObj(1), 'XData', fillXCued, 'YData', perfFillYCued, 'FaceColor', cueColor);
+set(p.draw.onlineCuePerfPlotObj(1), 'XData', fillXCued(1:2), 'YData', [cuedPerf cuedPerf]);
+set(p.draw.onlineCuePerfFillObj(2), 'XData', fillXUncued, 'YData', perfFillYUncued, 'FaceColor', uncuedColor);
+set(p.draw.onlineCuePerfPlotObj(2), 'XData', fillXUncued(1:2), 'YData', [uncuedPerf uncuedPerf]);
+
+% update ticks:
+set(p.draw.onlineCuePerfPlotAxes, 'XTick', ...
+    [1 2], 'XTickLabel', ...
+    {'Cued Change', 'Uncued Change'});
+
+drawnow;
+
+% Split cued vs. uncued stimulus change plot
+
+% update accumulators
+if p.trVars.isStimChangeTrial
+    chgLoc = p.status.chgLoc(end); % The location of the change
+    isHit = (p.trData.trialEndState == p.state.hit); % if monkey is correct
+
+    if chgLoc == 0 % No change trial, skip
+    elseif chgLoc == p.stim.cueLoc % Cued change trial
+        p.status.cuedTotalCount.global = p.status.cuedTotalCount.global + 1;
+        p.status.cuedTotalCount.(['loc' num2str(chgLoc)]) = p.status.cuedTotalCount.(['loc' num2str(chgLoc)]) + 1;
+
+        if isHit
+            p.status.cuedHitCount.global = p.status.cuedHitCount.global + 1;
+            p.status.cuedHitCount.(['loc' num2str(chgLoc)]) = p.status.cuedHitCount.(['loc' num2str(chgLoc)]) + 1;
+        end
+    else
+        % Uncued change trial
+        p.status.uncuedTotalCount.global = p.status.uncuedTotalCount.global + 1;
+        p.status.uncuedTotalCount.(['loc' num2str(chgLoc)]) = p.status.uncuedTotalCount.(['loc' num2str(chgLoc)]) + 1;
+
+        if isHit
+            p.status.uncuedHitCount.global = p.status.uncuedHitCount.global + 1;
+            p.status.uncuedHitCount.(['loc' num2str(chgLoc)]) = p.status.uncuedHitCount.(['loc' num2str(chgLoc)]) + 1;
+        end
+    end
+end
+
+% Define X positions
+xPosCued1 = 0.5;
+xPosUncued1 = 0.62;
+xPosUncued2 = 1.0; % Only Uncued
+xPosCued3 = 1.38;
+xPosUncued3 = 1.5;
+xPosUncued4 = 1.88; % Only Uncued
+
+xPositions = [xPosCued1, xPosUncued1, xPosUncued2, xPosCued3, xPosUncued3, xPosUncued4]; 
+
+barHalfWidth = 0.05;
+
+% Update plot objects
+for i = 1:6
+    loc = ceil(i / 2); % Determine the actual location (1, 2, 3, 4)
+    
+    % Check if cued or uncued and assign the correct color
+    if (loc == 1 || loc == 3) && ismember(i, [1, 4]) % Cued Locations (1 and 3)
+        perfCount = p.status.cuedHitCount.(['loc' num2str(loc)]);
+        totalCount = p.status.cuedTotalCount.(['loc' num2str(loc)]);
+    else
+        % Uncued Locations (1, 2, 3, 4)
+        perfCount = p.status.uncuedHitCount.(['loc' num2str(loc)]);
+        totalCount = p.status.uncuedTotalCount.(['loc' num2str(loc)]);
+    end
+
+    % Compute performance and confidence interval
+    [perf, pci] = binofit(perfCount, totalCount);
+
+    % Set x positions for the plots
+    fillX = xPositions(i) + barHalfWidth * [-1 1 1 -1 -1]; % Default position
+    switch i
+        case 1, fillX = xPosCued1 + barHalfWidth * [-1 1 1 -1 -1];
+        case 2, fillX = xPosUncued1 + barHalfWidth * [-1 1 1 -1 -1];
+        case 3, fillX = xPosUncued2 + barHalfWidth * [-1 1 1 -1 -1];
+        case 4, fillX = xPosCued3 + barHalfWidth * [-1 1 1 -1 -1];
+        case 5, fillX = xPosUncued3 + barHalfWidth * [-1 1 1 -1 -1];
+        case 6, fillX = xPosUncued4 + barHalfWidth * [-1 1 1 -1 -1];
+    end
+
+    perfFillY = [pci(1) pci(1) pci(2) pci(2) pci(1)];
+
+    if ismember(i, [1, 4])  % Cued Locations (1 and 3)
+        color = cueColor;  % Blue for Cued
+    else
+        color = uncuedColor;  % Yellow for Uncued
+    end
+
+    % Update the plot objects
+    set(p.draw.onlineSplitCuePerfFillObj(i), 'XData', fillX, 'YData', perfFillY, 'FaceColor', color);
+    set(p.draw.onlineSplitCuePerfPlotObj(i), 'XData', fillX(1:2), 'YData', [perf perf]);
+end
+
+% Center positions for the grouped tick labels
+centerPos1 = mean([xPosCued1, xPosUncued1]);
+centerPos3 = mean([xPosCued3, xPosUncued3]);
+
+% Update ticks for grouped labels
+set(p.draw.onlineSplitCuePerfPlotAxes, 'XTick', [centerPos1, xPosUncued2, centerPos3, xPosUncued4], 'XTickLabel', {'Location 1', 'Location 2', 'Location 3', 'Location 4'});
+
+% dummy plot objects for the legend
+hold(p.draw.onlineSplitCuePerfPlotAxes, 'on');
+dummyCue = plot(p.draw.onlineSplitCuePerfPlotAxes, NaN, NaN, 's', 'Color', cueColor, 'MarkerFaceColor', cueColor, 'MarkerSize', 10);
+dummyUncued = plot(p.draw.onlineSplitCuePerfPlotAxes, NaN, NaN, 's', 'Color', uncuedColor, 'MarkerFaceColor', uncuedColor, 'MarkerSize', 10);
+
+lgd = legend(p.draw.onlineSplitCuePerfPlotAxes, [dummyCue, dummyUncued], {'Cued', 'Uncued'}, 'Location', 'northoutside', 'Orientation', 'horizontal');
+title(lgd, 'Change Type');
+
+hold(p.draw.onlineSplitCuePerfPlotAxes, 'off');
+drawnow;
+
+
 
 % Here we will compute aggregate performance (percent correct) and reaction
 % time. We first define which trials we're interested in numerically based

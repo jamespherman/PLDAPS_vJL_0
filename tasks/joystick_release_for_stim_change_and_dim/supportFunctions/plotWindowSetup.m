@@ -29,6 +29,17 @@ p.draw.onlinePerfPlotWindow         = ...
     'Visible','on',...
     'NextPlot','add');
 
+% make new plotting window for plotting performance on cued vs. uncued
+% stimulus change detection
+p.draw.onlineCuePerfPlotWindow         = ...
+    figure(...
+    'Position', [0 8 667 1314],...
+    'Name','OnlineCuePerfPlotWindow',...
+    'NumberTitle','off',...
+    'Color', 1 * [1 1 1],...
+    'Visible','on',...
+    'NextPlot','add');
+
 % If we're actually going to use the online plots, we need to create some
 % axes to plot into in the online plot figure window, and graphics object
 % handles for the plots themselves, and we should also show the plotting
@@ -294,6 +305,116 @@ if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
         'String', 'Median Reaction Time (seconds)', ...
         'FontSize', 16 ...
         );
+
+    % make axes for cue performance data
+    p.draw.onlineCuePerfPlotAxes = axes(...
+        'Parent', p.draw.onlineCuePerfPlotWindow, ...
+        'Position', [0.1 0.6 0.875 0.375], ...
+        'TickDir', 'Out', ...
+        'LineWidth', 1, ...
+        'XColor', [0 0 0], ...
+        'YColor', [0 0 0], ...
+        'NextPlot', 'add');
+    p.draw.onlineSplitCuePerfPlotAxes = axes(...
+        'Parent', p.draw.onlineCuePerfPlotWindow, ...
+        'Position', [0.1 0.1 0.875 0.375], ...
+        'TickDir', 'Out', ...
+        'LineWidth', 1, ...
+        'XColor', [0 0 0], ...
+        'YColor', [0 0 0], ...
+        'NextPlot', 'add');
+
+    % add X/Y axis labels
+    xlabel(p.draw.onlineCuePerfPlotAxes, 'Stimulus Change Type', 'FontSize', 16);
+    ylabel(p.draw.onlineCuePerfPlotAxes, 'Proportion Correct', 'FontSize', 16);
+
+    xlabel(p.draw.onlineSplitCuePerfPlotAxes, 'Stimulus Location', 'FontSize', 16);
+    ylabel(p.draw.onlineSplitCuePerfPlotAxes, 'Proportion Correct', 'FontSize', 16);
+
+
+    % make plot objects for cue performance data
+    p.draw.onlineCuePerfFillObj(1) = fill(p.draw.onlineCuePerfPlotAxes, ...
+        NaN(1, 5), NaN(1, 5), 0.7*[1 1 1]);
+    set(p.draw.onlineCuePerfFillObj(1), ...
+        'EdgeColor', 'None');
+
+    p.draw.onlineCuePerfPlotObj(1) = plot(p.draw.onlinePerfPlotAxes, ...
+        NaN, NaN, 'Color', [0 0 0], 'LineWidth', 2);
+
+    % plot FillObj and PlotObj for Cued data
+    p.draw.onlineCuePerfFillObj(1) = fill(p.draw.onlineCuePerfPlotAxes, ...
+        [0.75 1.25 1.25 0.75 0.75], NaN(1, 5), 0.7*[1 1 1], 'EdgeColor', 'None');
+    p.draw.onlineCuePerfPlotObj(1) = plot(p.draw.onlineCuePerfPlotAxes, ...
+        [1 1], NaN(1, 2), 'Color', [0 0 0], 'LineWidth', 2);
+    
+    % plot FillObj and PlotObj for Uncued data
+    p.draw.onlineCuePerfFillObj(2) = fill(p.draw.onlineCuePerfPlotAxes, ...
+        [1.75 2.25 2.25 1.75 1.75], NaN(1, 5), 0.7*[1 1 1], 'EdgeColor', 'None');
+    p.draw.onlineCuePerfPlotObj(2) = plot(p.draw.onlineCuePerfPlotAxes, ...
+        [2 2], NaN(1, 2), 'Color', [0 0 0], 'LineWidth', 2);
+
+
+    % make plot objects for split cue performance data
+
+    barHalfWidth = 0.25;
+
+    % Adjusted X positions
+    xPosCued1 = 0.5;
+    xPosUncued1 = 0.7;
+    xPosUncued2 = 1.0; % Only uncued
+    xPosCued3 = 1.3;
+    xPosUncued3 = 1.5;
+    xPosUncued4 = 1.8; % Only uncued
+    
+    % Initialize YData for the fill objects (replace NaN with actual data)
+    yDataPlaceholder = NaN(1, 5);
+    
+    % For Location 1 (Cued and Uncued)
+    p.draw.onlineSplitCuePerfFillObj(1) = fill(p.draw.onlineSplitCuePerfPlotAxes, [xPosCued1-barHalfWidth, xPosCued1+barHalfWidth, xPosCued1+barHalfWidth, xPosCued1-barHalfWidth, xPosCued1-barHalfWidth], yDataPlaceholder, 0.7*[1 1 1], 'EdgeColor', 'None');
+    p.draw.onlineSplitCuePerfPlotObj(1) = plot(p.draw.onlineSplitCuePerfPlotAxes, [xPosCued1, xPosCued1], [NaN, NaN], 'Color', [0 0 0], 'LineWidth', 2);
+    
+    p.draw.onlineSplitCuePerfFillObj(2) = fill(p.draw.onlineSplitCuePerfPlotAxes, [xPosUncued1-barHalfWidth, xPosUncued1+barHalfWidth, xPosUncued1+barHalfWidth, xPosUncued1-barHalfWidth, xPosUncued1-barHalfWidth], yDataPlaceholder, 0.7*[1 1 1], 'EdgeColor', 'None');
+    p.draw.onlineSplitCuePerfPlotObj(2) = plot(p.draw.onlineSplitCuePerfPlotAxes, [xPosUncued1, xPosUncued1], [NaN, NaN], 'Color', [0 0 0], 'LineWidth', 2);
+    
+    % For Location 2 (Uncued Only)
+    p.draw.onlineSplitCuePerfFillObj(3) = fill(p.draw.onlineSplitCuePerfPlotAxes, [xPosUncued2-barHalfWidth, xPosUncued2+barHalfWidth, xPosUncued2+barHalfWidth, xPosUncued2-barHalfWidth, xPosUncued2-barHalfWidth], yDataPlaceholder, 0.7*[1 1 1], 'EdgeColor', 'None');
+    p.draw.onlineSplitCuePerfPlotObj(3) = plot(p.draw.onlineSplitCuePerfPlotAxes, [xPosUncued2, xPosUncued2], [NaN, NaN], 'Color', [0 0 0], 'LineWidth', 2);
+    
+    % For Location 3 (Cued and Uncued)
+    p.draw.onlineSplitCuePerfFillObj(4) = fill(p.draw.onlineSplitCuePerfPlotAxes, [xPosCued3-barHalfWidth, xPosCued3+barHalfWidth, xPosCued3+barHalfWidth, xPosCued3-barHalfWidth, xPosCued3-barHalfWidth], yDataPlaceholder, 0.7*[1 1 1], 'EdgeColor', 'None');
+    p.draw.onlineSplitCuePerfPlotObj(4) = plot(p.draw.onlineSplitCuePerfPlotAxes, [xPosCued3, xPosCued3], [NaN, NaN], 'Color', [0 0 0], 'LineWidth', 2);
+    
+    p.draw.onlineSplitCuePerfFillObj(5) = fill(p.draw.onlineSplitCuePerfPlotAxes, [xPosUncued3-barHalfWidth, xPosUncued3+barHalfWidth, xPosUncued3+barHalfWidth, xPosUncued3-barHalfWidth, xPosUncued3-barHalfWidth], yDataPlaceholder, 0.7*[1 1 1], 'EdgeColor', 'None');
+    p.draw.onlineSplitCuePerfPlotObj(5) = plot(p.draw.onlineSplitCuePerfPlotAxes, [xPosUncued3, xPosUncued3], [NaN, NaN], 'Color', [0 0 0], 'LineWidth', 2);
+    
+    % For Location 4 (Uncued Only)
+    p.draw.onlineSplitCuePerfFillObj(6) = fill(p.draw.onlineSplitCuePerfPlotAxes, [xPosUncued4-barHalfWidth, xPosUncued4+barHalfWidth, xPosUncued4+barHalfWidth, xPosUncued4-barHalfWidth, xPosUncued4-barHalfWidth], yDataPlaceholder, 0.7*[1 1 1], 'EdgeColor', 'None');
+    p.draw.onlineSplitCuePerfPlotObj(6) = plot(p.draw.onlineSplitCuePerfPlotAxes, [xPosUncued4, xPosUncued4], [NaN, NaN], 'Color', [0 0 0], 'LineWidth', 2);
+    
+    % Update the X-Tick labels
+    set(p.draw.onlineSplitCuePerfPlotAxes, 'XTick', [0.6, 1.0, 1.4, 1.8], 'XTickLabel', {'1', '2', '3', '4'});
+
+
+
+    % make accumulator variables for cued and uncued trial performance
+    p.status.cuedHitCount.global        = 0;
+    p.status.cuedTotalCount.global      = 0;
+    p.status.uncuedHitCount.global      = 0;
+    p.status.uncuedTotalCount.global    = 0;
+
+    p.status.cuedHitCount.loc1          = 0;
+    p.status.cuedHitCount.loc3          = 0;
+    p.status.cuedTotalCount.loc1        = 0;
+    p.status.cuedTotalCount.loc3        = 0;
+    p.status.uncuedHitCount.loc1        = 0;
+    p.status.uncuedHitCount.loc2        = 0;
+    p.status.uncuedHitCount.loc3        = 0;
+    p.status.uncuedHitCount.loc4        = 0;
+    p.status.uncuedTotalCount.loc1      = 0;
+    p.status.uncuedTotalCount.loc2      = 0;
+    p.status.uncuedTotalCount.loc3      = 0;
+    p.status.uncuedTotalCount.loc4      = 0;
+
 end
 
 %% Reposition GUI window

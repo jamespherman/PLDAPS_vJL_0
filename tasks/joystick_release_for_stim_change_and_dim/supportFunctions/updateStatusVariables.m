@@ -12,9 +12,12 @@ p.status.reactionTimes(p.status.iTrial)     = p.trData.timing.reactionTime;
 p.status.dimVals(p.status.iTrial)           = p.trData.dimVal * ...
     ((-1)^p.trVars.isStimChgNoDim) * p.trVars.isStimChangeTrial;
 
+p.status.chgLoc(p.status.iTrial) = p.stim.stimChgIdx;
+
 % iterate "good trial" count
 p.status.iGoodTrial = p.status.iGoodTrial + ...
     double(~p.trData.trialRepeatFlag);
+
 
 % update count of trials with 1 / 2 / 3 / 4 stimuli:
 switch p.stim.nStim
