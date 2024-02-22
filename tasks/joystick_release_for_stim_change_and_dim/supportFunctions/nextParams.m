@@ -255,11 +255,36 @@ for i = 1:p.stim.nFeatures
     % if "tempDelta" is non-zero, add the corresponding feature delta
     % to the appropriate entry of the feature array
     if tempDelta ~= 0
-        % find the right delta, and multiply by "tempDelta" to allow
-        % for "increases" and "decreases" of various features.
-        featureDelta = tempDelta * ...
-            p.trVars.([p.stim.featureValueNames{i} 'Delta']);
-        
+
+        % if this is a psychometric function estimation task, then we will
+        % dynamically change the (orient) delta vlaue on a trial-by-trial
+        % basis.
+        if contains(p.init.exptType, 'psycho')
+            print("Hello")
+            %{
+            deltasArray = linspace(p.trVars.orientDeltaMin, ...
+                p.trVars.orientDeltaMax, 4);
+
+            deltaNumber = randi([1, 4]);
+            switch deltaNumber
+                case 1
+                    featureDelta = tempDelta * deltasArray(1);
+                case 2
+                    featureDelta = tempDelta * deltasArray(2);
+                case 3
+                    featureDelta = tempDelta * deltasArray(3);
+                case 4
+                    featureDelta = tempDelta * deltasArray(4);
+            end
+            %}
+
+        else
+            % find the right delta, and multiply by "tempDelta" to allow
+            % for "increases" and "decreases" of various features.
+            featureDelta = tempDelta * ...
+                p.trVars.([p.stim.featureValueNames{i} 'Delta']);
+        end
+
         % add to stim array
         p.stim.([p.stim.featureValueNames{i} ...
             'Array'])(p.stim.stimChgIdx, 2) = ...

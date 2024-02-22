@@ -521,7 +521,8 @@ if get(hObject, 'Value')
         uiData = guidata(hObject);
         
         % evaluate "finish" file function, returning "p"
-        eval(['uiData.p = ' uiData.p.init.taskFiles.finish(1:end-2) '(uiData.p);']);
+        eval(['uiData.p = ' uiData.p.init.taskFiles.finish(1:end-2) ...
+            '(uiData.p);']);
         
         % update uiData, update the status values being displayed in the
         % gui, then pul uiData back down.
