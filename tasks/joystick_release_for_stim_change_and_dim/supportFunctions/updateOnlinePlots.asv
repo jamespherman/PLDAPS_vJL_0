@@ -149,20 +149,13 @@ fillXCued = 1 + barHalfWidth*[-1 1 1 -1 -1];
 fillXUncued = 2 + barHalfWidth*[-1 1 1 -1 -1];
 
 % Define y data for performance fill
-perfFillYCuedGlobal = [cuedPCI(1) cuedPCI(1) cuedPCI(2) cuedPCI(2) cuedPCI(1)];
-perfFillYUncuedGlobal = [uncuedPCI(1) uncuedPCI(1) uncuedPCI(2) uncuedPCI(2) uncuedPCI(1)];
+perfFillYCued = [cuedPCI(1) cuedPCI(1) cuedPCI(2) cuedPCI(2) cuedPCI(1)];
+perfFillYUncued = [uncuedPCI(1) uncuedPCI(1) uncuedPCI(2) uncuedPCI(2) uncuedPCI(1)];
 
-set(p.draw.onlineCuePerfFillObj(1), 'XData', fillXCued, 'YData', perfFillYCuedGlobal, 'FaceColor', cueColor);
+set(p.draw.onlineCuePerfFillObj(1), 'XData', fillXCued, 'YData', perfFillYCued, 'FaceColor', cueColor);
 set(p.draw.onlineCuePerfPlotObj(1), 'XData', fillXCued(1:2), 'YData', [cuedPerf cuedPerf]);
-set(p.draw.onlineCuePerfFillObj(2), 'XData', fillXUncued, 'YData', perfFillYUncuedGlobal, 'FaceColor', uncuedColor);
+set(p.draw.onlineCuePerfFillObj(2), 'XData', fillXUncued, 'YData', perfFillYUncued, 'FaceColor', uncuedColor);
 set(p.draw.onlineCuePerfPlotObj(2), 'XData', fillXUncued(1:2), 'YData', [uncuedPerf uncuedPerf]);
-
-% Add text labels for number of trials
-nCued = p.status.cuedTotalCount.global;
-nUncued = p.status.uncuedTotalCount.global;
-
-text(1, cuedPerf + 1, ['n = ' num2str(nCued)], 'HorizontalAlignment', 'center');
-text(2, uncuedPerf + 1, ['n = ' num2str(nUncued)], 'HorizontalAlignment', 'center');
 
 % update ticks:
 set(p.draw.onlineCuePerfPlotAxes, 'XTick', ...

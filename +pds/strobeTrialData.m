@@ -11,7 +11,7 @@ function p = strobeTrialData(p)
 % classyStrobe's list of values to strobe:
 
 nStrobesToSend = size(p.init.strobeList, 1);
-
+try
 for ii = 1:nStrobesToSend
 
     strbCode = p.init.codes.(p.init.strobeList{ii, 1});
@@ -35,6 +35,9 @@ for ii = 1:nStrobesToSend
         end
     end
     
+end
+catch me
+    keyboard
 end
 
 % strobe list of values.
