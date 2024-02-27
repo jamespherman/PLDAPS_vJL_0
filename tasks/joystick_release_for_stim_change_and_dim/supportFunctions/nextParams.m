@@ -264,18 +264,7 @@ for i = 1:p.stim.nFeatures
             %{
             deltasArray = linspace(p.trVars.orientDeltaMin, ...
                 p.trVars.orientDeltaMax, 4);
-
-            deltaNumber = randi([1, 4]);
-            switch deltaNumber
-                case 1
-                    featureDelta = tempDelta * deltasArray(1);
-                case 2
-                    featureDelta = tempDelta * deltasArray(2);
-                case 3
-                    featureDelta = tempDelta * deltasArray(3);
-                case 4
-                    featureDelta = tempDelta * deltasArray(4);
-            end
+            featureDelta = tempDelta * deltasArray(randi([1,4]));
             %}
 
         else
