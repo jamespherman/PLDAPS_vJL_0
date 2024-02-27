@@ -260,7 +260,7 @@ for i = 1:p.stim.nFeatures
         % dynamically change the (orient) delta vlaue on a trial-by-trial
         % basis.
         if contains(p.init.exptType, 'psycho')
-            print("Hello")
+
             %{
             deltasArray = linspace(p.trVars.orientDeltaMin, ...
                 p.trVars.orientDeltaMax, 4);
