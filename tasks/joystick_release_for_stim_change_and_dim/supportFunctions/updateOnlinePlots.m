@@ -287,6 +287,59 @@ hold(p.draw.onlineSplitCuePerfPlotAxes, 'off');
 drawnow;
 
 
+% Psychometric function estimation plot
+if contains(p.init.exptType, 'psycho')
+    
+    % Update accumulators
+
+    % if it's a no change trial, skip
+    if p.trVars.isStimChangeTrial
+        isHit = (p.trData.trialEndState == p.state.hit); % if monkey is correct
+
+        % if it's a hit, add to the appropriate accumulator
+        if isHit
+            p.status.orientDelta{p.stim.deltasArrayIndex}.hitCount = ...
+                p.status.orientDelta{p.stim.deltasArrayIndex}.hitCount + 1;
+        end
+
+        % add to the total count after each trial
+        p.status.orientDelta{p.stim.deltasArrayIndex}.totalCount = ...
+            p.status.orientDelta{p.stim.deltasArrayIndex}.totalCount + 1;
+    end
+
+    % Update plot objects
+    barHalfWidth = 0.05;
+    xPositions = [0.75, 1.25, 1.75, 2.25];
+    
+    for i = 1:length(p.status.orientDelta)
+        % Retrieve performance count and total count for this delta
+        perfCount = p.status.orientDelta{i}.hitCount;
+        totalCount = p.status.orientDelta{i}.totalCount;
+    
+        % Compute performance and confidence interval
+        [perf, pci] = binofit(perfCount, totalCount);
+    
+        % Set x positions for the fill objects
+        fillX = xPositions(i) + barHalfWidth * [-1 1 1 -1 -1];
+    
+        % Set Y positions for confidence interval and performance line
+        perfFillY = [pci(1) pci(1) pci(2) pci(2) pci(1)];
+        perfLineY = [perf perf];
+    
+        % Update the plot objects for this delta
+        set(p.draw.onlinePsychoPerfFillObj(i), 'XData', fillX, 'YData', perfFillY, 'FaceColor', 0.7*[1 1 1]); % Adjust color as needed
+        set(p.draw.onlinePsychoPerfPlotObj(i), 'XData', fillX(1:2), 'YData', perfLineY, 'Color', [0 0 0], 'LineWidth', 2); % Adjust color and line width as needed
+    end
+    try
+    set(p.draw.onlinePsychoPerfPlotAxes, 'XTick', xPositions, 'XTickLabel', {p.stim.deltasArray(1), p.stim.deltasArray(2), p.stim.deltasArray(3), p.stim.deltasArray(4)});
+    catch me
+    end
+    % Refresh the plot to show updates
+    drawnow;
+
+
+end
+
 
 % Here we will compute aggregate performance (percent correct) and reaction
 % time. We first define which trials we're interested in numerically based

@@ -259,12 +259,10 @@ for i = 1:p.stim.nFeatures
         % if this is a psychometric function estimation task, then we will
         % dynamically change the (orient) delta vlaue on a trial-by-trial
         % basis.
-        if contains(p.init.exptType, 'psycho') && strcmp(p.stim.featureValueNames{i}, 'orient')
-            p.stim.deltasArray = linspace(p.trVars.orientDeltaMin, ...
+        if contains(p.init.exptType, 'psycho')
+            deltasArray = linspace(p.trVars.orientDeltaMin, ...
                 p.trVars.orientDeltaMax, 4);
-            deltasArrayIndex = randi([1,4]);
-            featureDelta = tempDelta * p.stim.deltasArray(deltasArrayIndex);
-            p.stim.deltasArrayIndex = deltasArrayIndex;
+            featureDelta = tempDelta * deltasArray(randi([1,4]));
 
         else
             % find the right delta, and multiply by "tempDelta" to allow

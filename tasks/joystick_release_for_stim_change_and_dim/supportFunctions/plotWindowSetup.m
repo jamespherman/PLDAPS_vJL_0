@@ -40,6 +40,17 @@ p.draw.onlineCuePerfPlotWindow         = ...
     'Visible','on',...
     'NextPlot','add');
 
+if contains(p.init.exptType, 'psycho')
+% make new plotting window for psychometric function estimation plot
+p.draw.OnlinePsychoPlotWindow         = ...
+    figure(...
+    'Position', [1883 8 667 667],...
+    'Name','OnlinePsychoPlotWindow',...
+    'NumberTitle','off',...
+    'Color', 1 * [1 1 1],...
+    'Visible','on',...
+    'NextPlot','add');
+end
 % If we're actually going to use the online plots, we need to create some
 % axes to plot into in the online plot figure window, and graphics object
 % handles for the plots themselves, and we should also show the plotting
@@ -366,7 +377,7 @@ if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
     xPosUncued3 = 1.5;
     xPosUncued4 = 1.8; % Only uncued
     
-    % Initialize YData for the fill objects (replace NaN with actual data)
+    % Initialize YData for the fill objects
     yDataPlaceholder = NaN(1, 5);
     
     % For Location 1 (Cued and Uncued)
@@ -414,6 +425,49 @@ if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
     p.status.uncuedTotalCount.loc2      = 0;
     p.status.uncuedTotalCount.loc3      = 0;
     p.status.uncuedTotalCount.loc4      = 0;
+
+
+% create psychometric plot objects
+
+if contains(p.init.exptType, 'psycho')
+    
+    % make accumulator variables for orient delta plot
+    p.status.orientDelta = cell(4, 1);
+    p.status.orientDelta{1} = struct('hitCount', 0, 'totalCount', 0); % min
+    p.status.orientDelta{2} = struct('hitCount', 0, 'totalCount', 0);
+    p.status.orientDelta{3} = struct('hitCount', 0, 'totalCount', 0);
+    p.status.orientDelta{4} = struct('hitCount', 0, 'totalCount', 0); % max
+
+
+    p.draw.onlinePsychoPerfPlotAxes = axes(...
+        'Parent', p.draw.OnlinePsychoPlotWindow, ...
+        'Position', [0.1 0.1 0.875 0.875], ...
+        'TickDir', 'Out', ...
+        'LineWidth', 1, ...
+        'XColor', [0 0 0], ...
+        'YColor', [0 0 0], ...
+        'NextPlot', 'add');
+
+    xlabel(p.draw.onlinePsychoPerfPlotAxes, 'Orient Delta Value', 'FontSize', 16);
+    ylabel(p.draw.onlinePsychoPerfPlotAxes, 'Proportion Correct', 'FontSize', 16);
+
+    % make plot objects for psycho performance data
+    for i = 1:4
+
+        centerX = 1 + (i-1); % calculate center position
+        xFill = [centerX - 0.25, centerX + 0.25, centerX + 0.25, centerX - 0.25, centerX - 0.25];
+        yFill = [0, 0, 1, 1, 0]; % placeholder yFill values (to be updated in updateOnlinePlots)
+        
+        % Create the fill object for the current box plot
+        p.draw.onlinePsychoPerfFillObj(i) = fill(p.draw.onlinePsychoPerfPlotAxes, xFill, yFill, 0.7*[1 1 1], 'EdgeColor', 'None');
+        xPlot = [centerX, centerX];
+        yPlot = [0.5, 0.5]; % placeholder
+        
+        % create the plot object for the current box plot
+        p.draw.onlinePsychoPerfPlotObj(i) = plot(p.draw.onlinePsychoPerfPlotAxes, xPlot, yPlot, 'Color', [0 0 0], 'LineWidth', 2);
+    end
+
+end
 
 end
 

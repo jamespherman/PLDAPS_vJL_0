@@ -298,37 +298,37 @@ end
 % between 4 values.
 
 function table = tableDef_stimDimPlusOrientChange_psycho
-table =         [0   1   1   0   0   0   1   0   1   0   0   0   1   0   1   2   23001; % single stimulus at location 1; orientation change at location 1
-                 0   1   1   0   0   0   0   0   0   0   0   0   0   0   1   1   23002; % single stimulus at location 1; no change
-                 0   1   1   0   0   0   1   0   1   0   0   0   1   0   2   2   23001; % single stimulus at location 1; orientation change at location 1
-                 0   1   1   0   0   0   0   0   0   0   0   0   0   0   2   1   23002; % single stimulus at location 1; no change
-                 0   1   1   0   0   0   1   0   1   0   0   0   1   0   3   2   23001; % single stimulus at location 1; orientation change at location 1
-                 0   1   1   0   0   0   0   0   0   0   0   0   0   0   3   1   23002; % single stimulus at location 1; no change
-                 0   1   1   0   0   0   1   0   1   0   0   0   1   0   4   2   23001; % single stimulus at location 1; orientation change at location 1
+table =         [1   1   1   0   0   0   1   0   1   0   0   0   1   0   1   2   23001; % single stimulus at location 1; orientation change at location 1
+                 1   1   1   0   0   0   0   0   0   0   0   0   0   0   1   1   23002; % single stimulus at location 1; no change
+                 1   1   1   0   0   0   1   0   1   0   0   0   1   0   2   2   23001; % single stimulus at location 1; orientation change at location 1
+                 1   1   1   0   0   0   0   0   0   0   0   0   0   0   2   1   23002; % single stimulus at location 1; no change
+                 1   1   1   0   0   0   1   0   1   0   0   0   1   0   3   2   23001; % single stimulus at location 1; orientation change at location 1
+                 1   1   1   0   0   0   0   0   0   0   0   0   0   0   3   1   23002; % single stimulus at location 1; no change
+                 1   1   1   0   0   0   1   0   1   0   0   0   1   0   4   2   23001; % single stimulus at location 1; orientation change at location 1
 
-                 0   1   0   1   0   0   2   0   1   0   0   0   1   0   1   2   23001; % single stimulus at location 2; orientation change at location 2
-                 0   1   0   1   0   0   0   0   0   0   0   0   0   0   1   1   23002; % single stimulus at location 2; no change
-                 0   1   0   1   0   0   2   0   1   0   0   0   1   0   2   2   23001; % single stimulus at location 2; orientation change at location 2
-                 0   1   0   1   0   0   0   0   0   0   0   0   0   0   2   1   23002; % single stimulus at location 2; no change
-                 0   1   0   1   0   0   2   0   1   0   0   0   1   0   3   2   23001; % single stimulus at location 2; orientation change at location 2
-                 0   1   0   1   0   0   0   0   0   0   0   0   0   0   3   1   23002; % single stimulus at location 2; no change
-                 0   1   0   1   0   0   2   0   1   0   0   0   1   0   4   2   23001; % single stimulus at location 2; orientation change at location 2
+                 1   1   0   1   0   0   2   0   1   0   0   0   1   0   1   2   23001; % single stimulus at location 2; orientation change at location 2
+                 1   1   0   1   0   0   0   0   0   0   0   0   0   0   1   1   23002; % single stimulus at location 2; no change
+                 1   1   0   1   0   0   2   0   1   0   0   0   1   0   2   2   23001; % single stimulus at location 2; orientation change at location 2
+                 1   1   0   1   0   0   0   0   0   0   0   0   0   0   2   1   23002; % single stimulus at location 2; no change
+                 1   1   0   1   0   0   2   0   1   0   0   0   1   0   3   2   23001; % single stimulus at location 2; orientation change at location 2
+                 1   1   0   1   0   0   0   0   0   0   0   0   0   0   3   1   23002; % single stimulus at location 2; no change
+                 1   1   0   1   0   0   2   0   1   0   0   0   1   0   4   2   23001; % single stimulus at location 2; orientation change at location 2
 
-                 0   1   0   0   1   0   3   0   1   0   0   0   1   0   1   3   23005; % single stimulus at location 3; orientation change at location 3
-                 0   1   0   0   1   0   0   0   0   0   0   0   0   0   1   1   23006; % single stimulus at location 3; no change
-                 0   1   0   0   1   0   3   0   1   0   0   0   1   0   2   3   23005; % single stimulus at location 3; orientation change at location 3
-                 0   1   0   0   1   0   3   0   1   0   0   0   1   0   3   3   23005; % single stimulus at location 3; orientation change at location 3
-                 0   1   0   0   1   0   0   0   0   0   0   0   0   0   3   1   23006; % single stimulus at location 3; no change
-                 0   1   0   0   1   0   3   0   1   0   0   0   1   0   4   3   23005; % single stimulus at location 3; orientation change at location 3
-                 0   1   0   0   1   0   0   0   0   0   0   0   0   0   4   1   23006; % single stimulus at location 3; no change
+                 1   1   0   0   1   0   3   0   1   0   0   0   1   0   1   3   23005; % single stimulus at location 3; orientation change at location 3
+                 1   1   0   0   1   0   0   0   0   0   0   0   0   0   1   1   23006; % single stimulus at location 3; no change
+                 1   1   0   0   1   0   3   0   1   0   0   0   1   0   2   3   23005; % single stimulus at location 3; orientation change at location 3
+                 1   1   0   0   1   0   3   0   1   0   0   0   1   0   3   3   23005; % single stimulus at location 3; orientation change at location 3
+                 1   1   0   0   1   0   0   0   0   0   0   0   0   0   3   1   23006; % single stimulus at location 3; no change
+                 1   1   0   0   1   0   3   0   1   0   0   0   1   0   4   3   23005; % single stimulus at location 3; orientation change at location 3
+                 1   1   0   0   1   0   0   0   0   0   0   0   0   0   4   1   23006; % single stimulus at location 3; no change
 
-                 0   1   0   0   0   1   4   0   1   0   0   0   1   0   1   3   23005; % single stimulus at location 4; orientation change at location 4
-                 0   1   0   0   0   1   0   0   0   0   0   0   0   0   1   1   23006; % single stimulus at location 4; no change
-                 0   1   0   0   0   1   4   0   1   0   0   0   1   0   2   3   23005; % single stimulus at location 4; orientation change at location 4
-                 0   1   0   0   0   1   4   0   1   0   0   0   1   0   3   3   23005; % single stimulus at location 4; orientation change at location 4
-                 0   1   0   0   0   1   0   0   0   0   0   0   0   0   3   1   23006; % single stimulus at location 4; no change
-                 0   1   0   0   0   1   4   0   1   0   0   0   1   0   4   3   23005; % single stimulus at location 4; orientation change at location 4
-                 0   1   0   0   0   1   0   0   0   0   0   0   0   0   4   1   23006; % single stimulus at location 4; no change
+                 1   1   0   0   0   1   4   0   1   0   0   0   1   0   1   3   23005; % single stimulus at location 4; orientation change at location 4
+                 1   1   0   0   0   1   0   0   0   0   0   0   0   0   1   1   23006; % single stimulus at location 4; no change
+                 1   1   0   0   0   1   4   0   1   0   0   0   1   0   2   3   23005; % single stimulus at location 4; orientation change at location 4
+                 1   1   0   0   0   1   4   0   1   0   0   0   1   0   3   3   23005; % single stimulus at location 4; orientation change at location 4
+                 1   1   0   0   0   1   0   0   0   0   0   0   0   0   3   1   23006; % single stimulus at location 4; no change
+                 1   1   0   0   0   1   4   0   1   0   0   0   1   0   4   3   23005; % single stimulus at location 4; orientation change at location 4
+                 1   1   0   0   0   1   0   0   0   0   0   0   0   0   4   1   23006; % single stimulus at location 4; no change
 
                  ];
 end
