@@ -218,7 +218,7 @@ p.rig.guiVars = {...
     'stim2ChgIntvl'; ...        % 3
     'chgWinDur'; ...            % 4
     'stimLoc1Elev'; ...         % 5
-    'hueDelta'; ...             % 6
+    'orientDelta'; ...         % 6
     'lumDelta'; ...             % 7
     'propHueChgOnly'; ...       % 8
     'joyMinLatency'; ...        % 9
@@ -329,7 +329,7 @@ p.trVarsInit.satVar                   = 0.00;     % variability in saturation
 % Magnitude of stimulus delta if desired:
 p.trVarsInit.speedDelta               = (pi/8);   % motion magniutde
 p.trVarsInit.contDelta                = 0.2;      % contrast
-p.trVarsInit.orientDelta              = 45;       % orientation
+p.trVarsInit.orientDelta              = 40;       % orientation
 p.trVarsInit.freqDelta                = 0.25;     % spatial frequency (cycles per degree)
 p.trVarsInit.satDelta                 = 0.038;    % color saturation
 p.trVarsInit.lumDelta                 = -0.15;     % luminance

@@ -157,13 +157,6 @@ set(p.draw.onlineCuePerfPlotObj(1), 'XData', fillXCued(1:2), 'YData', [cuedPerf 
 set(p.draw.onlineCuePerfFillObj(2), 'XData', fillXUncued, 'YData', perfFillYUncuedGlobal, 'FaceColor', uncuedColor);
 set(p.draw.onlineCuePerfPlotObj(2), 'XData', fillXUncued(1:2), 'YData', [uncuedPerf uncuedPerf]);
 
-% Add text labels for number of trials
-nCued = p.status.cuedTotalCount.global;
-nUncued = p.status.uncuedTotalCount.global;
-
-text(1, cuedPerf + 1, ['n = ' num2str(nCued)], 'HorizontalAlignment', 'center');
-text(2, uncuedPerf + 1, ['n = ' num2str(nUncued)], 'HorizontalAlignment', 'center');
-
 % update ticks:
 set(p.draw.onlineCuePerfPlotAxes, 'XTick', ...
     [1 2], 'XTickLabel', ...
