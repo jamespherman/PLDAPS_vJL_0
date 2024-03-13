@@ -280,7 +280,7 @@ p.trVarsInit.stimRadius               = 3.25;     % aperture radius in deg
 p.trVarsInit.boxSizePix               = 6;        % diameter of each "check" in pixels
 p.trVarsInit.boxLifetime              = 8;        % "check" lifetime in frams
 p.trVarsInit.nPatches                 = 4;        % number of stimuli 
-p.trVarsInit.nEpochs                  = 1;        % just one epoch with all four stimuli present.
+p.trVarsInit.nEpochs                  = 3;        % just one epoch with all four stimuli present.
 
 % times/latencies/durations:
 p.trVarsInit.rewardDurationMs        = 200;      % reward duration
