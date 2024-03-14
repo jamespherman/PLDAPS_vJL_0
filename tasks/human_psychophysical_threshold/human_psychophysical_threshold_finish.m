@@ -90,7 +90,7 @@ end
 % true that means we've already decided to fix the signal strength so
 % there's no need3 to do this check.
 threshChangeCrit = (p.trVars.maxSignalStrength - ...
-    p.trVars.minSignalStrength) / p.trVarsInit.divFactorNoThreshChg;
+    p.trVars.minSignalStrength) / p.trVars.divFactorNoThreshChg;
 if ~p.status.fixSignalStrength && ...
         (p.init.questObj.trialCount > p.trVars.numThreshCheckTrials)
     

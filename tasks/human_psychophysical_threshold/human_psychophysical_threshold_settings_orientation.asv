@@ -1,5 +1,5 @@
-function p = human_psychophysical_threshold_settings_hue1
-%  p = human_psychophysical_threshold_settings_hue1
+function p = human_psychophysical_threshold_settings_orientation
+%  p = human_psychophysical_threshold_settings_orientation
 %
 %  On some proportion of trials, the fixation point turns off without
 %  reward delivery or "boop", monkey must release joystick to get reward on
@@ -64,7 +64,7 @@ p.init.protocol_title   = [p.init.taskName '_task'];    % Define Banner text to 
 p.init.date             = datestr(now,'yyyymmdd');
 p.init.time             = datestr(now,'HHMM');
 
-p.init.exptType         = 'human_psychophysics_hue_discrimination';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
+p.init.exptType         = 'human_psychophysics_orientation_discrimination';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
 
 p.init.date_1yyyy       = str2double(['1' datestr(now,'yyyy')]); % gotta add a '1' otherwise date/times starting with zero lose that zero in conversion to double.
 p.init.date_1mmdd       = str2double(['1' datestr(now,'mmdd')]);
@@ -180,7 +180,7 @@ p.rig.guiVars = {...
     'lumInit'; ...        % 9
     'satMaskVar'; ...        % 10
     'hueMaskVar'; ...              % 11
-    'divFactorNoThreshChg'};                 % 12
+    'boxLifetime'};                 % 12
 
 %% INIT VARIABLES 
 % vars that are only set once
@@ -253,24 +253,24 @@ p.trVarsInit.bgLum                    = -0.5;
 
 % Initial / base values for each stimulus feature.
 p.trVarsInit.speedInit                = 0.0;      % initial motion magniutde
-p.trVarsInit.ctrstInit                = 0.1;      % initial contrast
+p.trVarsInit.ctrstInit                = 0.2;      % initial contrast
 p.trVarsInit.orientInit               = 30;       % initial orientation
 p.trVarsInit.freqInit                 = 0.175;    % initial spatial frequency (cycles per degree)
-p.trVarsInit.satInit                  = 0.4;      % target interval color saturation
+p.trVarsInit.satInit                  = 0;        % initial color saturation
 p.trVarsInit.lumInit                  = p.trVarsInit.bgLum;      % initial luminance
 p.trVarsInit.hueInit                  = 0;        % initial hue (color angle)
 
 % Stimulus feature variances used for masking:
-p.trVarsInit.ctrstMask                = 0;        % contrast for masking epoch
-p.trVarsInit.lumMaskVar               = 0.25;     % contrast variance for masking epoch
+p.trVarsInit.ctrstMask                = 0.1;      % contrast variance for masking epoch
+p.trVarsInit.ctrstMaskVar             = 0.1;      % contrast variance for masking epoch
 p.trVarsInit.orientMaskVar            = 20;       % orientation variance for masking epoch
-p.trVarsInit.hueMaskVar               = 180;      % hue variance for masking epoch
-p.trVarsInit.satMaskVar               = 0.4;      % sat variance for masking epoch
+p.trVarsInit.hueMaskVar               = 180;    % hue variance for masking epoch
+p.trVarsInit.satMaskVar               = 0.46;      % sat variance for masking epoch
 p.trVarsInit.satMask                  = 0.0;      % sat for masking epoch
 
 % Variance of feature dimensions that can be variable in this way:
 p.trVarsInit.orientVar                = 2;       % variability in orientation
-p.trVarsInit.hueVar                   = 0.05;     % variability in hue (angle)
+p.trVarsInit.hueVar                   = 0.0;     % variability in hue (angle)
 p.trVarsInit.lumVar                   = 0.0;     % variability in luminance
 p.trVarsInit.satVar                   = 0.0;     % variability in saturation
 

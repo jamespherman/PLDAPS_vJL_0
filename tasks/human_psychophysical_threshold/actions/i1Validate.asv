@@ -1,0 +1,82 @@
+function p = i1Validate(p)
+%   [] = i1Validate(p)
+
+% check if i1 is connected:
+p.rig.i1Connected = I1('IsConnected');
+
+% tell user to put device in calibration cradle then wait for them to press
+% a key before initiating calibration:
+disp('Place photomer in calibration cradle then press any keyboard key.');
+pause;
+I1('Calibrate');
+
+% tell user calibration is complete:
+disp('Calibration complete.')
+
+% tell user to place photomer on screen for measurement then wait for key
+% press to continue to measurement:
+disp('Place photomer on screen for measurement.');
+pause;
+
+% we're going to measure at 11 X 11 locations at a single luminance
+% preallocate space (3 color coords X 11 X 11):
+measurements = zeros(3, 11, 11);
+rgbColors    = zeros(3, 11, 11);
+
+% define a vector of values to query DKL plane:
+values = linspace(-1, 1, 11);
+
+% loop over points on a plane in DKL space (at mid-level luminance)
+for i = 1:11
+    for j = 1:11
+
+        % define color to show:
+        tempColor = [0 0 0];
+        [tempColor(1), tempColor(2), tempColor(3)] = ...
+            dkl2rgb([0, values(i), values(j)]');
+
+        % fill screen with color
+        Screen('FillRect', p.draw.window, fix(tempColor*255));
+        Screen('Flip', p.draw.window);
+
+        % trigger measurement
+        I1('TriggerMeasurement');
+
+        % retrieve measurement:
+        measurements(:, i, j) = I1('GetTriStimulus');
+        
+        % store RGB color:
+        rgbColors(:, i, j) = fix(tempColor*255);
+
+    end
+end
+
+% holder for luminance linearity measurement values:
+lumMeasures = zeros(3, 11);
+lumColors   = zeros(3, 11);
+
+% loop from lowest luminance to highest luminance to measure linearity
+for i = 1:11
+    % define color to show:
+        tempColor = [0 0 0];
+        [tempColor(1), tempColor(2), tempColor(3)] = ...
+            dkl2rgb([values(i), 0 0]');
+
+        % fill screen with color
+        Screen('FillRect', p.draw.window, fix(tempColor*255));
+        Screen('Flip', p.draw.window);
+
+        % trigger measurement
+        I1('TriggerMeasurement');
+
+        % retrieve measurement:
+        lumMeasures(:, i) = I1('GetTriStimulus');
+        
+        % store RGB color:
+        lumColors(:, i) = fix(tempColor*255);
+end
+
+
+keyboard
+
+end
