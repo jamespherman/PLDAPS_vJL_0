@@ -207,72 +207,61 @@ if p.trVars.isStimChangeTrial && p.stim.nStim ~= 1
 end
 
 
-% Update the plot objects
+% Update plot objects
+xPosCued1 = 0.5 + 0.2;
+xPosUncued1 = 0.62 + 0.2;
+xPosCued3 = 1.38 - 0.2;
+xPosUncued3 = 1.5 - 0.2;
 
-% Define X positions
-xPosCued1 = 0.5;
-xPosUncued1 = 0.62;
-xPosUncued2 = 1.0; % Only Uncued
-xPosCued3 = 1.38;
-xPosUncued3 = 1.5;
-xPosUncued4 = 1.88; % Only Uncued
-
-xPositions = [xPosCued1, xPosUncued1, xPosUncued2, xPosCued3, xPosUncued3, xPosUncued4]; 
+xPositions = [xPosCued1, xPosUncued1, xPosCued3, xPosUncued3];
 
 barHalfWidth = 0.05;
 
-for i = 1:6
-    loc = ceil(i / 2); % Determine the actual location (1, 2, 3, 4)
+for i = 1:length(xPositions)
+    loc = ceil(i / 2); % Determine actual location (1 and 3)
     
     % Check if cued or uncued and assign the correct color
-    if (loc == 1 || loc == 3) && ismember(i, [1, 4]) % Cued Locations (1 and 3)
-        perfCount = p.status.cuedHitCount.(['loc' num2str(loc)]);
-        totalCount = p.status.cuedTotalCount.(['loc' num2str(loc)]);
-    else
-        % Uncued Locations (1, 2, 3, 4)
-        perfCount = p.status.uncuedHitCount.(['loc' num2str(loc)]);
-        totalCount = p.status.uncuedTotalCount.(['loc' num2str(loc)]);
+    if loc == 1 && mod(i, 2) == 1 % Cued Location 1
+        perfCount = p.status.cuedHitCount.loc1;
+        totalCount = p.status.cuedTotalCount.loc1;
+    elseif loc == 1 % Uncued Location 1
+        perfCount = p.status.uncuedHitCount.loc1;
+        totalCount = p.status.uncuedTotalCount.loc1;
+    elseif loc == 3 && mod(i, 2) == 1 % Cued Location 3
+        perfCount = p.status.cuedHitCount.loc3;
+        totalCount = p.status.cuedTotalCount.loc3;
+    else % Uncued Location 3
+        perfCount = p.status.uncuedHitCount.loc3;
+        totalCount = p.status.uncuedTotalCount.loc3;
     end
 
-    % Compute performance and confidence interval
     [perf, pci] = binofit(perfCount, totalCount);
 
-    % Set x positions for the plots
-    fillX = xPositions(i) + barHalfWidth * [-1 1 1 -1 -1]; % Default position
-    switch i
-        case 1, fillX = xPosCued1 + barHalfWidth * [-1 1 1 -1 -1];
-        case 2, fillX = xPosUncued1 + barHalfWidth * [-1 1 1 -1 -1];
-        case 3, fillX = xPosUncued2 + barHalfWidth * [-1 1 1 -1 -1];
-        case 4, fillX = xPosCued3 + barHalfWidth * [-1 1 1 -1 -1];
-        case 5, fillX = xPosUncued3 + barHalfWidth * [-1 1 1 -1 -1];
-        case 6, fillX = xPosUncued4 + barHalfWidth * [-1 1 1 -1 -1];
-    end
-
+    fillX = xPositions(i) + barHalfWidth * [-1 1 1 -1 -1];  
     perfFillY = [pci(1) pci(1) pci(2) pci(2) pci(1)];
 
-    if ismember(i, [1, 4])  % Cued Locations (1 and 3)
-        color = cueColor;  % Blue for Cued
+    if mod(i, 2) == 1 
+        color = cueColor;
     else
-        color = uncuedColor;  % Yellow for Uncued
+        color = uncuedColor;
     end
 
-    % Update the plot objects
+    % Update plot objects
     set(p.draw.onlineSplitCuePerfFillObj(i), 'XData', fillX, 'YData', perfFillY, 'FaceColor', color);
     set(p.draw.onlineSplitCuePerfPlotObj(i), 'XData', fillX(1:2), 'YData', [perf perf]);
 end
 
-% Center positions for the grouped tick labels
+% Positions for the grouped tick labels
 centerPos1 = mean([xPosCued1, xPosUncued1]);
 centerPos3 = mean([xPosCued3, xPosUncued3]);
+set(p.draw.onlineSplitCuePerfPlotAxes, 'XTick', [centerPos1, centerPos3], 'XTickLabel', {'Location 1', 'Location 3'});
 
-% Update ticks for grouped labels
-set(p.draw.onlineSplitCuePerfPlotAxes, 'XTick', [centerPos1, xPosUncued2, centerPos3, xPosUncued4], 'XTickLabel', {'Location 1', 'Location 2', 'Location 3', 'Location 4'});
-
-% dummy plot objects for the legend
+% Dummy plot objects for the legend
 hold(p.draw.onlineSplitCuePerfPlotAxes, 'on');
 dummyCue = plot(p.draw.onlineSplitCuePerfPlotAxes, NaN, NaN, 's', 'Color', cueColor, 'MarkerFaceColor', cueColor, 'MarkerSize', 10);
 dummyUncued = plot(p.draw.onlineSplitCuePerfPlotAxes, NaN, NaN, 's', 'Color', uncuedColor, 'MarkerFaceColor', uncuedColor, 'MarkerSize', 10);
 
+% Legend
 lgd = legend(p.draw.onlineSplitCuePerfPlotAxes, [dummyCue, dummyUncued], {'Cued', 'Uncued'}, 'Location', 'northoutside', 'Orientation', 'horizontal');
 title(lgd, 'Change Type');
 
