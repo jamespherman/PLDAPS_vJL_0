@@ -35,5 +35,5 @@ save(fullfile(p.init.sessionFolder, 'p.mat'), '-struct', 'p','status','-append')
 iString = sprintf('%04d', p.status.iTrial); % add leading zeros to make a 4 digit string for the trial number.
 trVars  = p.trVars;
 trData  = p.trData;
-save(fullfile(p.init.sessionFolder, ['trial' iString '.mat']), 'trVars', 'trData');
-
+status  = p.status;
+save(fullfile(p.init.sessionFolder, ['trial' iString '.mat']), 'trVars', 'trData', 'status');
