@@ -336,11 +336,11 @@ p.trVarsInit.satVar                   = 0.00;     % variability in saturation
 p.trVarsInit.speedDelta               = (pi/8);   % motion magniutde
 p.trVarsInit.contDelta                = 0.2;      % contrast
 p.trVarsInit.orientDelta              = 45;       % orientation
-p.trVarsInit.orientDeltaMin           = 15;       % orientation
-p.trVarsInit.orientDeltaMax           = 45;       % orientation
+p.trVarsInit.orientDeltaMin           = 10;       % orientation
+p.trVarsInit.orientDeltaMax           = 35;       % orientation
 p.trVarsInit.freqDelta                = 0.25;     % spatial frequency (cycles per degree)
 p.trVarsInit.satDelta                 = 0.038;    % color saturation
-p.trVarsInit.lumDelta                 = -0.15;     % luminance
+p.trVarsInit.lumDelta                 = 0;        % luminance
 p.trVarsInit.hueDelta                 = 50;       % hue (color angle)
 
 % spatial properties of "checkerboard":
