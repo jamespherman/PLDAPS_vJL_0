@@ -194,16 +194,30 @@ for i = 1:p.stim.nFeatures
             p.stim.([p.stim.featureValueNames{i} ...
             'Array'])(p.trVars.stimChgIdx, 2) + featureDelta;
 
-        % Set up masking intervals depending on which feature is the
+        % Set up masking intervals depending on w
+        % 
+        % 
+        % 
+        % 
+        % 
+        % hich feature is the
         % outlier:
         switch p.stim.featureValueNames{i}
             case 'hue'
                 p.stim.hueVarArray(:, [1 3]) = p.trVars.hueMaskVar;
-                p.stim.hueArray(:, [1 3]) = fix(rand(4,2)*360);
-                p.stim.satArray(:, [1 3]) = 0;
-                p.stim.satVarArray(:, [1 3]) = 0.2;
+                p.stim.hueArray(:, [1 3]) = fix(rand*360);
+                p.stim.satArray(:, [1 3]) = p.trVars.satMask;
+                p.stim.satVarArray(:, [1 3]) = p.trVars.satMaskVar;
             case 'orient'
-            case 'ctrst'
+                p.stim.orientVarArray(:, [1 3]) = p.trVars.orientMaskVar;
+                p.stim.ctrstArray(:, [1 3]) = p.trVars.ctrstMask;
+                p.stim.lumVarArray(:, [1 3]) = p.trVars.lumMaskVar;
+            case 'speed'
+                p.stim.speedArray(:, [1 3]) = repmat(...
+                    p.stim.speedArray(:, 2), 1, 2);
+                p.stim.orientVarArray(:, [1 3]) = p.trVars.orientMaskVar;
+                p.stim.ctrstArray(:, [1 3]) = p.trVars.ctrstMask;
+                p.stim.lumVarArray(:, [1 3]) = p.trVars.lumMaskVar;
         end
     end
 end

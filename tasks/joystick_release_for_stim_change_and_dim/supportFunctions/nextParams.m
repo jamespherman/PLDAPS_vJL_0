@@ -263,7 +263,9 @@ for i = 1:p.stim.nFeatures
                 strcmp(p.stim.featureValueNames{i}, 'orient')
             p.stim.deltasArray = linspace(p.trVars.orientDeltaMin, ...
                 p.trVars.orientDeltaMax, 4);
-            deltasArrayIndex = randi([1,4]);
+
+            % choose a random integer 
+            deltasArrayIndex = randi(4);
             featureDelta = tempDelta * p.stim.deltasArray(deltasArrayIndex);
             p.stim.deltasArrayIndex = deltasArrayIndex;
 
@@ -279,6 +281,9 @@ for i = 1:p.stim.nFeatures
             'Array'])(p.stim.stimChgIdx, 2) = ...
             p.stim.([p.stim.featureValueNames{i} ...
             'Array'])(p.stim.stimChgIdx, 2) + featureDelta;
+
+        % store feature delta in "status"
+        p.status.changeDelta = featureDelta;
     end
 end
 catch me

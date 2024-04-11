@@ -99,10 +99,9 @@ p.init.taskActions{1} = 'pdsActions.dataToWorkspace';
 p.init.taskActions{2} = 'pdsActions.blackScreen';
 p.init.taskActions{3} = 'pdsActions.alphaBinauralBeats';
 p.init.taskActions{4} = 'pdsActions.stopAudioSchedule';
-p.init.taskActions{5} = 'pdsActions.rewardDrain';
-p.init.taskActions{6} = 'pdsActions.singleReward';
-p.init.taskActions{7} = 'pdsActions.catOldOutput';
-p.init.taskActions{8} = 'i1CalibrateAndMeasure';
+p.init.taskActions{5} = 'pdsActions.catOldOutput';
+p.init.taskActions{6} = 'i1CalibrateAndMeasure';
+p.init.taskActions{7} = 'i1Validate';
 
 %% audio:
 p.audio.audsplfq        = 48000; % datapixx audio playback sampling rate.
@@ -179,9 +178,9 @@ p.rig.guiVars = {...
     'satInit'; ...             % 7
     'satVar'; ...       % 8
     'lumInit'; ...        % 9
-    'stimRadius'; ...        % 10
-    'boxSizePix'; ...              % 11
-    'boxLifetime'};                 % 12
+    'satMaskVar'; ...        % 10
+    'hueMaskVar'; ...              % 11
+    'divFactorNoThreshChg'};                 % 12
 
 %% INIT VARIABLES 
 % vars that are only set once
@@ -254,17 +253,20 @@ p.trVarsInit.bgLum                    = -0.5;
 
 % Initial / base values for each stimulus feature.
 p.trVarsInit.speedInit                = 0.0;      % initial motion magniutde
-p.trVarsInit.ctrstInit                = 0.2;      % initial contrast
+p.trVarsInit.ctrstInit                = 0.1;      % initial contrast
 p.trVarsInit.orientInit               = 30;       % initial orientation
 p.trVarsInit.freqInit                 = 0.175;    % initial spatial frequency (cycles per degree)
-p.trVarsInit.satInit                  = 0.4;      % initial color saturation
+p.trVarsInit.satInit                  = 0.4;      % target interval color saturation
 p.trVarsInit.lumInit                  = p.trVarsInit.bgLum;      % initial luminance
 p.trVarsInit.hueInit                  = 0;        % initial hue (color angle)
 
 % Stimulus feature variances used for masking:
-p.trVarsInit.ctrstMaskVar             = 0.2;      % contrast variance for masking epoch
+p.trVarsInit.ctrstMask                = 0;        % contrast for masking epoch
+p.trVarsInit.lumMaskVar               = 0.25;     % contrast variance for masking epoch
 p.trVarsInit.orientMaskVar            = 20;       % orientation variance for masking epoch
-p.trVarsInit.hueMaskVar               = 0.125;    % hue variance for masking epoch
+p.trVarsInit.hueMaskVar               = 180;      % hue variance for masking epoch
+p.trVarsInit.satMaskVar               = 0.4;      % sat variance for masking epoch
+p.trVarsInit.satMask                  = 0.0;      % sat for masking epoch
 
 % Variance of feature dimensions that can be variable in this way:
 p.trVarsInit.orientVar                = 2;       % variability in orientation

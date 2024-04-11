@@ -7,7 +7,7 @@ function p                      = initClut(p)
 
 
 % initialize DKL conversion variables`
-initmon('LUTvpixx');
+initmon('LUTBENQ');
 
 % set Background color to black.
 [bgRGB(1), bgRGB(2), bgRGB(3)] = dkl2rgb([p.trVarsInit.bgLum 0 0]');

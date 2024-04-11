@@ -99,9 +99,9 @@ p.init.taskActions{1} = 'pdsActions.dataToWorkspace';
 p.init.taskActions{2} = 'pdsActions.blackScreen';
 p.init.taskActions{3} = 'pdsActions.alphaBinauralBeats';
 p.init.taskActions{4} = 'pdsActions.stopAudioSchedule';
-p.init.taskActions{5} = 'pdsActions.rewardDrain';
-p.init.taskActions{6} = 'pdsActions.singleReward';
-p.init.taskActions{7} = 'pdsActions.catOldOutput';
+p.init.taskActions{5} = 'pdsActions.catOldOutput';
+p.init.taskActions{6} = 'i1CalibrateAndMeasure';
+p.init.taskActions{7} = 'i1Validate';
 
 %% audio:
 p.audio.audsplfq        = 48000; % datapixx audio playback sampling rate.
@@ -178,9 +178,9 @@ p.rig.guiVars = {...
     'satInit'; ...             % 7
     'satVar'; ...       % 8
     'lumInit'; ...        % 9
-    'stimRadius'; ...        % 10
-    'boxSizePix'; ...              % 11
-    'boxLifetime'};                 % 12
+    'satMaskVar'; ...        % 10
+    'hueMaskVar'; ...              % 11
+    'divFactorNoThreshChg'};                 % 12
 
 %% INIT VARIABLES 
 % vars that are only set once
@@ -253,12 +253,20 @@ p.trVarsInit.bgLum                    = -0.5;
 
 % Initial / base values for each stimulus feature.
 p.trVarsInit.speedInit                = 0.0;      % initial motion magniutde
-p.trVarsInit.ctrstInit                = 0.2;      % initial contrast
+p.trVarsInit.ctrstInit                = 0.1;      % initial contrast
 p.trVarsInit.orientInit               = 30;       % initial orientation
 p.trVarsInit.freqInit                 = 0.175;    % initial spatial frequency (cycles per degree)
 p.trVarsInit.satInit                  = 0.4;      % initial color saturation
 p.trVarsInit.lumInit                  = p.trVarsInit.bgLum;      % initial luminance
 p.trVarsInit.hueInit                  = 90;        % initial hue (color angle)
+
+% Stimulus feature variances used for masking:
+p.trVarsInit.ctrstMask                = 0;        % contrast for masking epoch
+p.trVarsInit.lumMaskVar               = 0.25;      % contrast variance for masking epoch
+p.trVarsInit.orientMaskVar            = 20;       % orientation variance for masking epoch
+p.trVarsInit.hueMaskVar               = 180;    % hue variance for masking epoch
+p.trVarsInit.satMaskVar               = 0.4;      % sat variance for masking epoch
+p.trVarsInit.satMask                  = 0.0;      % sat for masking epoch
 
 % Variance of feature dimensions that can be variable in this way:
 p.trVarsInit.orientVar                = 2;       % variability in orientation
@@ -280,14 +288,16 @@ p.trVarsInit.stimRadius               = 3.25;     % aperture radius in deg
 p.trVarsInit.boxSizePix               = 6;        % diameter of each "check" in pixels
 p.trVarsInit.boxLifetime              = 8;        % "check" lifetime in frams
 p.trVarsInit.nPatches                 = 4;        % number of stimuli 
-p.trVarsInit.nEpochs                  = 1;        % just one epoch with all four stimuli present.
+p.trVarsInit.nEpochs                  = 3;        % just one epoch with all four stimuli present.
 
 % times/latencies/durations:
 p.trVarsInit.rewardDurationMs        = 200;      % reward duration
 p.trVarsInit.fix2CueIntvl            = 0.0;      % Time delay between acquiring fixation and cue onset.
 p.trVarsInit.cueDur                  = 0.0;      % Duration of cue presentaiton.
 p.trVarsInit.cue2StimItvl            = 0.25;     % time between cue offset and stimulus onset (stimulus onset asynchrony).
-p.trVarsInit.stim2ChgIntvl           = 0.5;      % minimum time between stimulus onset and change.
+p.trVarsInit.maskItvlMin             = 0.3;      % minimum duration of masking interval
+p.trVarsInit.maskItvlWin             = 0.2;      % multiplicative scalar to determine masking interval duration (rand * win + min)
+p.trVarsInit.targetItvlDur           = 1.5;      % duratino of "target" interval
 p.trVarsInit.chgWinDur               = 0.0;      % time window during which a change is possible.
 p.trVarsInit.rewardDelay             = 0.5;      % delay between cued change and reward delivery for hits.
 p.trVarsInit.joyMinLatency           = 0.2;      % minimum acceptable joystick release latency.

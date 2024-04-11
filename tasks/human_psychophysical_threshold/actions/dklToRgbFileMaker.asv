@@ -6,11 +6,11 @@ clear
 close all
 
 % define display name for saving files:
-displayName = 'BENQ';
+displayName = 'tcl';
 
 % load "colorData"
 dataDir = '/home/jph/Documents/PLDAPS_vJL_0/output/';
-dataFile = '20240313_t1546_human_psychophysical_threshold_x1Data.mat';
+dataFile = '20240308_t1526_human_psychophysical_threshold_x1Data.mat';
 load([dataDir dataFile]);
 
 % get maximum and minimum luminance values for each "gun":
@@ -55,9 +55,8 @@ end
 % because we want to keep the interpolated values from the loop above when
 % they're larger than the values found by the more simple method, but only
 % for intensity indexes greater than 50:
-tempIdx = repmat(0:255, 3, 1)';
-luts(tempIdx > 50 & interpVal > luts) = ...
-    interpVal(tempIdx > 50 & interpVal > luts);
+tempIdx = repmat((0:255)', 
+keyboard
 
 % set zero values to 1:
 % luts(luts == 0) = 1;
