@@ -1,5 +1,5 @@
-function p = joystick_release_for_orient_change_and_dim_cued_settings
-%  p = joystick_release_for_orient_change_and_dim_cued_settings
+function p = joystick_release_for_orient_change_and_dim_learn_cue_settings
+%  p = joystick_release_for_orient_change_and_dim_learn_cue_settings
 %  On some proportion of trials, the fixation point turns off without
 %  reward delivery or "boop", monkey must release joystick to get reward on
 %  those trials. On the remaining trials, the "boop" and reward are
@@ -59,7 +59,7 @@ p.init.rigConfigFile     = which(['rigConfigFiles.rigConfig_rig' ...
 
 %% define task name and related files:
 
-p.init.exptType         = 'joystick_release_for_stim_dim_and_orient_change_cued';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
+p.init.exptType         = 'joystick_release_for_stim_dim_and_orient_change_learn_cue';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
 
 p.init.taskName         = 'joystick_release_for_stim_change_and_dim';
 p.init.taskType         = 1;                            % poorly defined numerical index for the task "type"
@@ -369,7 +369,7 @@ p.trVarsInit.postRewardDurMin        = 1;        % how long should the trial las
 p.trVarsInit.postRewardDurMax        = 1.2;      % how long should the trial last AFTER reward delivery at maximum? This lets us record the neuronal response to reward.
 p.trVarsInit.useQuest                = false;    % use "QUEST" to determine next stimulus value?
 p.trVarsInit.numTrialsForPerfCalc    = 100;      % how many of the most recently completed trials should be used to calculate % correct / median RT?
-p.trVarsInit.freeRewardProbability   = 0.1;      % How probable is it that the monkey will get a free reward in between trials?
+p.trVarsInit.freeRewardProbability   = 0;      % How probable is it that the monkey will get a free reward in between trials?
 
 p.trVarsInit.connectRipple           = true;
 p.trVarsInit.rippleChanSelect        = 1;

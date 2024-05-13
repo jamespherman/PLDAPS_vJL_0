@@ -414,9 +414,11 @@ end
 % compute rectangle containing cue-ring (in pixels).
 ringRadPix  = pds.deg2pix(p.draw.ringRadDeg, p);
 
-if contains(p.init.exptType, 'psycho')
+
+if contains(p.init.exptType, 'psycho') || (contains(p.init.exptType, 'learn') && p.trVars.isNoChangeTrial)
     p.draw.cueRingRect = [0 0 0 0];
 else
+    print(p.stim.cueLoc)
     p.draw.cueRingRect = [...
         p.trVars.stimLocCartPix(p.stim.cueLoc, 1) - ringRadPix...
         p.trVars.stimLocCartPix(p.stim.cueLoc, 2) - ringRadPix ...
