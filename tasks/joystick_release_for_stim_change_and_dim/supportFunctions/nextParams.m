@@ -39,15 +39,16 @@ if isempty(p.status.trialsArrayRowsPossible)
 
     % define a vector of booleans to determine which trials will have a
     % free reward after they're completed and which will not:
-    p.status.freeRewardsAvailable = false(p.init.blockLength, 1);
-
-    % how many free rewards per block?
-    nFreeRewards = ceil(p.init.blockLength / 10);
-
-    % pick trials to have free rewards:
-    p.status.freeRewardsAvailable(...
-        randi(p.init.blockLength, [nFreeRewards, 1])) = true;
-
+    if p.trVarsInit.freeRewardProbability > 0
+        p.status.freeRewardsAvailable = false(p.init.blockLength, 1);
+    
+        % how many free rewards per block?
+        nFreeRewards = ceil(p.init.blockLength / 10);
+    
+        % pick trials to have free rewards:
+        p.status.freeRewardsAvailable(...
+            randi(p.init.blockLength, [nFreeRewards, 1])) = true;
+    end
     % define cue arc color proportion based on number of change trials at
     % cued location versus change trials at other locations; note that this
     % assumes the proportion of change trials at the cued location is the
@@ -418,7 +419,6 @@ ringRadPix  = pds.deg2pix(p.draw.ringRadDeg, p);
 if contains(p.init.exptType, 'psycho') || (contains(p.init.exptType, 'learn') && p.trVars.isNoChangeTrial)
     p.draw.cueRingRect = [0 0 0 0];
 else
-    print(p.stim.cueLoc)
     p.draw.cueRingRect = [...
         p.trVars.stimLocCartPix(p.stim.cueLoc, 1) - ringRadPix...
         p.trVars.stimLocCartPix(p.stim.cueLoc, 2) - ringRadPix ...
