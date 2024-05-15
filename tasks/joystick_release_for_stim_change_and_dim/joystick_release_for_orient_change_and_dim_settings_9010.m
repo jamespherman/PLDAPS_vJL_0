@@ -332,7 +332,7 @@ p.trVarsInit.contDelta                = 0.2;      % contrast
 p.trVarsInit.orientDelta              = 45;       % orientation
 p.trVarsInit.freqDelta                = 0.25;     % spatial frequency (cycles per degree)
 p.trVarsInit.satDelta                 = 0.038;    % color saturation
-p.trVarsInit.lumDelta                 = -0.15;     % luminance
+p.trVarsInit.lumDelta                 = 0;     % luminance
 p.trVarsInit.hueDelta                 = 50;       % hue (color angle)
 
 % spatial properties of "checkerboard":
@@ -347,9 +347,9 @@ p.trVarsInit.rewardDurationMs        = 300;      % reward duration
 p.trVarsInit.fix2CueIntvl            = 0.0;      % Time delay between acquiring fixation and cue onset.
 p.trVarsInit.cueDur                  = 0.0;      % Duration of cue presentaiton.
 p.trVarsInit.cue2StimItvl            = 0.35;     % time between cue offset and stimulus onset (stimulus onset asynchrony).
-p.trVarsInit.stim2ChgIntvl           = 0.5;      % minimum time between stimulus onset and change.
-p.trVarsInit.chgWinDur               = 1.5;      % time window during which a change is possible.
-p.trVarsInit.rewardDelay             = 0.65;     % delay between cued change and reward delivery for hits.
+p.trVarsInit.stim2ChgIntvl           = 1;        % minimum time between stimulus onset and change.
+p.trVarsInit.chgWinDur               = 2;        % time window during which a change is possible.
+p.trVarsInit.rewardDelay             = 1;        % delay between cued change and reward delivery for hits.
 p.trVarsInit.joyMinLatency           = 0.2;      % minimum acceptable joystick release latency.
 p.trVarsInit.joyMaxLatency           = 1;        % maximum acceptable joystick release latency.
 p.trVarsInit.timeoutAfterFa          = 1;        % timeout duration following false alarm.
