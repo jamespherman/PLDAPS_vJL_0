@@ -191,6 +191,12 @@ end
 
 % callback function for clear button
 function clearButton_callback(hObject, eventdata)
+
+% find open figure windows (that are not the gui) and close them:
+figWins = findall(0, 'Type', 'Figure');
+delete(figWins(~contains({figWins.Name}, 'PLDAPS_vK2_GUI')));
+
+% close open psychtoolbox windows
 Screen('CloseAll');
 end
 
@@ -469,12 +475,6 @@ else
 end
 drawnow;
 
-% go into the directory containing the currently relevant run-files.
-% First, determine which protocol is presently initialized (pipi :
-% presently initialized protocol index). First get current directory so we
-% can return when done.
-currentDirectory = pwd;
-
 % if the run button is toggled ON, do steps neccessary prior to entering
 % the "run while loop"
 if get(hObject, 'Value')
@@ -487,10 +487,6 @@ if get(hObject, 'Value')
     % menu? (for choosing the directory to CD into for the "run", "next",
     % and "finish" files).
     currentSettingsFileIndex = get(uiData.handles.settingsFilesPopUp, 'value');
-% 
-%     % CD into directory containing settings file & initialization file
-%     % (necessary for eval function).
-%     eval(['cd ' uiData.paths.settingsFilePaths{currentSettingsFileIndex}]);
 
     while uiData.p.runFlag
         
@@ -554,9 +550,6 @@ end
 guidata(hObject, uiData);
 updateStatusValues(uiData);
 drawnow;
-
-% % % go back to original directory
-% % cd(currentDirectory)
 
 end
 
@@ -648,6 +641,12 @@ end
 
 % --- gui closing function
 function guiCloseFunction(hObject, eventdata)
+
+% find open figure windows (that are not the gui) and close them:
+figWins = findall(0, 'Type', 'Figure');
+delete(figWins(~contains({figWins.Name}, 'PLDAPS_vK2_GUI')));
+
+% close open psychtoolbox screen and any movies that might have been loaded
 Screen('CloseAll');
 Screen('CloseMovie');
 end
@@ -856,8 +855,8 @@ uiData.handles.settingsFilesPopUp = uicontrol(...
     'Visible', 'Off', ...
     'Style', 'popupmenu', ...
     'String', {'settings_file1', 'settings_file1'}, ...
-    'FontSize', 16, ...
     'FontUnits', 'normalized', ...
+    'FontSize', 0.25, ...
     'Callback', @settingsFilesPopUp_callback);
 
 % build button to browse for & select settings files
