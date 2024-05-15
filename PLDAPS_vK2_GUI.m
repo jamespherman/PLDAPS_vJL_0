@@ -592,6 +592,7 @@ p = pds.loadP(uiData.p.init.sessionFolder);
 set(uiData.handles.uiStatusString, 'String', 'Saving session data...');
 drawnow;
 
+try
 % save session data
 sessionFileName = [uiData.p.init.outputFolder filesep ...
     uiData.p.init.sessionId '.mat'];
@@ -604,6 +605,9 @@ end
 % tell user we're back to "idle"
 set(uiData.handles.uiStatusString, 'String', 'Idle.');
 drawnow;
+catch me
+    keyboard
+end
 
 end
 

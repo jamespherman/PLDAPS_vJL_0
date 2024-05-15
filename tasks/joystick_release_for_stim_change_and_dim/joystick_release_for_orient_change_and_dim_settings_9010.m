@@ -218,7 +218,7 @@ p.rig.guiVars = {...
     'stim2ChgIntvl'; ...        % 3
     'chgWinDur'; ...            % 4
     'stimLoc1Elev'; ...         % 5
-    'hueDelta'; ...             % 6
+    'orientDelta'; ...          % 6
     'lumDelta'; ...             % 7
     'propHueChgOnly'; ...       % 8
     'joyMinLatency'; ...        % 9
