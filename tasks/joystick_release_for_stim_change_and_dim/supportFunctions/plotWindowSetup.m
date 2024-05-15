@@ -41,22 +41,31 @@ p.draw.onlineCuePerfPlotWindow         = ...
     'NextPlot','add');
 
 if contains(p.init.exptType, 'psycho')
-% make new plotting window for psychometric function estimation plot
-p.draw.OnlinePsychoPlotWindow         = ...
-    figure(...
+    % make new plotting window for psychometric function estimation plot
+    p.draw.OnlinePsychoPlotWindow         = ...
+        figure(...
+        'Position', [1883 8 667 667],...
+        'Name','OnlinePsychoPlotWindow',...
+        'NumberTitle','off',...
+        'Color', 1 * [1 1 1],...
+        'Visible','on',...
+        'NextPlot','add');
+end
+
+p.draw.onlineConfusionPlotWindow = figure(...
     'Position', [1883 8 667 667],...
-    'Name','OnlinePsychoPlotWindow',...
+    'Name','onlineConfusionPlotWindow',...
     'NumberTitle','off',...
-    'Color', 1 * [1 1 1],...
+    'Color', [1 1 1],...
     'Visible','on',...
     'NextPlot','add');
-end
+
 % If we're actually going to use the online plots, we need to create some
 % axes to plot into in the online plot figure window, and graphics object
 % handles for the plots themselves, and we should also show the plotting
 % window:
 if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
-    
+
     % x labels for PSTHs:
     psthXLabel{1} = 'Time from Fixation Onset (s)';
     psthXLabel{2} = 'Time from Stimulus Onset (s)';
@@ -81,28 +90,28 @@ if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
         xlabel(p.draw.psthPlotAxes(i), psthXLabel{i});
     end
     p.draw.psthPlotAxes(6) = axes(...
-            'Parent', p.draw.onlinePlotWindow, ...
-            'Position', [0.52 0.24 0.43 0.15], ...
-            'TickDir', 'Out', ...
-            'LineWidth', 1, ...
-            'XColor', [0 0 0], ...
-            'YColor', [0 0 0], ...
-            'YAxisLocation', 'right', ...
-            'NextPlot', 'add', ...
-            'Visible', 'on');
+        'Parent', p.draw.onlinePlotWindow, ...
+        'Position', [0.52 0.24 0.43 0.15], ...
+        'TickDir', 'Out', ...
+        'LineWidth', 1, ...
+        'XColor', [0 0 0], ...
+        'YColor', [0 0 0], ...
+        'YAxisLocation', 'right', ...
+        'NextPlot', 'add', ...
+        'Visible', 'on');
     xlabel(p.draw.psthPlotAxes(6), psthXLabel{2});
     p.draw.psthPlotAxes(7) = axes(...
-            'Parent', p.draw.onlinePlotWindow, ...
-            'Position', [0.52 0.43 0.43 0.15], ...
-            'TickDir', 'Out', ...
-            'LineWidth', 1, ...
-            'XColor', [0 0 0], ...
-            'YColor', [0 0 0], ...
-            'YAxisLocation', 'right', ...
-            'NextPlot', 'add', ...
-            'Visible', 'on');
+        'Parent', p.draw.onlinePlotWindow, ...
+        'Position', [0.52 0.43 0.43 0.15], ...
+        'TickDir', 'Out', ...
+        'LineWidth', 1, ...
+        'XColor', [0 0 0], ...
+        'YColor', [0 0 0], ...
+        'YAxisLocation', 'right', ...
+        'NextPlot', 'add', ...
+        'Visible', 'on');
     xlabel(p.draw.psthPlotAxes(7), psthXLabel{3});
-    
+
     % Make plot objects for several trial PSTHs:
     % (1) Fixation onset
     % (2) Single stimulus onset (location 1)
@@ -154,7 +163,7 @@ if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
 
     % colors for plots:
     palette = parula(16);
-    
+
     % (1) Fixation onset
     set(p.draw.onlinePlotObj(1), 'Color', 'k', 'Tag', 'Fixation Onset')
 
@@ -189,7 +198,7 @@ if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
     % (9) Stimulus onset (location 4)
     set(p.draw.onlinePlotObj(9), 'Color', palette(14, :), ...
         'Tag', 'Stim Change Loc 4');
-    
+
     % (10) Reward
     set(p.draw.onlinePlotObj(10), 'Color', 'k', 'Tag', 'Reward')
 
@@ -267,7 +276,7 @@ if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
     p.draw.onlinePlotLegend(7).UserData = {'Stim Loc 4 (XX)', ...
         'Stim Loc 3 (XX)', 'Stim Loc 2 (XX)', 'Stim Loc 1 (XX)'};
 
-    % make axes for plotting aggregate performance / reaction time 
+    % make axes for plotting aggregate performance / reaction time
     % data:
     p.draw.onlinePerfPlotAxes = axes(...
         'Parent', p.draw.onlinePerfPlotWindow, ...
@@ -357,7 +366,7 @@ if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
         [0.75 1.25 1.25 0.75 0.75], NaN(1, 5), 0.7*[1 1 1], 'EdgeColor', 'None');
     p.draw.onlineCuePerfPlotObj(1) = plot(p.draw.onlineCuePerfPlotAxes, ...
         [1 1], NaN(1, 2), 'Color', [0 0 0], 'LineWidth', 2);
-    
+
     % plot FillObj and PlotObj for Uncued data
     p.draw.onlineCuePerfFillObj(2) = fill(p.draw.onlineCuePerfPlotAxes, ...
         [1.75 2.25 2.25 1.75 1.75], NaN(1, 5), 0.7*[1 1 1], 'EdgeColor', 'None');
@@ -376,32 +385,32 @@ if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
     xPosCued3 = 1.3;
     xPosUncued3 = 1.5;
     xPosUncued4 = 1.8; % Only uncued
-    
+
     % Initialize YData for the fill objects
     yDataPlaceholder = NaN(1, 5);
-    
+
     % For Location 1 (Cued and Uncued)
     p.draw.onlineSplitCuePerfFillObj(1) = fill(p.draw.onlineSplitCuePerfPlotAxes, [xPosCued1-barHalfWidth, xPosCued1+barHalfWidth, xPosCued1+barHalfWidth, xPosCued1-barHalfWidth, xPosCued1-barHalfWidth], yDataPlaceholder, 0.7*[1 1 1], 'EdgeColor', 'None');
     p.draw.onlineSplitCuePerfPlotObj(1) = plot(p.draw.onlineSplitCuePerfPlotAxes, [xPosCued1, xPosCued1], [NaN, NaN], 'Color', [0 0 0], 'LineWidth', 2);
-    
+
     p.draw.onlineSplitCuePerfFillObj(2) = fill(p.draw.onlineSplitCuePerfPlotAxes, [xPosUncued1-barHalfWidth, xPosUncued1+barHalfWidth, xPosUncued1+barHalfWidth, xPosUncued1-barHalfWidth, xPosUncued1-barHalfWidth], yDataPlaceholder, 0.7*[1 1 1], 'EdgeColor', 'None');
     p.draw.onlineSplitCuePerfPlotObj(2) = plot(p.draw.onlineSplitCuePerfPlotAxes, [xPosUncued1, xPosUncued1], [NaN, NaN], 'Color', [0 0 0], 'LineWidth', 2);
-    
+
     % For Location 2 (Uncued Only)
     p.draw.onlineSplitCuePerfFillObj(3) = fill(p.draw.onlineSplitCuePerfPlotAxes, [xPosUncued2-barHalfWidth, xPosUncued2+barHalfWidth, xPosUncued2+barHalfWidth, xPosUncued2-barHalfWidth, xPosUncued2-barHalfWidth], yDataPlaceholder, 0.7*[1 1 1], 'EdgeColor', 'None');
     p.draw.onlineSplitCuePerfPlotObj(3) = plot(p.draw.onlineSplitCuePerfPlotAxes, [xPosUncued2, xPosUncued2], [NaN, NaN], 'Color', [0 0 0], 'LineWidth', 2);
-    
+
     % For Location 3 (Cued and Uncued)
     p.draw.onlineSplitCuePerfFillObj(4) = fill(p.draw.onlineSplitCuePerfPlotAxes, [xPosCued3-barHalfWidth, xPosCued3+barHalfWidth, xPosCued3+barHalfWidth, xPosCued3-barHalfWidth, xPosCued3-barHalfWidth], yDataPlaceholder, 0.7*[1 1 1], 'EdgeColor', 'None');
     p.draw.onlineSplitCuePerfPlotObj(4) = plot(p.draw.onlineSplitCuePerfPlotAxes, [xPosCued3, xPosCued3], [NaN, NaN], 'Color', [0 0 0], 'LineWidth', 2);
-    
+
     p.draw.onlineSplitCuePerfFillObj(5) = fill(p.draw.onlineSplitCuePerfPlotAxes, [xPosUncued3-barHalfWidth, xPosUncued3+barHalfWidth, xPosUncued3+barHalfWidth, xPosUncued3-barHalfWidth, xPosUncued3-barHalfWidth], yDataPlaceholder, 0.7*[1 1 1], 'EdgeColor', 'None');
     p.draw.onlineSplitCuePerfPlotObj(5) = plot(p.draw.onlineSplitCuePerfPlotAxes, [xPosUncued3, xPosUncued3], [NaN, NaN], 'Color', [0 0 0], 'LineWidth', 2);
-    
+
     % For Location 4 (Uncued Only)
     p.draw.onlineSplitCuePerfFillObj(6) = fill(p.draw.onlineSplitCuePerfPlotAxes, [xPosUncued4-barHalfWidth, xPosUncued4+barHalfWidth, xPosUncued4+barHalfWidth, xPosUncued4-barHalfWidth, xPosUncued4-barHalfWidth], yDataPlaceholder, 0.7*[1 1 1], 'EdgeColor', 'None');
     p.draw.onlineSplitCuePerfPlotObj(6) = plot(p.draw.onlineSplitCuePerfPlotAxes, [xPosUncued4, xPosUncued4], [NaN, NaN], 'Color', [0 0 0], 'LineWidth', 2);
-    
+
     % Update the X-Tick labels
     set(p.draw.onlineSplitCuePerfPlotAxes, 'XTick', [0.6, 1.0, 1.4, 1.8], 'XTickLabel', {'1', '2', '3', '4'});
 
@@ -427,20 +436,53 @@ if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
     p.status.uncuedTotalCount.loc4      = 0;
 
 
-% create psychometric plot objects
+    % create psychometric plot objects
 
-if contains(p.init.exptType, 'psycho')
-    
-    % make accumulator variables for orient delta plot
-    p.status.orientDelta = cell(4, 1);
-    p.status.orientDelta{1} = struct('hitCount', 0, 'totalCount', 0); % min
-    p.status.orientDelta{2} = struct('hitCount', 0, 'totalCount', 0);
-    p.status.orientDelta{3} = struct('hitCount', 0, 'totalCount', 0);
-    p.status.orientDelta{4} = struct('hitCount', 0, 'totalCount', 0); % max
+    if contains(p.init.exptType, 'psycho')
+
+        % make accumulator variables for orient delta plot
+        p.status.orientDelta = cell(4, 1);
+        p.status.orientDelta{1} = struct('hitCount', 0, 'totalCount', 0); % min
+        p.status.orientDelta{2} = struct('hitCount', 0, 'totalCount', 0);
+        p.status.orientDelta{3} = struct('hitCount', 0, 'totalCount', 0);
+        p.status.orientDelta{4} = struct('hitCount', 0, 'totalCount', 0); % max
 
 
-    p.draw.onlinePsychoPerfPlotAxes = axes(...
-        'Parent', p.draw.OnlinePsychoPlotWindow, ...
+        p.draw.onlinePsychoPerfPlotAxes = axes(...
+            'Parent', p.draw.OnlinePsychoPlotWindow, ...
+            'Position', [0.1 0.1 0.875 0.875], ...
+            'TickDir', 'Out', ...
+            'LineWidth', 1, ...
+            'XColor', [0 0 0], ...
+            'YColor', [0 0 0], ...
+            'NextPlot', 'add');
+
+        xlabel(p.draw.onlinePsychoPerfPlotAxes, 'Orient Delta Value', 'FontSize', 16);
+        ylabel(p.draw.onlinePsychoPerfPlotAxes, 'Proportion Correct', 'FontSize', 16);
+
+        % make plot objects for psycho performance data
+        for i = 1:4
+
+            centerX = 1 + (i-1); % calculate center position
+            xFill = [centerX - 0.25, centerX + 0.25, centerX + 0.25, centerX - 0.25, centerX - 0.25];
+            yFill = [0, 0, 1, 1, 0]; % placeholder yFill values (to be updated in updateOnlinePlots)
+
+            % Create the fill object for the current box plot
+            p.draw.onlinePsychoPerfFillObj(i) = fill(p.draw.onlinePsychoPerfPlotAxes, xFill, yFill, 0.7*[1 1 1], 'EdgeColor', 'None');
+            xPlot = [centerX, centerX];
+            yPlot = [0.5, 0.5]; % placeholder
+
+            % create the plot object for the current box plot
+            p.draw.onlinePsychoPerfPlotObj(i) = plot(p.draw.onlinePsychoPerfPlotAxes, xPlot, yPlot, 'Color', [0 0 0], 'LineWidth', 2);
+        end
+
+    end
+
+    % Confusion Matrix Plot
+
+    % Create axes for confusion matrix
+    p.draw.onlineConfusionPlotAxes = axes(...
+        'Parent', p.draw.onlineConfusionPlotWindow, ...
         'Position', [0.1 0.1 0.875 0.875], ...
         'TickDir', 'Out', ...
         'LineWidth', 1, ...
@@ -448,32 +490,34 @@ if contains(p.init.exptType, 'psycho')
         'YColor', [0 0 0], ...
         'NextPlot', 'add');
 
-    xlabel(p.draw.onlinePsychoPerfPlotAxes, 'Orient Delta Value', 'FontSize', 16);
-    ylabel(p.draw.onlinePsychoPerfPlotAxes, 'Proportion Correct', 'FontSize', 16);
+    xlabel(p.draw.onlineConfusionPlotAxes, 'Confusion Matrix Category', 'FontSize', 16);
+    ylabel(p.draw.onlineConfusionPlotAxes, 'Rate', 'FontSize', 16);
 
-    % make plot objects for psycho performance data
+    % Make fill objects
     for i = 1:4
-
-        centerX = 1 + (i-1); % calculate center position
+        centerX = 1 + (i-1);
         xFill = [centerX - 0.25, centerX + 0.25, centerX + 0.25, centerX - 0.25, centerX - 0.25];
         yFill = [0, 0, 1, 1, 0]; % placeholder yFill values (to be updated in updateOnlinePlots)
-        
-        % Create the fill object for the current box plot
-        p.draw.onlinePsychoPerfFillObj(i) = fill(p.draw.onlinePsychoPerfPlotAxes, xFill, yFill, 0.7*[1 1 1], 'EdgeColor', 'None');
-        xPlot = [centerX, centerX];
-        yPlot = [0.5, 0.5]; % placeholder
-        
-        % create the plot object for the current box plot
-        p.draw.onlinePsychoPerfPlotObj(i) = plot(p.draw.onlinePsychoPerfPlotAxes, xPlot, yPlot, 'Color', [0 0 0], 'LineWidth', 2);
+
+        p.draw.onlineConfusionFillObj(i) = fill(p.draw.onlineConfusionPlotAxes, xFill, yFill, 0.7*[1 1 1], 'EdgeColor', 'None');
     end
 
-end
+    % Make plot objects
+    for i = 1:4
+        centerX = 1 + (i-1);
+        xPlot = [centerX, centerX];
+        yPlot = [0, 1];
 
+        p.draw.onlineConfusionPlotObj(i) = plot(p.draw.onlineConfusionPlotAxes, xPlot, yPlot, 'Color', [0 0 0], 'LineWidth', 2, 'Visible', 'on');
+    end
+
+    % Set x-tick labels
+    set(p.draw.onlineConfusionPlotAxes, 'XTick', [1, 2, 3, 4], 'XTickLabel', {'Hit', 'Miss', 'False Alarm', 'Correct Reject'});
 end
 
 %% Reposition GUI window
 % allobj = findall(0);
-% 
+%
 % for i = 1:length(allobj)
 %     if isfield(get(allobj(i)),'Name')
 %         if strfind(get(allobj(i),'Name'),'pldaps')
