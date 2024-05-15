@@ -89,7 +89,7 @@ for i = 1:length(p.draw.psthPlotAxes)
             % what is the trial count for the current plot object? Defining
             % this as a temporary variable lets us keep the code a bit cleaner.
             currCount = p.draw.psthPlotAxes(i).Children(j).UserData.trialCount;
-            
+
             % use "regexprep" to replace the placeholder string 'XX' with the
             % trial count:
             p.draw.onlinePlotLegend(i).String{legIdx} = ...
@@ -113,19 +113,19 @@ if p.trVars.isStimChangeTrial && p.stim.nStim ~= 1
 
     if p.status.chgLoc(end) == 0 % No change trial, skip
 
-    % if it's a cued change trial, add to the total number of cued change
-    % trials    
+        % if it's a cued change trial, add to the total number of cued change
+        % trials
     elseif p.status.chgLoc(end) == p.stim.cueLoc
         p.status.cuedTotalCount.global = p.status.cuedTotalCount.global + 1;
-        
+
         % if it's a correct response, add to the cued hit count
         if p.trData.trialEndState == p.state.hit
             p.status.cuedHitCount.global = p.status.cuedHitCount.global + 1;
         end
 
 
-    % if it's an uncued change trial, add to the total number of uncued
-    % change trials    
+        % if it's an uncued change trial, add to the total number of uncued
+        % change trials
     else
         p.status.uncuedTotalCount.global = p.status.uncuedTotalCount.global + 1;
         if p.trData.trialEndState == p.state.hit
@@ -179,8 +179,8 @@ if p.trVars.isStimChangeTrial && p.stim.nStim ~= 1
     if chgLoc == 0
 
 
-    % if it's a cued change trial, add to the total number of cued change
-    % trials
+        % if it's a cued change trial, add to the total number of cued change
+        % trials
     elseif chgLoc == p.stim.cueLoc
         p.status.cuedTotalCount.global = p.status.cuedTotalCount.global + 1;
         p.status.cuedTotalCount.(['loc' num2str(chgLoc)]) = p.status.cuedTotalCount.(['loc' num2str(chgLoc)]) + 1;
@@ -192,8 +192,8 @@ if p.trVars.isStimChangeTrial && p.stim.nStim ~= 1
         end
 
 
-    % if it's an uncued change trial, add to the total number of uncued
-    % change trials
+        % if it's an uncued change trial, add to the total number of uncued
+        % change trials
     else
         p.status.uncuedTotalCount.global = p.status.uncuedTotalCount.global + 1;
         p.status.uncuedTotalCount.(['loc' num2str(chgLoc)]) = p.status.uncuedTotalCount.(['loc' num2str(chgLoc)]) + 1;
@@ -219,7 +219,7 @@ barHalfWidth = 0.05;
 
 for i = 1:length(xPositions)
     loc = ceil(i / 2); % Determine actual location (1 and 3)
-    
+
     % Check if cued or uncued and assign the correct color
     if loc == 1 && mod(i, 2) == 1 % Cued Location 1
         perfCount = p.status.cuedHitCount.loc1;
@@ -237,10 +237,10 @@ for i = 1:length(xPositions)
 
     [perf, pci] = binofit(perfCount, totalCount);
 
-    fillX = xPositions(i) + barHalfWidth * [-1 1 1 -1 -1];  
+    fillX = xPositions(i) + barHalfWidth * [-1 1 1 -1 -1];
     perfFillY = [pci(1) pci(1) pci(2) pci(2) pci(1)];
 
-    if mod(i, 2) == 1 
+    if mod(i, 2) == 1
         color = cueColor;
     else
         color = uncuedColor;
@@ -269,9 +269,48 @@ hold(p.draw.onlineSplitCuePerfPlotAxes, 'off');
 drawnow;
 
 
+% Confusion matrix plot
+
+% Obtaining values
+totalHits = nnz(ismember(p.status.trialEndStates, 21));
+totalMisses = nnz(ismember(p.status.trialEndStates, 23));
+totalFalseAlarms = nnz(ismember(p.status.trialEndStates, 25));
+totalCorrectRejects = nnz(ismember(p.status.trialEndStates, 22));
+
+% Calculate  hit rate, miss rate, false alarm rate, and correct reject rate
+totalTrials = totalHits + totalMisses + totalFalseAlarms + totalCorrectRejects;
+hitRate = totalHits / totalTrials;
+missRate = totalMisses / totalTrials;
+falseAlarmRate = totalFalseAlarms / totalTrials;
+correctRejectRate = totalCorrectRejects / totalTrials;
+
+% Calculate error bars
+z = 1.96; % 95%
+hitErrorBar = z * sqrt((hitRate * (1 - hitRate)) / totalTrials);
+missErrorBar = z * sqrt((missRate * (1 - missRate)) / totalTrials);
+falseAlarmErrorBar = z * sqrt((falseAlarmRate * (1 - falseAlarmRate)) / totalTrials);
+correctRejectErrorBar = z * sqrt((correctRejectRate * (1 - correctRejectRate)) / totalTrials);
+
+% Update confusion matrix plot data
+confusionRates = [hitRate, missRate, falseAlarmRate, correctRejectRate];
+confusionErrorBars = [hitErrorBar, missErrorBar, falseAlarmErrorBar, correctRejectErrorBar];
+
+for i = 1:4
+    % Update fill object for current box plot
+    yFill = [confusionRates(i) - confusionErrorBars(i), confusionRates(i) - confusionErrorBars(i), ...
+        confusionRates(i) + confusionErrorBars(i), confusionRates(i) + confusionErrorBars(i), ...
+        confusionRates(i) - confusionErrorBars(i)];
+    set(p.draw.onlineConfusionFillObj(i), 'YData', yFill);
+    
+    % Update plot object for current box plot
+    yPlot = [confusionRates(i), confusionRates(i)];
+    set(p.draw.onlineConfusionPlotObj(i), 'YData', yPlot);
+end
+
+
 % Psychometric function estimation plot
 if contains(p.init.exptType, 'psycho')
-    
+
     % Update accumulators
 
     % if it's a no change trial, skip
@@ -292,28 +331,28 @@ if contains(p.init.exptType, 'psycho')
     % Update plot objects
     barHalfWidth = 0.05;
     xPositions = [0.75, 1.25, 1.75, 2.25];
-    
+
     for i = 1:length(p.status.orientDelta)
         % Retrieve performance count and total count for this delta
         perfCount = p.status.orientDelta{i}.hitCount;
         totalCount = p.status.orientDelta{i}.totalCount;
-    
+
         % Compute performance and confidence interval
         [perf, pci] = binofit(perfCount, totalCount);
-    
+
         % Set x positions for the fill objects
         fillX = xPositions(i) + barHalfWidth * [-1 1 1 -1 -1];
-    
+
         % Set Y positions for confidence interval and performance line
         perfFillY = [pci(1) pci(1) pci(2) pci(2) pci(1)];
         perfLineY = [perf perf];
-    
+
         % Update the plot objects for this delta
         set(p.draw.onlinePsychoPerfFillObj(i), 'XData', fillX, 'YData', perfFillY, 'FaceColor', 0.7*[1 1 1]); % Adjust color as needed
         set(p.draw.onlinePsychoPerfPlotObj(i), 'XData', fillX(1:2), 'YData', perfLineY, 'Color', [0 0 0], 'LineWidth', 2); % Adjust color and line width as needed
     end
     try
-    set(p.draw.onlinePsychoPerfPlotAxes, 'XTick', xPositions, 'XTickLabel', {p.stim.deltasArray(1), p.stim.deltasArray(2), p.stim.deltasArray(3), p.stim.deltasArray(4)});
+        set(p.draw.onlinePsychoPerfPlotAxes, 'XTick', xPositions, 'XTickLabel', {p.stim.deltasArray(1), p.stim.deltasArray(2), p.stim.deltasArray(3), p.stim.deltasArray(4)});
     catch me
     end
     % Refresh the plot to show updates
