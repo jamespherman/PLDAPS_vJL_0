@@ -58,6 +58,9 @@ switch p.init.exptType
     case 'joystick_release_for_stim_dim_and_orient_change_learn_cue'
         table = tableDef_stimDimPlusOrientChange_learn_cue;
 
+    case 'joystick_release_for_stim_dim_and_orient_change_learn_chg'
+        table = tableDef_stimDimPlusOrientChange_learn_chg;
+
     case 'joystick_release_for_stim_dim_and_hue_change_TEST'
         table = tableDef_fixAndStimDim_test;
 
@@ -337,7 +340,7 @@ table =         [1   1   1   0   0   0   1   0   1   0   0   0   1   0   1   2  
 end
 
 % Orientation change detection - training
-% Only cued locations will change.
+% Only cued locations will change -- 100% prob. cue.
 
 function table = tableDef_stimDimPlusOrientChange_learn_cue
 table =         [1   1   1   0   0   0   1   0   1   0   0   0   1   0   1   2   23001; % single stimulus at location 1; orientation change at location 1
@@ -373,6 +376,33 @@ table =         [1   1   1   0   0   0   1   0   1   0   0   0   1   0   1   2  
                  3   4   1   1   1   1   0   0   0   0   0   0   0   0   3   1   23222; % four stimuli at all locations; stimulus loc 3 is "primary", no orientation change
                  3   4   1   1   1   1   3   0   1   0   0   0   1   0   4   12  23223; % four stimuli at all locations; stimulus loc 4 is "primary", orientation change at location 3
                  3   4   1   1   1   1   0   0   0   0   0   0   0   0   4   1   23224; % four stimuli at all locations; stimulus loc 4 is "primary", no orientation change
+
+
+                 ];
+end
+
+% Same as learn_cue (above), but only change trials
+% (No no change trials)
+function table = tableDef_stimDimPlusOrientChange_learn_chg
+table =         [1   1   1   0   0   0   1   0   1   0   0   0   1   0   1   2   23001; % single stimulus at location 1; orientation change at location 1
+                 1   1   1   0   0   0   1   0   1   0   0   0   1   0   2   2   23001; % single stimulus at location 1; orientation change at location 1
+                 1   1   1   0   0   0   1   0   1   0   0   0   1   0   3   2   23001; % single stimulus at location 1; orientation change at location 1
+                 1   1   1   0   0   0   1   0   1   0   0   0   1   0   4   2   23001; % single stimulus at location 1; orientation change at location 1
+
+                 1   4   1   1   1   1   1   0   1   0   0   0   1   0   1   12  23301; % four stimuli at all locations; stimulus loc 1 is "primary", orientation change at location 1
+                 1   4   1   1   1   1   1   0   1   0   0   0   1   0   2   12  23203; % four stimuli at all locations; stimulus loc 2 is "primary", orientation change at location 1
+                 1   4   1   1   1   1   1   0   1   0   0   0   1   0   3   12  23205; % four stimuli at all locations; stimulus loc 3 is "primary", orientation change at location 1
+                 1   4   1   1   1   1   1   0   1   0   0   0   1   0   4   12  23207; % four stimuli at all locations; stimulus loc 4 is "primary", orientation change at location 1
+
+                 3   1   0   0   1   0   3   0   1   0   0   0   1   0   1   3   23005; % single stimulus at location 3; orientation change at location 3
+                 3   1   0   0   1   0   3   0   1   0   0   0   1   0   2   3   23005; % single stimulus at location 3; orientation change at location 3
+                 3   1   0   0   1   0   3   0   1   0   0   0   1   0   3   3   23005; % single stimulus at location 3; orientation change at location 3
+                 3   1   0   0   1   0   3   0   1   0   0   0   1   0   4   3   23005; % single stimulus at location 3; orientation change at location 3
+
+                 3   4   1   1   1   1   3   0   1   0   0   0   1   0   1   12  23217; % four stimuli at all locations; stimulus loc 1 is "primary", orientation change at location 3
+                 3   4   1   1   1   1   3   0   1   0   0   0   1   0   2   12  23219; % four stimuli at all locations; stimulus loc 2 is "primary", orientation change at location 3
+                 3   4   1   1   1   1   3   0   1   0   0   0   1   0   3   12  23221; % four stimuli at all locations; stimulus loc 3 is "primary", orientation change at location 3
+                 3   4   1   1   1   1   3   0   1   0   0   0   1   0   4   12  23223; % four stimuli at all locations; stimulus loc 4 is "primary", orientation change at location 3
 
 
                  ];
