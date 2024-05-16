@@ -504,10 +504,11 @@ if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
 
     % Make plot objects
     for i = 1:4
-        centerX = 1 + (i-1);
-        xPlot = [centerX, centerX];
-        yPlot = [0, 1];
-
+        centerY = 0.5; % Set the y-coordinate for the horizontal line
+        xMin = 1 + (i-1) - 0.25; % Set the minimum x-value for the line
+        xMax = 1 + (i-1) + 0.25; % Set the maximum x-value for the line
+        xPlot = [xMin, xMax];
+        yPlot = [centerY, centerY];
         p.draw.onlineConfusionPlotObj(i) = plot(p.draw.onlineConfusionPlotAxes, xPlot, yPlot, 'Color', [0 0 0], 'LineWidth', 2, 'Visible', 'on');
     end
 
