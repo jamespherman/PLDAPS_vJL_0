@@ -8,7 +8,6 @@ function p = updateStatusVariables(p)
 % "negative" dimVal for the purposes of plotting, if this was a no-change
 % trial, instead define the dimVal as 0.
 p.status.trialEndStates(p.status.iTrial)    = p.trData.trialEndState;
-p.status.reactionTimes(p.status.iTrial)     = p.trData.timing.reactionTime;
 
 p.status.chgLoc(p.status.iTrial) = p.stim.stimChgIdx;
 
