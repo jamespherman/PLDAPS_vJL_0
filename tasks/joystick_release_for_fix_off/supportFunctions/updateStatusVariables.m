@@ -9,8 +9,6 @@ function p = updateStatusVariables(p)
 % trial, instead define the dimVal as 0.
 p.status.trialEndStates(p.status.iTrial)    = p.trData.trialEndState;
 
-p.status.chgLoc(p.status.iTrial) = p.stim.stimChgIdx;
-
 % iterate "good trial" count
 p.status.iGoodTrial = p.status.iGoodTrial + double(~p.trData.trialRepeatFlag);
 
