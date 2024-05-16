@@ -463,7 +463,7 @@ if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
         % make plot objects for psycho performance data
         for i = 1:4
 
-            centerX = 1 + (i-1); % calculate center position
+            centerX = 1 + (i-1);
             xFill = [centerX - 0.25, centerX + 0.25, centerX + 0.25, centerX - 0.25, centerX - 0.25];
             yFill = [0, 0, 1, 1, 0]; % placeholder yFill values (to be updated in updateOnlinePlots)
 
@@ -504,9 +504,9 @@ if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
 
     % Make plot objects
     for i = 1:4
-        centerY = 0.5; % Set the y-coordinate for the horizontal line
-        xMin = 1 + (i-1) - 0.25; % Set the minimum x-value for the line
-        xMax = 1 + (i-1) + 0.25; % Set the maximum x-value for the line
+        centerY = 0.5;
+        xMin = 1 + (i-1) - 0.25;
+        xMax = 1 + (i-1) + 0.25;
         xPlot = [xMin, xMax];
         yPlot = [centerY, centerY];
         p.draw.onlineConfusionPlotObj(i) = plot(p.draw.onlineConfusionPlotAxes, xPlot, yPlot, 'Color', [0 0 0], 'LineWidth', 2, 'Visible', 'on');
