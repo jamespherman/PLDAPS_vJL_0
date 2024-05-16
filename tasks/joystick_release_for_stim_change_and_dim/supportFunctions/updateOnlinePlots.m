@@ -301,11 +301,16 @@ for i = 1:4
         confusionRates(i) + confusionErrorBars(i), confusionRates(i) + confusionErrorBars(i), ...
         confusionRates(i) - confusionErrorBars(i)];
     set(p.draw.onlineConfusionFillObj(i), 'YData', yFill);
-    
+
     % Update plot object for current box plot
-    yPlot = [confusionRates(i), confusionRates(i)];
-    set(p.draw.onlineConfusionPlotObj(i), 'YData', yPlot);
+    centerY = confusionRates(i); % Set the y-coordinate to the current confusion rate
+    xMin = 1 + (i-1) - 0.25; % Set the minimum x-value for the line
+    xMax = 1 + (i-1) + 0.25; % Set the maximum x-value for the line
+    xPlot = [xMin, xMax];
+    yPlot = [centerY, centerY];
+    set(p.draw.onlineConfusionPlotObj(i), 'XData', xPlot, 'YData', yPlot);
 end
+drawnow;
 
 
 % Psychometric function estimation plot
