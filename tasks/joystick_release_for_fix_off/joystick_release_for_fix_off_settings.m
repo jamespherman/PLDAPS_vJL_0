@@ -365,7 +365,7 @@ p.init.trDataInitList = {...
     'p.trData.timing.cueChg',           '-1'; ...   % time of cue change
     'p.trData.timing.foilChg',          '-1'; ...   % time of foil change
     'p.trData.timing.noChg',            '-1'; ...   % time of no change
-    'p.trData.timing.brokeFix',         '-1'; ...   % time of fixation break
+    'p.trData.timing.fixBreak',         '-1'; ...   % time of fixation break
     'p.trData.timing.brokeJoy',         '-1'; ...   % time of joystick release
     'p.trData.timing.reward',           '-1'; ...   % time of reward delivery
     'p.trData.timing.tone',             '-1'; ...   % time of audio feedback delivery

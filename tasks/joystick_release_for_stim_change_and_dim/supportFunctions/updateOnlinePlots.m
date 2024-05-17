@@ -278,18 +278,17 @@ totalFalseAlarms = nnz(ismember(p.status.trialEndStates, 25));
 totalCorrectRejects = nnz(ismember(p.status.trialEndStates, 22));
 
 % Calculate  hit rate, miss rate, false alarm rate, and correct reject rate
-totalTrials = totalHits + totalMisses + totalFalseAlarms + totalCorrectRejects;
-hitRate = totalHits / totalTrials;
-missRate = totalMisses / totalTrials;
-falseAlarmRate = totalFalseAlarms / totalTrials;
-correctRejectRate = totalCorrectRejects / totalTrials;
+hitRate = totalHits / (totalHits + totalMisses);
+missRate = totalMisses / (totalHits + totalMisses);
+falseAlarmRate = totalFalseAlarms / (totalCorrectRejects + totalFalseAlarms);
+correctRejectRate = totalCorrectRejects / (totalCorrectRejects + totalFalseAlarms);
 
 % Calculate error bars
 z = 1.96; % 95%
-hitErrorBar = z * sqrt((hitRate * (1 - hitRate)) / totalTrials);
-missErrorBar = z * sqrt((missRate * (1 - missRate)) / totalTrials);
-falseAlarmErrorBar = z * sqrt((falseAlarmRate * (1 - falseAlarmRate)) / totalTrials);
-correctRejectErrorBar = z * sqrt((correctRejectRate * (1 - correctRejectRate)) / totalTrials);
+hitErrorBar = z * sqrt((hitRate * (1 - hitRate)) / (totalHits + totalMisses));
+missErrorBar = z * sqrt((missRate * (1 - missRate)) / (totalHits + totalMisses));
+falseAlarmErrorBar = z * sqrt((falseAlarmRate * (1 - falseAlarmRate)) / (totalCorrectRejects + totalFalseAlarms));
+correctRejectErrorBar = z * sqrt((correctRejectRate * (1 - correctRejectRate)) / (totalCorrectRejects + totalFalseAlarms));
 
 % Update confusion matrix plot data
 confusionRates = [hitRate, missRate, falseAlarmRate, correctRejectRate];

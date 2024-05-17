@@ -83,7 +83,7 @@ WaitSecs(relTime + p.trVars.postRewardDuration - timeNow);
 
 % If this trial has a free inter-trial-interval reward available and didn't
 % end in "repeatFlag", give a free reward:
-if p.trVarsInit.freeRewardProbability > 0 && p.status.freeRewardsAvailable(p.trVars.currentTrialsArrayRow) && ...
+if p.trVars.freeRewardProbability > 0 && p.status.freeRewardsAvailable(p.trVars.currentTrialsArrayRow) && ...
         ~p.trData.trialRepeatFlag
 
     % deliver free reward

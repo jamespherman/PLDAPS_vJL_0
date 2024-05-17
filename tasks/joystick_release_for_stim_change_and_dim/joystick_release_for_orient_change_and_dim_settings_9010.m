@@ -364,11 +364,11 @@ p.trVarsInit.joyReleaseWaitDur       = 5;        % how long to wait after trial 
 
 p.trVarsInit.stimFrameIdx            = 1;        % stimulus (eg dots) frame display index
 p.trVarsInit.flipIdx                 = 1;        % index of
-p.trVarsInit.postRewardDurMin        = 1;      % how long should the trial last AFTER reward delivery at minimum? This lets us record the neuronal response to reward.
+p.trVarsInit.postRewardDurMin        = 1;        % how long should the trial last AFTER reward delivery at minimum? This lets us record the neuronal response to reward.
 p.trVarsInit.postRewardDurMax        = 1.2;      % how long should the trial last AFTER reward delivery at maximum? This lets us record the neuronal response to reward.
 p.trVarsInit.useQuest                = false;    % use "QUEST" to determine next stimulus value?
 p.trVarsInit.numTrialsForPerfCalc    = 100;      % how many of the most recently completed trials should be used to calculate % correct / median RT?
-p.trVarsInit.freeRewardProbability   = 0.1;      % How probable is it that the monkey will get a free reward in between trials?
+p.trVarsInit.freeRewardProbability   = 0;        % How probable is it that the monkey will get a free reward in between trials?
 
 p.trVarsInit.connectRipple           = true;
 p.trVarsInit.rippleChanSelect        = 1;
