@@ -314,15 +314,15 @@ p.trVarsInit.highDimVal          = 0.9;        % high brightness ABOVE backgroun
 
 % Initial / base values for each stimulus feature.
 p.trVarsInit.speedInit                = 0.0;      % initial motion magniutde
-p.trVarsInit.ctrstInit                = 0.375;    % initial contrast
+p.trVarsInit.ctrstInit                = 0.175;    % initial contrast
 p.trVarsInit.orientInit               = 30;       % initial orientation
-p.trVarsInit.freqInit                 = 0.25;     % initial spatial frequency (cycles per degree)
+p.trVarsInit.freqInit                 = 0.225;     % initial spatial frequency (cycles per degree)
 p.trVarsInit.satInit                  = 0.0;      % initial color saturation
-p.trVarsInit.lumInit                  = 0.3;      % initial luminance
+p.trVarsInit.lumInit                  = -0.8;      % initial luminance
 p.trVarsInit.hueInit                  = 20;       % initial hue (color angle)
 
 % Variance of feature dimensions that can be variable in this way:
-p.trVarsInit.orientVar                = 8;        % variability in orientation
+p.trVarsInit.orientVar                = 0;        % variability in orientation
 p.trVarsInit.hueVar                   = 0.00;     % variability in hue (angle)
 p.trVarsInit.lumVar                   = 0.02;     % variability in luminance
 p.trVarsInit.satVar                   = 0.00;     % variability in saturation
@@ -338,7 +338,7 @@ p.trVarsInit.hueDelta                 = 50;       % hue (color angle)
 
 % spatial properties of "checkerboard":
 p.trVarsInit.stimRadius               = 3.25;     % aperture radius in deg
-p.trVarsInit.boxSizePix               = 24;       % diameter of each "check" in pixels
+p.trVarsInit.boxSizePix               = 22;       % diameter of each "check" in pixels
 p.trVarsInit.boxLifetime              = 8;        % "check" lifetime in frames
 p.trVarsInit.nPatches                 = 4;        % number of stimuli 
 p.trVarsInit.nEpochs                  = 2;        % just one "pre-change" and one "post-change" epoch for now
