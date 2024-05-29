@@ -206,7 +206,6 @@ if p.trVars.isStimChangeTrial && p.stim.nStim ~= 1
     end
 end
 
-
 % Update plot objects
 xPosCued1 = 0.5 + 0.2;
 xPosUncued1 = 0.62 + 0.2;
@@ -362,7 +361,35 @@ if contains(p.init.exptType, 'psycho')
     % Refresh the plot to show updates
     drawnow;
 
+end
 
+% Learning curve plot
+
+correctCodes = [21, 22];
+correctTrials = ismember(p.status.trialEndStates, correctCodes);
+
+% Set the desired block size
+block_size = 50;
+
+% Calculate the number of complete blocks
+num_blocks = floor(length(correctTrials) / block_size);
+
+block_accuracy = zeros(num_blocks, 1);
+% Iterate over each block and calculate the accuracy
+for i = 1:num_blocks
+    start_idx = (i - 1) * block_size + 1;
+    end_idx = i * block_size;
+    block_data = correctTrials(start_idx:end_idx);
+    block_accuracy(i) = sum(block_data) / block_size;
+end
+
+% Update the learning curve plot every 100 trials
+if mod(p.status.iTrial, block_size) == 0
+    plot(p.draw.onlineLearningCurveAxes, 1:num_blocks, block_accuracy, 'o-');
+    xlabel(p.draw.onlineLearningCurveAxes, 'Block Number');
+    ylabel(p.draw.onlineLearningCurveAxes, 'Accuracy');
+    title(p.draw.onlineLearningCurveAxes, 'Learning Curve');
+    drawnow;
 end
 
 
