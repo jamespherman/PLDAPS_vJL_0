@@ -416,7 +416,7 @@ end
 ringRadPix  = pds.deg2pix(p.draw.ringRadDeg, p);
 
 
-if contains(p.init.exptType, 'psycho') || (contains(p.init.exptType, 'learn') && p.trVars.isNoChangeTrial)
+if contains(p.init.exptType, 'psycho')
     p.draw.cueRingRect = [0 0 0 0];
 else
     p.draw.cueRingRect = [...
