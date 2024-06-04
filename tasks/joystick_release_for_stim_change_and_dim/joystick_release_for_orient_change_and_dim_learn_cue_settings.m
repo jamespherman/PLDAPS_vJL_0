@@ -346,14 +346,14 @@ p.trVarsInit.nEpochs                  = 2;        % just one "pre-change" and on
 % times/latencies/durations:
 p.trVarsInit.rewardDurationMs        = 350;      % reward duration
 p.trVarsInit.fix2CueIntvl            = 0.3;      % Time delay between acquiring fixation and cue onset.
-p.trVarsInit.cueDur                  = 0.25;     % Duration of cue presentaiton.
+p.trVarsInit.cueDur                  = 0.3;     % Duration of cue presentaiton.
 p.trVarsInit.cue2StimItvl            = 0.3;      % time between cue offset and stimulus onset (stimulus onset asynchrony).
 p.trVarsInit.stim2ChgIntvl           = 1.0;      % minimum time between stimulus onset and change.
-p.trVarsInit.chgWinDur               = 2.0;      % time window during which a change is possible.
+p.trVarsInit.chgWinDur               = 2.25;      % time window during which a change is possible.
 p.trVarsInit.rewardDelay             = 0.65;     % delay between cued change and reward delivery for hits.
 p.trVarsInit.joyMinLatency           = 0.2;      % minimum acceptable joystick release latency.
 p.trVarsInit.joyMaxLatency           = 1;        % maximum acceptable joystick release latency.
-p.trVarsInit.timeoutAfterFa          = 1;        % timeout duration following false alarm.
+p.trVarsInit.timeoutAfterFa          = 2;        % timeout duration following false alarm.
 p.trVarsInit.timeoutAfterFoilFa      = 0;        % timeout duration following false alarm.
 p.trVarsInit.timeoutAfterMiss        = 0;        % timeout duration following miss
 p.trVarsInit.timeoutAfterFixBreak    = 0.1;      % timeout duration following fixation break
