@@ -473,49 +473,48 @@ if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
 
     % Confusion Matrix Plot
 
-    p.draw.onlineConfusionPlotWindow = figure(...
-        'Position', [1883 8 667 667],...
-        'Name','onlineConfusionPlotWindow',...
-        'NumberTitle','off',...
-        'Color', [1 1 1],...
-        'Visible','on',...
-        'NextPlot','add');
+    % Confusion Matrix Plot
+p.draw.onlineConfusionPlotWindow = figure(...
+    'Position', [1883 8 667 667],...
+    'Name','onlineConfusionPlotWindow',...
+    'NumberTitle','off',...
+    'Color', [1 1 1],...
+    'Visible','on',...
+    'NextPlot','add');
 
-    % Create axes for confusion matrix
-    p.draw.onlineConfusionPlotAxes = axes(...
-        'Parent', p.draw.onlineConfusionPlotWindow, ...
-        'Position', [0.1 0.1 0.875 0.875], ...
-        'TickDir', 'Out', ...
-        'LineWidth', 1, ...
-        'XColor', [0 0 0], ...
-        'YColor', [0 0 0], ...
-        'NextPlot', 'add');
+% Create axes for confusion matrix
+p.draw.onlineConfusionPlotAxes = axes(...
+    'Parent', p.draw.onlineConfusionPlotWindow, ...
+    'Position', [0.1 0.1 0.875 0.875], ...
+    'TickDir', 'Out', ...
+    'LineWidth', 1, ...
+    'XColor', [0 0 0], ...
+    'YColor', [0 0 0], ...
+    'NextPlot', 'add');
 
-    xlabel(p.draw.onlineConfusionPlotAxes, 'Confusion Matrix Category', 'FontSize', 16);
-    ylabel(p.draw.onlineConfusionPlotAxes, 'Rate', 'FontSize', 16);
+xlabel(p.draw.onlineConfusionPlotAxes, 'Confusion Matrix Category', 'FontSize', 16);
+ylabel(p.draw.onlineConfusionPlotAxes, 'Rate', 'FontSize', 16);
 
-    % Make fill objects
-    for i = 1:4
-        centerX = 1 + (i-1);
-        xFill = [centerX - 0.25, centerX + 0.25, centerX + 0.25, centerX - 0.25, centerX - 0.25];
-        yFill = [0, 0, 1, 1, 0]; % placeholder yFill values (to be updated in updateOnlinePlots)
+% Make fill objects
+for i = 1:5
+    centerX = 1 + (i-1);
+    xFill = [centerX - 0.25, centerX + 0.25, centerX + 0.25, centerX - 0.25, centerX - 0.25];
+    yFill = [0, 0, 1, 1, 0]; % placeholder yFill values (to be updated in updateOnlinePlots)
+    p.draw.onlineConfusionFillObj(i) = fill(p.draw.onlineConfusionPlotAxes, xFill, yFill, 0.7*[1 1 1], 'EdgeColor', 'None');
+end
 
-        p.draw.onlineConfusionFillObj(i) = fill(p.draw.onlineConfusionPlotAxes, xFill, yFill, 0.7*[1 1 1], 'EdgeColor', 'None');
-    end
+% Make plot objects
+for i = 1:5
+    centerY = 0.5;
+    xMin = 1 + (i-1) - 0.25;
+    xMax = 1 + (i-1) + 0.25;
+    xPlot = [xMin, xMax];
+    yPlot = [centerY, centerY];
+    p.draw.onlineConfusionPlotObj(i) = plot(p.draw.onlineConfusionPlotAxes, xPlot, yPlot, 'Color', [0 0 0], 'LineWidth', 2, 'Visible', 'on');
+end
 
-    % Make plot objects
-    for i = 1:4
-        centerY = 0.5;
-        xMin = 1 + (i-1) - 0.25;
-        xMax = 1 + (i-1) + 0.25;
-        xPlot = [xMin, xMax];
-        yPlot = [centerY, centerY];
-        p.draw.onlineConfusionPlotObj(i) = plot(p.draw.onlineConfusionPlotAxes, xPlot, yPlot, 'Color', [0 0 0], 'LineWidth', 2, 'Visible', 'on');
-    end
-
-    % Set x-tick labels
-    set(p.draw.onlineConfusionPlotAxes, 'XTick', [1, 2, 3, 4], 'XTickLabel', {'Hit', 'Miss', 'False Alarm', 'Correct Reject'});
-
+% Set x-tick labels
+set(p.draw.onlineConfusionPlotAxes, 'XTick', [1, 2, 3, 4, 5], 'XTickLabel', {'Hit', 'Miss', 'Change FA', 'No Change FA', 'Correct Reject'});
 
     % Learning Curve Plot
 
