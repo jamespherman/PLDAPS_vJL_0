@@ -26,17 +26,18 @@ codes.taskCode          = 32000;
 %% holy unique task codes:
 % Each task gets its own unique task code for easy identification. These
 % are the values that are strobed after taskCode is strboed. 
-codes.uniqueTaskCode_mcd        = 32001;
-codes.uniqueTaskCode_gSac    	= 32002;
-codes.uniqueTaskCode_freeView   = 32003;
-codes.uniqueTaskCode_pFix       = 32004;
-codes.uniqueTaskCode_pFixLfp    = 32005;
-codes.uniqueTaskCode_pFixMotDir = 32006;
-codes.uniqueTaskCode_mFlash     = 32007;
-codes.uniqueTaskCode_tod        = 32008;
-codes.uniqueTaskCode_scd        = 32009;
-codes.uniqueTaskCode_nfl        = 32010;
-codes.uniqueTaskCode_gSac_jph  	= 32011;
+codes.uniqueTaskCode_mcd        	= 32001;
+codes.uniqueTaskCode_gSac    		= 32002;
+codes.uniqueTaskCode_freeView   	= 32003;
+codes.uniqueTaskCode_pFix       	= 32004;
+codes.uniqueTaskCode_pFixLfp    	= 32005;
+codes.uniqueTaskCode_pFixMotDir 	= 32006;
+codes.uniqueTaskCode_mFlash     	= 32007;
+codes.uniqueTaskCode_tod        	= 32008;
+codes.uniqueTaskCode_scd        	= 32009;
+codes.uniqueTaskCode_nfl        	= 32010;
+codes.uniqueTaskCode_gSac_jph  		= 32011;
+codes.uniqueTaskCode_gSac_contrast  	= 32012;
 
 %% unique codes that are internal to the 'classyStrobe' function class
 % (see pds.classyStrobe.m for more details)
