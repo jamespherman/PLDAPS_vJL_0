@@ -143,30 +143,37 @@ end
 
 % define colors of backround and target for upcoming trial:
 switch stimConfigIdx
-    case 1
+    case 1 % "high" saliency
         c1 = p.draw.clutIdx.dkl_0;
         c2 = p.draw.clutIdx.dkl_180;
-    case 2
+
+    case 2 % "high" saliency
         c1 = p.draw.clutIdx.dkl_180;
         c2 = p.draw.clutIdx.dkl_0;
-    case 3
+
+    case 3 % "high" saliency
         c1 = p.draw.clutIdx.dkl_90;
         c2 = p.draw.clutIdx.dkl_270;
-    case 4
+
+    case 4 % "high" saliency
         c1 = p.draw.clutIdx.dkl_270;
         c2 = p.draw.clutIdx.dkl_90;
-    case 5
+
+    case 5 % "low" saliency
         c1 = p.draw.clutIdx.dkl_0;
         c2 = p.draw.clutIdx.dkl_45;
-    case 6
-        c1 = p.draw.clutIdx.dkl_0;
-        c2 = p.draw.clutIdx.dkl_315;
-    case 7
+
+    case 6 % "low" saliency
+        c1 = p.draw.clutIdx.dkl_90;
+        c2 = p.draw.clutIdx.dkl_135;
+
+    case 7 % "low" saliency
         c1 = p.draw.clutIdx.dkl_180;
         c2 = p.draw.clutIdx.dkl_225;
-    case 8
-        c1 = p.draw.clutIdx.dkl_180;
-        c2 = p.draw.clutIdx.dkl_135;
+
+    case 8 % "low" saliency
+        c1 = p.draw.clutIdx.dkl_270;
+        c2 = p.draw.clutIdx.dkl_315;
 end
 
 p.draw.color.targ       = c1;
