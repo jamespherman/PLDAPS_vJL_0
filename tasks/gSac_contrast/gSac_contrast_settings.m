@@ -225,8 +225,8 @@ p.trVarsInit.setTargLocViaTrialArray    = true;
 p.trVarsInit.propVis             = 0;    % proportion of visually-guided saccades out of the total (i.e. propMem would equal 1 - pVis )
 p.trVarsInit.fixDegX             = 0;    % fixation X location in degrees
 p.trVarsInit.fixDegY             = 0;    % fixation Y location in degrees
-p.trVarsInit.targDegX            = -10;  % default target X location if one isn't specified by other means
-p.trVarsInit.targDegY            = 5;    % default target Y location if one isn't specified by other means
+p.trVarsInit.targDegX            = -12;  % default target X location if one isn't specified by other means
+p.trVarsInit.targDegY            = 0;    % default target Y location if one isn't specified by other means
 
 % times/latencies/durations:
 p.trVarsInit.rewardDurationMs        = 180;      % reward duration
@@ -280,6 +280,8 @@ p.trVarsInit.targWinWidthDeg      = 8;        % target window width in degrees
 p.trVarsInit.targWinHeightDeg     = 8;        % target window height in degrees
 p.trVarsInit.targWidth            = 12;       % fixation point indicator line width in pixels
 p.trVarsInit.targRadius           = 16;       % fixation point "radius" in pixels
+
+p.trVarsInit.stimConfigIdx        = 0;      % integer indicating which target / background color configuration is used on the current trial
 
 % I don't think I need to carry these around in 'p'....
 % can't I just define them in the 'run' worksapce and forget avbout them?
@@ -487,6 +489,7 @@ p.init.strobeList = {...
     'rewardDuration', 'p.trVars.rewardDurationMs'; ...
     'trialCount', 'p.status.iTrial'; ...
     'goodTrialCount', 'p.status.iGoodTrial'; ...
+    'p.init.trialsArray(p.trVars.currentTrialsArrayRow, strcmp(p.init.trialArrayColumnNames, ''trialCode''))',  'trialCode'; ...
     };
 
 

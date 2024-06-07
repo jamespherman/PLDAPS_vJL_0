@@ -135,14 +135,15 @@ end
 % assuming we're using the trials array, determine which stimulus
 % configuration (target and background color) we're using in this trial:
 if p.trVars.setTargLocViaTrialArray
-    stimConfigIdx = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
+    p.trVars.stimConfigIdx = p.init.trialsArray(...
+        p.trVars.currentTrialsArrayRow, ...
     strcmp(p.init.trialArrayColumnNames, 'tgtBkgndCond'));
 else
-    stimConfigIdx = randi(8);
+    p.trVars.stimConfigIdx = randi(8);
 end
 
 % define colors of backround and target for upcoming trial:
-switch stimConfigIdx
+switch p.trVars.stimConfigIdx
     case 1 % "high" saliency
         c1 = p.draw.clutIdx.dkl_0;
         c2 = p.draw.clutIdx.dkl_180;

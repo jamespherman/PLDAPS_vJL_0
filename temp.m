@@ -2,8 +2,8 @@
 % clear workspace and close open figure windows
 
 % load data
-load(['/home/herman_lab/Documents/PLDAPS_vK2_MASTER/output/' ...
-    '20240605_t1001_joystick_release_for_stim_change_and_dim.mat'])
+load(['/home/herman_lab/OneDrive/Behavioral Data/' ...
+    '20240606_t1004_joystick_release_for_stim_change_and_dim.mat'])
 
 % close open figure windows AGAIN
 
@@ -54,6 +54,9 @@ plot([1 1] * (mean(stimOnTime(cueChgFa) - fixAqTime(cueChgFa)) + ...
 legObj = legend('stim On', 'joy rel', 'plan chg', 'plan stim off', ...
     'FontSize', 16, 'Box', 'Off', 'Location', 'Best');
 
+% title:
+title('cued change')
+
 % get axes limits to plot matching histograms:
 xLims = xlim;
 
@@ -99,6 +102,9 @@ plot([1 1] * (mean(stimOnTime(noChgFa) - fixAqTime(noChgFa)) + ...
 % legend:
 legObj = legend('stim On', 'joy rel', 'plan chg', 'plan stim off', ...
     'FontSize', 16, 'Box', 'Off', 'Location', 'Best');
+
+% title:
+title('NO change')
 
 % get axes limits to plot matching histograms:
 xLims = xlim;

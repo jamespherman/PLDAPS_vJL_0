@@ -10,7 +10,7 @@ function p = initTrialStructure(p)
 
 % column descriptions
 p.init.trialArrayColumnNames = {'targetLocIdx', 'tgtBkgndCond', ...
-    'highLowRwd', 'numTrials', 'stimcode'};
+    'highLowRwd', 'numTrials', 'trialCode'};
 
 % table definition
 switch p.init.exptType
