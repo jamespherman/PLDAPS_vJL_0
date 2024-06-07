@@ -59,7 +59,7 @@ p.init.rigConfigFile     = which(['rigConfigFiles.rigConfig_rig' ...
 
 %% define task name and related files:
 
-p.init.exptType         = 'joystick_release_for_stim_dim_and_orient_change_learn_cue';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
+p.init.exptType         = 'joystick_release_for_stim_dim_and_orient_change_learn_cue_multi';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
 
 p.init.taskName         = 'joystick_release_for_stim_change_and_dim';
 p.init.taskType         = 1;                            % poorly defined numerical index for the task "type"
@@ -179,6 +179,12 @@ p.status.cue2CtLoc1                 = 0; % count of two patch cue change trials 
 p.status.foil2CtLoc1                = 0; % count of two patch foil change trials at location 1
 p.status.cue2CtLoc2                 = 0; % count of two patch cue change trials at location 2
 p.status.foil2CtLoc2                = 0; % count of two patch foil change trials at location 2
+
+p.status.totalHits                  = 0; % count of correct rejects
+p.status.totalMisses                = 0; % count of misses
+p.status.totalChangeFalseAlarms     = 0; % count of change FAs
+p.status.totalNoChangeFalseAlarms   = 0; % count of no change FAs
+p.status.totalCorrectRejects        = 0; % count of correct rejects
 
 p.status.missedFrames               = 0; % count of missed frames as reported by psychtoolbox
 p.status.freeRwdRand                = 0; % random number drawn for deciding whether or not to deliver free reward

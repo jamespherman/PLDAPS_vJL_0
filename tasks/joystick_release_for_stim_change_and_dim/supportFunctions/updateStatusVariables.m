@@ -51,6 +51,21 @@ switch p.stim.nStim
         end
 end
 
+switch p.trData.trialEndState
+    case p.state.hit
+        p.status.totalHits = p.status.totalHits + 1;
+    case p.state.miss
+        p.status.totalMisses = p.status.totalMisses + 1;
+    case p.state.fa
+        if p.trVars.isStimChangeTrial
+            p.status.totalChangeFalseAlarms = p.status.totalChangeFalseAlarms + 1;
+        else
+            p.status.totalNoChangeFalseAlarms = p.status.totalNoChangeFalseAlarms + 1;
+        end
+    case p.state.cr
+        p.status.totalCorrectRejects = p.status.totalCorrectRejects + 1;
+end
+
 % % was the last trial a "two patch" trial?
 % twoPatch    = p.trVars.cueOn & p.trVars.foilOn;
 % 

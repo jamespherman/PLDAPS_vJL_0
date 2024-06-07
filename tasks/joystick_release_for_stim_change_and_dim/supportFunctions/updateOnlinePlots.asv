@@ -273,17 +273,17 @@ drawnow;
 % Calculate hit rate, miss rate, change false alarm rate, no change false alarm rate, and correct reject rate
 hitRate = p.status.totalHits / (p.status.totalHits + p.status.totalMisses);
 missRate = p.status.totalMisses / (p.status.totalHits + p.status.totalMisses);
-changeFalseAlarmRate = p.status.totalChangeFalseAlarms / (p.status.totalHits + p.status.totalMisses + p.status.totalChangeFalseAlarms);
-noChangeFalseAlarmRate = p.status.totalNoChangeFalseAlarms / (p.status.totalCorrectRejects + p.status.totalNoChangeFalseAlarms);
-correctRejectRate = p.status.totalCorrectRejects / (p.status.totalCorrectRejects + p.status.totalNoChangeFalseAlarms);
+changeFalseAlarmRate = totalChangeFalseAlarms / (totalHits + totalMisses + totalChangeFalseAlarms);
+noChangeFalseAlarmRate = totalNoChangeFalseAlarms / (totalCorrectRejects + totalNoChangeFalseAlarms);
+correctRejectRate = totalCorrectRejects / (totalCorrectRejects + totalNoChangeFalseAlarms);
 
 % Calculate error bars
 z = 1.96; % 95%
-hitErrorBar = z * sqrt((hitRate * (1 - hitRate)) / (p.status.totalHits + p.status.totalMisses));
-missErrorBar = z * sqrt((missRate * (1 - missRate)) / (p.status.totalHits + p.status.totalMisses));
-changeFalseAlarmErrorBar = z * sqrt((changeFalseAlarmRate * (1 - changeFalseAlarmRate)) / (p.status.totalHits + p.status.totalMisses + p.status.totalChangeFalseAlarms));
-noChangeFalseAlarmErrorBar = z * sqrt((noChangeFalseAlarmRate * (1 - noChangeFalseAlarmRate)) / (p.status.totalCorrectRejects + p.status.totalNoChangeFalseAlarms));
-correctRejectErrorBar = z * sqrt((correctRejectRate * (1 - correctRejectRate)) / (p.status.totalCorrectRejects + p.status.totalNoChangeFalseAlarms));
+hitErrorBar = z * sqrt((hitRate * (1 - hitRate)) / (totalHits + totalMisses));
+missErrorBar = z * sqrt((missRate * (1 - missRate)) / (totalHits + totalMisses));
+changeFalseAlarmErrorBar = z * sqrt((changeFalseAlarmRate * (1 - changeFalseAlarmRate)) / (totalHits + totalMisses + totalChangeFalseAlarms));
+noChangeFalseAlarmErrorBar = z * sqrt((noChangeFalseAlarmRate * (1 - noChangeFalseAlarmRate)) / (totalCorrectRejects + totalNoChangeFalseAlarms));
+correctRejectErrorBar = z * sqrt((correctRejectRate * (1 - correctRejectRate)) / (totalCorrectRejects + totalNoChangeFalseAlarms));
 
 % Update confusion matrix plot data
 confusionRates = [hitRate, missRate, changeFalseAlarmRate, noChangeFalseAlarmRate, correctRejectRate];
