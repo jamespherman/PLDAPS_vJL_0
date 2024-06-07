@@ -270,27 +270,20 @@ drawnow;
 
 % Confusion matrix plot
 
-% Obtaining values
-totalHits = nnz(ismember(p.status.trialEndStates, 21));
-totalMisses = nnz(ismember(p.status.trialEndStates, 23));
-totalChangeFalseAlarms = nnz(ismember(p.status.trialEndStates, 25) & p.trVars.isStimChangeTrial == 1);
-totalNoChangeFalseAlarms = nnz(ismember(p.status.trialEndStates, 25) & p.trVars.isStimChangeTrial == 0);
-totalCorrectRejects = nnz(ismember(p.status.trialEndStates, 22));
-
 % Calculate hit rate, miss rate, change false alarm rate, no change false alarm rate, and correct reject rate
-hitRate = totalHits / (totalHits + totalMisses + totalChangeFalseAlarms);
-missRate = totalMisses / (totalHits + totalMisses + totalChangeFalseAlarms);
-changeFalseAlarmRate = totalChangeFalseAlarms / (totalHits + totalMisses + totalChangeFalseAlarms);
-noChangeFalseAlarmRate = totalNoChangeFalseAlarms / (totalCorrectRejects + totalNoChangeFalseAlarms);
-correctRejectRate = totalCorrectRejects / (totalCorrectRejects + totalNoChangeFalseAlarms);
+hitRate = p.status.totalHits / (p.status.totalHits + p.status.totalMisses);
+missRate = p.status.totalMisses / (p.status.totalHits + p.status.totalMisses);
+changeFalseAlarmRate = p.status.totalChangeFalseAlarms / (p.status.totalHits + p.status.totalMisses + p.status.totalChangeFalseAlarms);
+noChangeFalseAlarmRate = p.status.totalNoChangeFalseAlarms / (p.status.totalCorrectRejects + p.status.totalNoChangeFalseAlarms);
+correctRejectRate = p.status.totalCorrectRejects / (p.status.totalCorrectRejects + p.status.totalNoChangeFalseAlarms);
 
 % Calculate error bars
 z = 1.96; % 95%
-hitErrorBar = z * sqrt((hitRate * (1 - hitRate)) / (totalHits + totalMisses + totalChangeFalseAlarms));
-missErrorBar = z * sqrt((missRate * (1 - missRate)) / (totalHits + totalMisses));
-changeFalseAlarmErrorBar = z * sqrt((changeFalseAlarmRate * (1 - changeFalseAlarmRate)) / (totalHits + totalMisses + totalChangeFalseAlarms));
-noChangeFalseAlarmErrorBar = z * sqrt((noChangeFalseAlarmRate * (1 - noChangeFalseAlarmRate)) / (totalCorrectRejects + totalNoChangeFalseAlarms));
-correctRejectErrorBar = z * sqrt((correctRejectRate * (1 - correctRejectRate)) / (totalCorrectRejects + totalNoChangeFalseAlarms));
+hitErrorBar = z * sqrt((hitRate * (1 - hitRate)) / (p.status.totalHits + p.status.totalMisses));
+missErrorBar = z * sqrt((missRate * (1 - missRate)) / (p.status.totalHits + p.status.totalMisses));
+changeFalseAlarmErrorBar = z * sqrt((changeFalseAlarmRate * (1 - changeFalseAlarmRate)) / (p.status.totalHits + p.status.totalMisses + p.status.totalChangeFalseAlarms));
+noChangeFalseAlarmErrorBar = z * sqrt((noChangeFalseAlarmRate * (1 - noChangeFalseAlarmRate)) / (p.status.totalCorrectRejects + p.status.totalNoChangeFalseAlarms));
+correctRejectErrorBar = z * sqrt((correctRejectRate * (1 - correctRejectRate)) / (p.status.totalCorrectRejects + p.status.totalNoChangeFalseAlarms));
 
 % Update confusion matrix plot data
 confusionRates = [hitRate, missRate, changeFalseAlarmRate, noChangeFalseAlarmRate, correctRejectRate];
@@ -311,7 +304,9 @@ for i = 1:5
     yPlot = [centerY, centerY];
     set(p.draw.onlineConfusionPlotObj(i), 'XData', xPlot, 'YData', yPlot);
 end
-
+hold on;
+ylim([0 1]);
+hold off;
 drawnow;
 
 
