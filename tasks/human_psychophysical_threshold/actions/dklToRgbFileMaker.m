@@ -9,8 +9,7 @@ close all
 displayName = 'BENQ';
 
 % load "colorData"
-dataDir = '/home/jph/Documents/PLDAPS_vJL_0/output/';
-dataFile = '20240313_t1546_human_psychophysical_threshold_x1Data.mat';
+[dataFile, dataDir] = uigetfile('*_x1Data.mat', 'Pick a photometer measurement file');
 load([dataDir dataFile]);
 
 % get maximum and minimum luminance values for each "gun":
