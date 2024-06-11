@@ -60,7 +60,6 @@ p.init.rigConfigFile     = which(['rigConfigFiles.rigConfig_rig' ...
 %% define task name and related files:
 
 p.init.exptType         = 'joystick_release_for_stim_dim_and_orient_change_learn_cue_multi';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
-
 p.init.taskName         = 'joystick_release_for_stim_change_and_dim';
 p.init.taskType         = 1;                            % poorly defined numerical index for the task "type"
 p.init.pldapsFolder     = pwd;                          % pldaps gui takes us to taks folder automatically once we choose a settings file

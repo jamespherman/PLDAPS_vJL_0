@@ -5,8 +5,9 @@ function p                      = initClut(p)
 % also define variables as pointers to certain colors (for ease of
 % reference in other places).
 
-% initialize DKL conversion variables`
-initmon('LUTvpixx');
+% initialize DKL conversion variables
+p.init.initMonFile = ['LUT_VPIXX_rig' p.init.pcName(end-1)];
+initmon(p.init.initMonFile);
 
 % set Background color to dark gray.
 [bgRGB(1), bgRGB(2), bgRGB(3)] = dkl2rgb([-0.8 0 0]');
