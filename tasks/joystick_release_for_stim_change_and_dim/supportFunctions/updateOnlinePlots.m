@@ -183,12 +183,12 @@ if p.trVars.isStimChangeTrial && p.stim.nStim ~= 1
         % trials
     elseif chgLoc == p.stim.cueLoc
         p.status.cuedTotalCount.global = p.status.cuedTotalCount.global + 1;
-        p.status.cuedTotalCount.(['loc' num2str(chgLoc)]) = p.status.cuedTotalCount.(['loc' num2str(chgLoc)]) + 1;
+        % p.status.cuedTotalCount.(['loc' num2str(chgLoc)]) = p.status.cuedTotalCount.(['loc' num2str(chgLoc)]) + 1;
 
         % if it's a correct response, add to the cued hit count
         if isHit
             p.status.cuedHitCount.global = p.status.cuedHitCount.global + 1;
-            p.status.cuedHitCount.(['loc' num2str(chgLoc)]) = p.status.cuedHitCount.(['loc' num2str(chgLoc)]) + 1;
+            % p.status.cuedHitCount.(['loc' num2str(chgLoc)]) = p.status.cuedHitCount.(['loc' num2str(chgLoc)]) + 1;
         end
 
 
@@ -196,12 +196,12 @@ if p.trVars.isStimChangeTrial && p.stim.nStim ~= 1
         % change trials
     else
         p.status.uncuedTotalCount.global = p.status.uncuedTotalCount.global + 1;
-        p.status.uncuedTotalCount.(['loc' num2str(chgLoc)]) = p.status.uncuedTotalCount.(['loc' num2str(chgLoc)]) + 1;
+        % p.status.uncuedTotalCount.(['loc' num2str(chgLoc)]) = p.status.uncuedTotalCount.(['loc' num2str(chgLoc)]) + 1;
 
         % if it's a correct response, add to the uncued hit count
         if isHit
             p.status.uncuedHitCount.global = p.status.uncuedHitCount.global + 1;
-            p.status.uncuedHitCount.(['loc' num2str(chgLoc)]) = p.status.uncuedHitCount.(['loc' num2str(chgLoc)]) + 1;
+            % p.status.uncuedHitCount.(['loc' num2str(chgLoc)]) = p.status.uncuedHitCount.(['loc' num2str(chgLoc)]) + 1;
         end
     end
 end
@@ -368,7 +368,7 @@ correctCodes = [21, 22];
 correctTrials = ismember(p.status.trialEndStates, correctCodes);
 
 % Set the desired block size
-block_size = 50;
+block_size = 60;
 
 % Calculate the number of complete blocks
 num_blocks = floor(length(correctTrials) / block_size);

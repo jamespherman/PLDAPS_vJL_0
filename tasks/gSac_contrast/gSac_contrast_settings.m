@@ -492,8 +492,4 @@ p.init.strobeList = {...
     'trialCode',        'p.init.trialsArray(p.trVars.currentTrialsArrayRow, find(strcmp(p.init.trialArrayColumnNames, ''trialCode'')))' ...
 };
 
-<<<<<<< HEAD
 end
-=======
-end
->>>>>>> 77706fe8ce840436ddfd71b442fd570468ca7926
