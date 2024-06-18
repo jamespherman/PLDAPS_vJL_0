@@ -327,11 +327,15 @@ if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
         'NextPlot', 'add');
 
     % add X/Y axis labels
-    xlabel(p.draw.onlineCuePerfPlotAxes, 'Stimulus Change Type', 'FontSize', 16);
-    ylabel(p.draw.onlineCuePerfPlotAxes, 'Proportion Correct', 'FontSize', 16);
+    xlabel(p.draw.onlineCuePerfPlotAxes, ...
+        'Stimulus Change Type', 'FontSize', 16);
+    ylabel(p.draw.onlineCuePerfPlotAxes, ...
+        'Proportion Correct', 'FontSize', 16);
 
-    xlabel(p.draw.onlineSplitCuePerfPlotAxes, 'Stimulus Location', 'FontSize', 16);
-    ylabel(p.draw.onlineSplitCuePerfPlotAxes, 'Proportion Correct', 'FontSize', 16);
+    xlabel(p.draw.onlineSplitCuePerfPlotAxes, ...
+        'Stimulus Location', 'FontSize', 16);
+    ylabel(p.draw.onlineSplitCuePerfPlotAxes, ...
+        'Proportion Correct', 'FontSize', 16);
 
 
     % make plot objects for cue performance data
@@ -345,13 +349,15 @@ if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
 
     % plot FillObj and PlotObj for Cued data
     p.draw.onlineCuePerfFillObj(1) = fill(p.draw.onlineCuePerfPlotAxes, ...
-        [0.75 1.25 1.25 0.75 0.75], NaN(1, 5), 0.7*[1 1 1], 'EdgeColor', 'None');
+        [0.75 1.25 1.25 0.75 0.75], NaN(1, 5), 0.7*[1 1 1], ...
+        'EdgeColor', 'None');
     p.draw.onlineCuePerfPlotObj(1) = plot(p.draw.onlineCuePerfPlotAxes, ...
         [1 1], NaN(1, 2), 'Color', [0 0 0], 'LineWidth', 2);
 
     % plot FillObj and PlotObj for Uncued data
     p.draw.onlineCuePerfFillObj(2) = fill(p.draw.onlineCuePerfPlotAxes, ...
-        [1.75 2.25 2.25 1.75 1.75], NaN(1, 5), 0.7*[1 1 1], 'EdgeColor', 'None');
+        [1.75 2.25 2.25 1.75 1.75], NaN(1, 5), 0.7*[1 1 1], ...
+        'EdgeColor', 'None');
     p.draw.onlineCuePerfPlotObj(2) = plot(p.draw.onlineCuePerfPlotAxes, ...
         [2 2], NaN(1, 2), 'Color', [0 0 0], 'LineWidth', 2);
 
@@ -371,29 +377,66 @@ if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
     yDataPlaceholder = NaN(1, 5);
 
     % For Location 1 (Cued and Uncued)
-    p.draw.onlineSplitCuePerfFillObj(1) = fill(p.draw.onlineSplitCuePerfPlotAxes, [xPosCued1-barHalfWidth, xPosCued1+barHalfWidth, xPosCued1+barHalfWidth, xPosCued1-barHalfWidth, xPosCued1-barHalfWidth], yDataPlaceholder, 0.7*[1 1 1], 'EdgeColor', 'None');
-    p.draw.onlineSplitCuePerfPlotObj(1) = plot(p.draw.onlineSplitCuePerfPlotAxes, [xPosCued1, xPosCued1], [NaN, NaN], 'Color', [0 0 0], 'LineWidth', 2);
+    p.draw.onlineSplitCuePerfFillObj(1) = ...
+        fill(p.draw.onlineSplitCuePerfPlotAxes, ...
+        xPosCued1 + barHalfWidth * [-1 1 1 -1 -1], ...
+        yDataPlaceholder, 0.7*[1 1 1], 'EdgeColor', 'None');
+    p.draw.onlineSplitCuePerfPlotObj(1) = ...
+        plot(p.draw.onlineSplitCuePerfPlotAxes, ...
+        [xPosCued1, xPosCued1], [NaN, NaN], ...
+        'Color', [0 0 0], 'LineWidth', 2);
 
-    p.draw.onlineSplitCuePerfFillObj(2) = fill(p.draw.onlineSplitCuePerfPlotAxes, [xPosUncued1-barHalfWidth, xPosUncued1+barHalfWidth, xPosUncued1+barHalfWidth, xPosUncued1-barHalfWidth, xPosUncued1-barHalfWidth], yDataPlaceholder, 0.7*[1 1 1], 'EdgeColor', 'None');
-    p.draw.onlineSplitCuePerfPlotObj(2) = plot(p.draw.onlineSplitCuePerfPlotAxes, [xPosUncued1, xPosUncued1], [NaN, NaN], 'Color', [0 0 0], 'LineWidth', 2);
+    p.draw.onlineSplitCuePerfFillObj(2) = ...
+        fill(p.draw.onlineSplitCuePerfPlotAxes, ...
+        xPosUncued1 + barHalfWidth * [-1 1 1 -1 -1], ...
+        yDataPlaceholder, 0.7*[1 1 1], 'EdgeColor', 'None');
+    p.draw.onlineSplitCuePerfPlotObj(2) = ...
+        plot(p.draw.onlineSplitCuePerfPlotAxes, ...
+        [xPosUncued1, xPosUncued1], [NaN, NaN], ...
+        'Color', [0 0 0], 'LineWidth', 2);
 
     % For Location 2 (Uncued Only)
-    p.draw.onlineSplitCuePerfFillObj(3) = fill(p.draw.onlineSplitCuePerfPlotAxes, [xPosUncued2-barHalfWidth, xPosUncued2+barHalfWidth, xPosUncued2+barHalfWidth, xPosUncued2-barHalfWidth, xPosUncued2-barHalfWidth], yDataPlaceholder, 0.7*[1 1 1], 'EdgeColor', 'None');
-    p.draw.onlineSplitCuePerfPlotObj(3) = plot(p.draw.onlineSplitCuePerfPlotAxes, [xPosUncued2, xPosUncued2], [NaN, NaN], 'Color', [0 0 0], 'LineWidth', 2);
+    p.draw.onlineSplitCuePerfFillObj(3) = ...
+        fill(p.draw.onlineSplitCuePerfPlotAxes, ...
+        xPosUncued2 + barHalfWidth * [-1 1 1 -1 -1], ...
+        yDataPlaceholder, 0.7*[1 1 1], 'EdgeColor', 'None');
+    p.draw.onlineSplitCuePerfPlotObj(3) = ...
+        plot(p.draw.onlineSplitCuePerfPlotAxes, ...
+        [xPosUncued2, xPosUncued2], [NaN, NaN], ...
+        'Color', [0 0 0], 'LineWidth', 2);
 
     % For Location 3 (Cued and Uncued)
-    p.draw.onlineSplitCuePerfFillObj(4) = fill(p.draw.onlineSplitCuePerfPlotAxes, [xPosCued3-barHalfWidth, xPosCued3+barHalfWidth, xPosCued3+barHalfWidth, xPosCued3-barHalfWidth, xPosCued3-barHalfWidth], yDataPlaceholder, 0.7*[1 1 1], 'EdgeColor', 'None');
-    p.draw.onlineSplitCuePerfPlotObj(4) = plot(p.draw.onlineSplitCuePerfPlotAxes, [xPosCued3, xPosCued3], [NaN, NaN], 'Color', [0 0 0], 'LineWidth', 2);
+    p.draw.onlineSplitCuePerfFillObj(4) = ...
+        fill(p.draw.onlineSplitCuePerfPlotAxes, ...
+        xPosCued3 + barHalfWidth * [-1 1 1 -1 -1], ...
+        yDataPlaceholder, 0.7*[1 1 1], 'EdgeColor', 'None');
+    p.draw.onlineSplitCuePerfPlotObj(4) = ...
+        plot(p.draw.onlineSplitCuePerfPlotAxes, ...
+        [xPosCued3, xPosCued3], [NaN, NaN], ...
+        'Color', [0 0 0], 'LineWidth', 2);
 
-    p.draw.onlineSplitCuePerfFillObj(5) = fill(p.draw.onlineSplitCuePerfPlotAxes, [xPosUncued3-barHalfWidth, xPosUncued3+barHalfWidth, xPosUncued3+barHalfWidth, xPosUncued3-barHalfWidth, xPosUncued3-barHalfWidth], yDataPlaceholder, 0.7*[1 1 1], 'EdgeColor', 'None');
-    p.draw.onlineSplitCuePerfPlotObj(5) = plot(p.draw.onlineSplitCuePerfPlotAxes, [xPosUncued3, xPosUncued3], [NaN, NaN], 'Color', [0 0 0], 'LineWidth', 2);
+    p.draw.onlineSplitCuePerfFillObj(5) = ...
+        fill(p.draw.onlineSplitCuePerfPlotAxes, ...
+        xPosUncued3 + barHalfWidth * [-1 1 1 -1 -1], ...
+        yDataPlaceholder, 0.7*[1 1 1], 'EdgeColor', 'None');
+    p.draw.onlineSplitCuePerfPlotObj(5) = ...
+        plot(p.draw.onlineSplitCuePerfPlotAxes, ...
+        [xPosUncued3, xPosUncued3], [NaN, NaN], ...
+        'Color', [0 0 0], 'LineWidth', 2);
 
     % For Location 4 (Uncued Only)
-    p.draw.onlineSplitCuePerfFillObj(6) = fill(p.draw.onlineSplitCuePerfPlotAxes, [xPosUncued4-barHalfWidth, xPosUncued4+barHalfWidth, xPosUncued4+barHalfWidth, xPosUncued4-barHalfWidth, xPosUncued4-barHalfWidth], yDataPlaceholder, 0.7*[1 1 1], 'EdgeColor', 'None');
-    p.draw.onlineSplitCuePerfPlotObj(6) = plot(p.draw.onlineSplitCuePerfPlotAxes, [xPosUncued4, xPosUncued4], [NaN, NaN], 'Color', [0 0 0], 'LineWidth', 2);
+    p.draw.onlineSplitCuePerfFillObj(6) = ...
+        fill(p.draw.onlineSplitCuePerfPlotAxes, ...
+        xPosUncued4 + barHalfWidth * [-1 1 1 -1 -1], ...
+        yDataPlaceholder, 0.7*[1 1 1], 'EdgeColor', 'None');
+    p.draw.onlineSplitCuePerfPlotObj(6) = ...
+        plot(p.draw.onlineSplitCuePerfPlotAxes, ...
+        [xPosUncued4, xPosUncued4], [NaN, NaN], ...
+        'Color', [0 0 0], 'LineWidth', 2);
 
     % Update the X-Tick labels
-    set(p.draw.onlineSplitCuePerfPlotAxes, 'XTick', [0.6, 1.0, 1.4, 1.8], 'XTickLabel', {'1', '2', '3', '4'});
+    set(p.draw.onlineSplitCuePerfPlotAxes, ...
+        'XTick', [0.6, 1.0, 1.4, 1.8], 'XTickLabel', {'1', '2', '3', '4'});
 
     % make accumulator variables for cued and uncued trial performance
     p.status.cuedHitCount.global        = 0;
@@ -427,18 +470,16 @@ if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
             'Color', 1 * [1 1 1],...
             'Visible','on',...
             'NextPlot','add');
-    end
 
-    % create psychometric plot objects
+        % create psychometric plot objects
 
-    if contains(p.init.exptType, 'psycho')
 
         % make accumulator variables for orient delta plot
         p.status.orientDelta = cell(4, 1);
-        p.status.orientDelta{1} = struct('hitCount', 0, 'totalCount', 0); % min
+        p.status.orientDelta{1} = struct('hitCount', 0, 'totalCount', 0);
         p.status.orientDelta{2} = struct('hitCount', 0, 'totalCount', 0);
         p.status.orientDelta{3} = struct('hitCount', 0, 'totalCount', 0);
-        p.status.orientDelta{4} = struct('hitCount', 0, 'totalCount', 0); % max
+        p.status.orientDelta{4} = struct('hitCount', 0, 'totalCount', 0);
 
         p.draw.onlinePsychoPerfPlotAxes = axes(...
             'Parent', p.draw.OnlinePsychoPlotWindow, ...
@@ -449,23 +490,29 @@ if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
             'YColor', [0 0 0], ...
             'NextPlot', 'add');
 
-        xlabel(p.draw.onlinePsychoPerfPlotAxes, 'Orient Delta Value', 'FontSize', 16);
-        ylabel(p.draw.onlinePsychoPerfPlotAxes, 'Proportion Correct', 'FontSize', 16);
+        xlabel(p.draw.onlinePsychoPerfPlotAxes, 'Orient Delta Value', ...
+            'FontSize', 16);
+        ylabel(p.draw.onlinePsychoPerfPlotAxes, 'Proportion Correct', ...
+            'FontSize', 16);
 
         % make plot objects for psycho performance data
         for i = 1:4
 
             centerX = 1 + (i-1);
-            xFill = [centerX - 0.25, centerX + 0.25, centerX + 0.25, centerX - 0.25, centerX - 0.25];
-            yFill = [0, 0, 1, 1, 0]; % placeholder yFill values (to be updated in updateOnlinePlots)
+            xFill = centerX + 0.25 * [-1 1 1 -1 -1];
+            yFill = [0, 0, 1, 1, 0]; % placeholder yFill values
 
             % Create the fill object for the current box plot
-            p.draw.onlinePsychoPerfFillObj(i) = fill(p.draw.onlinePsychoPerfPlotAxes, xFill, yFill, 0.7*[1 1 1], 'EdgeColor', 'None');
+            p.draw.onlinePsychoPerfFillObj(i) = ...
+                fill(p.draw.onlinePsychoPerfPlotAxes, ...
+                xFill, yFill, 0.7*[1 1 1], 'EdgeColor', 'None');
             xPlot = [centerX, centerX];
             yPlot = [0.5, 0.5]; % placeholder
 
             % create the plot object for the current box plot
-            p.draw.onlinePsychoPerfPlotObj(i) = plot(p.draw.onlinePsychoPerfPlotAxes, xPlot, yPlot, 'Color', [0 0 0], 'LineWidth', 2);
+            p.draw.onlinePsychoPerfPlotObj(i) = ...
+                plot(p.draw.onlinePsychoPerfPlotAxes, xPlot, yPlot, ...
+                'Color', [0 0 0], 'LineWidth', 2);
         end
 
     end
@@ -492,29 +539,46 @@ p.draw.onlineConfusionPlotAxes = axes(...
     'YColor', [0 0 0], ...
     'NextPlot', 'add');
 
-xlabel(p.draw.onlineConfusionPlotAxes, 'Confusion Matrix Category', 'FontSize', 16);
+xlabel(p.draw.onlineConfusionPlotAxes, ...
+    'Confusion Matrix Category', 'FontSize', 16);
 ylabel(p.draw.onlineConfusionPlotAxes, 'Rate', 'FontSize', 16);
 
+% we're going to plot 6 categories of behavioral response:
+% 1 - single stimulus hits
+% 2 - single stimulus FAs
+% 3 - single stimulus OTHER (non starts / joybreaks / etc).
+% 4 - multi stimulus hits
+% 5 - multi stimulus FAs
+% 6 - multi stimulus OTHER (non starts / joybreaks / etc).
+tickLabels = {'Sgl. Hits', 'Sgl. FAs', 'Sgl. Other', ...
+    'Multi. Hits', 'Multi. FAs', 'Multi. Other'};
+nObj = length(tickLabels);
+
 % Make fill objects
-for i = 1:5
+for i = 1:nObj
     centerX = 1 + (i-1);
-    xFill = [centerX - 0.25, centerX + 0.25, centerX + 0.25, centerX - 0.25, centerX - 0.25];
-    yFill = [0, 0, 1, 1, 0]; % placeholder yFill values (to be updated in updateOnlinePlots)
-    p.draw.onlineConfusionFillObj(i) = fill(p.draw.onlineConfusionPlotAxes, xFill, yFill, 0.7*[1 1 1], 'EdgeColor', 'None');
+    xFill = centerX + 0.25*[-1 1 1 -1 -1];
+    yFill = [0, 0, 1, 1, 0]; % placeholder
+    p.draw.onlineConfusionFillObj(i) = ...
+        fill(p.draw.onlineConfusionPlotAxes, xFill, yFill, 0.7*[1 1 1], ...
+        'EdgeColor', 'None');
 end
 
 % Make plot objects
-for i = 1:5
+for i = 1:nObj
     centerY = 0.5;
     xMin = 1 + (i-1) - 0.25;
     xMax = 1 + (i-1) + 0.25;
     xPlot = [xMin, xMax];
     yPlot = [centerY, centerY];
-    p.draw.onlineConfusionPlotObj(i) = plot(p.draw.onlineConfusionPlotAxes, xPlot, yPlot, 'Color', [0 0 0], 'LineWidth', 2, 'Visible', 'on');
+    p.draw.onlineConfusionPlotObj(i) = ...
+        plot(p.draw.onlineConfusionPlotAxes, ...
+        xPlot, yPlot, 'Color', [0 0 0], 'LineWidth', 2, 'Visible', 'on');
 end
 
 % Set x-tick labels
-set(p.draw.onlineConfusionPlotAxes, 'XTick', [1, 2, 3, 4, 5], 'XTickLabel', {'Hit', 'Miss', 'Change FA', 'No Change FA', 'Correct Reject'});
+set(p.draw.onlineConfusionPlotAxes, 'XTick', 1:nObj, ...
+    'XTickLabel', tickLabels);
 
     % Learning Curve Plot
 
@@ -527,7 +591,8 @@ set(p.draw.onlineConfusionPlotAxes, 'XTick', [1, 2, 3, 4, 5], 'XTickLabel', {'Hi
         'NextPlot','add');
 
     % Create axes for the learning curve plot
-    p.draw.onlineLearningCurveAxes = axes('Parent', p.draw.onlineLearningCurveWindow);
+    p.draw.onlineLearningCurveAxes = axes('Parent', ...
+        p.draw.onlineLearningCurveWindow);
     xlabel(p.draw.onlineLearningCurveAxes, 'Block Number');
     ylabel(p.draw.onlineLearningCurveAxes, 'Accuracy');
     title(p.draw.onlineLearningCurveAxes, 'Learning Curve');

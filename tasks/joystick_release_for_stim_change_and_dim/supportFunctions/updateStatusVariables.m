@@ -11,6 +11,7 @@ p.status.trialEndStates(p.status.iTrial)    = p.trData.trialEndState;
 p.status.reactionTimes(p.status.iTrial)     = p.trData.timing.reactionTime;
 p.status.dimVals(p.status.iTrial)           = p.trData.dimVal * ...
     ((-1)^p.trVars.isStimChgNoDim) * p.trVars.isStimChangeTrial;
+p.status.nStim(p.status.iTrial)             = p.stim.nStim;
 
 p.status.chgLoc(p.status.iTrial) = p.stim.stimChgIdx;
 
