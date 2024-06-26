@@ -1,5 +1,5 @@
-function p = human_psychophysical_threshold_settings_speed
-%  p = human_psychophysical_threshold_settings_speed
+function p = human_psychophysical_threshold_settings_speed1
+%  p = human_psychophysical_threshold_settings_speed1
 %
 %  On some proportion of trials, the fixation point turns off without
 %  reward delivery or "boop", monkey must release joystick to get reward on
@@ -75,6 +75,7 @@ p.init.outputFolder     = fullfile(p.init.pldapsFolder, 'output');
 p.init.figureFolder     = fullfile(p.init.pldapsFolder, 'output', 'figures');
 p.init.sessionId        = [p.init.date '_t' p.init.time '_' p.init.taskName];     % Define the prefix for the Output File
 p.init.sessionFolder    = fullfile(p.init.outputFolder, p.init.sessionId);
+p.init.settingsFile     = mfilename;
 
 % Define the "init", "next", "run", and "finish" ".m" files.
 p.init.taskFiles.init   = [p.init.taskName '_init.m'];
@@ -171,7 +172,7 @@ p.rig.guiStatVals = {...
 p.rig.guiVars = {...
     'passJoy'; ...     % 1
     'passEye'; ...          % 2
-    'doDriftCorrect'; ...        % 3
+    'practiceTrials'; ...        % 3
     'hueDelta'; ...            % 4
     'hueVar'; ...         % 5
     'ctrstInit'; ...             % 6
@@ -336,6 +337,7 @@ p.trVarsInit.currentState     = p.state.trialBegun;  % initialize "state" variab
 p.trVarsInit.exitWhileLoop    = false;  % do we want to exit the "run" while loop?
 p.trVarsInit.cueIsOn          = 0;  % is the cue ring currently being presented?
 p.trVarsInit.stimIsOn         = false;  % are stimuli currently being presented?
+p.trVarsInit.practiceTrials   = true; % are we running practice trials?
 
 p.trVarsInit.fixWinWidthDeg       = 4;        % fixation window width in degrees
 p.trVarsInit.fixWinHeightDeg      = 4;        % fixation window height in degrees

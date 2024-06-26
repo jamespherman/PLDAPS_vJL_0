@@ -52,6 +52,26 @@ setGuiMessage(...
     'Eyelink Setup Complete!');
 ListenChar(1);
 
+% If this is the "speed" task, we need to redefine some variables
+% incorporating the screen refresh rate:
+if contains(p.init.settingsFile, 'speed')
+    
+    % define minimum and maximum "speed" based on refresh rate:
+    p.stim.minSpeed = 2 * pi / p.rig.refreshRate;
+    p.stim.maxSpeed = 2 * pi / (p.rig.refreshRate / 12);
+
+    % define "initSpeed" to be the middle of the minSpeed / maxSpeed range:
+    p.trVarsInit.speedInit = mean([p.stim.minSpeed, p.stim.maxSpeed]);
+
+    % variables related to "QUEST" (adaptive threshold estimation)
+    p.trVarsInit.minSignalStrength       = 0;    % what is the smallest signal we want to test?
+    p.trVarsInit.maxSignalStrength       = p.trVarsInit.speedInit - p.stim.minSpeed;     % what is the largest signal we want to test?
+    p.trVarsInit.supraSignalStrength     = p.trVarsInit.maxSignalStrength;      % what is a signal strength that is very likely to be above threshold?
+
+    % now assign to "trVarsGuiComm
+    p.trVarsGuiComm = p.trVarsInit;
+end
+
 % (6) define trial structure
 p   = initTrialStructure(p);
 
@@ -72,9 +92,6 @@ p.init.codes = pds.initCodes;
 
 % initialize the random seed:
 RandStream.setGlobalStream(RandStream('mt19937ar','Seed', 0));
-
-% Maybe this is the place to start recording an EDF file? Must implement
-% this...
 
 end
 

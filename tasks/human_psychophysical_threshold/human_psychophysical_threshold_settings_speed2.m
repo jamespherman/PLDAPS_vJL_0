@@ -1,5 +1,5 @@
-function p = human_psychophysical_threshold_settings_speed
-%  p = human_psychophysical_threshold_settings_speed
+function p = human_psychophysical_threshold_settings_speed2
+%  p = human_psychophysical_threshold_settings_speed2
 %
 %  On some proportion of trials, the fixation point turns off without
 %  reward delivery or "boop", monkey must release joystick to get reward on
@@ -75,6 +75,7 @@ p.init.outputFolder     = fullfile(p.init.pldapsFolder, 'output');
 p.init.figureFolder     = fullfile(p.init.pldapsFolder, 'output', 'figures');
 p.init.sessionId        = [p.init.date '_t' p.init.time '_' p.init.taskName];     % Define the prefix for the Output File
 p.init.sessionFolder    = fullfile(p.init.outputFolder, p.init.sessionId);
+p.init.settingsFile     = mfilename;
 
 % Define the "init", "next", "run", and "finish" ".m" files.
 p.init.taskFiles.init   = [p.init.taskName '_init.m'];
@@ -171,7 +172,7 @@ p.rig.guiStatVals = {...
 p.rig.guiVars = {...
     'passJoy'; ...     % 1
     'passEye'; ...          % 2
-    'doDriftCorrect'; ...        % 3
+    'practiceTrials'; ...        % 3
     'hueDelta'; ...            % 4
     'hueVar'; ...         % 5
     'ctrstInit'; ...             % 6
@@ -180,7 +181,7 @@ p.rig.guiVars = {...
     'lumInit'; ...        % 9
     'satMaskVar'; ...        % 10
     'hueMaskVar'; ...              % 11
-    'boxLifetime'};                 % 12
+    'divFactorNoThreshChg'};                 % 12
 
 %% INIT VARIABLES 
 % vars that are only set once
@@ -252,7 +253,7 @@ p.trVarsInit.fixLocRandY         = 0;           % random variation in X location
 p.trVarsInit.bgLum                    = -0.5;
 
 % Initial / base values for each stimulus feature.
-p.trVarsInit.speedInit                = pi/8;      % initial motion magniutde
+p.trVarsInit.speedInit                = pi/6;      % initial motion magniutde
 p.trVarsInit.ctrstInit                = 0.2;      % initial contrast
 p.trVarsInit.orientInit               = 30;       % initial orientation
 p.trVarsInit.freqInit                 = 0.175;    % initial spatial frequency (cycles per degree)
@@ -260,8 +261,16 @@ p.trVarsInit.satInit                  = 0;        % initial color saturation
 p.trVarsInit.lumInit                  = p.trVarsInit.bgLum;      % initial luminance
 p.trVarsInit.hueInit                  = 0;        % initial hue (color angle)
 
+% Stimulus feature variances used for masking:
+p.trVarsInit.ctrstMask                = 0;        % contrast for masking epoch
+p.trVarsInit.lumMaskVar               = 0.1;      % contrast variance for masking epoch
+p.trVarsInit.orientMaskVar            = 20;       % orientation variance for masking epoch
+p.trVarsInit.hueMaskVar               = 180;    % hue variance for masking epoch
+p.trVarsInit.satMaskVar               = 0.46;      % sat variance for masking epoch
+p.trVarsInit.satMask                  = 0.0;      % sat for masking epoch
+
 % Variance of feature dimensions that can be variable in this way:
-p.trVarsInit.orientVar                = 2;       % variability in orientation
+p.trVarsInit.orientVar                = 0;       % variability in orientation
 p.trVarsInit.hueVar                   = 0.0;     % variability in hue (angle)
 p.trVarsInit.lumVar                   = 0.0;     % variability in luminance
 p.trVarsInit.satVar                   = 0.0;     % variability in saturation
@@ -278,9 +287,9 @@ p.trVarsInit.hueDelta                 = 45;       % hue (color angle)
 % spatial properties of "checkerboard":
 p.trVarsInit.stimRadius               = 3.25;     % aperture radius in deg
 p.trVarsInit.boxSizePix               = 6;        % diameter of each "check" in pixels
-p.trVarsInit.boxLifetime              = 8;        % "check" lifetime in frams
+p.trVarsInit.boxLifetime              = 1;        % "check" lifetime in frams
 p.trVarsInit.nPatches                 = 4;        % number of stimuli 
-p.trVarsInit.nEpochs                  = 1;        % just one epoch with all four stimuli present.
+p.trVarsInit.nEpochs                  = 3;        % just one epoch with all four stimuli present.
 
 % times/latencies/durations:
 p.trVarsInit.rewardDurationMs        = 200;      % reward duration
@@ -290,7 +299,6 @@ p.trVarsInit.cue2StimItvl            = 0.25;     % time between cue offset and s
 p.trVarsInit.maskItvlMin             = 0.3;      % minimum duration of masking interval
 p.trVarsInit.maskItvlWin             = 0.2;      % multiplicative scalar to determine masking interval duration (rand * win + min)
 p.trVarsInit.targetItvlDur           = 1.5;      % duratino of "target" interval
-
 p.trVarsInit.chgWinDur               = 0.0;      % time window during which a change is possible.
 p.trVarsInit.rewardDelay             = 0.5;      % delay between cued change and reward delivery for hits.
 p.trVarsInit.joyMinLatency           = 0.2;      % minimum acceptable joystick release latency.
@@ -313,15 +321,15 @@ p.trVarsInit.numTrialsForPerfCalc    = 100;      % how many of the most recently
 
 % variables related to "QUEST" (adaptive threshold estimation)
 p.trVarsInit.useQuest                = true;     % use "QUEST" to determine next stimulus value?
-p.trVarsInit.initQuestThreshGuess    = pi/8;     % initial guess of threshold value to pass to quest
+p.trVarsInit.initQuestThreshGuess    = pi/10;    % initial guess of threshold value to pass to quest
 p.trVarsInit.initQuestSD             = 10;       % how many SDs to tell QUEST to search for threshold value?
-p.trVarsInit.initQuestBetaGuess      = 10;       % what is our initial guess for beta?
-p.trVarsInit.signalStrength          = pi/8;     % what is the signal strength for the upcoming trial (updated during experiment).
-p.trVarsInit.minSignalStrength       = pi/32;    % what is the smallest signal we want to test?
-p.trVarsInit.maxSignalStrength       = pi/4;     % what is the largest signal we want to test?
-p.trVarsInit.supraSignalStrength     = pi/4;     % what is a signal strength that is very likely to be above threshold?
+p.trVarsInit.initQuestBetaGuess      = 1;        % what is our initial guess for beta?
+p.trVarsInit.signalStrength          = 0.1;      % what is the signal strength for the upcoming trial (updated during experiment). This is also the assumed suprathreshold value.
+p.trVarsInit.minSignalStrength       = 0.105;    % what is the smallest signal we want to test?
+p.trVarsInit.maxSignalStrength       = 1.57;     % what is the largest signal we want to test?
+p.trVarsInit.supraSignalStrength     = 0.8;      % what is a signal strength that is very likely to be above threshold?
 p.trVarsInit.numThreshCheckTrials    = 5;        % how many trials to check for thrreshold estimate being lower than criterion?
-p.trVarsInit.divFactorNoThreshChg    = 20;
+p.trVarsInit.divFactorNoThreshChg    = 50;
 
 % I don't think I need to carry these around in 'p'....
 % can't I just define them in the 'run' worksapce and forget avbout them?
@@ -329,13 +337,14 @@ p.trVarsInit.currentState     = p.state.trialBegun;  % initialize "state" variab
 p.trVarsInit.exitWhileLoop    = false;  % do we want to exit the "run" while loop?
 p.trVarsInit.cueIsOn          = 0;  % is the cue ring currently being presented?
 p.trVarsInit.stimIsOn         = false;  % are stimuli currently being presented?
+p.trVarsInit.practiceTrials   = true; % are we running practice trials?
 
 p.trVarsInit.fixWinWidthDeg       = 4;        % fixation window width in degrees
 p.trVarsInit.fixWinHeightDeg      = 4;        % fixation window height in degrees
 p.trVarsInit.fixPointRadPix       = 10;       % fixation point "radius" in pixels
 p.trVarsInit.fixPointLinePix      = 6;        % fixation point line weight in pixels7
 
-% variables related to how the experiment is run / what is shown, etc.
+% variables related to how the experiment is run / w10hat is shown, etc.
 p.trVarsInit.useCellsForDraw        = false;
 p.trVarsInit.wantEndFlicker         = false;     % have screen flicker / low tone play repeatedly while waiting for joystick release?
 p.trVarsInit.wantOnlinePlots        = false;     % use online plotting window?

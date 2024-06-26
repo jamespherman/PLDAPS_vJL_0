@@ -9,7 +9,7 @@ function p = human_psychophysical_threshold_finish(p)
 %   run function (each trial)
 %   finish function (after each trial)
 %
-% finish function runs at the end of every trial and is usually used to 
+% finish function runs at the end of every trial and is usually used to
 % save data, update online plots, set stimulus for next trial, etc.
 
 %% In this function:
@@ -27,16 +27,17 @@ function p = human_psychophysical_threshold_finish(p)
 % (1) fill screen with background color (if we're not playing a movie)
 if ~isfield(p.draw, 'movie')
     Screen('FillRect', p.draw.window, ...
-        fix(255*p.draw.clut.subColors(p.draw.color.background + 1, :)));
+        fix(p.draw.colorRange * ...
+        p.draw.clut.subColors(p.draw.color.background + 1, :)));
     Screen('Flip', p.draw.window);
 end
 
-% read buffered ADC and DIN data from DATAPixx
-% p           = pds.readDatapixxBuffers(p);
+% clear eyelink host PC screen:
+Eyelink('Command', 'clear_screen 0');
 
 % Was the previous trial aborted?
 p.trData.trialRepeatFlag = (p.trData.trialEndState > 10) & ...
-    (p.trData.trialEndState < 20);                                                       
+    (p.trData.trialEndState < 20);
 
 %% strobes:
 % strobe trial data:
@@ -76,54 +77,56 @@ end
 pds.saveP(p);
 
 % (6) if we're using QUEST, compute the posterior and update the parameter
-% estimates here
-p           = updateQuest(p);
-if isfield(p.init.questObj, 'threshEst')
-    p.status.questThreshEst = p.init.questObj.threshEst(end);
-end
-
-% if the trialcount for the quest object is larger than
-% p.trVars.numThreshCheckTrials + 1, check whether the change in
-% threshold estimate has been below a criterion value for the last
-% p.trvars.numThreshCheckTrials trials. Also, we only check this if the
-% variable "p.status.fixSignalStrength" is false - if that variable is
-% true that means we've already decided to fix the signal strength so
-% there's no need3 to do this check.
-threshChangeCrit = (p.trVars.maxSignalStrength - ...
-    p.trVars.minSignalStrength) / p.trVars.divFactorNoThreshChg;
-if ~p.status.fixSignalStrength && ...
-        (p.init.questObj.trialCount > p.trVars.numThreshCheckTrials)
-    
-    tempThreshChange = abs(diff(p.init.questObj.threshEst));
-
-    if ~isempty(findall(0, 'Name', 'ThreshChangeFig'))
-        close(findall(0, 'Name', 'ThreshChangeFig'));
-    end
-    figure('Name', 'ThreshChangeFig');
-    plot(2:(length(tempThreshChange)+1), tempThreshChange);
-    hold on
-    plot(xlim, threshChangeCrit*[1 1]);
-    xlabel('Trial Number')
-    ylabel('Change in threshold estimate from previous trial')
-
-    if all(tempThreshChange(end-p.trVars.numThreshCheckTrials+1:end) < ...
-            threshChangeCrit)
-
-        % set "fixSignalStrength" to true 79
-        p.status.fixSignalStrength       = true;
+% estimates here (IF THIS WASN'T A PRACTICE TRIAL)
+if ~p.trVars.practiceTrials
+    p           = updateQuest(p);
+    if isfield(p.init.questObj, 'threshEst')
+        p.status.questThreshEst = p.init.questObj.threshEst(end);
     end
 
-end
+    % if the trialcount for the quest object is larger than
+    % p.trVars.numThreshCheckTrials + 1, check whether the change in
+    % threshold estimate has been below a criterion value for the last
+    % p.trvars.numThreshCheckTrials trials. Also, we only check this if the
+    % variable "p.status.fixSignalStrength" is false - if that variable is
+    % true that means we've already decided to fix the signal strength so
+    % there's no need3 to do this check.
+    threshChangeCrit = (p.trVars.maxSignalStrength - ...
+        p.trVars.minSignalStrength) / p.trVars.divFactorNoThreshChg;
+    if ~p.status.fixSignalStrength && ...
+            (p.init.questObj.trialCount > p.trVars.numThreshCheckTrials)
 
-% (8) update trials list
-p           = updateTrialsList(p);
+        tempThreshChange = abs(diff(p.init.questObj.threshEst));
 
-% (7) update status variables
-p           = updateStatusVariables(p);
+        if ~isempty(findall(0, 'Name', 'ThreshChangeFig'))
+            close(findall(0, 'Name', 'ThreshChangeFig'));
+        end
+        figure('Name', 'ThreshChangeFig');
+        plot(2:(length(tempThreshChange)+1), tempThreshChange);
+        hold on
+        plot(xlim, threshChangeCrit*[1 1]);
+        xlabel('Trial Number')
+        ylabel('Change in threshold estimate from previous trial')
 
-% (8) if we're using online plots, update them now:
-if isfield(p.trVars, 'wantOnlinePlots') && p.trVars.wantOnlinePlots
-    p       = updateOnlinePlots(p);
+        if all(tempThreshChange(end-p.trVars.numThreshCheckTrials+1:end) < ...
+                threshChangeCrit)
+
+            % set "fixSignalStrength" to true 79
+            p.status.fixSignalStrength       = true;
+        end
+
+    end
+
+    % (8) update trials list
+    p           = updateTrialsList(p);
+
+    % (7) update status variables
+    p           = updateStatusVariables(p);
+
+    % (8) if we're using online plots, update them now:
+    if isfield(p.trVars, 'wantOnlinePlots') && p.trVars.wantOnlinePlots
+        p       = updateOnlinePlots(p);
+    end
 end
 
 % Instead of stopping after the threshold estimate has stabilized, we want
@@ -167,7 +170,7 @@ if p.status.numTrialsSinceFixSig >= 20
         p.status.numTrialsSinceFixSig);
 
     % make a plot to see a summary of the data:
-    figure('MenuBar', 'None', 'ToolBar', 'None', 'NextPlot', 'Add')
+    fh = figure('MenuBar', 'None', 'ToolBar', 'None', 'NextPlot', 'Add');
     ax(1) = axes('Position', [0.1 0.1 0.65 0.85], 'TickDir', 'Out', ...
         'NextPlot', 'Add');
     ax(2) = axes('Position', [0.8 0.1 0.1 0.85], 'TickDir', 'Out', ...
@@ -183,6 +186,15 @@ if p.status.numTrialsSinceFixSig >= 20
     fill(ax(2), fillX, fillY, 0.8*[1 1 1], 'EdgeColor', 'none');
     plot(ax(2), [-0.55 0.55], pctCorrect*[1 1], 'k', 'LineWidth', 2)
     ylabel(ax(2), 'Percent Correct (fixed signal)')
+
+    % save the open figures. First define filenames:
+    sumFileName = [p.init.outputFolder filesep p.init.edfFile '_' ...
+        p.init.date '_summaryFig.fig'];
+    tChgFileName = [p.init.outputFolder filesep p.init.edfFile '_' ...
+        p.init.date '_tChgFig.fig'];
+    savefig(fh, sumFileName);
+    savefig(findall(0, 'Name', 'ThreshChangeFig'), tChgFileName);
+
 end
 
 end

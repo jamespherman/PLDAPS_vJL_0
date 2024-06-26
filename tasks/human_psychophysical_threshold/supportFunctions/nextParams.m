@@ -180,13 +180,22 @@ for i = 1:p.stim.nFeatures
         % if we're using QUEST run "getQuestSuggestedDelta" - this both
         % gets a suggested signal strength AND initializes the QUEST object
         % if it doesn't yet exist.
-        if isfield(p.trVars, 'useQuest') && p.trVars.useQuest
+        if isfield(p.trVars, 'useQuest') && p.trVars.useQuest && ...
+                ~p.trVars.practiceTrials
             p = getQuestSuggestedDelta(p);
+
+            % Assign the QUEST-derived signal strength
+            featureDelta = p.trVars.signalStrength * tempDelta;
+            p.status.questSignalVal = featureDelta;
+
+        elseif p.trVars.practiceTrials
+            
+            % Use the "suprathreshold" value:
+            featureDelta = p.trVars.supraSignalStrength * tempDelta;
+            p.status.questSignalVal = featureDelta;
         end
 
-        % Assign the QUEST-derived signal strength 
-        featureDelta = p.trVars.signalStrength;
-        p.status.questSignalVal = featureDelta;
+        
         
         % add to stim array IN THE SECOND EPOCH
         p.stim.([p.stim.featureValueNames{i} ...
