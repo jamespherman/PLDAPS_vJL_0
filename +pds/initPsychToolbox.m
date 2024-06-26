@@ -26,10 +26,13 @@ PsychImaging('AddTask', 'General', 'FloatingPoint32BitIfPossible');
 p.draw.middleXY                     = [p.draw.screenRect(3)/2, ...
     p.draw.screenRect(4)/2];
 
-% MUST FIGURE OUT HOW WE'RE GOING TO DO THIS PART:
-% Screen('LoadNormalizedGammaTable', p.draw.window, p.draw.clut.combinedClut, 2);
-
+% Now that we have the window open, we can use that information to estimate
+% the refresh rate / frame duration.
 p.rig.refreshRate                   = FrameRate(p.draw.window);
+p.rig.frameDuration
+
+% define color range:
+p.draw.colorRange = Screen('ColorRange', p.draw.window);
 
 % Fill the window with the background color.
 Screen('FillRect', p.draw.window, [0.5 0.5 0.5])

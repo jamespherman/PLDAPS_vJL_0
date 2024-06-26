@@ -342,7 +342,7 @@ if timeNow > p.trData.timing.lastFrameTime + ...
 
     % Fill the window with the background color.
     Screen('FillRect', p.draw.window, ...
-        fix(255*p.draw.clut.subColors(p.draw.color.background + 1, :)));
+        fix(255*p.draw.bgRGB));
 
     % calculate which stimulus frame we're in based on time since
     % stimulus onset - stimuli should be drawn in the frame that their

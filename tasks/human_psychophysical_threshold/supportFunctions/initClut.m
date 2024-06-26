@@ -9,8 +9,11 @@ function p                      = initClut(p)
 % initialize DKL conversion variables`
 initmon('LUTBENQ');
 
-% set Background color to black.
+% what's our display's "color range"?
+
+% set Background color.
 [bgRGB(1), bgRGB(2), bgRGB(3)] = dkl2rgb([p.trVarsInit.bgLum 0 0]');
+p.draw.bgRGB = bgRGB;
 
 % define muted green (mutGreen):
 % mutGreen    = [0.3953 0.7459 0.5244];

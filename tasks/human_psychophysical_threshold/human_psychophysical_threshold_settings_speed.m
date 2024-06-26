@@ -269,7 +269,7 @@ p.trVarsInit.satMaskVar               = 0.46;      % sat variance for masking ep
 p.trVarsInit.satMask                  = 0.0;      % sat for masking epoch
 
 % Variance of feature dimensions that can be variable in this way:
-p.trVarsInit.orientVar                = 2;       % variability in orientation
+p.trVarsInit.orientVar                = 0;       % variability in orientation
 p.trVarsInit.hueVar                   = 0.0;     % variability in hue (angle)
 p.trVarsInit.lumVar                   = 0.0;     % variability in luminance
 p.trVarsInit.satVar                   = 0.0;     % variability in saturation
@@ -286,7 +286,7 @@ p.trVarsInit.hueDelta                 = 45;       % hue (color angle)
 % spatial properties of "checkerboard":
 p.trVarsInit.stimRadius               = 3.25;     % aperture radius in deg
 p.trVarsInit.boxSizePix               = 6;        % diameter of each "check" in pixels
-p.trVarsInit.boxLifetime              = 8;        % "check" lifetime in frams
+p.trVarsInit.boxLifetime              = 1;        % "check" lifetime in frams
 p.trVarsInit.nPatches                 = 4;        % number of stimuli 
 p.trVarsInit.nEpochs                  = 3;        % just one epoch with all four stimuli present.
 
@@ -324,11 +324,11 @@ p.trVarsInit.initQuestThreshGuess    = pi/10;    % initial guess of threshold va
 p.trVarsInit.initQuestSD             = 10;       % how many SDs to tell QUEST to search for threshold value?
 p.trVarsInit.initQuestBetaGuess      = 1;        % what is our initial guess for beta?
 p.trVarsInit.signalStrength          = 0.1;      % what is the signal strength for the upcoming trial (updated during experiment). This is also the assumed suprathreshold value.
-p.trVarsInit.minSignalStrength       = 0.05;     % what is the smallest signal we want to test?
-p.trVarsInit.maxSignalStrength       = 1;        % what is the largest signal we want to test?
+p.trVarsInit.minSignalStrength       = 0.105;    % what is the smallest signal we want to test?
+p.trVarsInit.maxSignalStrength       = 1.57;     % what is the largest signal we want to test?
 p.trVarsInit.supraSignalStrength     = 0.8;      % what is a signal strength that is very likely to be above threshold?
 p.trVarsInit.numThreshCheckTrials    = 5;        % how many trials to check for thrreshold estimate being lower than criterion?
-p.trVarsInit.divFactorNoThreshChg    = 1000;
+p.trVarsInit.divFactorNoThreshChg    = 50;
 
 % I don't think I need to carry these around in 'p'....
 % can't I just define them in the 'run' worksapce and forget avbout them?
