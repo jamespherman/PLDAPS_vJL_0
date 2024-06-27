@@ -36,4 +36,5 @@ iString = sprintf('%04d', p.status.iTrial); % add leading zeros to make a 4 digi
 trVars  = p.trVars;
 trData  = p.trData;
 status  = p.status;
-save(fullfile(p.init.sessionFolder, ['trial' iString '.mat']), 'trVars', 'trData', 'status');
+init    = p.init;
+save(fullfile(p.init.sessionFolder, ['trial' iString '.mat']), 'trVars', 'trData', 'status', 'init');

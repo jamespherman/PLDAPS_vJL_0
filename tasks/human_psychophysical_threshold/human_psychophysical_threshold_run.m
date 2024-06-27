@@ -97,6 +97,26 @@ switch p.trVars.currentState
         p.trData.timing.trialBegin      = timeNow;
         p.trVars.currentState           = p.state.showFix;
 
+        % draw boxes on Host PC indicating locatoin of fixation and
+        % stimuli:
+        for k = 1:4
+            Eyelink('Command', 'draw_box %d %d %d %d 15', ...
+                p.trVars.stimRects(k, 1), ...
+                p.trVars.stimRects(k, 2), ...
+                p.trVars.stimRects(k, 3), ...
+                p.trVars.stimRects(k, 4));
+        end
+        Eyelink('Command', 'draw_box %d %d %d %d 15', ...
+                p.draw.fixPointRect(1), ...
+                p.draw.fixPointRect(2), ...
+                p.draw.fixPointRect(3), ...
+                p.draw.fixPointRect(4));
+
+        % if this is a "practice trial" report it to eyelink:
+        if p.trVars.practiceTrials
+            Eyelink('Message', 'PRCTCTR');
+        end
+
     case p.state.showFix
         %% STATE 3:
         %   SHOW FIXATION POINT AND WAIT FOR SUBJECT TO ACQUIRE FIXATION.
@@ -342,7 +362,14 @@ if timeNow > p.trData.timing.lastFrameTime + ...
 
     % Fill the window with the background color.
     Screen('FillRect', p.draw.window, ...
-        fix(255*p.draw.clut.subColors(p.draw.color.background + 1, :)));
+        round(p.draw.colorRange*p.draw.bgRGB));
+
+    % if this is a practice trial, put text in the window telling the
+    % subject and experimenter that it is indeed a practice trial:
+    if p.trVars.practiceTrials
+        Screen('DrawText', p.draw.window, 'Practice Trial', ...
+            p.draw.middleXY(1)-75, 50, p.draw.colorRange * [1 0 0]);
+    end
 
     % calculate which stimulus frame we're in based on time since
     % stimulus onset - stimuli should be drawn in the frame that their
