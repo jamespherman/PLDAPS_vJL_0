@@ -225,7 +225,7 @@ p.trVarsInit.setTargLocViaTrialArray    = true;
 p.trVarsInit.propVis             = 0;    % proportion of visually-guided saccades out of the total (i.e. propMem would equal 1 - pVis )
 p.trVarsInit.fixDegX             = 0;    % fixation X location in degrees
 p.trVarsInit.fixDegY             = 0;    % fixation Y location in degrees
-p.trVarsInit.targDegX            = -12;  % default target X location if one isn't specified by other means
+p.trVarsInit.targDegX            = -6;  % default target X location if one isn't specified by other means
 p.trVarsInit.targDegY            = 0;    % default target Y location if one isn't specified by other means
 
 % times/latencies/durations:
