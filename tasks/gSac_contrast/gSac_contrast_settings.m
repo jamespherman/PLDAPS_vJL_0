@@ -229,8 +229,9 @@ p.trVarsInit.targDegX            = -6;  % default target X location if one isn't
 p.trVarsInit.targDegY            = 0;    % default target Y location if one isn't specified by other means
 
 % times/latencies/durations:
-p.trVarsInit.rewardDurationMs        = 180;      % reward duration
-p.trVarsInit.rewardDurDelta          = 80;       % how much to increase / decrease "base" reward by for "high" / "low" reward magnitude trials?
+p.trVarsInit.rewardDurationHigh      = 280;      % reward duration (solenoid open time) for "large reward" target
+p.trVarsInit.rewardDurationLow       = 50;       % reward duration for "small reward" target
+p.trVarsInit.rewardDurationMs        = 165;      % reward duration variable used to define solenoid opening "schedule" (VPixx)
 p.trVarsInit.rwdSize                 = 0;        % variable to store whether the current trial is "high" or "low" reward (coded as 1 or 2).
 p.trVarsInit.rewardDelay             = 0.25;     % delay between successful target fixation and reward delivery
 p.trVarsInit.timeoutAfterFa          = 2;        % timeout duration following false alarm.
