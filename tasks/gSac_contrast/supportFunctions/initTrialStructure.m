@@ -69,21 +69,21 @@ table =           [ 1   1   1   3   24001; ... % target loc 1 | tgt/bkgnd cond 1
                     2   7   1   3   24014; ... % target loc 2 | tgt/bkgnd cond 7 | high rwd
                     1   8   1   3   24015; ... % target loc 1 | tgt/bkgnd cond 8 | high rwd
                     2   8   1   3   24016; ... % target loc 2 | tgt/bkgnd cond 8 | high rwd
-                    1   1   2   3   24017; ... % target loc 1 | tgt/bkgnd cond 1 | high rwd
-                    2   1   2   3   24018; ... % target loc 2 | tgt/bkgnd cond 1 | high rwd
-                    1   2   2   3   24019; ... % target loc 1 | tgt/bkgnd cond 2 | high rwd
-                    2   2   2   3   24020; ... % target loc 2 | tgt/bkgnd cond 2 | high rwd
-                    1   3   2   3   24021; ... % target loc 1 | tgt/bkgnd cond 3 | high rwd
-                    2   3   2   3   24022; ... % target loc 2 | tgt/bkgnd cond 3 | high rwd
-                    1   4   2   3   24023; ... % target loc 1 | tgt/bkgnd cond 4 | high rwd
-                    2   4   2   3   24024; ... % target loc 2 | tgt/bkgnd cond 4 | high rwd
-                    1   5   2   3   24025; ... % target loc 1 | tgt/bkgnd cond 5 | high rwd
-                    2   5   2   3   24026; ... % target loc 2 | tgt/bkgnd cond 5 | high rwd
-                    1   6   2   3   24027; ... % target loc 1 | tgt/bkgnd cond 6 | high rwd
-                    2   6   2   3   24028; ... % target loc 2 | tgt/bkgnd cond 6 | high rwd
-                    1   7   2   3   24029; ... % target loc 1 | tgt/bkgnd cond 7 | high rwd
-                    2   7   2   3   24030; ... % target loc 2 | tgt/bkgnd cond 7 | high rwd
-                    1   8   2   3   24031; ... % target loc 1 | tgt/bkgnd cond 8 | high rwd
-                    2   8   2   3   24032;...  % target loc 2 | tgt/bkgnd cond 8 | high rwd
+                    1   1   2   3   24017; ... % target loc 1 | tgt/bkgnd cond 1 | low rwd
+                    2   1   2   3   24018; ... % target loc 2 | tgt/bkgnd cond 1 | low rwd
+                    1   2   2   3   24019; ... % target loc 1 | tgt/bkgnd cond 2 | low rwd
+                    2   2   2   3   24020; ... % target loc 2 | tgt/bkgnd cond 2 | low rwd
+                    1   3   2   3   24021; ... % target loc 1 | tgt/bkgnd cond 3 | low rwd
+                    2   3   2   3   24022; ... % target loc 2 | tgt/bkgnd cond 3 | low rwd
+                    1   4   2   3   24023; ... % target loc 1 | tgt/bkgnd cond 4 | low rwd
+                    2   4   2   3   24024; ... % target loc 2 | tgt/bkgnd cond 4 | low rwd
+                    1   5   2   3   24025; ... % target loc 1 | tgt/bkgnd cond 5 | low rwd
+                    2   5   2   3   24026; ... % target loc 2 | tgt/bkgnd cond 5 | low rwd
+                    1   6   2   3   24027; ... % target loc 1 | tgt/bkgnd cond 6 | low rwd
+                    2   6   2   3   24028; ... % target loc 2 | tgt/bkgnd cond 6 | low rwd
+                    1   7   2   3   24029; ... % target loc 1 | tgt/bkgnd cond 7 | low rwd
+                    2   7   2   3   24030; ... % target loc 2 | tgt/bkgnd cond 7 | low rwd
+                    1   8   2   3   24031; ... % target loc 1 | tgt/bkgnd cond 8 | low rwd
+                    2   8   2   3   24032;...  % target loc 2 | tgt/bkgnd cond 8 | low rwd
                     ];
 end

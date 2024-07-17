@@ -14,12 +14,10 @@ initmon(c.init.initMonFile);
 [bgRGB(1), bgRGB(2), bgRGB(3)] = dkl2rgb([-0.8 0 0]');
 
 % define some new DKL colors with equal saturation and luminance. Note, the
-% "dklLum" values defined here were empirically identified as those that
-% result in < 0.4% measured luminance difference between the "target"
-% luminance (68).
+% "dklLum" values defined here 
 satRad      = 0.4;
 dklLum      = [-0.4888, -0.4871, -0.4958, -0.4944, -0.4975, -0.5012, ...
-                -0.4974, -0.4922, -0.4896];
+                -0.4974, -0.4922, -0.4896-0.5];
 dklThetas   = 0:45:360;
 
 for i = 1:length(dklThetas)
