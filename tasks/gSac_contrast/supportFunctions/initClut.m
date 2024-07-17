@@ -24,7 +24,7 @@ dklThetas   = 0:45:360;
 
 for i = 1:length(dklThetas)
     [r(i), g(i), b(i)] = dkl2rgb(...
-        [dklLum satRad *[cosd(dklThetas(i)) sind(dklThetas(i))]]');
+        [dklLum(i) satRad *[cosd(dklThetas(i)) sind(dklThetas(i))]]');
 end
 
 % fortyfivedegree_pospos = [ 0.6235 0.4863 0.4157];
