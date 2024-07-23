@@ -68,6 +68,10 @@ switch p.init.exptType
             table(:, strcmp(p.init.trialArrayColumnNames, 'speed')) * -1;
         end
 
+    case 'human_psychophysics_rfFreq_discrimination'
+
+        table = tableDef_humanPsychophysicsRfGratDiscrimination;
+
     otherwise
         table = tableDefault;
 end
@@ -180,4 +184,13 @@ table =            [1   4   1   1   1   1   1   1   0   0   0   0   0   0   1   
                     2   4   1   1   1   1   2   1   0   0   0   0   0   0   2   10   23902;
                     3   4   1   1   1   1   3   1   0   0   0   0   0   0   3   10   23903;
                     4   4   1   1   1   1   4   1   0   0   0   0   0   0   4   10   23904;];
+end
+
+% Four stimulus patches, one might have a different hue than the others (on
+% average). Human psychophysics:
+function table = tableDef_humanPsychophysicsRfGratDiscrimination
+table =            [1   4   1   1   1   1   1   0   0   1   0   0   0   0   1   10   23901;
+                    2   4   1   1   1   1   2   0   0   1   0   0   0   0   2   10   23902;
+                    3   4   1   1   1   1   3   0   0   1   0   0   0   0   3   10   23903;
+                    4   4   1   1   1   1   4   0   0   1   0   0   0   0   4   10   23904;];
 end

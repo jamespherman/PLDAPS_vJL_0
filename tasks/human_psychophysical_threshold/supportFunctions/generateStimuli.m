@@ -285,11 +285,19 @@ for i = 1:nLoop
         % phase   = p.stim.speedArray(j, i) * ...
         %    assocArray(cpeint(1, j, i):cpeint(2, j, i), 4);
         phase   = assocArray(cpeint(1, j, i):cpeint(2, j, i), 4);
+        % p.trVars.rfPhase + rand*2*pi
 
-        % generate gabor part (gaussian windowed sinusoid).
-        
-        gaborVals = p.stim.ctrstArray(j,i) * ...
-            gf(X, Y, phase, freq, orient, winStd);
+        % generate gabor part (gaussian windowed sinusoid). OR radial
+        % frequency part, depending on which stimulus type is desired:
+        if p.trVars.rfFlag
+            gratingVals = rff(X / (p.stim.patchDiamBox/2), ...
+                Y /  (p.stim.patchDiamBox/2), p.stim.ctrstArray(j,i), ...
+                p.trVars.rfRad0, p.trVars.rfSigma, ...
+                p.trVars.rfAmpMod, phase, freq);
+        else
+            gratingVals =  p.stim.ctrstArray(j,i) * ...
+                gf(X, Y, phase, freq, orient, winStd);
+        end
 
         % treating saturation as radius and hue as theta, generate XY (DKL
         % plane) coordinates to then rotate by the desired "hue angle":
@@ -315,7 +323,7 @@ for i = 1:nLoop
             p.stim.funs.unfrnd(...
             p.stim.lumArray(j, i) - p.stim.lumVarArray(j, i), ...
             p.stim.lumArray(j, i) + p.stim.lumVarArray(j,i), ...
-            [1,cpppe(i, j)]) + gaborVals'; ...
+            [1,cpppe(i, j)]) + gratingVals'; ...
             p.stim.funs.rotVcts(...
             XYvals, p.stim.hueArray(j, i))]);
         
@@ -327,20 +335,6 @@ for i = 1:nLoop
         % as long as the numbers / array-sizes are correct.
     end
 end
-
-% [p.stim.tempR(currInd, :),...
-%             p.stim.tempG(currInd, :),...
-%             p.stim.tempB(currInd, :)] = ...
-%             dkl2rgb([...
-%             p.stim.funs.unfrnd(...
-%             p.stim.lumArray(j, i) - p.stim.lumVarArray(j, i), ...
-%             p.stim.lumArray(j, i) + p.stim.lumVarArray(j,i), ...
-%             [1,cpppe(i, j)]) + gaborVals'; ...
-%             p.stim.funs.rotVcts(...
-%             [p.stim.funs.nrmrnd(p.stim.satArray(j, i), ...
-%             p.stim.satVarArray(j, i), [1, cpppe(i, j)]); ...
-%             p.stim.funs.nrmrnd(0, p.stim.hueVarArray(j, i), ...
-%             [1, cpppe(i, j)])], p.stim.hueArray(j, i))]);
 
 % define a 4D placeholder for the output "images":
 p.stim.imagesOut = zeros(p.stim.patchDiamBox, p.trVars.nPatches * ...
@@ -381,79 +375,6 @@ end
 
 end
 
-function p                      = makeTex(p)
-
-% make a hard-edged circular window for the "checkerboard" stimulus
-% patches. First some helpful variables.
-ms              = p.stim.patchDiamPix / 2 - 0.5;
-[x,y]           = meshgrid(-ms:ms, -ms:ms);
-hw              = ones(1, p.stim.patchDiamPix, p.stim.patchDiamPix);
-radval          = (x.^2 + y.^2).^0.5;
-g1              = radval > (ms - 0.5);
-
-% Build the "hard window"
-hw(g1)          = 0;
-hw              = squeeze(hw);
-
-%unscaled "image"
-unscaledIm      = reshape(1:p.stim.nBoxTot / p.trVars.nPatches , ...
-    p.stim.patchDiamBox, p.stim.patchDiamBox);
-
-% scaled image without replacing the undex values.
-scaledIm        = hw.*(arrayScale(unscaledIm, p.trVars.boxSizePix));
-
-% Note which of the checks in the unscaled image have been retained to any
-% extent in the scaled image. This is helpful because when we generate
-% unique color indexes, we don't try to account for the hard window simply
-% because it's computationally more efficient, but we need to discard some
-% of the colors / indexes to put the right colors in the right rows of the
-% CLUT. This logical index lets us do that.
-p.stim.colorRowSelector = repmat(ismember(unscaledIm(:), scaledIm(:)), ...
-    p.trVars.nPatches, 1); 
-
-% Loop over possible stimulus locations. For each possible stimulus
-% location, if the stimulus will be present in the current trial, make the
-% array to generate the texture for displaying the stimulus. However, even 
-for i = 1:p.trVars.nPatches
-
-    % The range of CLUT indexes for each stimulus patch is distinct and
-    % sequential. To select the right range of indexes for the current
-    % patch, we calculate an "offset" that sets the bottom of the range
-    % above the index values that are dedicated to other patches / fixed
-    % CLUT values.
-    if i > 1
-        offsetVal = max(p.stim.stimArray{i - 1}(:)) + 1;
-    else
-        offsetVal = p.draw.nColors;
-    end
-
-    % generate the stimulus array for the currently considered patch:
-    p.stim.stimArray{i}  = (reshape(unindex(hw.*...
-            arrayScale(unscaledIm, p.trVars.boxSizePix)), ...
-            p.stim.patchDiamPix, p.stim.patchDiamPix) - 2 + ...
-            offsetVal).*hw + (~hw)*p.draw.color.background;
-
-    % If the currently considered stimulus patch is displayed in the
-    % current trial, generate a tecture for it. If the stimulus patch
-    % won't be displayed, populate the texture with "empty" ("[]").
-    if any(p.trVars.stimOnList == i)
-        p.draw.stimTex{i}    = Screen('MakeTexture', p.draw.window, ...
-            p.stim.stimArray{i});
-    else
-        % store empty array for patches not shown in the current trial:
-        p.draw.stimTex{i}    = [];
-    end
-end
-
-% if the cued stimulus is being presented at a location other than location
-% 1, reorder the textures:
-% if p.stim.cueLoc ~= 1 && p.stim.nStim > 1
-%     keyboard
-%     p.draw.stimTex = fliplr(p.draw.stimTex);
-% end
-
-end
-
 function y                      = arrayScale(x, scale)
 
 % scale (up to) the 1st two dimensions of a 1/2/3/4D array:
@@ -483,5 +404,21 @@ a       = cos(angle)*f;
 b       = sin(angle)*f;
 out     = exp(-((x/gaussWinSD).^2) - ((y/gaussWinSD).^2)) .* ...
     sin(a.*x+b.*y+phase);
+
+end
+
+function out = rff(x, y, c, r0, s, A, phase, freq)
+
+% in-line function definitions
+d4 = @(r, c, r0, s) c * (1 - 4 * ((r - r0) / s).^2 + (4 / 3) * ...
+    ((r - r0) / s).^4) .* exp(-((r - r0) / s).^2);
+rFun = @(r0, A, w, theta, phi) r0 * (1 + A * sin(w * theta + phi));
+
+% Compute r/theta for each X/Y:
+r = sqrt(x.^2 + y.^2);
+theta = atan2(y, x);
+
+% Compute "d4":
+out = d4(r, c, rFun(r0, A, freq, theta, phase), s);
 
 end

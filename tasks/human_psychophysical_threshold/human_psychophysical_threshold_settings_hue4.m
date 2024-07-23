@@ -284,6 +284,13 @@ p.trVarsInit.satDelta                 = 0.038;    % color saturation
 p.trVarsInit.lumDelta                 = 0;        % luminance
 p.trVarsInit.hueDelta                 = 45;       % hue (color angle)
 
+% Variables specifically related to radial frequency grating definition:
+p.trVarsInit.rfRad0                   = 0.7;      % radius of the radial frequency grating as a proportion of "stimRadius" (below).
+p.trVarsInit.rfAmpMod                 = 0.1;      % magnitude of amplitude modulation in RF gratings (how "bulgy" they are)
+p.trVarsInit.rfPhase                  = 0;        % phase of radial frequency grating
+p.trVarsInit.rfSigma                  = p.trVarsInit.rfRad0 / 8; % variance of RF grating, we define this relative to rfRad0.
+p.trVarsInit.rfFlag                   = false;     % variable indicating whether we want to use RF gratings or gabor gratings for stimulus generation
+
 % spatial properties of "checkerboard":
 p.trVarsInit.stimRadius               = 3.25;     % aperture radius in deg
 p.trVarsInit.boxSizePix               = 6;        % diameter of each "check" in pixels

@@ -1,5 +1,5 @@
-function p = human_psychophysical_threshold_settings_hue1
-%  p = human_psychophysical_threshold_settings_hue1
+function p = human_psychophysical_threshold_settings_radFreq
+%  p = human_psychophysical_threshold_settings_radFreq
 %
 %  On some proportion of trials, the fixation point turns off without
 %  reward delivery or "boop", monkey must release joystick to get reward on
@@ -33,7 +33,7 @@ function p = human_psychophysical_threshold_settings_hue1
 % sure we have what we need.
 
 %%
-% p.init;           % all things that are saved once except for trialVarsInit
+% p.init;           % all things that are saved once except for trVarsInit
 % p.rig;            % all rig (monitor, PTB stuff, distances) related stuff
 % p.audio;          % all things audio related
 % p.draw;           % all widths/hieghts/etc of stuff that's drawn. (all except for stimulus, which is saved uniquely in stim struct)
@@ -64,7 +64,7 @@ p.init.protocol_title   = [p.init.taskName '_task'];    % Define Banner text to 
 p.init.date             = datestr(now,'yyyymmdd');
 p.init.time             = datestr(now,'HHMM');
 
-p.init.exptType         = 'human_psychophysics_hue_discrimination';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
+p.init.exptType         = 'human_psychophysics_rfFreq_discrimination';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
 
 p.init.date_1yyyy       = str2double(['1' datestr(now,'yyyy')]); % gotta add a '1' otherwise date/times starting with zero lose that zero in conversion to double.
 p.init.date_1mmdd       = str2double(['1' datestr(now,'mmdd')]);
@@ -253,25 +253,25 @@ p.trVarsInit.fixLocRandY         = 0;           % random variation in X location
 p.trVarsInit.bgLum                    = -0.5;
 
 % Initial / base values for each stimulus feature.
-p.trVarsInit.speedInit                = 0.0;      % initial motion magniutde
-p.trVarsInit.ctrstInit                = 0.1;      % initial contrast
+p.trVarsInit.speedInit                = pi/6;      % initial motion magniutde
+p.trVarsInit.ctrstInit                = 0.5;      % initial contrast
 p.trVarsInit.orientInit               = 30;       % initial orientation
-p.trVarsInit.freqInit                 = 0.175;    % initial spatial frequency (cycles per degree)
-p.trVarsInit.satInit                  = 0.4;      % target interval color saturation
+p.trVarsInit.freqInit                 = 5;        % initial spatial frequency (cycles per degree)
+p.trVarsInit.satInit                  = 0;        % initial color saturation
 p.trVarsInit.lumInit                  = p.trVarsInit.bgLum;      % initial luminance
 p.trVarsInit.hueInit                  = 0;        % initial hue (color angle)
 
 % Stimulus feature variances used for masking:
 p.trVarsInit.ctrstMask                = 0;        % contrast for masking epoch
-p.trVarsInit.lumMaskVar               = 0.25;     % contrast variance for masking epoch
+p.trVarsInit.lumMaskVar               = 0.1;      % contrast variance for masking epoch
 p.trVarsInit.orientMaskVar            = 20;       % orientation variance for masking epoch
-p.trVarsInit.hueMaskVar               = 180;      % hue variance for masking epoch
-p.trVarsInit.satMaskVar               = 0.4;      % sat variance for masking epoch
+p.trVarsInit.hueMaskVar               = 180;    % hue variance for masking epoch
+p.trVarsInit.satMaskVar               = 0.46;      % sat variance for masking epoch
 p.trVarsInit.satMask                  = 0.0;      % sat for masking epoch
 
 % Variance of feature dimensions that can be variable in this way:
-p.trVarsInit.orientVar                = 2;       % variability in orientation
-p.trVarsInit.hueVar                   = 0.05;     % variability in hue (angle)
+p.trVarsInit.orientVar                = 0;       % variability in orientation
+p.trVarsInit.hueVar                   = 0.0;     % variability in hue (angle)
 p.trVarsInit.lumVar                   = 0.0;     % variability in luminance
 p.trVarsInit.satVar                   = 0.0;     % variability in saturation
 
@@ -279,7 +279,7 @@ p.trVarsInit.satVar                   = 0.0;     % variability in saturation
 p.trVarsInit.speedDelta               = (pi/8);   % motion magniutde
 p.trVarsInit.contDelta                = 0.3;      % contrast
 p.trVarsInit.orientDelta              = 45;       % orientation
-p.trVarsInit.freqDelta                = 0.25;     % spatial frequency (cycles per degree)
+p.trVarsInit.freqDelta                = 1;        % spatial frequency (cycles per degree)
 p.trVarsInit.satDelta                 = 0.038;    % color saturation
 p.trVarsInit.lumDelta                 = 0;        % luminance
 p.trVarsInit.hueDelta                 = 45;       % hue (color angle)
@@ -289,12 +289,12 @@ p.trVarsInit.rfRad0                   = 0.7;      % radius of the radial frequen
 p.trVarsInit.rfAmpMod                 = 0.1;      % magnitude of amplitude modulation in RF gratings (how "bulgy" they are)
 p.trVarsInit.rfPhase                  = 0;        % phase of radial frequency grating
 p.trVarsInit.rfSigma                  = p.trVarsInit.rfRad0 / 8; % variance of RF grating, we define this relative to rfRad0.
-p.trVarsInit.rfFlag                   = false;     % variable indicating whether we want to use RF gratings or gabor gratings for stimulus generation
+p.trVarsInit.rfFlag                   = true;     % variable indicating whether we want to use RF gratings or gabor gratings for stimulus generation
 
 % spatial properties of "checkerboard":
 p.trVarsInit.stimRadius               = 3.25;     % aperture radius in deg
 p.trVarsInit.boxSizePix               = 6;        % diameter of each "check" in pixels
-p.trVarsInit.boxLifetime              = 8;        % "check" lifetime in frams
+p.trVarsInit.boxLifetime              = 1;        % "check" lifetime in frams
 p.trVarsInit.nPatches                 = 4;        % number of stimuli 
 p.trVarsInit.nEpochs                  = 3;        % just one epoch with all four stimuli present.
 
@@ -327,16 +327,16 @@ p.trVarsInit.postRewardDuration      = 0;        % how long should the trial las
 p.trVarsInit.numTrialsForPerfCalc    = 100;      % how many of the most recently completed trials should be used to calculate % correct / median RT?
 
 % variables related to "QUEST" (adaptive threshold estimation)
-p.trVarsInit.useQuest                = true;     % use "QUEST" to determine next stimulus value?
-p.trVarsInit.initQuestThreshGuess    = 10;       % initial guess of threshold value to pass to quest
+p.trVarsInit.useQuest                = false;     % use "QUEST" to determine next stimulus value?
+p.trVarsInit.initQuestThreshGuess    = pi/10;    % initial guess of threshold value to pass to quest
 p.trVarsInit.initQuestSD             = 10;       % how many SDs to tell QUEST to search for threshold value?
-p.trVarsInit.initQuestBetaGuess      = 10;       % what is our initial guess for beta?
-p.trVarsInit.signalStrength          = 30;       % what is the signal strength for the upcoming trial (updated during experiment). This is also the assumed suprathreshold value.
+p.trVarsInit.initQuestBetaGuess      = 1;        % what is our initial guess for beta?
+p.trVarsInit.signalStrength          = 0.1;      % what is the signal strength for the upcoming trial (updated during experiment). This is also the assumed suprathreshold value.
 p.trVarsInit.minSignalStrength       = 1;        % what is the smallest signal we want to test?
-p.trVarsInit.maxSignalStrength       = 360;      % what is the largest signal we want to test?
-p.trVarsInit.supraSignalStrength     = 60;       % what is a signal strength that is very likely to be above threshold?
+p.trVarsInit.maxSignalStrength       = 10;       % what is the largest signal we want to test?
+p.trVarsInit.supraSignalStrength     = 0.8;      % what is a signal strength that is very likely to be above threshold?
 p.trVarsInit.numThreshCheckTrials    = 5;        % how many trials to check for thrreshold estimate being lower than criterion?
-p.trVarsInit.divFactorNoThreshChg    = 1000;
+p.trVarsInit.divFactorNoThreshChg    = 50;
 
 % I don't think I need to carry these around in 'p'....
 % can't I just define them in the 'run' worksapce and forget avbout them?
@@ -349,9 +349,9 @@ p.trVarsInit.practiceTrials   = true; % are we running practice trials?
 p.trVarsInit.fixWinWidthDeg       = 4;        % fixation window width in degrees
 p.trVarsInit.fixWinHeightDeg      = 4;        % fixation window height in degrees
 p.trVarsInit.fixPointRadPix       = 10;       % fixation point "radius" in pixels
-p.trVarsInit.fixPointLinePix      = 6;        % fixation point line weight in pixels
+p.trVarsInit.fixPointLinePix      = 6;        % fixation point line weight in pixels7
 
-% variables related to how the experiment is run / what is shown, etc.
+% variables related to how the experiment is run / w10hat is shown, etc.
 p.trVarsInit.useCellsForDraw        = false;
 p.trVarsInit.wantEndFlicker         = false;     % have screen flicker / low tone play repeatedly while waiting for joystick release?
 p.trVarsInit.wantOnlinePlots        = false;     % use online plotting window?

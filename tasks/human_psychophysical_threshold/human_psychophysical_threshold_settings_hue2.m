@@ -275,6 +275,13 @@ p.trVarsInit.hueVar                   = 0.05;     % variability in hue (angle)
 p.trVarsInit.lumVar                   = 0.0;     % variability in luminance
 p.trVarsInit.satVar                   = 0.0;     % variability in saturation
 
+% Variables specifically related to radial frequency grating definition:
+p.trVarsInit.rfRad0                   = 0.7;      % radius of the radial frequency grating as a proportion of "stimRadius" (below).
+p.trVarsInit.rfAmpMod                 = 0.1;      % magnitude of amplitude modulation in RF gratings (how "bulgy" they are)
+p.trVarsInit.rfPhase                  = 0;        % phase of radial frequency grating
+p.trVarsInit.rfSigma                  = p.trVarsInit.rfRad0 / 8; % variance of RF grating, we define this relative to rfRad0.
+p.trVarsInit.rfFlag                   = false;     % variable indicating whether we want to use RF gratings or gabor gratings for stimulus generation
+
 % Magnitude of stimulus delta if desired:
 p.trVarsInit.speedDelta               = (pi/8);   % motion magniutde
 p.trVarsInit.contDelta                = 0.3;      % contrast

@@ -97,7 +97,8 @@ switch p.trVars.currentState
         p.trData.timing.trialBegin      = timeNow;
         p.trVars.currentState           = p.state.showFix;
 
-        % draw boxes on Host PC indicating locatoin of fixation and
+        try
+        % draw boxes on Host PC indicating location of fixation and
         % stimuli:
         for k = 1:4
             Eyelink('Command', 'draw_box %d %d %d %d 15', ...
@@ -111,6 +112,9 @@ switch p.trVars.currentState
                 p.draw.fixPointRect(2), ...
                 p.draw.fixPointRect(3), ...
                 p.draw.fixPointRect(4));
+        catch me
+            keyboard
+        end
 
         % if this is a "practice trial" report it to eyelink:
         if p.trVars.practiceTrials
