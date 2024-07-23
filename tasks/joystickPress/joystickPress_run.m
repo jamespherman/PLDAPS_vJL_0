@@ -97,7 +97,7 @@ switch p.trVars.currentState
         
         % If joystick is held down, onwards to state 0.25
         % If not, onward to state 3.3 (non-start)
-        if pds.joyHeld(p)
+        if pds.joyHeld(p) && p.trData.timing.joyPress < 0
             p.init.strb.addValue(p.init.codes.joyPress);
             p.trData.timing.joyPress    = timeNow;
             p.trVars.currentState       = p.state.holdJoy;
@@ -153,7 +153,7 @@ switch p.trVars.currentState
         %% JOYSTICK BREAK (MISS)
         p = playTone(p, 'low');
         p.trVars.exitWhileLoop = true;
-        
+
     case p.state.nonStart
         %% NON-START
         % subject did not hold the joystick within the alloted time and

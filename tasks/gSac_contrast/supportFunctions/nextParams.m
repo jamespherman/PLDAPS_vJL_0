@@ -370,11 +370,9 @@ p.trVars.targHoldDuration =  unifrnd(p.trVars.targHoldDurationMin, ...
 % "high" and "low" reward trials, respectively.
 if p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
     strcmp(p.init.trialArrayColumnNames, 'highLowRwd')) == 1
-    p.trVars.rewardDurationMs = p.trVarsInit.rewardDurationMs + ...
-        p.trVarsInit.rewardDurDelta;
+    p.trVars.rewardDurationMs = p.trVars.rewardDurationHigh;
 else
-    p.trVars.rewardDurationMs = p.trVarsInit.rewardDurationMs - ...
-        p.trVarsInit.rewardDurDelta;
+    p.trVars.rewardDurationMs = p.trVars.rewardDurationLow;
 end
 
 end

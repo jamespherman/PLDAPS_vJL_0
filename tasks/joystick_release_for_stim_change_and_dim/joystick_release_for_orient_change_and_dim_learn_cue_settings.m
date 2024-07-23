@@ -62,7 +62,7 @@ p.init.rigConfigFile     = which(['rigConfigFiles.rigConfig_rig' ...
 p.init.exptType         = 'joystick_release_for_stim_dim_and_orient_change_learn_cue_multi';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
 p.init.taskName         = 'joystick_release_for_stim_change_and_dim';
 p.init.taskType         = 1;                            % poorly defined numerical index for the task "type"
-p.init.pldapsFolder     = pwd;                          % pldaps gui takes us to taks folder automatically once we choose a settings file
+p.init.pldapsFolder     = regexp(mfilename('fullpath'), '/(?<=/).+?PLDAPS_vK2_MASTER', 'match', 'once'); % as long as this settings file is in a subfolder of "PLDAPS_vK2_MASTER" this should give the correct PLDAPS dir.                         % pldaps gui takes us to taks folder automatically once we choose a settings file
 p.init.protocol_title   = [p.init.taskName '_task'];    % Define Banner text to identify the experimental protocol
 p.init.date             = datestr(now,'yyyymmdd');
 p.init.time             = datestr(now,'HHMM');

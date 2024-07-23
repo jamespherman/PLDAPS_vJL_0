@@ -28,7 +28,7 @@ function p = joystick_release_for_stim_change_and_dim_finish(p)
 % like an odd time to do this but before you go changing it ask jph), then
 % align spikes to events for later plotting. This is currently a hack
 % because we drop the first trial's events - figure out a way around this.
-if p.rig.ripple.status
+if p.rig.ripple.status && ~isempty(p.rig.ripple.recChans)
     p = pds.getRippleData(p);
 end
 p = alignSpikes(p);

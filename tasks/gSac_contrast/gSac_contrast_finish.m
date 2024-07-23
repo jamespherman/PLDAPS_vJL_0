@@ -51,7 +51,7 @@ p           = pds.waitForJoystickRelease(p);
 postTrialTimeOut(p);
 
 % retreive data from ripple "NIP" if connected:
-if p.rig.ripple.status 
+if p.rig.ripple.status && ~isempty(p.rig.ripple.recChans)
     p = pds.getRippleData(p);
 end
 
