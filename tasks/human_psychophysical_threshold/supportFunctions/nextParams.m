@@ -116,21 +116,6 @@ end
 p.stim.primStim     = p.init.trialsArray(p.trVars.currentTrialsArrayRow,...
     strcmp(p.init.trialArrayColumnNames, 'primary'));
 
-% Redefine Hue array so that each patch has a unique hue:
-% p.stim.hueArray = repmat(...
-%     circshift(p.trVars.hueInit + [0; 90; 180; 270], ...
-%     p.stim.primStim - 1), 1, p.trVars.nEpochs);
-
-% Redefine orientation array so that each patch has a unique orientation:
-% p.stim.orientArray = repmat(...
-%     circshift(p.trVars.orientInit + [0; 45; 90; 135], ...
-%     p.stim.primStim - 1), 1, p.trVars.nEpochs);
-
-% depending on the info present in the current row of the trials array
-% ("p.init.trialsArray"), define the "stimulus feature value arrays."
-% These have one entry for each stimulus patch (one row per patch) and
-% each "epoch" (one column per epoch).
-
 try
 % loop over stimulus features
 for i = 1:p.stim.nFeatures
@@ -176,13 +161,7 @@ for i = 1:p.stim.nFeatures
             p.stim.([p.stim.featureValueNames{i} ...
             'Array'])(p.trVars.stimChgIdx, 2) + featureDelta;
 
-        % Set up masking intervals depending on w
-        % 
-        % 
-        % 
-        % 
-        % 
-        % hich feature is the
+        % Set up masking intervals depending on which feature is the
         % outlier:
         switch p.stim.featureValueNames{i}
             case 'hue'

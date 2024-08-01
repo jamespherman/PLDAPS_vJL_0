@@ -153,6 +153,9 @@ p.status.questThreshEst             = []; % quest's estimated threshold
 p.status.questSignalVal             = []; % last quest-suggested signal strength
 p.status.fixSignalStrength          = 0;  % are we presenting a fixed signal strength or a quest-determined variable one?
 p.status.numTrialsSinceFixSig       = 0;  % running count of the number of good trials since the threshold was fixed.
+p.status.questThreshCiLow           = 0;
+p.status.questThreshCiHigh          = 0;
+
 p.rig.guiStatVals = {...
     'blockNumber'; ...
     'iTrial'; ...   
@@ -160,6 +163,8 @@ p.rig.guiStatVals = {...
     'trialsLeftInBlock'; ...
     'questSignalVal'; ...
     'questThreshEst'; ...
+    'questThreshCiLow'; ...
+    'questThreshCiHigh'; ...
     'fixSignalStrength'; ...
     'numTrialsSinceFixSig'; ...
     };
@@ -326,17 +331,21 @@ p.trVarsInit.flipIdx                 = 1;        % index of
 p.trVarsInit.postRewardDuration      = 0;        % how long should the trial last AFTER reward delivery? This lets us record the neuronal response to reward.
 p.trVarsInit.numTrialsForPerfCalc    = 100;      % how many of the most recently completed trials should be used to calculate % correct / median RT?
 
-% variables related to "QUEST" (adaptive threshold estimation)
+% variables related to "QUEST" (adaptive threshold estimation) - in this
+% "speed" task, we initialize these variables here but they must be
+% redefined after we have specified a "pixels per degree" value (after
+% "init" is executed).
 p.trVarsInit.useQuest                = true;     % use "QUEST" to determine next stimulus value?
 p.trVarsInit.initQuestThreshGuess    = pi/10;    % initial guess of threshold value to pass to quest
-p.trVarsInit.initQuestSD             = 10;       % how many SDs to tell QUEST to search for threshold value?
-p.trVarsInit.initQuestBetaGuess      = 1;        % what is our initial guess for beta?
+p.trVarsInit.initQuestBetaGuess      = 3.5;      % what is our initial guess for beta?
 p.trVarsInit.signalStrength          = 0.1;      % what is the signal strength for the upcoming trial (updated during experiment). This is also the assumed suprathreshold value.
-p.trVarsInit.minSignalStrength       = 0.105;    % what is the smallest signal we want to test?
-p.trVarsInit.maxSignalStrength       = 1.57;     % what is the largest signal we want to test?
-p.trVarsInit.supraSignalStrength     = 0.8;      % what is a signal strength that is very likely to be above threshold?
+p.trVarsInit.minSignalStrength       = pi/30;    % what is the smallest signal we want to test?
+p.trVarsInit.maxSignalStrength       = pi/2;     % what is the largest signal we want to test?
+p.trVarsInit.initQuestSD              =0;        % What is the SD on our initial threshold guess?
+p.trVarsInit.supraSignalStrength     = 0.8;      % what is a signal stength that is very likely to be above threshold?
+p.trVarsInit.questGrain              = 0;        % What is the "grain" size for representing our psychometric function?
 p.trVarsInit.numThreshCheckTrials    = 5;        % how many trials to check for thrreshold estimate being lower than criterion?
-p.trVarsInit.divFactorNoThreshChg    = 50;
+p.trVarsInit.divFactorNoThreshChg    = 2;
 
 % I don't think I need to carry these around in 'p'....
 % can't I just define them in the 'run' worksapce and forget avbout them?

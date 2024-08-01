@@ -37,6 +37,51 @@ function p = human_psychophysical_threshold_init(p)
 % (2) define rig-specific information
 p   = pds.initRigConfigFile(p);
 
+% if this is a "speed" task we must compute speeds here now that we have a
+% "pixels per degree" value specified:
+if contains(p.init.settingsFile, 'speed')
+
+    % define spatial frequency of gabor in cycles per pixel:
+    p.trVarsInit.freqCycPx               = p.trVarsInit.freqInit / ...
+        pds.deg2pix(1,p);
+
+    % Our minimum speed is based on the assumption that we change the phase
+    % by 1 pixel per frame. Note, this is also the smallest difference in
+    % speed that can be achieved. The maximum speed is instead just based
+    % on the assumption that we don't want to move more than 1/4 cycle per
+    % frame:
+    p.stim.minSpeed                      = p.trVarsInit.freqCycPx * 2 * pi;
+    p.stim.maxSpeed                      = pi / 2;
+
+    % In these speed tasks 3/4 stimuli have one speed and the 4th, outlier
+    % stimulus has a different speed. We specify the speed for 3/4 stimuli
+    % as the value halfway between the minimum and the maximum, then
+    % specify our minimum and maximum signal strength based on the range
+    % between that midpoint and the top / bottom of the range:
+    p.stim.midSpeed                      = (p.stim.maxSpeed - ...
+        p.stim.minSpeed) / 2;
+    p.trVarsInit.minSignalStrength       = p.stim.minSpeed;
+    p.trVarsInit.maxSignalStrength       = p.stim.maxSpeed - ...
+        p.stim.midSpeed;
+    p.trVarsInit.supraSignalStrength     = p.trVarsInit.maxSignalStrength;
+    p.trVarsInit.speedInit               = p.stim.midSpeed;
+
+    % We define the "SD" and the "grain" based on the min/max signal
+    % strengths:
+    p.trVarsInit.initQuestSD             = ...
+        (p.trVarsInit.maxSignalStrength - ...
+        p.trVarsInit.minSignalStrength) / 6;
+    p.trVarsInit.questGrain              = p.stim.minSpeed / 2;
+
+    % define the initial speed delta and the initial threshold guess as the
+    % midpoint between the minimum and maximum signal strengths. We do this
+    % because "QuestCreate" defines the psychometric function under this
+    % assumption and we'll get out-of-range errors if we choose a different
+    % value:
+    p.trVarsInit.initQuestThreshGuess    = p.stim.minSpeed + ...
+        p.trVarsInit.maxSignalStrength / 2;
+end
+
 % (3) define color look-up-table (lut). 
 p   = initClut(p);
 
@@ -51,26 +96,6 @@ disp('pds.initEyelink execution has completed.');
 setGuiMessage(...
     'Eyelink Setup Complete!');
 ListenChar(1);
-
-% If this is the "speed" task, we need to redefine some variables
-% incorporating the screen refresh rate:
-if contains(p.init.settingsFile, 'speed')
-    
-    % define minimum and maximum "speed" based on refresh rate:
-    p.stim.minSpeed = 2 * pi / p.rig.refreshRate;
-    p.stim.maxSpeed = 2 * pi / (p.rig.refreshRate / 12);
-
-    % define "initSpeed" to be the middle of the minSpeed / maxSpeed range:
-    p.trVarsInit.speedInit = mean([p.stim.minSpeed, p.stim.maxSpeed]);
-
-    % variables related to "QUEST" (adaptive threshold estimation)
-    p.trVarsInit.minSignalStrength       = 0;    % what is the smallest signal we want to test?
-    p.trVarsInit.maxSignalStrength       = p.trVarsInit.speedInit - p.stim.minSpeed;     % what is the largest signal we want to test?
-    p.trVarsInit.supraSignalStrength     = p.trVarsInit.maxSignalStrength;      % what is a signal strength that is very likely to be above threshold?
-
-    % now assign to "trVarsGuiComm
-    p.trVarsGuiComm = p.trVarsInit;
-end
 
 % (6) define trial structure
 p   = initTrialStructure(p);
