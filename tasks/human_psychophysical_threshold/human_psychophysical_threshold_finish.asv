@@ -87,20 +87,18 @@ if ~p.trVars.practiceTrials
     % p.trVars.numThreshCheckTrials + 1, check whether the trial-to-trial
     % change in threshold estimate has beeen below a criterion value for
     % the last p.trvars.numThreshCheckTrials trials. Also, we only check 
-    % this if the variable "p.status.fixSignalStrength" is false - if that 
-    % variable is true that means we've already decided to fix the signal 
-    % strength so there's no need to do this check.
-    threshChangeCrit = p.init.questObj.grain / ...
-        p.trVars.divFactorNoThreshChg;
+    % this if the variable "p.status.fixSignalStrength" is false - if that variable is
+    % true that means we've already decided to fix the signal strength so
+    % there's no need3 to do this check.
+    threshChangeCrit = (p.trVars.maxSignalStrength - ...
+        p.trVars.minSignalStrength) / p.trVars.divFactorNoThreshChg;
     if ~p.status.fixSignalStrength && ...
             (p.init.questObj.trialCount > p.trVars.numThreshCheckTrials)
 
         % compute trial-to-trial change in 95% confidence interval on
         % estimated threshold:
-        tempThreshCiChange = abs(diff(...
-            abs(diff(p.init.questObj.threshEstCi, [], 2))));
+        tempThreshCiChange = abs(diff(p.init.questObj.threshEstCi, [], 2));
 
-        % close threshold estimation plot window if it's open 
         if ~isempty(findall(0, 'Name', 'ThreshChangeFig'))
             close(findall(0, 'Name', 'ThreshChangeFig'));
         end
@@ -117,7 +115,7 @@ if ~p.trVars.practiceTrials
         % for at least "numThreshCheckTrials", and the subject has
         % completed at least 25 trials of threshold estimation, fix the
         % signal strength and validate the estimated threshold:
-        if all(tempThreshCiChange(...
+        if all(tempThreshChange(...
                 end-p.trVars.numThreshCheckTrials+1:end) < ...
                 threshChangeCrit) && p.init.questObj.trialCount >= 25
 

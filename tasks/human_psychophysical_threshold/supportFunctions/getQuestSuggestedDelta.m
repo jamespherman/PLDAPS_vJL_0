@@ -27,7 +27,8 @@ if ~isfield(p.init, 'questObj')
     % create QUEST object
     p.init.questObj = QuestCreate(initThresholdGuess, ...
         initThresholdGuessSD, thresholdPctCorr, ...
-        betaInit, deltaInit, gammaInit, 0.1, p.trVars.maxSignalStrength);
+        betaInit, deltaInit, gammaInit, p.trVarsInit.questGrain, ...
+        p.trVarsInit.maxSignalStrength - p.trVarsInit.minSignalStrength);
 
     % set the questObj to normalize the PDF
     p.init.questObj.normalizePdf   = 1;

@@ -1,0 +1,16 @@
+function p = updateStatusVariables(p)
+%
+% p = updateStatusVariables(p)
+%
+
+% iterate "good trial" count
+p.status.iGoodTrial = p.status.iGoodTrial + ...
+    double(~p.trData.trialRepeatFlag);
+
+
+% if we're using QUEST, update the threshold estimate and the 
+if p.trVars.useQuest
+    p.status.questThreshEst = 10^QuestMean(p.init.questObj);
+end
+
+end

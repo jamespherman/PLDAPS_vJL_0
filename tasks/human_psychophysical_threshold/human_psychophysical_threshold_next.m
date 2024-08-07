@@ -50,7 +50,7 @@ p = initTrData(p);
 % (7) generate stimuli
 p   = generateStimuli(p);
 
-% (8) record save the stim details (ie dot XYCW)
+% (8) Store the stimulus details (ie dot XYCW)
 % p.trVars.stim = p.stim;
 
 % (9) Send trial number information to Eyelink for EDF file:
@@ -69,9 +69,8 @@ Eyelink('Message', '!V CLEAR %d %d %d', p.init.el.backgroundcolour(1), ...
 Eyelink('Command', 'record_status_message "TRIAL %d/%d"', ...
     p.status.iTrial, p.status.totalTrials);
 
+% If desired, do a drift correction.
 if p.trVars.doDriftCorrect
-% (10) % Perform a drift check / correction. Optionally provide x y target
-% location, otherwise target is presented on screen centre
 EyelinkDoDriftCorrection(p.init.el, p.draw.middleXY(1), ...
     p.draw.middleXY(2));
 end
