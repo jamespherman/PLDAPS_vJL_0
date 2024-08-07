@@ -43,7 +43,8 @@ if isempty(p.status.trialsArrayRowsPossible)
         p.status.freeRewardsAvailable = false(p.init.blockLength, 1);
     
         % how many free rewards per block?
-        nFreeRewards = ceil(p.init.blockLength / 10);
+        nFreeRewards = ceil(p.init.blockLength * ...
+            p.trVarsInit.freeRewardProbability);
     
         % pick trials to have free rewards:
         p.status.freeRewardsAvailable(...
@@ -439,9 +440,17 @@ function p = timingInfo(p)
 % majority of these are calculated relative to the time that fixation is
 % aquired.
 
+% Compute time between fixation acquisition and cue onset:
+p.trVars.fix2CueIntvl = p.trVars.fix2CueIntvlMin + ...
+    p.trVars.fix2CueIntvlWin * rand;
+
+% Compute time between cue offset and stimulus onset:
+p.trVars.cue2StimIntvl  = p.trVars.cue2StimIntvlMin + ...
+    p.trVars.cue2StimIntvlWin * rand;
+
 % Time between acquiring fixation and stimulus onset in seconds.
 p.trVars.fix2StimOnIntvl = p.trVars.fix2CueIntvl + p.trVars.cueDur + ...
-    p.trVars.cue2StimItvl;
+    p.trVars.cue2StimIntvl;
 
 % Stimulus change time; regardless of whether there actually is a stimulus
 % change in the current trial, we calculate a change time to keep the

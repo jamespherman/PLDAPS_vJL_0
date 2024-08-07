@@ -85,7 +85,7 @@ WaitSecs(relTime + p.trVars.postRewardDuration - timeNow);
 % end in "repeatFlag", give a free reward:
 if p.trVars.freeRewardProbability > 0 && ...
         p.status.freeRewardsAvailable(p.trVars.currentTrialsArrayRow) ...
-        && ~p.trData.trialRepeatFlag
+        && ~p.trData.trialRepeatFlag && p.trVars.freeRewardFlag
 
     % deliver free reward
     p = pds.freeReward(p);
