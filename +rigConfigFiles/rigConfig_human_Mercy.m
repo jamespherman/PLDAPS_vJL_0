@@ -1,4 +1,4 @@
-function p = rigConfig_human(p)
+function p = rigConfig_human_Mercy(p)
 
 % this is the rig config file
 % Here we note rig- and animal-specific details such as screen size or
