@@ -240,7 +240,7 @@ p.trVarsInit.isStimChangeTrial   = false;     % variable tracking whether the cu
 % replace the automatically calculated elevations and eccentricities with
 % the specified values:
 p.trVarsInit.stimLoc1Elev        = 45;          % Stimulus location (angle of elevation).
-p.trVarsInit.stimLoc1Ecc         = 8;          % Stimulus location (eccentricity in degrees).
+p.trVarsInit.stimLoc1Ecc         = 6;          % Stimulus location (eccentricity in degrees).
 p.trVarsInit.stimLoc2Elev        = 0;           % Stimulus location (angle of elevation).
 p.trVarsInit.stimLoc2Ecc         = 0;           % Stimulus location (eccentricity in degrees).
 p.trVarsInit.stimLoc3Elev        = 0;           % Stimulus location (angle of elevation).
@@ -297,7 +297,7 @@ p.trVarsInit.rfSigma                  = p.trVarsInit.rfRad0 / 8; % variance of R
 p.trVarsInit.rfFlag                   = false;     % variable indicating whether we want to use RF gratings or gabor gratings for stimulus generation
 
 % spatial properties of "checkerboard":
-p.trVarsInit.stimRadius               = 3;     % aperture radius in deg
+p.trVarsInit.stimRadius               = 2.5;     % aperture radius in deg
 p.trVarsInit.boxSizePix               = 6;        % diameter of each "check" in pixels
 p.trVarsInit.boxLifetime              = 8;        % "check" lifetime in frams
 p.trVarsInit.nPatches                 = 4;        % number of stimuli 

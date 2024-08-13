@@ -258,7 +258,7 @@ p.trVarsInit.isStimChangeTrial   = false;     % variable tracking whether the cu
 % replace the automatically calculated elevations and eccentricities with
 % the specified values:
 p.trVarsInit.stimLoc1Elev        = 45;          % Stimulus location (angle of elevation).
-p.trVarsInit.stimLoc1Ecc         = 8;           % Stimulus location (eccentricity in degrees).
+p.trVarsInit.stimLoc1Ecc         = 6;           % Stimulus location (eccentricity in degrees).
 p.trVarsInit.stimLoc2Elev        = 0;           % Stimulus location (angle of elevation).
 p.trVarsInit.stimLoc2Ecc         = 0;           % Stimulus location (eccentricity in degrees).
 p.trVarsInit.stimLoc3Elev        = 0;           % Stimulus location (angle of elevation).
@@ -315,7 +315,7 @@ p.trVarsInit.lumDelta                 = 0;        % luminance
 p.trVarsInit.hueDelta                 = 45;       % hue (color angle)
 
 % spatial properties of "checkerboard":
-p.trVarsInit.stimRadius               = 3;        % aperture radius in deg
+p.trVarsInit.stimRadius               = 2.5;        % aperture radius in deg
 p.trVarsInit.boxSizePix               = 6;        % diameter of each "check" in pixels
 p.trVarsInit.boxLifetime              = 1;        % "check" lifetime in frams
 p.trVarsInit.nPatches                 = 4;        % number of stimuli 

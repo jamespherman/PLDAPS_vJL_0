@@ -14,7 +14,7 @@ function p = rigConfig_human_Mercy(p)
 %   yyyymmdd is the date (e.g. 19830531)
 
 %% Geometry
-p.rig.viewdist        = 610;      % viewing distance (mm)
+p.rig.viewdist        = 540;      % viewing distance (mm)
 p.rig.screenhpix      = 1200;     % screen height (pixels)
 p.rig.screenh         = 300;   % screen height (mm)
 p.rig.deg2PixConstant = p.rig.viewdist * p.rig.screenhpix / p.rig.screenh;
