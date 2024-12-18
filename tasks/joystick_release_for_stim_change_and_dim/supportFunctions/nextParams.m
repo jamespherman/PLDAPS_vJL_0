@@ -129,9 +129,6 @@ end
 %%
 function p = trialTypeInfo(p)
 
-% keyboard
-
-% June 19th, 2019
 % retreive random seed values ("trialSeed" and "stimSeed" from trials
 % array.
 p.trVars.stimSeed = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
@@ -157,6 +154,12 @@ p.trVars.isStimChangeTrial  = ~p.trVars.isNoChangeTrial;
 % how many stimuli will be shown on this trial?
 p.stim.nStim = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
     strcmp(p.init.trialArrayColumnNames, 'n stim'));
+
+% Is this an opto stim trial? Opto stim trials have a 4 in the thousands
+% digit of their trial code:
+trialCode = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
+    strcmp(p.init.trialArrayColumnNames, 'trialCode'));
+p.trVars.isOptoStimTrial = mod(floor(trialCode / 1000), 10) == 4;
 
 % On a certain proportion of trials, we want the peripheral stimulus to
 % change in some feature without dimming. We use a random number draw to
@@ -314,6 +317,8 @@ if p.trVars.isStimChangeTrial
 else
     p.trData.dimVal = 0;
 end
+
+
 
 % define a variable indicating if this is a contrast change trial
 p.trVars.isContrastChangeTrial = ...

@@ -1,4 +1,4 @@
-function p = joystick_release_for_orient_change_and_dim_learn_cue_settings
+function p = joystick_release_for_orient_change_and_dim_opto_settings
 %  p = joystick_release_for_orient_change_and_dim_learn_cue_settings
 %  On some proportion of trials, the fixation point turns off without
 %  reward delivery or "boop", monkey must release joystick to get reward on
@@ -58,7 +58,7 @@ p.init.rigConfigFile     = which(['rigConfigFiles.rigConfig_rig' ...
 
 %% define task name and related files:
 
-p.init.exptType         = 'joystick_release_for_stim_dim_and_orient_change_learn_cue_multi';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
+p.init.exptType         = 'joystick_release_for_stim_dim_and_orient_change_opto';  % Which experiment are we running? <- IMPORTANT FOR TRIAL STRUCTURE CHOICE
 p.init.taskName         = 'joystick_release_for_stim_change_and_dim';
 p.init.taskType         = 1;                            % poorly defined numerical index for the task "type"
 p.init.pldapsFolder     = regexp(mfilename('fullpath'), '/(?<=/).+?PLDAPS_vK2_MASTER', 'match', 'once'); % as long as this settings file is in a subfolder of "PLDAPS_vK2_MASTER" this should give the correct PLDAPS dir.                         % pldaps gui takes us to taks folder automatically once we choose a settings file
@@ -225,7 +225,7 @@ p.rig.guiVars = {...
     'stimLoc1Elev'; ...         % 5
     'orientDelta'; ...          % 6
     'freeRewardFlag'; ...       % 7
-    'otoPulseAmpVolts'; ...     % 8
+    'optoPulseAmpVolts'; ...    % 8
     'joyMinLatency'; ...        % 9
     'joyMaxLatency'; ...        % 10
     'passJoy'; ...              % 11
@@ -419,6 +419,13 @@ p.trVarsInit.fixColorIndex          = 0;
 p.trVarsInit.postFlip.logical         = false;
 p.trVarsInit.postFlip.varNames        = cell(0);
 
+%% optital stimulation variables
+p.trVarsInit.optoStimDurSec    = 0.5;         % Duration in seconds of optical stimulation
+p.trVarsInit.optoPulseDurSec   = 0.5;         % Duration in seconds of each "pulse" of optical stimulation
+p.trVarsInit.optoPulseAmpVolts = 3.5;         % Amplitude of voltage pulses controlling optical stimulation intensity
+p.trVarsInit.optoIpiSec        = 0.0;         % Duration in seconds between pulses of optical stimulation
+p.trVarsInit.isOptoStimTrial   = false;       % Logical variable indicating whether the current trial is an optical stimulation trial or not.
+
 %% end of trVarsInit
 % once all trial variables have been initialized in trVarsInit, we copy 
 % them to 'trVarsGuiComm' in order to inform the gui. 
@@ -464,6 +471,7 @@ p.init.trDataInitList = {...
     'p.trData.timing.reactionTime'      '-1'; ...   % time of joystick release relative to dimming
     'p.trData.timing.fixHoldReqMet',    '-1'; ...   % time that fixation hold duration was met (also time of fixation dimming)
     'p.trData.timing.freeReward',       '-1'; ...   % time that free reward was delivered
+    'p.trData.timing.optoStim',         '-1'; ...   % time that optical stimulation was delivered
     };
 
 % since the list above is fixed, count its rows now for looping over later.
@@ -495,14 +503,7 @@ p.rig.dp.dacRate               = 1000;     % define DAC sampling rate (Hz);
 p.rig.dp.dacPadDur             = 0.01;     % how much time to pad the DAC +4V with +0V?
 p.rig.dp.dacBuffAddr           = 10e6;     % DAC buffer base address
 p.rig.dp.dacChannelOut         = 0;        % Which channel to use for DAC outpt control of reward system.
-
-%% optital stimulation variables
 p.rig.dp.optoDacChan           = 1;           % Which channel to use for DAC output control of optical stimulation.
-p.trVarsInit.optoStimDurSec    = 0.5;         % Duration in seconds of optical stimulation
-p.trVarsInit.optoPulseDurSec   = 0.5;         % Duration in seconds of each "pulse" of optical stimulation
-p.trVarsInit.otoPulseAmpVolts  = 3.5;         % Amplitude of voltage pulses controlling optical stimulation intensity
-p.trVarsInit.optoIpiSec        = 0.0;         % Duration in seconds between pulses of optical stimulation
-p.trVarsInit.isOptoStimTrial   = false;       % Logical variable indicating whether the current trial is an optical stimulation trial or not.
 
 %% stimulus-specific (and static over the course of an experiment):
 % here we have motion related vars but if your stimulus is of different

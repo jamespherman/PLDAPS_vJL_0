@@ -541,7 +541,7 @@ if timeNow > p.trData.timing.lastFrameTime + ...
         p.trVars.eyePixX p.trVars.eyePixY] + ...
         [-1 -1 1 1]*p.draw.eyePosWidth + repmat(p.draw.middleXY, 1, 2);
     Screen('FillRect', p.draw.window, p.draw.color.eyePos, gazePosition);
-    
+
     % draw the cue-ring (if desired)
     if p.trVars.cueIsOn
         if p.stim.nStim > 1
@@ -603,6 +603,17 @@ if timeNow > p.trData.timing.lastFrameTime + ...
         [-p.draw.fixWinWidthPix -p.draw.fixWinHeightPix ...
         p.draw.fixWinWidthPix p.draw.fixWinHeightPix], ...
         p.draw.fixWinPenDraw)
+
+    % If this is an opto stim trial, draw a slightly larger fixation window
+    % to indicate this as an opto-stim trial to the experimenter.
+    if p.trVars.isOptoStimTrial
+        % Draw larger opto indicator window
+        Screen('FrameRect',p.draw.window, p.draw.color.fixWin, ...
+            repmat(p.draw.fixPointPix, 1, 2) + ...
+            [-p.draw.fixWinWidthPix -p.draw.fixWinHeightPix ...
+            p.draw.fixWinWidthPix p.draw.fixWinHeightPix] * 1.1, ...
+            p.draw.fixWinPenDraw);
+    end
     
     % Draw the joystick-bar graphic.
     Screen('FrameRect', p.draw.window, p.draw.color.joyInd, p.draw.joyRect);
@@ -624,6 +635,14 @@ if timeNow > p.trData.timing.lastFrameTime + ...
     % if a stimulus event has occurred, mark the time of that event based
     % on the previously recorded fliptime.
     if p.trVars.postFlip.logical
+
+        % Check if this includes a change or no-change event and deliver 
+        % optical stimulation if appropriate
+        if p.trVars.isOptoStimTrial && ...
+                any(contains(p.trVars.postFlip.varNames, {'stimChg', ...
+                'noChg'}))
+            p = pds.deliverOptoStim(p);
+        end
         
         % loop over the "varNames" field of "p.trVars.postFlip" and assign
         % "p.trData.timing.lastFrameTime" to

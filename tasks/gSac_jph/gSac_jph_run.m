@@ -523,50 +523,82 @@ joyRectNow = pds.joyRectFillCalc(p);
 
 %% if we're close enough to next screen flip, start drawing:
 
-if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNumber
+if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - ...
+        p.rig.magicNumber
     
     % Fill the window with the background color.
     Screen('FillRect', p.draw.window, p.draw.color.background);
     
     % Draw the grid
-    Screen('DrawLines', p.draw.window, p.draw.gridXY, [], p.draw.color.gridMajor);
+    Screen('DrawLines', p.draw.window, p.draw.gridXY, [], ...
+        p.draw.color.gridMajor);
     
     % draw mouse cursor:
     if p.trVarsInit.setTargLocViaMouse
-        Screen('FillRect', p.draw.window, p.draw.color.mouseCursor, [p.trVars.mouseCursorX p.trVars.mouseCursorY p.trVars.mouseCursorX p.trVars.mouseCursorY] + [-1 -1 1 1] * p.draw.cursorW)
+        Screen('FillRect', p.draw.window, p.draw.color.mouseCursor, ...
+            [p.trVars.mouseCursorX p.trVars.mouseCursorY ...
+            p.trVars.mouseCursorX p.trVars.mouseCursorY] + ...
+            [-1 -1 1 1] * p.draw.cursorW)
     end
         
     % Draw the gaze position, MUST DRAW THE GAZE BEFORE THE
     % FIXATION. Otherwise, when the gaze indicator goes over any
     % stimuli it will change the occluded stimulus' color!
-    Screen('FillRect', p.draw.window, p.draw.color.eyePos, [p.trVars.eyePixX p.trVars.eyePixY p.trVars.eyePixX p.trVars.eyePixY] + [-1 -1 1 1]*p.draw.eyePosWidth + repmat(p.draw.middleXY, 1, 2));
+    Screen('FillRect', p.draw.window, p.draw.color.eyePos, ...
+        [p.trVars.eyePixX p.trVars.eyePixY p.trVars.eyePixX ...
+        p.trVars.eyePixY] + [-1 -1 1 1]*p.draw.eyePosWidth + ...
+        repmat(p.draw.middleXY, 1, 2));
     
     % draw targWin:
-    Screen('FrameRect',p.draw.window, p.draw.color.targWin, repmat(p.draw.targPointPix, 1, 2) +  [-p.draw.targWinWidthPix -p.draw.targWinHeightPix p.draw.targWinWidthPix p.draw.targWinHeightPix], p.draw.targWinPenDraw)   
+    Screen('FrameRect',p.draw.window, p.draw.color.targWin, ...
+        repmat(p.draw.targPointPix, 1, 2) +  [-p.draw.targWinWidthPix ...
+        -p.draw.targWinHeightPix p.draw.targWinWidthPix ...
+        p.draw.targWinHeightPix], p.draw.targWinPenDraw)   
     
     % draw fixation window
-    Screen('FrameRect',p.draw.window, p.draw.color.fixWin, repmat(p.draw.fixPointPix, 1, 2) +  [-p.draw.fixWinWidthPix -p.draw.fixWinHeightPix p.draw.fixWinWidthPix p.draw.fixWinHeightPix], p.draw.fixWinPenDraw)
+    Screen('FrameRect',p.draw.window, p.draw.color.fixWin, ...
+        repmat(p.draw.fixPointPix, 1, 2) +  [-p.draw.fixWinWidthPix ...
+        -p.draw.fixWinHeightPix p.draw.fixWinWidthPix ...
+        p.draw.fixWinHeightPix], p.draw.fixWinPenDraw)
     
+    % If this is an opto stim trial, draw a slightly larger fixation window
+    % to indicate this as an opto-stim trial to the experimenter.
+    if p.trVars.isOptoStimTrial
+        % Draw larger opto indicator window
+        Screen('FrameRect',p.draw.window, p.draw.color.fixWin, ...
+            repmat(p.draw.fixPointPix, 1, 2) + ...
+            [-p.draw.fixWinWidthPix -p.draw.fixWinHeightPix ...
+            p.draw.fixWinWidthPix p.draw.fixWinHeightPix] * 1.2, ...
+            p.draw.fixWinPenDraw);
+    end
 
     % draw the target (if it is time)
     if p.trVars.targetIsOn
         
         % draw target:
-        Screen('FrameRect', p.draw.window, p.draw.color.targ, repmat(p.draw.targPointPix, 1, 2) + p.trVars.targRadius*[-1 -1 1 1], p.trVars.targWidth);
+        Screen('FrameRect', p.draw.window, p.draw.color.targ, ...
+            repmat(p.draw.targPointPix, 1, 2) + ...
+            p.trVars.targRadius*[-1 -1 1 1], p.trVars.targWidth);
         
     end
     
     % draw fixation spot
-    Screen('FrameRect',p.draw.window, p.draw.color.fix, repmat(p.draw.fixPointPix, 1, 2) + p.draw.fixPointRadius*[-1 -1 1 1], p.draw.fixPointWidth);
+    Screen('FrameRect',p.draw.window, p.draw.color.fix, ...
+        repmat(p.draw.fixPointPix, 1, 2) + ...
+        p.draw.fixPointRadius*[-1 -1 1 1], p.draw.fixPointWidth);
     
     
         % Draw the joystick-bar graphic.
-    Screen('FrameRect', p.draw.window, p.draw.color.joyInd, p.draw.joyRect);
+    Screen('FrameRect', p.draw.window, p.draw.color.joyInd, ...
+        p.draw.joyRect);
     Screen('FillRect',  p.draw.window, p.draw.color.joyInd, joyRectNow);
     
     % flip and record time of flip.
-    [p.trData.timing.flipTime(p.trVars.flipIdx), ~, ~, frMs] = Screen('Flip', p.draw.window, GetSecs + 0.00);
-    p.trData.timing.lastFrameTime   = p.trData.timing.flipTime(p.trVars.flipIdx) - p.trData.timing.trialStartPTB;
+    [p.trData.timing.flipTime(p.trVars.flipIdx), ~, ~, frMs] = ...
+        Screen('Flip', p.draw.window, GetSecs + 0.00);
+    p.trData.timing.lastFrameTime   = ...
+        p.trData.timing.flipTime(p.trVars.flipIdx) - ...
+        p.trData.timing.trialStartPTB;
     p.init.rigConfigFile     = which('rigConfigFiles.rigConfig_rig1'); 
     
     % strobe all values that are in the strobe list with the

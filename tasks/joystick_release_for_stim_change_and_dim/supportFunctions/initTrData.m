@@ -10,7 +10,8 @@ function p = initTrData(p)
 for i = 1:p.init.nTrDataListRows
     
     % build string to be evaluated
-    evalString = [p.init.trDataInitList{i, 1} ' = ' p.init.trDataInitList{i, 2} ';'];
+    evalString = [p.init.trDataInitList{i, 1} ' = ' ...
+        p.init.trDataInitList{i, 2} ';'];
     
     % evaluate string, assigning initialization value to variable.
     eval(evalString);

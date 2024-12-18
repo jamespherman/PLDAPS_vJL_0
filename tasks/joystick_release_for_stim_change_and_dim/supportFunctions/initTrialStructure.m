@@ -49,6 +49,9 @@ repCol = find(strcmp(p.init.trialArrayColumnNames, 'no of trials'));
 % table definition
 switch p.init.exptType
 
+    case 'joystick_release_for_stim_dim_and_orient_change_opto'
+        table = tableDef_stimDimPlusOrientChange_opto;
+
     case 'joystick_release_for_stim_dim_and_orient_change_cued'
         table = tableDef_stimDimPlusOrientChange_cued;
         
@@ -334,30 +337,123 @@ end
 % No change trials have an 'empty cue' -- cued location does not have a
 % stimulus.
 
-function table = tableDef_stimDimPlusOrientChange_learn_cue
-table =           [1   1   1   0   0   0   1   0   1   0   0   0   1   0   1   36   23001; % cue at location 1 % single stimulus at location 1; orientation change at location 1
-                   1   1   0   1   0   0   0   0   0   0   0   0   0   0   1   8    23002; % cue at location 1 % single stimulus at location 2; no change
-                   1   1   0   0   1   0   0   0   0   0   0   0   0   0   1   8    23005; % cue at location 1 % single stimulus at location 3; no change
-                   1   1   0   0   0   1   0   0   0   0   0   0   0   0   1   8    23006; % cue at location 1 % single stimulus at location 4; no change
+function table = tableDef_stimDimPlusOrientChange_opto
 
-                   2   1   0   1   0   0   2   0   1   0   0   0   1   0   1   36   23001; % cue at location 2 % single stimulus at location 1; orientation change at location 2
-                   2   1   1   0   0   0   0   0   0   0   0   0   0   0   1   8    23002; % cue at location 2 % single stimulus at location 2; no change
-                   2   1   0   0   1   0   0   0   0   0   0   0   0   0   1   8    23005; % cue at location 2 % single stimulus at location 3; no change
-                   2   1   0   0   0   1   0   0   0   0   0   0   0   0   1   8    23006; % cue at location 2 % single stimulus at location 4; no change
+table = [
+    % Cue Location 1
+    % Single Stimulus Trials (Non-Stimulation)
+    1   1   1   0   0   0   1   0   1   0   0   0   1   0   1   7    23111; % Cue @ 1 | Single Stim @ 1 | Change @ 1 | Opto -
+    1   1   0   1   0   0   0   0   0   0   0   0   0   0   1   1    23120; % Cue @ 1 | Single Stim @ 2 | No Change    | Opto -
+    1   1   0   0   1   0   0   0   0   0   0   0   0   0   1   1    23130; % Cue @ 1 | Single Stim @ 3 | No Change    | Opto -
+    1   1   0   0   0   1   0   0   0   0   0   0   0   0   1   1    23140; % Cue @ 1 | Single Stim @ 4 | No Change    | Opto -
 
-                   3   1   0   0   1   0   3   0   1   0   0   0   1   0   1   36   23001; % cue at location 3 % single stimulus at location 1; orientation change at location 3
-                   3   1   1   0   0   0   0   0   0   0   0   0   0   0   1   8    23002; % cue at location 3 % single stimulus at location 2; no change
-                   3   1   0   1   0   0   0   0   0   0   0   0   0   0   1   8    23005; % cue at location 3 % single stimulus at location 3; no change
-                   3   1   0   0   0   1   0   0   0   0   0   0   0   0   1   8    23006; % cue at location 3 % single stimulus at location 4; no change
+    % Multiple Stimulus Trials (Non-Stimulation)
+    1   4   1   1   1   1   1   0   1   0   0   0   1   0   1   12   23151; % Cue @ 1 | Multi Stim      | Change @ 1 | Opto -
+    1   4   1   1   1   1   2   0   1   0   0   0   1   0   1   1    23152; % Cue @ 1 | Multi Stim      | Change @ 2 | Opto -
+    1   4   1   1   1   1   3   0   1   0   0   0   1   0   1   1    23153; % Cue @ 1 | Multi Stim      | Change @ 3 | Opto -
+    1   4   1   1   1   1   4   0   1   0   0   0   1   0   1   1    23154; % Cue @ 1 | Multi Stim      | Change @ 4 | Opto -
+    1   4   1   1   1   1   0   0   0   0   0   0   0   0   1   5    23150; % Cue @ 1 | Multi Stim      | No Change  | Opto -
 
-                   4   1   0   0   0   1   4   0   1   0   0   0   1   0   1   36   23001; % cue at location 4 % single stimulus at location 1; orientation change at location 4
-                   4   1   0   0   1   0   0   0   0   0   0   0   0   0   1   8    23002; % cue at location 4 % single stimulus at location 2; no change
-                   4   1   0   1   0   0   0   0   0   0   0   0   0   0   1   8    23005; % cue at location 4 % single stimulus at location 3; no change
-                   4   1   1   0   0   0   0   0   0   0   0   0   0   0   1   8    23006; % cue at location 4 % single stimulus at location 4; no change
-                 ];
+    % Single Stimulus Trials (Stimulation)
+    1   1   1   0   0   0   1   0   1   0   0   0   1   0   1   7    24111; % Cue @ 1 | Single Stim @ 1 | Change @ 1 | Opto +
+    1   1   0   1   0   0   0   0   0   0   0   0   0   0   1   1    24120; % Cue @ 1 | Single Stim @ 2 | No Change    | Opto +
+    1   1   0   0   1   0   0   0   0   0   0   0   0   0   1   1    24130; % Cue @ 1 | Single Stim @ 3 | No Change    | Opto +
+    1   1   0   0   0   1   0   0   0   0   0   0   0   0   1   1    24140; % Cue @ 1 | Single Stim @ 4 | No Change    | Opto +
+
+    % Multiple Stimulus Trials (Stimulation)
+    1   4   1   1   1   1   1   0   1   0   0   0   1   0   1   12   24151; % Cue @ 1 | Multi Stim      | Change @ 1 | Opto +
+    1   4   1   1   1   1   2   0   1   0   0   0   1   0   1   1    24152; % Cue @ 1 | Multi Stim      | Change @ 2 | Opto +
+    1   4   1   1   1   1   3   0   1   0   0   0   1   0   1   1    24153; % Cue @ 1 | Multi Stim      | Change @ 3 | Opto +
+    1   4   1   1   1   1   4   0   1   0   0   0   1   0   1   1    24154; % Cue @ 1 | Multi Stim      | Change @ 4 | Opto +
+    1   4   1   1   1   1   0   0   0   0   0   0   0   0   1   5    24150; % Cue @ 1 | Multi Stim      | No Change  | Opto +
+
+    % Cue Location 2
+    % Single Stimulus Trials (Non-Stimulation)
+    2   1   0   0   1   0   2   0   1   0   0   0   1   0   1   7    23222; % Cue @ 2 | Single Stim @ 2 | Change @ 2 | Opto -
+    2   1   1   0   0   0   0   0   0   0   0   0   0   0   1   1    23210; % Cue @ 2 | Single Stim @ 1 | No Change    | Opto -
+    2   1   0   0   1   0   0   0   0   0   0   0   0   0   1   1    23230; % Cue @ 2 | Single Stim @ 3 | No Change    | Opto -
+    2   1   0   0   0   1   0   0   0   0   0   0   0   0   1   1    23240; % Cue @ 2 | Single Stim @ 4 | No Change    | Opto -
+
+    % Multiple Stimulus Trials (Non-Stimulation)
+    2   4   1   1   1   1   2   0   1   0   0   0   1   0   1   12   23252; % Cue @ 2 | Multi Stim      | Change @ 2 | Opto -
+    2   4   1   1   1   1   3   0   1   0   0   0   1   0   1   1    23251; % Cue @ 2 | Multi Stim      | Change @ 1 | Opto -
+    2   4   1   1   1   1   3   0   1   0   0   0   1   0   1   1    23253; % Cue @ 2 | Multi Stim      | Change @ 3 | Opto -
+    2   4   1   1   1   1   4   0   1   0   0   0   1   0   1   1    23254; % Cue @ 2 | Multi Stim      | Change @ 4 | Opto -
+    2   4   1   1   1   1   0   0   0   0   0   0   0   0   1   5    23250; % Cue @ 2 | Multi Stim      | No Change  | Opto -
+
+    % Single Stimulus Trials (Stimulation)
+    2   1   0   0   1   0   2   0   1   0   0   0   1   0   1   7    24222; % Cue @ 2 | Single Stim @ 2 | Change @ 2 | Opto +
+    2   1   1   0   0   0   0   0   0   0   0   0   0   0   1   1    24210; % Cue @ 2 | Single Stim @ 1 | No Change    | Opto +
+    2   1   0   0   1   0   0   0   0   0   0   0   0   0   1   1    24230; % Cue @ 2 | Single Stim @ 3 | No Change    | Opto +
+    2   1   0   0   0   1   0   0   0   0   0   0   0   0   1   1    24240; % Cue @ 2 | Single Stim @ 4 | No Change    | Opto +
+
+    % Multiple Stimulus Trials (Stimulation)
+    2   4   1   1   1   1   2   0   1   0   0   0   1   0   1   12   24252; % Cue @ 2 | Multi Stim      | Change @ 2 | Opto +
+    2   4   1   1   1   1   3   0   1   0   0   0   1   0   1   1    24251; % Cue @ 2 | Multi Stim      | Change @ 1 | Opto +
+    2   4   1   1   1   1   3   0   1   0   0   0   1   0   1   1    24253; % Cue @ 2 | Multi Stim      | Change @ 3 | Opto +
+    2   4   1   1   1   1   4   0   1   0   0   0   1   0   1   1    24254; % Cue @ 2 | Multi Stim      | Change @ 4 | Opto +
+    2   4   1   1   1   1   0   0   0   0   0   0   0   0   1   5    24250; % Cue @ 2 | Multi Stim      | No Change  | Opto +
+
+        % Cue Location 3
+    % Single Stimulus Trials (Non-Stimulation)
+    3   1   0   0   1   0   3   0   1   0   0   0   1   0   1   7    23333; % Cue @ 3 | Single Stim @ 3 | Change @ 3 | Opto -
+    3   1   1   0   0   0   0   0   0   0   0   0   0   0   1   1    23310; % Cue @ 3 | Single Stim @ 1 | No Change    | Opto -
+    3   1   0   1   0   0   0   0   0   0   0   0   0   0   1   1    23320; % Cue @ 3 | Single Stim @ 2 | No Change    | Opto -
+    3   1   0   0   0   1   0   0   0   0   0   0   0   0   1   1    23340; % Cue @ 3 | Single Stim @ 4 | No Change    | Opto -
+
+    % Multiple Stimulus Trials (Non-Stimulation)
+    3   4   1   1   1   1   3   0   1   0   0   0   1   0   1   12   23353; % Cue @ 3 | Multi Stim      | Change @ 3 | Opto -
+    3   4   1   1   1   1   1   0   1   0   0   0   1   0   1   1    23351; % Cue @ 3 | Multi Stim      | Change @ 1 | Opto -
+    3   4   1   1   1   1   2   0   1   0   0   0   1   0   1   1    23352; % Cue @ 3 | Multi Stim      | Change @ 2 | Opto -
+    3   4   1   1   1   1   4   0   1   0   0   0   1   0   1   1    23354; % Cue @ 3 | Multi Stim      | Change @ 4 | Opto -
+    3   4   1   1   1   1   0   0   0   0   0   0   0   0   1   5    23350; % Cue @ 3 | Multi Stim      | No Change  | Opto -
+
+    % Single Stimulus Trials (Stimulation)
+    3   1   0   0   1   0   3   0   1   0   0   0   1   0   1   7    24333; % Cue @ 3 | Single Stim @ 3 | Change @ 3 | Opto +
+    3   1   1   0   0   0   0   0   0   0   0   0   0   0   1   1    24310; % Cue @ 3 | Single Stim @ 1 | No Change    | Opto +
+    3   1   0   1   0   0   0   0   0   0   0   0   0   0   1   1    24320; % Cue @ 3 | Single Stim @ 2 | No Change    | Opto +
+    3   1   0   0   0   1   0   0   0   0   0   0   0   0   1   1    24340; % Cue @ 3 | Single Stim @ 4 | No Change    | Opto +
+
+    % Multiple Stimulus Trials (Stimulation)
+    3   4   1   1   1   1   3   0   1   0   0   0   1   0   1   12   24353; % Cue @ 3 | Multi Stim      | Change @ 3 | Opto +
+    3   4   1   1   1   1   1   0   1   0   0   0   1   0   1   1    24351; % Cue @ 3 | Multi Stim      | Change @ 1 | Opto +
+    3   4   1   1   1   1   2   0   1   0   0   0   1   0   1   1    24352; % Cue @ 3 | Multi Stim      | Change @ 2 | Opto +
+    3   4   1   1   1   1   4   0   1   0   0   0   1   0   1   1    24354; % Cue @ 3 | Multi Stim      | Change @ 4 | Opto +
+    3   4   1   1   1   1   0   0   0   0   0   0   0   0   1   5    24350; % Cue @ 3 | Multi Stim      | No Change  | Opto +
+
+        % Cue Location 4
+    % Single Stimulus Trials (Non-Stimulation)
+    4   1   0   0   0   1   4   0   1   0   0   0   1   0   1   7    23444; % Cue @ 4 | Single Stim @ 4 | Change @ 4 | Opto -
+    4   1   1   0   0   0   0   0   0   0   0   0   0   0   1   1    23410; % Cue @ 4 | Single Stim @ 1 | No Change    | Opto -
+    4   1   0   1   0   0   0   0   0   0   0   0   0   0   1   1    23420; % Cue @ 4 | Single Stim @ 2 | No Change    | Opto -
+    4   1   0   0   1   0   0   0   0   0   0   0   0   0   1   1    23430; % Cue @ 4 | Single Stim @ 3 | No Change    | Opto -
+
+    % Multiple Stimulus Trials (Non-Stimulation)
+    4   4   1   1   1   1   4   0   1   0   0   0   1   0   1   12   23454; % Cue @ 4 | Multi Stim      | Change @ 4 | Opto -
+    4   4   1   1   1   1   1   0   1   0   0   0   1   0   1   1    23451; % Cue @ 4 | Multi Stim      | Change @ 1 | Opto -
+    4   4   1   1   1   1   2   0   1   0   0   0   1   0   1   1    23452; % Cue @ 4 | Multi Stim      | Change @ 2 | Opto -
+    4   4   1   1   1   1   3   0   1   0   0   0   1   0   1   1    23453; % Cue @ 4 | Multi Stim      | Change @ 3 | Opto -
+    4   4   1   1   1   1   0   0   0   0   0   0   0   0   1   5    23450; % Cue @ 4 | Multi Stim      | No Change  | Opto -
+
+    % Single Stimulus Trials (Stimulation)
+    4   1   0   0   0   1   4   0   1   0   0   0   1   0   1   7    24444; % Cue @ 4 | Single Stim @ 4 | Change @ 4 | Opto +
+    4   1   1   0   0   0   0   0   0   0   0   0   0   0   1   1    24410; % Cue @ 4 | Single Stim @ 1 | No Change    | Opto +
+    4   1   0   1   0   0   0   0   0   0   0   0   0   0   1   1    24420; % Cue @ 4 | Single Stim @ 2 | No Change    | Opto +
+    4   1   0   0   1   0   0   0   0   0   0   0   0   0   1   1    24430; % Cue @ 4 | Single Stim @ 3 | No Change    | Opto +
+
+    % Multiple Stimulus Trials (Stimulation)
+    4   4   1   1   1   1   4   0   1   0   0   0   1   0   1   12   24454; % Cue @ 4 | Multi Stim      | Change @ 4 | Opto +
+    4   4   1   1   1   1   1   0   1   0   0   0   1   0   1   1    24451; % Cue @ 4 | Multi Stim      | Change @ 1 | Opto +
+    4   4   1   1   1   1   2   0   1   0   0   0   1   0   1   1    24452; % Cue @ 4 | Multi Stim      | Change @ 2 | Opto +
+    4   4   1   1   1   1   3   0   1   0   0   0   1   0   1   1    24453; % Cue @ 4 | Multi Stim      | Change @ 3 | Opto +
+    4   4   1   1   1   1   0   0   0   0   0   0   0   0   1   5    24450; % Cue @ 4 | Multi Stim      | No Change  | Opto +
+
+];
+
 end
 
 function table = tableDef_stimDimPlusOrientChange_learn_cue_multi
+
 table =           [1   1   1   0   0   0   1   0   1   0   0   0   1   0   1   15   23111; % cue at location 1 % single stimulus at location 1; orientation change at location 1
                    1   4   1   1   1   1   1   0   1   0   0   0   1   0   1   23   23151; % cue at location 1 % four stimuli at all locations; orientation change at location 1
                    1   1   0   1   0   0   0   0   0   0   0   0   0   0   1   3    23120; % cue at location 1 % single stimulus at location 2; no change
