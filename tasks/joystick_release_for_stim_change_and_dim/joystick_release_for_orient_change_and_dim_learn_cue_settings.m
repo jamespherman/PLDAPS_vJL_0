@@ -489,7 +489,6 @@ p.draw.joyRect              = [1705 900 1735 1100]; % experimenter-display joyst
 p.draw.cursorW              = 6; % cursor width in pixels
 
 %% datapixx - vars related to datapixx schedule settings
-
 p.rig.dp.useDataPixxBool       = 1;        % using datapixx
 p.rig.dp.adcRate               = 1000;     % define ADC sampling rate (Hz).
 p.rig.dp.maxDurADC             = 15;       % what is the maximum duration to preallocate for ADC buffering?
@@ -498,6 +497,28 @@ p.rig.dp.dacRate               = 1000;     % define DAC sampling rate (Hz);
 p.rig.dp.dacPadDur             = 0.01;     % how much time to pad the DAC +4V with +0V?
 p.rig.dp.dacBuffAddr           = 10e6;     % DAC buffer base address
 p.rig.dp.dacChannelOut         = 0;        % Which channel to use for DAC outpt control of reward system.
+
+%% optital stimulation variables
+p.trVarsInit.optoDacChan       = 1;           % Which channel to use for DAC output control of optical stimulation.
+p.trVarsInit.optoStimDurSec    = 0.5;         % Duration in seconds of optical stimulation
+p.trVarsInit.optoPulseDurSec   = 0.5;         % Duration in seconds of each "pulse" of optical stimulation
+p.trVarsInit.otoPulseAmpVolts  = 4.2;         % Amplitude of voltage pulses controlling optical stimulation intensity
+p.trVarsInit.optoIpiSec        = 0.0;         % Duration in seconds between pulses of optical stimulation
+
+% DAC output channel for LED control
+dacChannelOut = 1;
+
+% Total desired duration of the pulse train in seconds
+trainDur = 5;
+
+% Duration of each individual pulse in seconds
+pulseDur = 0.5;
+
+% Voltage amplitude of pulses in volts
+pulseAmp = 4.2;
+
+% Time from start of one pulse to start of next pulse in seconds
+ipi = 0.0;
 
 %% stimulus-specific (and static over the course of an experiment):
 % here we have motion related vars but if your stimulus is of different
