@@ -1,4 +1,4 @@
-function p = rigConfig_human(p)
+function p = rigConfig_human_Mercy(p)
 
 % this is the rig config file
 % Here we note rig- and animal-specific details such as screen size or
@@ -14,7 +14,7 @@ function p = rigConfig_human(p)
 %   yyyymmdd is the date (e.g. 19830531)
 
 %% Geometry
-p.rig.viewdist        = 610;      % viewing distance (mm)
+p.rig.viewdist        = 540;      % viewing distance (mm)
 p.rig.screenhpix      = 1200;     % screen height (pixels)
 p.rig.screenh         = 300;   % screen height (mm)
 p.rig.deg2PixConstant = p.rig.viewdist * p.rig.screenhpix / p.rig.screenh;

@@ -47,14 +47,31 @@ function p = human_psychophysical_threshold_settings_orientation
 %% p.init:
 p = struct;
 
-
 % define paths to add for this task
 % a list of paths to add (at present, for making sure directories
 % containing support functions will be in the path).
 % % p.init.pathList      = {[pwd '/supportFunctions']};
-p.init.rigConfigFile     = which('rigConfigFiles.rigConfig_human'); % rig config file has subject/rig-specific details (eg distance from screen)
 
+% determine which PC we're on so we can select the appropriate reward
+% magnitude:
+if ~ispc
+    [~, p.init.pcName] = unix('hostname');
+else
+    % if this IS running on a (windows) PC that means we've neglected to
+    % account for something - figure it out now! JPH - 5/16/2023
+    keyboard
+end
 
+% rig config file has subject/rig-specific details (eg distance from
+% screen). Select rig config file depending on PC name:
+switch p.init.pcName
+    case 'mayolab-thinkpad-p16s-gen-2'
+        p.init.rigConfigFile     = which(...
+            'rigConfigFiles.rigConfig_human_Mercy');
+    otherwise
+        p.init.rigConfigFile     = which(...
+            'rigConfigFiles.rigConfig_human');
+end
 %% define task name and related files:
 
 p.init.taskName         = 'human_psychophysical_threshold';
@@ -240,7 +257,7 @@ p.trVarsInit.isStimChangeTrial   = false;     % variable tracking whether the cu
 % replace the automatically calculated elevations and eccentricities with
 % the specified values:
 p.trVarsInit.stimLoc1Elev        = 45;          % Stimulus location (angle of elevation).
-p.trVarsInit.stimLoc1Ecc         = 10;          % Stimulus location (eccentricity in degrees).
+p.trVarsInit.stimLoc1Ecc         = 6;          % Stimulus location (eccentricity in degrees).
 p.trVarsInit.stimLoc2Elev        = 0;           % Stimulus location (angle of elevation).
 p.trVarsInit.stimLoc2Ecc         = 0;           % Stimulus location (eccentricity in degrees).
 p.trVarsInit.stimLoc3Elev        = 0;           % Stimulus location (angle of elevation).
@@ -297,7 +314,7 @@ p.trVarsInit.rfSigma                  = p.trVarsInit.rfRad0 / 8; % variance of R
 p.trVarsInit.rfFlag                   = false;     % variable indicating whether we want to use RF gratings or gabor gratings for stimulus generation
 
 % spatial properties of "checkerboard":
-p.trVarsInit.stimRadius               = 3.25;     % aperture radius in deg
+p.trVarsInit.stimRadius               = 2.5;     % aperture radius in deg
 p.trVarsInit.boxSizePix               = 6;        % diameter of each "check" in pixels
 p.trVarsInit.boxLifetime              = 8;        % "check" lifetime in frams
 p.trVarsInit.nPatches                 = 4;        % number of stimuli 

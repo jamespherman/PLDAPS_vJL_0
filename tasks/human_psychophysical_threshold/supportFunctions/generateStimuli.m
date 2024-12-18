@@ -264,6 +264,9 @@ p.stim.tempB                    = [bgRGB(3); zeros(cpeint(end), 1)];
 assocArray                  = unique([p.stim.uci(:), p.stim.X(:), ...
     p.stim.Y(:), p.stim.upi(:)], 'rows');
 
+% initialize some random phase values (one per patch):
+randPhase = rand(p.trVars.nPatches, 1)*2*pi;
+
 % loop over epochs...
 for i = 1:nLoop
     
@@ -284,7 +287,8 @@ for i = 1:nLoop
         % hack to deal with velocity change from pre-change to post-change
         % phase   = p.stim.speedArray(j, i) * ...
         %    assocArray(cpeint(1, j, i):cpeint(2, j, i), 4);
-        phase   = assocArray(cpeint(1, j, i):cpeint(2, j, i), 4);
+        phase   = randPhase(j) + ...
+            assocArray(cpeint(1, j, i):cpeint(2, j, i), 4);
         % p.trVars.rfPhase + rand*2*pi
 
         % generate gabor part (gaussian windowed sinusoid). OR radial
