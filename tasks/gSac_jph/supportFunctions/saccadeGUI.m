@@ -1342,7 +1342,7 @@ newCData    = [];
 % map types list: (1) saccade peak velocity ("pkv"), (2) saccade reaction
 % time ("srt"), (3) spike counts ("spk"), but only if ripple is connected:
 uiData.pldapsData.p.rig.ripple.status = true;
-if true
+if uiData.pldapsData.p.rig.ripple.status && isfield(uiData.heatMaps, 'spk')
     mapTypes    = {'pkv', 'srt', 'spk'};
 else
     mapTypes    = {'pkv', 'srt'};
@@ -1533,6 +1533,7 @@ if ~isempty(uiData.spikesAndEvents) && ...
         binEdges    = cell(3, 1);
         binCenters  = cell(3, 1);
         for i = 1:3
+            
             spikesForBinning = cell2mat(cellfun(@(x,y)x'-y, ...
                 uiData.spikesAndEvents.spikeTimes, ...
                 cellfun(@(x,y)y(x == rasterInfo.relTimeCodes(i)), ...
@@ -1694,7 +1695,7 @@ amin = nanmin(Z);
 amax = nanmax(Z);
 cmin = sign(amin)* abs(amin)/range(Z);
 cmax = sign(amax)* abs(amax)/range(Z);
-if all([cmin cmax] == 0) || all(isnan([cmin cmax]));
+if all([cmin cmax] == 0) || all(isnan([cmin cmax]))
     cmin = 0;
     cmax = 1;
     amin = 0;

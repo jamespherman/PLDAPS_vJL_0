@@ -336,7 +336,7 @@ p.trVarsInit.satVar                   = 0.00;     % variability in saturation
 % Magnitude of stimulus delta if desired:
 p.trVarsInit.speedDelta               = (pi/8);   % motion magniutde
 p.trVarsInit.contDelta                = 0.2;      % contrast
-p.trVarsInit.orientDelta              = 45;       % orientation
+p.trVarsInit.orientDelta              = 35;       % orientation
 p.trVarsInit.freqDelta                = 0.25;     % spatial frequency (cycles per degree)
 p.trVarsInit.satDelta                 = 0.038;    % color saturation
 p.trVarsInit.lumDelta                 = 0;        % luminance
@@ -350,7 +350,7 @@ p.trVarsInit.nPatches                 = 4;        % number of stimuli
 p.trVarsInit.nEpochs                  = 2;        % just one "pre-change" and one "post-change" epoch for now
 
 % times/latencies/durations:
-p.trVarsInit.rewardDurationMs        = 350;      % Reward duration
+p.trVarsInit.rewardDurationMs        = 400;      % Reward duration
 p.trVarsInit.fix2CueIntvlMin         = 0.25;     % Minimum time between fixation acquisition and cue presentation (onset).
 p.trVarsInit.fix2CueIntvlWin         = 0.25;     % Duration of possibile cue presentation window (between "min" and "min + win"). 
 p.trVarsInit.fix2CueIntvl            = 0.5;      % The value of this variable is updated before each trial but we set it to the max here just in case.
