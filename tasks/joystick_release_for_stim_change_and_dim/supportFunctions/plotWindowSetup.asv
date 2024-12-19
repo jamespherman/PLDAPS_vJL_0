@@ -8,8 +8,6 @@ if ~isempty(figWins)
     delete(figWins);
 end
 
-if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
-    
 % make new plotting PSTHs
 % p.draw.onlinePlotWindow         = ...
 %     figure(...
@@ -35,6 +33,7 @@ if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
 % axes to plot into in the online plot figure window, and graphics object
 % handles for the plots themselves, and we should also show the plotting
 % window:
+if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
 
 %     % x labels for PSTHs:
 %     psthXLabel{1} = 'Time from Fixation Onset (s)';

@@ -1,31 +1,42 @@
 function p = getRippleData(p)
-%
-% p = getRippleData(p)
-%
-% get spike times, event values, and event times stored in NIP's buffer,
-% and append them to p.trData fields. We append so we can call multiple
-% times 
-
-% Get spike times from 1st recording channel. Note these are returned as
-% sample numbers based on a 30 kHz sample rate, so we divide by 30 kHz to
-% convert to seconds:
+% Get spike times from all recording channels
 [~, tempSpikeTimes, ~, unitIdx] = pds.xippmex('spike', ...
-    p.rig.ripple.recChans(p.trVars.rippleChanSelect), 0);
+    p.rig.ripple.recChans, 0);
 
-% if we're using online sorting, use those spike times only,
-% otherwise use all spiketimes (threshold crossings).
-if p.trVars.useOnlineSort
-    p.trData.spikeTimes = [p.trData.spikeTimes, ...
-        tempSpikeTimes{1}(logical(unitIdx{1})) / 30000];
-else
-    p.trData.spikeTimes = [p.trData.spikeTimes, ...
-        tempSpikeTimes{:} / 30000];
+% Initialize spike counters
+totalSpikes = 0;
+p.trData.spikeTimes = [];
+
+% Convert and store spike data for current trial
+for iChan = 1:length(p.rig.ripple.recChans)
+    if ~isempty(tempSpikeTimes{iChan})
+        nSpikesThisChan = length(tempSpikeTimes{iChan});
+        totalSpikes = totalSpikes + nSpikesThisChan;
+        
+        if p.trVars.useOnlineSort
+            validSpikes = logical(unitIdx{iChan});
+            p.trData.spikeTimes = [p.trData.spikeTimes; ...
+                (tempSpikeTimes{iChan}(validSpikes) / 30000)'];
+            p.trData.spikeClusters = [p.trData.spikeClusters; ...
+                unitIdx{iChan}(validSpikes)'];
+        else
+            p.trData.spikeTimes = [p.trData.spikeTimes; ...
+                (tempSpikeTimes{iChan} / 30000)'];
+            p.trData.spikeClusters = [p.trData.spikeClusters; ...
+                zeros(nSpikesThisChan, 1)];
+        end
+    end
 end
 
-% get strobed event values and event times from ripple (in ripple's clock).
+disp(['Received ' num2str(totalSpikes) ' spikes from ' ...
+    num2str(nnz(~cellfun(@isempty, tempSpikeTimes))) ' channels']);
+
+% get strobed event values and event times from ripple
 [~, tempEventTimes, tempEventValues] = pds.xippmex('digin');
 tempEventValues = [tempEventValues.parallel];
 
-% store event values and event times:
-p.trData.eventValues    = [p.trData.eventValues, tempEventValues];
-p.trData.eventTimes     = [p.trData.eventTimes, tempEventTimes / 30000];
+% store event values and event times
+p.trData.eventValues = tempEventValues(:);
+p.trData.eventTimes = (tempEventTimes / 30000)';
+
+end

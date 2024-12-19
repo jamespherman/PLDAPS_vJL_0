@@ -1,222 +1,93 @@
-
-
 function p = alignSpikes(p)
+% Initialize PSTH plotter app if not already done
+if ~isfield(p.draw, 'psthPlotterApp')
+   p.draw.psthPlotterApp = PSTH_plotter;
+   
+   % Initialize empty data structures in the app
+   p.draw.psthPlotterApp.psthPlotterAppUIFigure.UserData.spikeTimes = [];
+   p.draw.psthPlotterApp.psthPlotterAppUIFigure.UserData.spikeClusters = [];
+   
+   % Create eventTimes structure with fields matching p.trData.timing
+   timingFields = setdiff(fieldnames(p.trData.timing), ...
+       {'flipTime', 'lastFrameTime', 'reactionTime', 'fixHoldReqMet', ...
+       'trialStartPTB', 'trialStartDP'});
+   for iField = 1:length(timingFields)
+       p.draw.psthPlotterApp.psthPlotterAppUIFigure.UserData.eventTimes.(timingFields{iField}) = [];
+   end
+end
 
-%
-% p = alignSpikes(p)
-%
-% Here we simply check if there are events that we want to align spike
-% times to. If any of those events has occurred, we align all the spike
-% times we have in our buffer to that event and store the aligned spike
-% times in the "UserData" field of the relevant plot object:
+% Extract all timing events for this trial into a structure by mapping strobed
+% event codes to timing field names
+eventTimes = struct();
 
-% for each of our 11 PSTHs, we want to check whether conditions are met
-% (e.g. event occurred in the last trial) such that we should add the spike
-% times to the across-trials list of spike times for the condition. Let's
-% make a big list of conditionals to handle that:
+% Create code-to-field mapping for tone events
+toneCodeList = [p.init.codes.lowTone, p.init.codes.noiseTone, p.init.codes.highTone];
 
-% (1) Fixation onset
-% (2) Stimulus onset (location 1)
-% (3) Stimulus onset (location 2)
-% (4) stimulus onset (location 3)
-% (5) Stimulus onset (location 4)
-% (6) Stimulus change (location 1)
-% (7) Stimulus change (location 2)
-% (8) Stimulus change (location 3)
-% (9) Stimulus change (location 4)
-% (10) Reward
-% (11) Free reward
-% (12) no free reward
-% (13) Multiple stimulus onset (location 1)
-% (14) Multiple stimulus onset (location 2)
-% (15) Multiple stimulus onset (location 3)
-% (16) Multiple stimulus onset (location 4)
-% (17) Multiple stimulus change (location 1)
-% (18) Multiple stimulus change (location 2)
-% (19) Multiple stimulus change (location 3)
-% (20) Multiple stimulus change (location 4)
+% Loop through each timing field and look for corresponding event code
+for i = 1:length(p.trData.eventValues)
+   code = p.trData.eventValues(i);
+   time = p.trData.eventTimes(i);
+   
+   % map the code to a field name
+   switch code
+       case p.init.codes.fixOn
+           eventTimes.fixOn = time;
+       case p.init.codes.fixAq
+           eventTimes.fixAq = time;
+       case p.init.codes.stimOn
+           eventTimes.stimOn = time;
+       case p.init.codes.stimOff
+           eventTimes.stimOff = time;
+       case p.init.codes.cueOn
+           eventTimes.cueOn = time;
+       case p.init.codes.cueOff
+           eventTimes.cueOff = time;
+       case p.init.codes.stimChange
+           eventTimes.stimChg = time;
+       case p.init.codes.noChange
+           eventTimes.noChg = time;
+       case p.init.codes.fixBreak
+           eventTimes.brokeFix = time;
+       case p.init.codes.joyBreak
+           eventTimes.brokeJoy = time;
+       case p.init.codes.reward
+           eventTimes.reward = time;
+       case p.init.codes.joyPress
+           eventTimes.joyPress = time;
+       case p.init.codes.joyRelease
+           eventTimes.joyRelease = time;
+       case p.init.codes.freeReward
+           eventTimes.freeReward = time;
+       case p.init.codes.optoStimOn
+           eventTimes.optoStim = time;
+       case p.init.codes.trialBegin
+           eventTimes.trialBegin = time;
+       case p.init.codes.trialEnd
+           eventTimes.trialEnd = time;
+   end
+   
+   % Check if this is any type of tone
+   if ismember(code, toneCodeList)
+       eventTimes.tone = time;
+   end
+end
 
+% Set any missing events to 0 (not -1) so they're properly ignored by nonzeros()
+timingFields = setdiff(fieldnames(p.trData.timing), ...
+   {'flipTime', 'lastFrameTime', 'reactionTime', 'fixHoldReqMet', ...
+   'trialStartPTB', 'trialStartDP'});
+for iField = 1:length(timingFields)
+   if ~isfield(eventTimes, timingFields{iField})
+       eventTimes.(timingFields{iField}) = 0;
+   end
+end
+
+% Update the PSTH plotter app with new data
 try
-% fixation onset:
-if any(p.trData.eventValues == p.init.codes.fixOn)
-
-    % time to align to; only use the last one.
-    alignTime = ...
-        p.trData.eventTimes(p.trData.eventValues == p.init.codes.fixOn);
-
-    % add the previous trial's spike times to the list of spike times we'll
-    % use to construct the PSTH:
-    p.draw.onlinePlotObj(1).UserData.spTimes = ...
-        [p.draw.onlinePlotObj(1).UserData.spTimes; ...
-        p.trData.spikeTimes(:) - alignTime(end)];
-
-    % iterate the total trial count for this plot object:
-    p.draw.onlinePlotObj(1).UserData.trialCount = ...
-        p.draw.onlinePlotObj(1).UserData.trialCount + 1;
-end
-
-% SINGLE stimulus onset (all locations):
-if any(p.trData.eventValues == p.init.codes.stimOn) && ...
-        length(p.trVars.stimOnList) == 1
-
-    % At which location did the SINGLE stimulus onset occur? We use that
-    % information to define a plot index ("plotInd") that refers to an
-    % element of p.draw.onlinePlotObj where we store the aligned spikes and
-    % trial counts:
-    plotInd = p.trVars.stimOnList + 1;
-
-    % time to align to; only use the last one.
-    alignTime = ...
-        p.trData.eventTimes(p.trData.eventValues == p.init.codes.stimOn);
-
-    % add the previous trial's spike times to the list of spike times we'll
-    % use to construct the PSTH:
-    p.draw.onlinePlotObj(plotInd).UserData.spTimes = ...
-        [p.draw.onlinePlotObj(plotInd).UserData.spTimes; ...
-        p.trData.spikeTimes(:) - alignTime(end)];
-
-    % iterate the total trial count for this plot object:
-    p.draw.onlinePlotObj(plotInd).UserData.trialCount = ...
-        p.draw.onlinePlotObj(plotInd).UserData.trialCount + 1;
-end
-
-% stimulus change (all locations) with a SINGLE stimulus present:
-if any(p.trData.eventValues == p.init.codes.stimChange) && ...
-        length(p.trVars.stimOnList) == 1
-
-    % At which location did the stimulus change occur? We use that
-    % information to define a plot index ("plotInd") that refers to an
-    % element of p.draw.onlinePlotObj where we store the aligned spikes and
-    % trial counts:
-    plotInd = p.trVars.stimOnList + 5;
-
-    % time to align to; only use the last one.
-    alignTime = ...
-        p.trData.eventTimes(p.trData.eventValues == ...
-        p.init.codes.stimChange);
-
-    % add the previous trial's spike times to the list of spike times we'll
-    % use to construct the PSTH:
-    p.draw.onlinePlotObj(plotInd).UserData.spTimes = ...
-        [p.draw.onlinePlotObj(plotInd).UserData.spTimes; ...
-        p.trData.spikeTimes(:) - alignTime(end)];
-
-    % iterate the total trial count for this plot object:
-    p.draw.onlinePlotObj(plotInd).UserData.trialCount = ...
-        p.draw.onlinePlotObj(plotInd).UserData.trialCount + 1;
-end
-
-% reward:
-if any(p.trData.eventValues == p.init.codes.reward)
-
-    % time to align to; only use the last one.
-    alignTime = ...
-        p.trData.eventTimes(p.trData.eventValues == p.init.codes.reward);
-
-    % add the previous trial's spike times to the list of spike times we'll
-    % use to construct the PSTH:
-    p.draw.onlinePlotObj(10).UserData.spTimes = ...
-        [p.draw.onlinePlotObj(10).UserData.spTimes; ...
-        p.trData.spikeTimes(:) - alignTime(end)];
-
-    % iterate the total trial count for this plot object:
-    p.draw.onlinePlotObj(10).UserData.trialCount = ...
-        p.draw.onlinePlotObj(10).UserData.trialCount + 1;
-end
-
-% free reward:
-if any(p.trData.eventValues == p.init.codes.freeReward)
-
-    % time to align to; only use the last one.
-    alignTime = ...
-        p.trData.eventTimes(p.trData.eventValues == ...
-        p.init.codes.freeReward);
-
-    % add the previous trial's spike times to the list of spike times we'll
-    % use to construct the PSTH:
-    p.draw.onlinePlotObj(11).UserData.spTimes = ...
-        [p.draw.onlinePlotObj(11).UserData.spTimes; ...
-        p.trData.spikeTimes(:) - alignTime(end)];
-
-    % iterate the total trial count for this plot object:
-    p.draw.onlinePlotObj(11).UserData.trialCount = ...
-        p.draw.onlinePlotObj(11).UserData.trialCount + 1;
-end
-
-% no free reward:
-if any(p.trData.eventValues == p.init.codes.noFreeReward)
-
-    % time to align to; only use the last one.
-    alignTime = ...
-        p.trData.eventTimes(p.trData.eventValues == ...
-        p.init.codes.noFreeReward);
-
-    % add the previous trial's spike times to the list of spike times we'll
-    % use to construct the PSTH:
-    p.draw.onlinePlotObj(12).UserData.spTimes = ...
-        [p.draw.onlinePlotObj(12).UserData.spTimes; ...
-        p.trData.spikeTimes(:) - alignTime(end)];
-
-    % iterate the total trial count for this plot object:
-    p.draw.onlinePlotObj(12).UserData.trialCount = ...
-        p.draw.onlinePlotObj(12).UserData.trialCount + 1;
-end
-
-% MULTIPLE stimulus onset (all locations):
-if any(p.trData.eventValues == p.init.codes.stimOn) && ...
-        length(p.trVars.stimOnList) > 1
-
-    % At which location did the CUED stimulus onset occur? We use that
-    % information to define a plot index ("plotInd") that refers to an
-    % element of p.draw.onlinePlotObj where we store the aligned spikes and
-    % trial counts:
-    plotInd = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
-        strcmp(p.init.trialArrayColumnNames, 'cue loc')) + 12;
-
-    % time to align to; only use the last one.
-    alignTime = ...
-        p.trData.eventTimes(p.trData.eventValues == p.init.codes.stimOn);
-
-    % add the previous trial's spike times to the list of spike times we'll
-    % use to construct the PSTH:
-    p.draw.onlinePlotObj(plotInd).UserData.spTimes = ...
-        [p.draw.onlinePlotObj(plotInd).UserData.spTimes; ...
-        p.trData.spikeTimes(:) - alignTime(end)];
-
-    % iterate the total trial count for this plot object:
-    p.draw.onlinePlotObj(plotInd).UserData.trialCount = ...
-        p.draw.onlinePlotObj(plotInd).UserData.trialCount + 1;
-end
-
-% stimulus change (all locations) with MULTIPLE stimuli present:
-if any(p.trData.eventValues == p.init.codes.stimChange) && ...
-        length(p.trVars.stimOnList) > 1
-
-    % At which location did the stimulus change occur? We use that
-    % information to define a plot index ("plotInd") that refers to an
-    % element of p.draw.onlinePlotObj where we store the aligned spikes and
-    % trial counts:
-    plotInd = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
-        strcmp(p.init.trialArrayColumnNames, 'stim chg')) + 16;
-
-    % time to align to; only use the last one.
-    alignTime = ...
-        p.trData.eventTimes(p.trData.eventValues == ...
-        p.init.codes.stimChange);
-
-    % add the previous trial's spike times to the list of spike times we'll
-    % use to construct the PSTH:
-    p.draw.onlinePlotObj(plotInd).UserData.spTimes = ...
-        [p.draw.onlinePlotObj(plotInd).UserData.spTimes; ...
-        p.trData.spikeTimes(:) - alignTime(end)];
-
-    % iterate the total trial count for this plot object:
-    p.draw.onlinePlotObj(plotInd).UserData.trialCount = ...
-        p.draw.onlinePlotObj(plotInd).UserData.trialCount + 1;
-end
-
-catch me
-    keyboard
+   p.draw.psthPlotterApp.updateData(p.trData.spikeTimes, ...
+       p.trData.spikeClusters, eventTimes);
+catch ME
+   warning('Error updating PSTH plotter app: %s', ME.message);
 end
 
 end
