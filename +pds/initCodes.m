@@ -92,6 +92,7 @@ codes.fixBreak2         = 3006; % this is if monkey breaks fixation whennot hold
 %% optical stimulation codes
 codes.optoStimOn        = 17001;
 codes.optoStimTrial     = 17002;
+codes.optoStimSham      = 17003;
 
 %% joystick codes
 codes.joyPress              = 2001;

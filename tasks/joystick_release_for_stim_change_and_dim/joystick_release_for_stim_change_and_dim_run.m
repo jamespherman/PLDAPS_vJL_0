@@ -606,7 +606,7 @@ if timeNow > p.trData.timing.lastFrameTime + ...
 
     % If this is an opto stim trial, draw a slightly larger fixation window
     % to indicate this as an opto-stim trial to the experimenter.
-    if p.trVars.isOptoStimTrial
+    if isfield(p.trVars, 'isOptoStimTrial') && p.trVars.isOptoStimTrial
         % Draw larger opto indicator window
         Screen('FrameRect',p.draw.window, p.draw.color.fixWin, ...
             repmat(p.draw.fixPointPix, 1, 2) + ...
@@ -636,12 +636,16 @@ if timeNow > p.trData.timing.lastFrameTime + ...
     % on the previously recorded fliptime.
     if p.trVars.postFlip.logical
 
-        % Check if this includes a change or no-change event and deliver 
-        % optical stimulation if appropriate
-        if p.trVars.isOptoStimTrial && ...
-                any(contains(p.trVars.postFlip.varNames, {'stimChg', ...
+        % Check if the list of variable names contains "stimChg" or "noChg"
+        % either deliver optostim or strobe sham opto stim code depending
+        % on whether this is an opto stim trial or not.
+        if any(contains(p.trVars.postFlip.varNames, {'stimChg', ...
                 'noChg'}))
-            p = pds.deliverOptoStim(p);
+            if p.trVars.isOptoStimTrial
+                p = pds.deliverOptoStim(p);
+            else
+                p.init.strb.strobeNow(p.init.codes.optoStimSham);
+            end
         end
         
         % loop over the "varNames" field of "p.trVars.postFlip" and assign

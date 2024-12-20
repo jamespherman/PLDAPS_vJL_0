@@ -60,6 +60,8 @@ for i = 1:length(p.trData.eventValues)
            eventTimes.freeReward = time;
        case p.init.codes.optoStimOn
            eventTimes.optoStim = time;
+       case p.init.codes.optoStimSham
+           eventTimes.optoStimSham = time;
        case p.init.codes.trialBegin
            eventTimes.trialBegin = time;
        case p.init.codes.trialEnd

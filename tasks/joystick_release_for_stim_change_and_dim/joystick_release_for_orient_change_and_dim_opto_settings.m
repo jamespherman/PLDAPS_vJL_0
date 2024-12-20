@@ -473,6 +473,7 @@ p.init.trDataInitList = {...
     'p.trData.timing.fixHoldReqMet',    '-1'; ...   % time that fixation hold duration was met (also time of fixation dimming)
     'p.trData.timing.freeReward',       '-1'; ...   % time that free reward was delivered
     'p.trData.timing.optoStim',         '-1'; ...   % time that optical stimulation was delivered
+    'p.trData.timing.optoStimSham',     '-1'; ...   % time that optical stimulation would be delivered for comparison
     };
 
 % since the list above is fixed, count its rows now for looping over later.

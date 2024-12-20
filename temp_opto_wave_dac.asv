@@ -14,13 +14,13 @@ dacBuffAddr = 0;
 dacChannelOut = 1;
 
 % Total desired duration of the pulse train in seconds
-trainDur = 0.5;
+trainDur = 5;
 
 % Duration of each individual pulse in seconds
 pulseDur = 0.5;
 
 % Voltage amplitude of pulses in volts
-pulseAmp = 4;
+pulseAmp = 55;
 
 % Time from start of one pulse to start of next pulse in seconds
 ipi = 0.0;

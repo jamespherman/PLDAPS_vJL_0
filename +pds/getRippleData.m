@@ -8,7 +8,7 @@ totalSpikes = 0;
 p.trData.spikeTimes = [];
 
 % Convert and store spike data for current trial
-for iChan = 1:length(p.rig.ripple.recChans)
+for iChan = 1:1
     if ~isempty(tempSpikeTimes{iChan})
         nSpikesThisChan = length(tempSpikeTimes{iChan});
         totalSpikes = totalSpikes + nSpikesThisChan;
