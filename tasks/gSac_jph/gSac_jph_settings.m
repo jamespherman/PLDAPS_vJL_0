@@ -1,5 +1,5 @@
-function p = gSac_jph_settings
-%  p = gSac_jph_settings
+function p = gSac_jph_settings_VisSacTraining
+%  p = gSac_jph_settings_VisSacTraining
 %
 %   gSac_jph task
 % =============
@@ -11,7 +11,6 @@ function p = gSac_jph_settings
 % elsewhere and either stays on (visually-gSac) or disappears 
 % (memory-gSac), delay, fixation point disappears indicating subject to
 % make a saccade to target, reward. 
-
 
 % Part of the quintet of pldpas functions:
 %   settings function
@@ -42,32 +41,45 @@ function p = gSac_jph_settings
 %% p.init:
 p = struct;
 
-% rigConfigFile has information per a particular rig/monkey setup. Info you
-% might expect to find inlcudes screen dimensions, screen refresh rate, 
-% joystick voltages, datapixx schedules, and many more...
-p.init.rigConfigFile     =  which('rigConfigFiles.rigConfig_ramsey_rigF_20190517'); % rig config file has subject/rig-specific details (eg distance from screen)
+% determine which PC we're on so we can select the appropriate reward
+% magnitude:
+if ~ispc
+    [~, p.init.pcName] = unix('hostname');
+else
+    % if this IS running on a (windows) PC that means we've neglected to
+    % account for something - figure it out now! JPH - 5/16/2023
+    keyboard
+end
+
+% rig config file has subject/rig-specific details (eg distance from
+% screen). Select rig config file depending on PC name (assuming the 2nd to
+% last characteer in the pcName string is 1 or 2):
+p.init.rigConfigFile     = which(['rigConfigFiles.rigConfig_rig' ...
+    p.init.pcName(end-1)]);
 
 
 %% define task name and related files:
 
 p.init.taskName     = 'gSac_jph';
 p                   = pds.initTaskMetadata(p); 
-% p.init.pldapsFolder     = pwd;                          % pldaps gui takes us to taks folder automatically once we choose a settings file
-% p.init.protocol_title   = [p.init.taskName '_task'];    % Define Banner text to identify the experimental protocol
-% p.init.date             = datestr(now,'yyyymmdd');
-% p.init.time             = datestr(now,'HHMM');
-% 
-% % output files:
-% p.init.outputFolder     = fullfile(p.init.pldapsFolder, 'output');
-% p.init.sessionId        = [p.init.date '_t' p.init.time '_' p.init.taskName];     % Define the prefix for the Output File
-% p.init.sessionFolder    = fullfile(p.init.outputFolder, p.init.sessionId);
-% 
-% 
-% % Define the "init", "next", "run", and "finish" ".m" files.
-% p.init.taskFiles.init   = [p.init.taskName '_init.m'];
-% p.init.taskFiles.next   = [p.init.taskName '_next.m'];
-% p.init.taskFiles.run    = [p.init.taskName '_run.m'];
-% p.init.taskFiles.finish = [p.init.taskName '_finish.m'];
+p.init.pldapsFolder     = pwd;                          % pldaps gui takes us to taks folder automatically once we choose a settings file
+p.init.protocol_title   = [p.init.taskName '_task'];    % Define Banner text to identify the experimental protocol
+p.init.date             = datestr(now,'yyyymmdd');
+p.init.time             = datestr(now,'HHMM');
+
+% output files:
+p.init.outputFolder     = fullfile(p.init.pldapsFolder, 'output');
+p.init.sessionId        = [p.init.date '_t' p.init.time '_' p.init.taskName];     % Define the prefix for the Output File
+p.init.sessionFolder    = fullfile(p.init.outputFolder, p.init.sessionId);
+
+% Define the "init", "next", "run", and "finish" ".m" files.
+p.init.taskFiles.init   = [p.init.taskName '_init.m'];
+p.init.taskFiles.next   = [p.init.taskName '_next.m'];
+p.init.taskFiles.run    = [p.init.taskName '_run.m'];
+p.init.taskFiles.finish = [p.init.taskName '_finish.m'];
+
+% are we using datapixx / viewpixx?
+p.init.useDataPixxBool = true;
 
 %% Define the Action M-files
 % User-defined actions that are either within the task folder under
@@ -95,8 +107,6 @@ p.rig.joyThreshPress    = 0.5;                  % joystick press threshold volta
 p.rig.joyThreshRelease  = 2;                    % joystick release threshold voltage (what voltages count as "joystick released"?)
 p.rig.magicNumber       = 0.008;                % time to wait for screen flip
 p.rig.joyVoltageMax     = 2.2436;
-
-
 
 %% audio:
 p.audio.audsplfq    = 48000;
@@ -133,6 +143,7 @@ p.status.iGoodMem           = 0;
 p.status.pGoodVis           = 0;
 p.status.pGoodMem           = 0;
 p.status.iTarget            = 0;
+p.status.rippleOnline       = 0;
 
 %% user determines the n status values shwon in gui upon init
 % here you just list the status vals you want to see. You do not set them,
@@ -213,11 +224,11 @@ p.trVarsInit.targDegX            = 0;
 p.trVarsInit.targDegY            = 0;
 
 % times/latencies/durations:
-p.trVarsInit.rewardDurationMs        = 150; % reward duration
-p.trVarsInit.rewardDelay             = 0;        % delay between cued change and reward delivery for hits.
+p.trVarsInit.rewardDurationMs        = 180; % reward duration
+p.trVarsInit.rewardDelay             = 0.25;        % delay between cued change and reward delivery for hits.
 p.trVarsInit.timeoutAfterFa          = 2;        % timeout duration following false alarm.
 p.trVarsInit.joyWaitDur              = 15;        % how long to wait for the subject to press the joystick at the beginning of a trial?
-p.trVarsInit.fixWaitDur              = 1;        % how long to wait after initial joystick press for the subject to acquire fixation?
+p.trVarsInit.fixWaitDur              = 3;        % how long to wait after initial joystick press for the subject to acquire fixation?
 p.trVarsInit.freeDur                 = 0;        % time before start of joystick press check
 p.trVarsInit.trialMax                = 15;       % max length of the trialF
 p.trVarsInit.joyReleaseWaitDur       = 3;        % how long to wait after trial end to start flickering the screen if the joystick hasn't been released
@@ -229,19 +240,19 @@ p.trVarsInit.joyPressVoltDir         = 1;
 p.trVarsInit.targetFlashDuration     = 0.2;      % Duration target stays on for the memory-guided trials.
 % p.trVarsInit.postFlashFixMin       = 1;    % minimum post-flash fixation-duration
 % p.trVarsInit.postFlashFixMax       = 1.5;  % maximum post-flash fixation-duration
-p.trVarsInit.targHoldDurationMin     = 0.5;  % minimum duration to maintain fixation on the target post-saccade 
-p.trVarsInit.targHoldDurationMax     = 0.7;      % maximum duration to maintain fixation on the target post-saccade 
+p.trVarsInit.targHoldDurationMin     = 0.2;  % minimum duration to maintain fixation on the target post-saccade 
+p.trVarsInit.targHoldDurationMax     = 0.3;      % maximum duration to maintain fixation on the target post-saccade 
 p.trVarsInit.maxSacDurationToAccept  = 0.1; % this is the max duration of a saccades that we're willing to wait for. 
 p.trVarsInit.goLatencyMin            = 0.1;  % minimum saccade-latency criterion
-p.trVarsInit.goLatencyMax            = 0.5;  % maximum saccade-latency criterion
+p.trVarsInit.goLatencyMax            = 1;  % maximum saccade-latency criterion
 % p.trVarsInit.preTargMin            = 0.75; % minimum fixation-only time before target onset
 % p.trVarsInit.preTargMax            = 1;    % maximum fixation-only time before target onset
 p.trVarsInit.targOnsetMin            = 0.75; % minimum fixation-only time before target onset
 p.trVarsInit.targOnsetMax            = 1;
-p.trVarsInit.goTimePostTargMin       = 1; % min duration from targ onset to the 'go' signal to saccade (which is fixation offset)
-p.trVarsInit.goTimePostTargMax       = 2; % max duration from targ onset to the 'go' signal to saccade (which is fixation offset)
+p.trVarsInit.goTimePostTargMin       = 0.3; % min duration from targ onset to the 'go' signal to saccade (which is fixation offset)
+p.trVarsInit.goTimePostTargMax       = 0.8; % max duration from targ onset to the 'go' signal to saccade (which is fixation offset)
 
-p.trVarsInit.maxFixWait              = 5;    % maximum time to wait for fixation-acquisition
+p.trVarsInit.maxFixWait              = 10;    % maximum time to wait for fixation-acquisition
 p.trVarsInit.targOnSacOnly           = 1;    % condition target reappearance on saccade?
 p.trVarsInit.rwdTime                 = -1;
 
@@ -256,11 +267,12 @@ p.trVarsInit.staticTargAmp           = 12;  % fixed target amplitude
 p.trVarsInit.maxHorzTargAmp          = 20;  % when using the "rectangular annulus" method of specifying target locations, we need separate horizontal and vertical max amps
 p.trVarsInit.maxVertTargAmp          = 12;  % "rectangular annulus" method of specifying target amplitude
         
-p.trVarsInit.fixWinWidthDeg       = 3;        % fixation window width in degrees
-p.trVarsInit.fixWinHeightDeg      = 3;        % fixation window height in degrees
-p.trVarsInit.targWinWidthDeg      = 4;        % target window width in degrees
-p.trVarsInit.targWinHeightDeg     = 4;        % target window height in degrees
-
+p.trVarsInit.fixWinWidthDeg       = 2;        % fixation window width in degrees
+p.trVarsInit.fixWinHeightDeg      = 2;        % fixation window height in degrees
+p.trVarsInit.targWinWidthDeg      = 8;        % target window width in degrees
+p.trVarsInit.targWinHeightDeg     = 8;        % target window height in degrees
+p.trVarsInit.targWidth            = 6;        % fixation point indicator line width in pixels
+p.trVarsInit.targRadius           = 16;       % fixation point "radius" in pixels
 
 % I don't think I need to carry these around in 'p'....
 % can't I just define them in the 'run' worksapce and forget avbout them?
@@ -274,11 +286,16 @@ p.trVarsInit.postMemSacTargOn = false;  % do we want the target on because a mem
 % variables related to online tracking of gaze position / velocity
 p.trVarsInit.whileLoopIdx           = 0;    % numerical index to current iteration of run while-loop
 p.trVarsInit.eyeVelFiltTaps         = 5;    % length in samples of online velocity filter
-p.trVarsInit.eyeVelThresh           = 25;   % threshold in deg/s for online saccade detection
+p.trVarsInit.eyeVelThresh           = 100;   % threshold in deg/s for online saccade detection
 p.trVarsInit.useVelThresh           = true; % does the experimenter want to use the velocity threshold to check saccade onset / offset?
-p.trVarsInit.eyeVelThreshOffline    = 10;   % gaze velocity threshold in deg/s for offline saccade detection (cleaner signal, lower threshold).
+p.trVarsInit.eyeVelThreshOffline    = 100;   % gaze velocity threshold in deg/s for offline saccade detection (cleaner signal, lower threshold).
 
-p.trVarsInit.connectPLX             = false;
+p.trVarsInit.connectRipple          = true;
+p.trVarsInit.rippleChanSelect       = 1;
+p.trVarsInit.useOnlineSort  	    = 0; % a boolean indicating whether we want to use spike times that have been sorted online in trellis or all threshold crossing times.
+
+% do we want online plots?
+p.trVarsInit.wantOnlinePlots        = true;
 
 %% end of trVarsInit
 % once all trial variables have been initialized in trVarsInit, we copy 
@@ -305,6 +322,7 @@ p.init.trDataInitList = {...
     'p.trData.onlineGaze',              '[]'; ...
     'p.trData.strobed',                 '[]'; ...
     'p.trData.spikeTimes',              '[]'; ...
+    'p.trData.spikeClusters',           '[]'; ...
     'p.trData.eventTimes',              '[]'; ...
     'p.trData.eventValues',             '[]'; ...
     'p.trData.preSacXY',                '[]'; ...
@@ -417,21 +435,19 @@ p.draw.color.mouseCursor    = p.draw.clutIdx.expCyan_subBg;                % mou
 % the boring stuff, like width and height of stuff that gets drawn.
 
 % fixation point and fixation point win:
-p.draw.fixPointWidth        = 4;        % fixation point indicator line width in pixels
-p.draw.fixPointRadius       = 6;        % fixation point "radius" in pixels
+p.draw.fixPointWidth        = 6;        % fixation point indicator line width in pixels
+p.draw.fixPointRadius       = 16;        % fixation point "radius" in pixels
 p.draw.fixWinPenThin        = 4;        % fixation window width (prior to 'go' signal).
 p.draw.fixWinPenThick       = 8;        % fixation window width (post 'go' signal).
 p.draw.fixWinPenDraw        = [];       % gets assigned either the pre or the post during the run function 
 
 % target and target win:
-p.draw.targWidth            = 4;        % fixation point indicator line width in pixels
-p.draw.targRadius           = 6;        % fixation point "radius" in pixels
 p.draw.targWinPenThin       = 4;        % fixation window width (prior to 'go' signal).
 p.draw.targWinPenThick      = 8;        % fixation window width (post 'go' signal).
 p.draw.targWinPenDraw       = [];       % gets assigned either the pre or the post during the run function
 
 % others:
-p.draw.eyePosWidth          = 6;        % eye position indicator width in pixels
+p.draw.eyePosWidth          = 8;        % eye position indicator width in pixels
 p.draw.gridSpacing          = 2;        % experimenter display grid spacing (in degrees).
 p.draw.gridW                = 2;        % grid spacing in degrees
 p.draw.joyRect              = [1705 900 1735 1100]; % experimenter-display joystick indicator rectangle.

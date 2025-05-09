@@ -231,7 +231,8 @@ switch p.trVars.currentState
         % If it has been more than 250 milliseconds from multi-stim onset,
         % deliver opto stim. Otherwise, strobe sham stim. Also make sure
         % this is a multi-stimulus trial.
-        if timeFromFixAq >= (p.trVars.fix2StimOnIntvl + 0.25) && ...
+        if isfield(p.trVars, 'optoStimDurSec') && timeFromFixAq ...
+                >= (p.trVars.fix2StimOnIntvl + 0.25) && ...
                 all([p.trData.timing.optoStim ...
                 p.trData.timing.optoStimSham] < 0)
 
@@ -241,7 +242,8 @@ switch p.trVars.currentState
                 p.trData.timing.optoStimSham = timeNow;
                 p.init.strb.strobeNow(p.init.codes.optoStimSham);
             end
-        elseif timeFromFixAq >= (p.trVars.fix2StimOnIntvl + 0.275 + ...
+        elseif isfield(p.trVars, 'optoStimDurSec') && timeFromFixAq >= ...
+                (p.trVars.fix2StimOnIntvl + 0.275 + ...
                 p.trVars.optoStimDurSec)
             % Zero out DAC voltage on opto stim channel:
             Datapixx('SetDacVoltages', [p.rig.dp.optoDacChan 0]);
@@ -638,6 +640,9 @@ if timeNow > p.trData.timing.lastFrameTime + ...
     Screen('FrameRect', p.draw.window, p.draw.color.joyInd, p.draw.joyRect);
     Screen('FillRect',  p.draw.window, p.draw.color.joyInd, joyRectNow);
 
+    % for writing screen image to disk:
+    % imageArray = Screen('GetImage', p.draw.window);
+
     % flip and store time of flip.
     [p.trData.timing.flipTime(p.trVars.flipIdx), ~, ~, ~] = ...
         Screen('Flip', p.draw.window);
@@ -684,6 +689,10 @@ if timeNow > p.trData.timing.lastFrameTime + ...
     
     % increment flip index
     p.trVars.flipIdx = p.trVars.flipIdx + 1;
+
+    % fileName = sprintf('stimulus_image_frame_%03d.png', ...
+    %    p.trVars.stimFrameIdx);
+    % imwrite(imageArray, fileName);
 end
 
 end
