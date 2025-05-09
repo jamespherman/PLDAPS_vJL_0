@@ -46,6 +46,15 @@ if ~isfield(p.draw, 'movie')
     Screen('Flip', p.draw.window);
 end
 
+% (0) get buffered spike times and event times from ripple (this might seem
+% like an odd time to do this but before you go changing it ask jph), then
+% align spikes to events for later plotting. This is currently a hack
+% because we drop the first trial's events - figure out a way around this.
+if p.rig.ripple.status && ~isempty(p.rig.ripple.recChans)
+    p = pds.getRippleData(p);
+end
+p = alignSpikes(p);
+
 % read buffered ADC and DIN data from DATAPixx
 p           = pds.readDatapixxBuffers(p);
 
@@ -72,9 +81,6 @@ p.trData.strobed = p.init.strb.strobedList;
 p.init.strb.flushVetoList;
 p.init.strb.flushStrobedList;
 
-% (3) pause ephys
-pds.stopOmniPlex;
-
 % wait for joystick release
 p           = pds.waitForJoystickRelease(p);
 
@@ -85,15 +91,6 @@ p           = pds.waitForJoystickRelease(p);
 % last trial, the "time-out" window has passed and there won't be an
 % ADDITIONAL time out.
 postTrialTimeOut(p);
-
-% retreive data from omniplex PC if desired.
-if p.rig.connectToOmniplex
-    p = pds.getOmniplexData(p);
-end
-
-% % % p.trData.spikeAndStrobeTimes(p.trData.spikeAndStrobeTimes(:,1)==4, 3)
-% % % 
-% % % keyboard
 
 % store missed frames count
 p.trData.missedFrameCount = nnz(diff(p.trData.timing.flipTime) > ...

@@ -33,15 +33,26 @@ function p = joystickPress_settings
 %% p.init:
 p = struct;
 
-
 % define paths to add for this task
 % a list of paths to add (at present, for making sure directories
 % containing support functions will be in the path).
 % % p.init.pathList      = {[pwd '/supportFunctions']};
 
+% determine which PC we're on so we can select the appropriate reward
+% magnitude:
+if ~ispc
+    [~, p.init.pcName] = unix('hostname');
+else
+    % if this IS running on a (windows) PC that means we've neglected to
+    % account for something - figure it out now! JPH - 5/16/2023
+    keyboard
+end
 
-p.init.rigConfigFile     = which('rigConfigFiles.rigConfig_ramsey_rigF_20190517'); % rig config file has subject/rig-specific details (eg distance from screen)
-
+% rig config file has subject/rig-specific details (eg distance from
+% screen). Select rig config file depending on PC name (assuming the 2nd to
+% last characteer in the pcName string is 1 or 2):
+p.init.rigConfigFile     = which(['rigConfigFiles.rigConfig_rig' ...
+    p.init.pcName(end-1)]);
 
 %% define task name and related files:
 
@@ -55,6 +66,9 @@ p.init.time             = datestr(now,'HHMM');
 p.init.date_1yyyy       = str2double(['1' datestr(now,'yyyy')]); % gotta add a '1' otherwise date/times starting with zero lose that zero in conversion to double.
 p.init.date_1mmdd       = str2double(['1' datestr(now,'mmdd')]);
 p.init.time_1hhmm       = str2double(['1' datestr(now,'HHMM')]);
+
+% are we using datapixx / viewpixx?
+p.init.useDataPixxBool = true;
 
 % output files:
 p.init.outputFolder     = fullfile(p.init.pldapsFolder, 'output');
@@ -196,7 +210,7 @@ p.init.exptType         = 'joystickPress';  % Which experiment are we running? T
 % 'trVars' is the key strcutarray that gets saved on every trial.
 
 % general vars:
-p.trVarsInit.passJoy             = 0;       % pass = 1; simulate correct trials (for debugging)
+p.trVarsInit.passJoy             = 1;       % pass = 1; simulate correct trials (for debugging)
 p.trVarsInit.passEye             = 1;       % pass = 1; simulate correct trials (for debugging)
 p.trVarsInit.blockNumber         = 0;       % block number
 p.trVarsInit.repeat              = 0;       % repeat trial if true
@@ -230,9 +244,9 @@ p.trVarsInit.fixDegX             = 0;           % fixation X location in degrees
 p.trVarsInit.fixDegY             = 0;           % fixation Y location in degrees
 
 % times/latencies/durations:
-p.trVarsInit.rewardDurationMs        = 280;     % reward duration
-p.trVarsInit.joyPressReqMin          = 0.1;      % minimum possible duration of joystick press required
-p.trVarsInit.joyPressReqMax          = 0.1;      % maximum possible duration of joystick press required
+p.trVarsInit.rewardDurationMs        = 300;     % reward duration
+p.trVarsInit.joyPressReqMin          = 3;       % minimum possible duration of joystick press required
+p.trVarsInit.joyPressReqMax          = 6;       % maximum possible duration of joystick press required
 p.trVarsInit.fix2CueIntvl            = 0.25;     % Time delay between acquiring fixation and cue ring onset.
 p.trVarsInit.cueDur                  = 0.133;    % Duration of ring presentaiton.
 p.trVarsInit.cue2StimItvl            = 0.567;    % time between ring offset and motion onset (stimulus onset asynchrony).
@@ -254,6 +268,8 @@ p.trVarsInit.stimFrameIdx            = 1;        % stimulus (eg dots) frame disp
 p.trVarsInit.flipIdx                 = 1;        % index of
 p.trVarsInit.postRewardDuration      = 0.25;     % how long should the trial last AFTER reward delivery? This lets us record the neuronal response to reward.
 p.trVarsInit.useQuest                = false;
+p.trVarsInit.connectRipple           = true;
+p.trVarsInit.useOnlineSort           = false;
 
 % I don't think I need to carry these around in 'p'....
 % can't I just define them in the 'run' worksapce and forget avbout them?
@@ -294,6 +310,21 @@ p.trVarsInit.satVar                   = 0.05;     % variability in saturation
 p.trVarsInit.postFlip.logical         = false;
 p.trVarsInit.postFlip.varNames        = cell(0);
 
+% variables related to online tracking of gaze position / velocity
+p.trVarsInit.whileLoopIdx           = 0;    % numerical index to current iteration of run while-loop
+p.trVarsInit.eyeVelFiltTaps         = 5;    % length in samples of online velocity filter
+p.trVarsInit.eyeVelThresh           = 100;   % threshold in deg/s for online saccade detection
+p.trVarsInit.useVelThresh           = true; % does the experimenter want to use the velocity threshold to check saccade onset / offset?
+p.trVarsInit.eyeVelThreshOffline    = 100;   % gaze velocity threshold in deg/s for offline saccade detection (cleaner signal, lower threshold).
+
+%% optital stimulation variables
+p.trVarsInit.optoStimDurSec    = 0.5;         % Duration in seconds of optical stimulation
+p.trVarsInit.optoPulseDurSec   = 0.5;         % Duration in seconds of each "pulse" of optical stimulation
+p.trVarsInit.optoPulseAmpVolts = 4.2;         % Amplitude of voltage pulses controlling optical stimulation intensity
+p.trVarsInit.optoIpiSec        = 0.0;         % Duration in seconds between pulses of optical stimulation
+p.trVarsInit.isOptoStimTrial   = false;       % Logical variable indicating whether the current trial is an optical stimulation trial or not.
+p.trVarsInit.optoStimTime      = -1;          % time that the opto stim will be triggered.
+
 %% end of trVarsInit
 % once all trial variables have been initialized in trVarsInit, we copy 
 % them to 'trVarsGuiComm' in order to inform the gui. 
@@ -317,6 +348,10 @@ p.init.trDataInitList = {...
     'p.trData.joyV',                    '[]'; ...
     'p.trData.dInValues',               '[]'; ...
     'p.trData.dInTimes',                '[]'; ...
+    'p.trData.spikeTimes',              '[]'; ...
+    'p.trData.spikeClusters',           '[]'; ...
+    'p.trData.eventTimes',              '[]'; ...
+    'p.trData.eventValues',             '[]'; ...
     'p.trData.onlineEyeX',              '[]'; ...
     'p.trData.onlineEyeY',              '[]'; ...
     'p.trData.timing.lastFrameTime',    '0'; ...    % time at which last video frame was displayed
@@ -334,6 +369,8 @@ p.init.trDataInitList = {...
     'p.trData.timing.reward',           '-1'; ...   % time of reward delivery
     'p.trData.timing.tone',             '-1'; ...   % time of audio feedback delivery
     'p.trData.timing.joyPress',         '-1'; ...   % time of joystick press
+    'p.trData.timing.optoStim',         '-1'; ...   % time that optical stimulation was delivered
+    'p.trData.timing.optoStimSham',     '-1'; ...   % time that optical stimulation would be delivered for comparison
     };
 
 % since the list above is fixed, count its rows now for looping over later.
@@ -395,6 +432,7 @@ p.rig.dp.dacRate               = 1000;     % define DAC sampling rate (Hz);
 p.rig.dp.dacPadDur             = 0.01;     % how much time to pad the DAC +4V with +0V?
 p.rig.dp.dacBuffAddr           = 10e6;     % DAC buffer base address
 p.rig.dp.dacChannelOut         = 0;        % Which channel to use for DAC outpt control of reward system.
+p.rig.dp.optoDacChan           = 1;           % Which channel to use for DAC output control of optical stimulation.
 
 %% stimulus-specific (and static over the course of an experiment):
 % here we have motion related vars but if your stimulus is of different

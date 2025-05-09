@@ -1,5 +1,5 @@
 classdef classyStrobe < handle
-    % hacky calss to strobe values to PLEXON ephys.
+    % hacky class to strobe values to PLEXON ephys.
     % key methods:
     %   addValue - adds a vlaue to the valueList, which will be strobed
     %              once the 'strobe' method is called

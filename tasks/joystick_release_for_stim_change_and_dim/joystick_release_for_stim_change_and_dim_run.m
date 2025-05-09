@@ -228,6 +228,25 @@ switch p.trVars.currentState
             p.trVars.stimIsOn                = true;
         end
 
+        % If it has been more than 250 milliseconds from multi-stim onset,
+        % deliver opto stim. Otherwise, strobe sham stim. Also make sure
+        % this is a multi-stimulus trial.
+        if timeFromFixAq >= (p.trVars.fix2StimOnIntvl + 0.25) && ...
+                all([p.trData.timing.optoStim ...
+                p.trData.timing.optoStimSham] < 0)
+
+            if p.trVars.isOptoStimTrial && p.trData.timing.optoStim < 0
+                p = pds.deliverOptoStim(p);
+            elseif p.trData.timing.optoStimSham < 0
+                p.trData.timing.optoStimSham = timeNow;
+                p.init.strb.strobeNow(p.init.codes.optoStimSham);
+            end
+        elseif timeFromFixAq >= (p.trVars.fix2StimOnIntvl + 0.275 + ...
+                p.trVars.optoStimDurSec)
+            % Zero out DAC voltage on opto stim channel:
+            Datapixx('SetDacVoltages', [p.rig.dp.optoDacChan 0]);
+        end
+
         % Hang out in this state until a stimChangeTime has passed, then go
         % to "makeDecision". If at any time the monkey breaks fixation or
         % joystick, go to appropriate terminal state.
@@ -639,14 +658,13 @@ if timeNow > p.trData.timing.lastFrameTime + ...
         % Check if the list of variable names contains "stimChg" or "noChg"
         % either deliver optostim or strobe sham opto stim code depending
         % on whether this is an opto stim trial or not.
-        if any(contains(p.trVars.postFlip.varNames, {'stimChg', ...
-                'noChg'}))
-            if p.trVars.isOptoStimTrial
-                p = pds.deliverOptoStim(p);
-            else
-                p.init.strb.strobeNow(p.init.codes.optoStimSham);
-            end
-        end
+%         if any(contains(p.trVars.postFlip.varNames, 'cueOn'))
+%             if p.trVars.isOptoStimTrial
+%                 p = pds.deliverOptoStim(p);
+%             else
+%                 p.init.strb.strobeNow(p.init.codes.optoStimSham);
+%             end
+%         end
         
         % loop over the "varNames" field of "p.trVars.postFlip" and assign
         % "p.trData.timing.lastFrameTime" to

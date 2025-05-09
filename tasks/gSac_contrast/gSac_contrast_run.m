@@ -34,7 +34,7 @@ while ~p.trVars.exitWhileLoop
     p.trVars.whileLoopIdx = p.trVars.whileLoopIdx + 1;
     
     % Update eye / joystick & Mouse position:
-    p = pds.getEyeJoy(p);   
+    p = pds.getEyeJoy(p);
     p = pds.getMouse(p);
     
     % store just-sampled gaze position and calculate eye velocity
@@ -574,7 +574,7 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - ...
 
     % If this is an opto stim trial, draw a slightly larger fixation window
     % to indicate this as an opto-stim trial to the experimenter.
-    if p.trVars.isOptoStimTrial
+    if isfield(p.trVars, 'isOptoStimTrial') && p.trVars.isOptoStimTrial
         % Draw larger opto indicator window
         Screen('FrameRect',p.draw.window, p.draw.color.fixWin, ...
             repmat(p.draw.fixPointPix, 1, 2) + ...

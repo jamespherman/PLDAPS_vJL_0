@@ -33,16 +33,17 @@ function p = joystickPress_run(p)
 %   (1) STATE-DEPENDENT section: sets variables as a function of state
 %   (2) TIME-DEPENDENT section: sets variables as a function of time 
 %   (3) DRAW section: PTB-based drawing
-
-i = 0;
 while ~p.trVars.exitWhileLoop
     
-    % Update eye / joystick position:
-    p = pds.getEyeJoy(p);
-
-    i = i + 1;
-    p.trData.onlineEyeX(i) = p.trVars.eyeDegX;
-    p.trData.onlineEyeY(i) = p.trVars.eyeDegY;
+    % iterate while-loop counter
+    p.trVars.whileLoopIdx = p.trVars.whileLoopIdx + 1;
+    
+    % Update eye / joystick & Mouse position:
+    p = pds.getEyeJoy(p);   
+    p = pds.getMouse(p);
+    
+    % store just-sampled gaze position and calculate eye velocity
+    p = onlineGazeCalcs(p);
     
     % STATE DEPENDENT section
     p = stateMachine(p);
@@ -110,7 +111,7 @@ switch p.trVars.currentState
         %% STATE 3:
         %   JOYSTICK IS HELD, WAIT UNTIL REQUIRED TIME HAS ELAPSED THEN GO
         %   TO REWARD DELIVERY.
-        
+
         % If joystick has been held down for the requisite duration: strobe
         % "hit" code to recording system, log the time that the joystick
         % hold duration requirement was met, advance to the "hit" state,
@@ -129,6 +130,31 @@ switch p.trVars.currentState
             p.init.strb.addValue(p.init.codes.miss);
             p.trData.timing.joyRelease = timeNow;
             p.trVars.currentState      = p.state.miss;
+        end
+
+        % If it's time to deliver opto stim and neither the "optoStim" nor
+        % the "optoStimSham" time values have been set (they are both < 0),
+        % either deliver the opto stim or mark the sham opto stim time. If
+        % opto stim time + opto stim duration has passed, make sure opto
+        % stim is turned off.
+        if p.trData.timing.joyPress > 0 && ...
+                timeNow > (p.trData.timing.joyPress + ...
+                p.trVars.optoStimTime) && all([p.trData.timing.optoStim ...
+                p.trData.timing.optoStimSham] < 0)
+            % if this is an opto stim trial, deliver the stim. Otherwise,
+            % strobe the sham stim time:
+            if p.trVars.isOptoStimTrial && p.trData.timing.optoStim < 0
+                p = pds.deliverOptoStim(p);
+            elseif p.trData.timing.optoStimSham < 0
+                p.trData.timing.optoStimSham = timeNow;
+                p.init.strb.strobeNow(p.init.codes.optoStimSham);
+            end
+        elseif p.trData.timing.joyPress > 0 && ...
+                timeNow > (p.trData.timing.joyPress + ...
+                p.trVars.optoStimTime + p.trVars.optoStimDurSec + 0.075)
+
+            % Zero out DAC voltage on opto stim channel:
+            Datapixx('SetDacVoltages', [p.rig.dp.optoDacChan 0]);
         end
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -169,6 +195,10 @@ if p.trVars.exitWhileLoop
     % - All colors are set to to background color
     % - strobe 'trial end' and note time.
     % - break out of the while loop.
+
+    % make sure opto stim is turned off:
+    % Zero out DAC voltage on opto stim channel:
+    Datapixx('SetDacVoltages', [p.rig.dp.optoDacChan 0]);
 
     % note trial end state
     p.trData.trialEndState = p.trVars.currentState;
@@ -225,45 +255,6 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
         [-1 -1 1 1]*p.draw.eyePosWidth + repmat(p.draw.middleXY, 1, 2);
     Screen('FillRect', p.draw.window, p.draw.color.eyePos, gazePosition);
     
-    % draw the cue-ring (if desired)
-    % if p.trVars.cueIsOn
-        % Screen('FrameOval', p.draw.window, p.draw.color.cueRing, p.draw.cueRingRect, ...
-            % p.draw.ringThickPix);
-    % end
-    
-    % calculate which stimulus frame we're in based on time since
-    % stimulus onset - stimuli should be drawn in the frame that their
-    % onset time is defined ("p.trData.timing.stimOn") for this reason,
-    % we force "stimFrameIdx" to a value of "1" until the stimulus
-    % onset time has been defined.
-    % p.trVars.stimFrameIdx  = ...
-        % (fix((timeNow - p.trData.timing.stimOn) / ...
-        % p.rig.frameDuration)) * (p.trData.timing.stimOn > 0) + 1;
-    
-    % if stimuli should be drawn (based on time in trial), draw them.
-    % if (p.trVars.cueStimIsOn || p.trVars.foilStimIsOn) && ...
-            % (p.trVars.stimFrameIdx <= p.trVars.stimFrames)
-
-        % Push (possibly new) color look-up table to ViewPIXX based on
-        % current frame (frame determined based on time in trial).
-        % Datapixx('SetVideoClut', p.draw.myCLUTs(:, : , p.trVars.stimFrameIdx));
-        
-        % draw FIXED textures to screen (one per stimulus)
-        % for i = 1:p.stim.nStim
-            % Screen('DrawTexture', p.draw.window, p.draw.stimTex{i}, [], ...
-                % p.trVars.stimRects(i,:));
-        % end
-    % end
-    
-    % draw fixation spot
-    % Screen('FrameRect',p.draw.window, p.draw.color.fix, repmat(p.draw.fixPointPix, 1, 2) + ...
-        % p.draw.fixPointRadius*[-1 -1 1 1], p.draw.fixPointWidth);
-    
-    % draw fixation window
-    % Screen('FrameRect',p.draw.window, p.draw.color.fixWin, repmat(p.draw.fixPointPix, 1, 2) +  ...
-        % [-p.draw.fixWinWidthPix -p.draw.fixWinHeightPix ...
-        % p.draw.fixWinWidthPix p.draw.fixWinHeightPix], p.draw.fixWinPenDraw)
-    
     % Draw the joystick-bar graphic.
     Screen('FrameRect', p.draw.window, p.draw.color.joyInd, p.draw.joyRect);
     Screen('FillRect',  p.draw.window, p.draw.color.joyInd, joyRectNow);
@@ -278,8 +269,10 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     end
 
     % flip and store time of flip.
-    [p.trData.timing.flipTime(p.trVars.flipIdx), ~, ~, frMs] = Screen('Flip', p.draw.window);
-    p.trData.timing.lastFrameTime   = p.trData.timing.flipTime(p.trVars.flipIdx) - ...
+    [p.trData.timing.flipTime(p.trVars.flipIdx), ~, ~, frMs] = ...
+        Screen('Flip', p.draw.window);
+    p.trData.timing.lastFrameTime   = ...
+        p.trData.timing.flipTime(p.trVars.flipIdx) - ...
         p.trData.timing.trialStartPTB;
     
     % strobe all values that are in the strobe list with the
@@ -312,8 +305,36 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     p.trVars.flipIdx = p.trVars.flipIdx + 1;
     
     % close out old movie texture:
-     Screen('Close', movieTex); 
+    Screen('Close'); 
 end
 
+
+end
+
+%%
+
+function p = onlineGazeCalcs(p)
+
+% Store gaze X, Y, and sample time; leave an extra slot for
+% yet-to-be-calculated velocity
+p.trData.onlineGaze(p.trVars.whileLoopIdx, :) = ...
+    [p.trVars.eyeDegX, p.trVars.eyeDegY, ...
+    GetSecs - p.trData.timing.trialStartPTB, NaN];
+
+% If we've collected at least "p.trVarsInit.eyeVelFiltTaps" samples,
+% compute eye velocity.
+if p.trVars.whileLoopIdx > p.trVarsInit.eyeVelFiltTaps
+    
+    % compute diff of gaze position / sample time array
+    tempDiff = diff(...
+        p.trData.onlineGaze(...
+        (p.trVars.whileLoopIdx - ...
+        p.trVarsInit.eyeVelFiltTaps + 1):p.trVars.whileLoopIdx, 1:3));
+    
+    % compute rectified total gaze velocity (combined across X & Y).
+    p.trData.onlineGaze(p.trVars.whileLoopIdx, 4) = ...
+        sqrt(sum(mean((tempDiff(:, 1:2) ./ ...
+        repmat(tempDiff(:, 3), 1, 2)).^2)));
+end
 
 end

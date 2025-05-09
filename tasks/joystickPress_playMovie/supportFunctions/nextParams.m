@@ -12,6 +12,13 @@ p.trVars.joyPressReq = p.trVars.joyPressReqMin + ...
 % log joyPressReq as a status variable:
 p.status.joyPressReq = p.trVars.joyPressReq;
 
+% will this be an opto stim trial or not?
+p.trVars.isOptoStimTrial = rand > 0.5;
+
+% regardless of whether this is an opto stim trial or not, choose a time to
+% deliver the opto stim at random in the time window
+p.trVars.optoStimTime = rand * p.trVars.joyPressReq;
+
 % Choose a row of "p.init.trialsArray" for the upcoming trial.
 % p = chooseRow(p);
 

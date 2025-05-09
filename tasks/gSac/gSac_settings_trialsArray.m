@@ -42,6 +42,13 @@ function p = gSac_settings_trialsArray
 %% p.init:
 p = struct;
 
+% need to set "useDataPixxBool" to true in all settings files. We really
+% need to change how we do this in general. There should be a some master
+% list of settings that are required for all tasks to run correctly that
+% get set in every settings file without the need to duplicate lines of
+% code across all settings files, and separately a list of settings that is
+% task-specific (JPH - 05/25/2023).
+p.init.useDataPixxBool = true;
 
 % define paths to add for this task
 % a list of paths to add (at present, for making sure directories

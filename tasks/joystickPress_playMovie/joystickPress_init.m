@@ -48,6 +48,9 @@ p   = movieInit(p);
 % (5) define audio waveforms and load to VIEWPixx
 p   = pds.initAudio(p);
 
+% initialize connection to Ripple:
+p = pds.initRipple(p);
+
 % (6) define trial structure
 % p   = initTrialStructure(p);
 

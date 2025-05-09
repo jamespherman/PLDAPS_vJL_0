@@ -42,19 +42,27 @@ function p = gSac_settings
 %% p.init:
 p = struct;
 
+% need to set "useDataPixxBool" to true in all settings files. We really
+% need to change how we do this in general. There should be a some master
+% list of settings that are required for all tasks to run correctly that
+% get set in every settings file without the need to duplicate lines of
+% code across all settings files, and separately a list of settings that is
+% task-specific (JPH - 05/25/2023).
+p.init.useDataPixxBool = true;
+
 % rigConfigFile has information per a particular rig/monkey setup. Info you
 % might expect to find inlcudes screen dimensions, screen refresh rate, 
 % joystick voltages, datapixx schedules, and many more...
 p.init.rigConfigFile     = which('rigConfigFiles.rigB_2019016_porter'); % rig config file has subject/rig-specific details (eg distance from screen)
 
 
-%% define task name and related files:
+% define task name and related files:
 
 p.init.taskName     = 'gSac';
 p                   = pds.initTaskMetadata(p); % ye ye I know, shouldn't this be in init? well it's here. For now...
 
 
-%% Define the Action M-files
+% Define the Action M-files
 % User-defined actions that are either within the task folder under
 % "actions" or within the +pds package under "actions":
 p.init.taskActions{1} = 'pdsActions.dataToWorkspace';
