@@ -10,22 +10,19 @@ p.rig.ripple.status = pds.xippmex;
 
 % Query time from NIP multiple times. If NIP is powered on, times will be
 % different:
-nVals = 2;
-tempTimeVals = zeros(nVals, 1);
-for i = 1:nVals
-    tempTimeVals(i) = pds.xippmex('time');
-    WaitSecs(0.05);
+
+
+% Check to see if NIP is turned on (if p.rig.ripple.status is TRUE):
+if p.rig.ripple.status
+%     p.rig.ripple.status = pds.xippmex('led', 'f1');
 end
 
-% re-define "status" based on time values:
-p.rig.ripple.status = diff(tempTimeVals) > 0;
+% if we DON'T WANT TO USE RIPPLE...
+% p.rig.ripple.status = p.trVarsInit.connectRipple;
 
 % get recording channels (if ripple is connected, and we want to use it):
 if p.rig.ripple.status && p.trVarsInit.connectRipple
     p.rig.ripple.recChans = ...
         [pds.xippmex('elec','micro'), ...
         pds.xippmex('elec','nano')];
-
-    % if recChans is empty we have a problem - warn the user:
-    warning('Ripple is connected but there are no channels found!');
 end
