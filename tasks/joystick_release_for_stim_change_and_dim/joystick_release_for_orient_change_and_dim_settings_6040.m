@@ -180,6 +180,12 @@ p.status.foil2CtLoc1                = 0; % count of two patch foil change trials
 p.status.cue2CtLoc2                 = 0; % count of two patch cue change trials at location 2
 p.status.foil2CtLoc2                = 0; % count of two patch foil change trials at location 2
 
+p.status.totalHits                  = 0; % count of correct rejects
+p.status.totalMisses                = 0; % count of misses
+p.status.totalChangeFalseAlarms     = 0; % count of change FAs
+p.status.totalNoChangeFalseAlarms   = 0; % count of no change FAs
+p.status.totalCorrectRejects        = 0; % count of correct rejects
+
 p.status.missedFrames               = 0; % count of missed frames as reported by psychtoolbox
 p.status.freeRwdRand                = 0; % random number drawn for deciding whether or not to deliver free reward
 p.status.freeRwdTotal               = 0; % total count of free inter trial interval rewards delivered
@@ -345,9 +351,13 @@ p.trVarsInit.nEpochs                  = 2;        % just one "pre-change" and on
 
 % times/latencies/durations:
 p.trVarsInit.rewardDurationMs        = 300;      % reward duration
+p.trVarsInit.fix2CueIntvlMin         = 0;        % Minimum time between fixation acquisition and cue presentation (onset).
+p.trVarsInit.fix2CueIntvlWin         = 0;        % Duration of possibile cue presentation window (between "min" and "min + win"). 
 p.trVarsInit.fix2CueIntvl            = 0.0;      % Time delay between acquiring fixation and cue onset.
 p.trVarsInit.cueDur                  = 0.0;      % Duration of cue presentaiton.
-p.trVarsInit.cue2StimItvl            = 0.35;     % time between cue offset and stimulus onset (stimulus onset asynchrony).
+p.trVarsInit.cue2StimIntvlMin        = 0.0;      % Minimum time between cue presentation (offset) and stimulus onset.
+p.trVarsInit.cue2StimIntvlWin        = 0.0;      % Duration of possible stimulus onset window after cue presentation (between "min" and "min + win").
+p.trVarsInit.cue2StimItvl            = 0.0;      % time between cue offset and stimulus onset (stimulus onset asynchrony).
 p.trVarsInit.stim2ChgIntvl           = 1;        % minimum time between stimulus onset and change.
 p.trVarsInit.chgWinDur               = 3;        % time window during which a change is possible.
 p.trVarsInit.rewardDelay             = 1;        % delay between cued change and reward delivery for hits.

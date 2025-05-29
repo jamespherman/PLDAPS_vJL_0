@@ -230,62 +230,62 @@ end
 
 % Peripheral stimulus dimming + change with mostly change trials.
 function table = tableDef_stimDimPlusChange_6040
-table =           [1   1   1   0   0   0   1   0   0   0   0   1   1   0   1   6   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   1   1   1   0   0   0   0   0   0   0   0   0   0   0   1   4   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   2   1   0   1   0   0   2   0   0   0   0   1   1   0   2   6   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   2   1   0   1   0   0   0   0   0   0   0   0   0   0   2   4   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   3   1   0   0   1   0   3   0   0   0   0   1   1   0   3   6   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   3   1   0   0   1   0   0   0   0   0   0   0   0   0   3   4   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   4   1   0   0   0   1   4   0   0   0   0   1   1   0   4   6   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   4   1   0   0   0   1   0   0   0   0   0   0   0   0   4   4   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
+table =           [1   1   1   0   0   0   1   0   1   0   0   1   1   0   1   6   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   1   1   1   0   0   0   0   0   1   0   0   0   0   0   1   4   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   2   1   0   1   0   0   2   0   1   0   0   1   1   0   2   6   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   2   1   0   1   0   0   0   0   1   0   0   0   0   0   2   4   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   3   1   0   0   1   0   3   0   1   0   0   1   1   0   3   6   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   3   1   0   0   1   0   0   0   1   0   0   0   0   0   3   4   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   4   1   0   0   0   1   4   0   1   0   0   1   1   0   4   6   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   4   1   0   0   0   1   0   0   1   0   0   0   0   0   4   4   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
                  ];
 end
 
 % Fixation + peripheral stimulus dimming
 function table = tableDef_fixAndStimDim_6040
-table =           [1   1   1   0   0   0   1   0   0   0   0   0   1   0   1   6   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   1   1   1   0   0   0   0   0   0   0   0   0   0   0   1   4   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   2   1   0   1   0   0   2   0   0   0   0   0   1   0   2   6   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   2   1   0   1   0   0   0   0   0   0   0   0   0   0   2   4   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   3   1   0   0   1   0   3   0   0   0   0   0   1   0   3   6   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   3   1   0   0   1   0   0   0   0   0   0   0   0   0   3   4   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   4   1   0   0   0   1   4   0   0   0   0   0   1   0   4   6   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   4   1   0   0   0   1   0   0   0   0   0   0   0   0   4   4   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
+table =           [1   1   1   0   0   0   1   0   1   0   0   0   1   0   1   6   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   1   1   1   0   0   0   0   0   1   0   0   0   0   0   1   4   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   2   1   0   1   0   0   2   0   1   0   0   0   1   0   2   6   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   2   1   0   1   0   0   0   0   1   0   0   0   0   0   2   4   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   3   1   0   0   1   0   3   0   1   0   0   0   1   0   3   6   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   3   1   0   0   1   0   0   0   1   0   0   0   0   0   3   4   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   4   1   0   0   0   1   4   0   1   0   0   0   1   0   4   6   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   4   1   0   0   0   1   0   0   1   0   0   0   0   0   4   4   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
                  ];
 end
 
 % Fixation + peripheral stimulus dimming
 function table = tableDef_fixAndStimDim_7030
-table =           [1   1   1   0   0   0   1   0   0   0   0   0   1   0   1   7   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   1   1   1   0   0   0   0   0   0   0   0   0   0   0   1   3   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   2   1   0   1   0   0   2   0   0   0   0   0   1   0   2   7   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   2   1   0   1   0   0   0   0   0   0   0   0   0   0   2   3   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   3   1   0   0   1   0   3   0   0   0   0   0   1   0   3   7   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   3   1   0   0   1   0   0   0   0   0   0   0   0   0   3   3   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   4   1   0   0   0   1   4   0   0   0   0   0   1   0   4   7   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   4   1   0   0   0   1   0   0   0   0   0   0   0   0   4   3   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
+table =           [1   1   1   0   0   0   1   0   1   0   0   0   1   0   1   7   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   1   1   1   0   0   0   0   0   1   0   0   0   0   0   1   3   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   2   1   0   1   0   0   2   0   1   0   0   0   1   0   2   7   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   2   1   0   1   0   0   0   0   1   0   0   0   0   0   2   3   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   3   1   0   0   1   0   3   0   1   0   0   0   1   0   3   7   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   3   1   0   0   1   0   0   0   1   0   0   0   0   0   3   3   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   4   1   0   0   0   1   4   0   1   0   0   0   1   0   4   7   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   4   1   0   0   0   1   0   0   1   0   0   0   0   0   4   3   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
                  ];
 end
 
 % Fixation + peripheral stimulus dimming with mostly change trials.
 function table = tableDef_fixAndStimDim_9010
-table =           [1   1   1   0   0   0   1   0   0   0   0   0   1   0   1   9   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   1   1   1   0   0   0   0   0   0   0   0   0   0   0   1   1   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   2   1   0   1   0   0   2   0   0   0   0   0   1   0   2   9   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   2   1   0   1   0   0   0   0   0   0   0   0   0   0   2   1   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   3   1   0   0   1   0   3   0   0   0   0   0   1   0   3   9   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   3   1   0   0   1   0   0   0   0   0   0   0   0   0   3   1   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   4   1   0   0   0   1   4   0   0   0   0   0   1   0   4   9   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   4   1   0   0   0   1   0   0   0   0   0   0   0   0   4   1   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
+table =           [1   1   1   0   0   0   1   0   1   0   0   0   1   0   1   9   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   1   1   1   0   0   0   0   0   1   0   0   0   0   0   1   1   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   2   1   0   1   0   0   2   0   1   0   0   0   1   0   2   9   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   2   1   0   1   0   0   0   0   1   0   0   0   0   0   2   1   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   3   1   0   0   1   0   3   0   1   0   0   0   1   0   3   9   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   3   1   0   0   1   0   0   0   1   0   0   0   0   0   3   1   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   4   1   0   0   0   1   4   0   1   0   0   0   1   0   4   9   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   4   1   0   0   0   1   0   0   1   0   0   0   0   0   4   1   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
                  ];
 end
 
 % Fixation + peripheral stimulus dimming with mostly change trials.
 function table = tableDef_fixAndStimDim_1000
-table =           [1   1   1   0   0   0   1   0   0   0   0   0   1   0   1   9   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   2   1   0   1   0   0   2   0   0   0   0   0   1   0   2   9   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   3   1   0   0   1   0   3   0   0   0   0   0   1   0   3   9   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
-                   4   1   0   0   0   1   4   0   0   0   0   0   1   0   4   9   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
+table =           [1   1   1   0   0   0   1   0   1   0   0   0   1   0   1   9   23001; % cue loc 1, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   2   1   0   1   0   0   2   0   1   0   0   0   1   0   2   9   23001; % cue loc 2, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   3   1   0   0   1   0   3   0   1   0   0   0   1   0   3   9   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
+                   4   1   0   0   0   1   4   0   1   0   0   0   1   0   4   9   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
                  ];
 end
 
