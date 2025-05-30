@@ -856,6 +856,15 @@ table =           [1   1   1   0   0   0   1   0   1   0   0   0   1   0   1   7
                    3   1   0   0   1   0   0   0   0   0   0   0   0   0   3   3   23006; % single stimulus at location 3; no change
                    4   1   0   0   0   1   4   0   1   0   0   0   1   0   4   7   23007; % single stimulus at location 4; orientation change at location 4
                    4   1   0   0   0   1   0   0   0   0   0   0   0   0   4   3   23008; % single stimulus at location 4; no change
+
+                   1   2   1   0   1   0   1   0   1   0   0   0   1   0   1   7   23001; % 2 stimulus at location 1; orientation change at location 1
+                   1   2   1   0   1   0   0   0   0   0   0   0   0   0   1   3   23002; % 2 stimulus at location 1; no change
+                   3   2   1   0   1   0   2   0   1   0   0   0   1   0   2   7   23003; % 2 stimulus at location 2; orientation change at location 2
+                   3   2   1   0   1   0   0   0   0   0   0   0   0   0   2   3   23004; % 2 stimulus at location 2; no change
+                   2   2   0   1   0   1   3   0   1   0   0   0   1   0   3   7   23005; % 2 stimulus at location 3; orientation change at location 3
+                   2   2   0   1   0   1   0   0   0   0   0   0   0   0   3   3   23006; % 2 stimulus at location 3; no change
+                   4   2   0   1   0   1   4   0   1   0   0   0   1   0   4   7   23007; % 2 stimulus at location 4; orientation change at location 4
+                   4   2   0   1   0   1   0   0   0   0   0   0   0   0   4   3   23008; % 2 stimulus at location 4; no change
                  ];
 end
 

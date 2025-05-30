@@ -67,6 +67,9 @@ switch p.init.exptType
     case 'joystick_release_for_fix_and_stim_dim_7030'
         table = tableDef_fixAndStimDim_7030;
 
+        case 'joystick_release_for_fix_and_stim_dim_7030_multi'
+        table = tableDef_fixAndStimDim_7030_multi;
+
     case 'joystick_release_for_fix_and_stim_dim_6040'
         table = tableDef_fixAndStimDim_6040;
 
@@ -264,6 +267,18 @@ table =           [1   1   1   0   0   0   1   0   1   0   0   0   1   0   1   7
                    3   1   0   0   1   0   0   0   1   0   0   0   0   0   3   3   23001; % cue loc 3, single stimulus, luminance decrease on side 1, side 1 starts purple
                    4   1   0   0   0   1   4   0   1   0   0   0   1   0   4   7   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
                    4   1   0   0   0   1   0   0   1   0   0   0   0   0   4   3   23001; % cue loc 4, single stimulus, luminance decrease on side 1, side 1 starts purple
+                 ];
+end
+
+function table = tableDef_fixAndStimDim_7030_multi
+table =           [1   2   1   1   0   0   1   0   1   0   0   0   1   0   1   7   23001; % cue loc 1, 2 stimulus, luminance decrease on side 1, side 1 starts purple
+                   1   2   1   1   0   0   0   0   1   0   0   0   0   0   1   3   23001; % cue loc 1, 2 stimulus, luminance decrease on side 1, side 1 starts purple
+                   2   2   1   1   0   0   2   0   1   0   0   0   1   0   2   7   23001; % cue loc 2, 2 stimulus, luminance decrease on side 1, side 1 starts purple
+                   2   2   1   1   0   0   0   0   1   0   0   0   0   0   2   3   23001; % cue loc 2, 2 stimulus, luminance decrease on side 1, side 1 starts purple
+                   3   2   0   0   1   1   3   0   1   0   0   0   1   0   3   7   23001; % cue loc 3, 2 stimulus, luminance decrease on side 1, side 1 starts purple
+                   3   2   0   0   1   1   0   0   1   0   0   0   0   0   3   3   23001; % cue loc 3, 2 stimulus, luminance decrease on side 1, side 1 starts purple
+                   4   2   0   0   1   1   4   0   1   0   0   0   1   0   4   7   23001; % cue loc 4, 2 stimulus, luminance decrease on side 1, side 1 starts purple
+                   4   2   0   0   1   1   0   0   1   0   0   0   0   0   4   3   23001; % cue loc 4, 2 stimulus, luminance decrease on side 1, side 1 starts purple
                  ];
 end
 
