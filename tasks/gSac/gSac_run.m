@@ -33,6 +33,18 @@ while ~p.trVars.exitWhileLoop
     % Update eye / joystick & Mouse position:
     p = pds.getEyeJoy(p);   
     p = pds.getMouse(p);
+
+    % if passEye is set to 1, use mouse position to simulate:
+    if p.trVars.mouseEyeSim == 1
+
+        % assign mouse pixels to eyePixX / Y
+        p.trVars.eyePixX   = p.trVars.mouseCursorX - p.draw.middleXY(1);
+        p.trVars.eyePixY   = p.trVars.mouseCursorY - p.draw.middleXY(2);
+
+        % convert eyePixX / Y to degrees:
+        p.trVars.eyeDegX   = pds.pix2deg(p.trVars.eyePixX, p);
+        p.trVars.eyeDegY   = pds.pix2deg(-p.trVars.eyePixY, p);
+    end
     
     
     % STATE DEPENDENT section
@@ -487,7 +499,7 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     Screen('DrawLines', p.draw.window, p.draw.gridXY, [], p.draw.color.gridMajor);
     
     % draw mouse cursor:
-    Screen('FillRect', p.draw.window, p.draw.color.mouseCursor, [p.trVars.mouseCursorX p.trVars.mouseCursorY p.trVars.mouseCursorX p.trVars.mouseCursorY] + [-1 -1 1 1] * p.draw.cursorW)
+    % Screen('FillRect', p.draw.window, p.draw.color.mouseCursor, [p.trVars.mouseCursorX p.trVars.mouseCursorY p.trVars.mouseCursorX p.trVars.mouseCursorY] + [-1 -1 1 1] * p.draw.cursorW)
         
         
     % Draw the gaze position, MUST DRAW THE GAZE BEFORE THE
