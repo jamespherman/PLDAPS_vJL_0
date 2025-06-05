@@ -1,5 +1,5 @@
-function p = gSac_run(p)
-%   p = gSac_run(p)
+function p = seansFirstTask_run(p)
+%   p = seansFirstTask_run(p)
 %
 % Part of the quintet of pldpas functions:
 %   settings function
@@ -518,7 +518,22 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     if p.trVars.targetIsOn
         
         % draw target:
-        Screen('FrameRect', p.draw.window, p.draw.color.targ, repmat(p.draw.targPointPix, 1, 2) + p.draw.targRadius*[-1 -1 1 1], p.draw.targWidth);
+        switch p.trVars.numDots
+            case 1
+                Screen('FillOval', p.draw.window, p.draw.color.targ, ...
+                    repmat(p.draw.targPointPix, 1, 2) + ...
+                    p.draw.targRadius*[-1 -1 1 1]);
+            case 2
+                Screen('FillOval', p.draw.window, p.draw.color.targ, ...
+                    repmat(p.draw.targPointPix - ...
+                    [p.draw.twoDotSepPix/2 0], 1, 2) + ...
+                    p.draw.targRadius*[-1 -1 1 1]);
+                Screen('FillOval', p.draw.window, p.draw.color.targ, ...
+                    repmat(p.draw.targPointPix + ...
+                    [p.draw.twoDotSepPix/2 0], 1, 2) + ...
+                    p.draw.targRadius*[-1 -1 1 1]);
+        end
+        
         
     end
     
