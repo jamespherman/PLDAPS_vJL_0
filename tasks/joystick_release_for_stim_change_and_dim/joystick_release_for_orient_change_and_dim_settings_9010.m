@@ -399,15 +399,15 @@ p.trVarsInit.freeRwdPsthMaxTime      = 0.75;
 
 % I don't think I need to carry these around in 'p'....
 % can't I just define them in the 'run' worksapce and forget avbout them?
-p.trVarsInit.currentState     = p.state.trialBegun;  % initialize "state" variable.
-p.trVarsInit.exitWhileLoop    = false;  % do we want to exit the "run" while loop?
-p.trVarsInit.cueIsOn          = 0;  % is the cue ring currently being presented?
-p.trVarsInit.stimIsOn         = false;  % are stimuli currently being presented?
+p.trVarsInit.currentState           = p.state.trialBegun;  % initialize "state" variable.
+p.trVarsInit.exitWhileLoop          = false;  % do we want to exit the "run" while loop?
+p.trVarsInit.cueIsOn                = 0;  % is the cue ring currently being presented?
+p.trVarsInit.stimIsOn               = false;  % are stimuli currently being presented?
 
-p.trVarsInit.fixWinWidthDeg       = 4;        % fixation window width in degrees
-p.trVarsInit.fixWinHeightDeg      = 4;        % fixation window height in degrees
-p.trVarsInit.fixPointRadPix       = 20;       % fixation point "radius" in pixels
-p.trVarsInit.fixPointLinePix      = 12;       % fixation point line weight in pixels
+p.trVarsInit.fixWinWidthDeg         = 4;        % fixation window width in degrees
+p.trVarsInit.fixWinHeightDeg        = 4;        % fixation window height in degrees
+p.trVarsInit.fixPointRadPix         = 20;       % fixation point "radius" in pixels
+p.trVarsInit.fixPointLinePix        = 12;       % fixation point line weight in pixels
 
 % variables related to how the experiment is run / what is shown, etc.
 p.trVarsInit.useCellsForDraw        = false;

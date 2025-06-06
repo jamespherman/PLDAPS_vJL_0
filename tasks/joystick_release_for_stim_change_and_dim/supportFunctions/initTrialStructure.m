@@ -460,9 +460,6 @@ table =           [1   1   1   0   0   0   1   0   1   0   0   0   1   0   1   1
                    1   1   0   0   1   0   0   0   0   0   0   0   0   0   1   3    23130; % cue at location 1 % single stimulus at location 3; no change
                    1   1   0   0   0   1   0   0   0   0   0   0   0   0   1   3    23140; % cue at location 1 % single stimulus at location 4; no change
                    1   4   1   1   1   1   0   0   0   0   0   0   0   0   1   13   23150; % cue at location 1 % four stimuli at all locations; no change
-                   1   4   1   1   1   1   2   0   1   0   0   0   1   0   1   1    23152; % cue at location 1 % four stimuli at all locations; orientation change at location 2
-                   1   4   1   1   1   1   3   0   1   0   0   0   1   0   1   1    23153; % cue at location 1 % four stimuli at all locations; orientation change at location 3
-                   1   4   1   1   1   1   4   0   1   0   0   0   1   0   1   1    23154; % cue at location 1 % four stimuli at all locations; orientation change at location 4
 
                    2   1   0   1   0   0   2   0   1   0   0   0   1   0   1   15   23222; % cue at location 2 % single stimulus at location 2; orientation change at location 2
                    2   4   1   1   1   1   2   0   1   0   0   0   1   0   1   23   23252; % cue at location 2 % four stimuli at all locations; orientation change at location 2
@@ -470,9 +467,6 @@ table =           [1   1   1   0   0   0   1   0   1   0   0   0   1   0   1   1
                    2   1   0   0   1   0   0   0   0   0   0   0   0   0   1   3    23230; % cue at location 2 % single stimulus at location 3; no change
                    2   1   0   0   0   1   0   0   0   0   0   0   0   0   1   3    23240; % cue at location 2 % single stimulus at location 4; no change
                    2   4   1   1   1   1   0   0   0   0   0   0   0   0   1   13   23250; % cue at location 2 % four stimuli at all locations; no change
-                   2   4   1   1   1   1   1   0   1   0   0   0   1   0   1   1    23251; % cue at location 2 % four stimuli at all locations; orientation change at location 1
-                   2   4   1   1   1   1   3   0   1   0   0   0   1   0   1   1    23253; % cue at location 2 % four stimuli at all locations; orientation change at location 3
-                   2   4   1   1   1   1   4   0   1   0   0   0   1   0   1   1    23254; % cue at location 2 % four stimuli at all locations; orientation change at location 4
 
                    3   1   0   0   1   0   3   0   1   0   0   0   1   0   1   15   23333; % cue at location 3 % single stimulus at location 3; orientation change at location 3
                    3   4   1   1   1   1   3   0   1   0   0   0   1   0   1   23   23353; % cue at location 3 % four stimuli at all locations; orientation change at location 3
@@ -480,9 +474,6 @@ table =           [1   1   1   0   0   0   1   0   1   0   0   0   1   0   1   1
                    3   1   0   1   0   0   0   0   0   0   0   0   0   0   1   3    23320; % cue at location 3 % single stimulus at location 2; no change
                    3   1   0   0   0   1   0   0   0   0   0   0   0   0   1   3    23345; % cue at location 3 % single stimulus at location 4; no change
                    3   4   1   1   1   1   0   0   0   0   0   0   0   0   1   13   23350; % cue at location 3 % four stimuli at all locations; no change
-                   3   4   1   1   1   1   1   0   1   0   0   0   1   0   1   1    23351; % cue at location 3 % four stimuli at all locations; orientation change at location 1
-                   3   4   1   1   1   1   2   0   1   0   0   0   1   0   1   1    23352; % cue at location 3 % four stimuli at all locations; orientation change at location 3
-                   3   4   1   1   1   1   4   0   1   0   0   0   1   0   1   1    23354; % cue at location 3 % four stimuli at all locations; orientation change at location 4
 
                    4   1   0   0   0   1   4   0   1   0   0   0   1   0   1   15   23444; % cue at location 4 % single stimulus at location 4; orientation change at location 4
                    4   4   1   1   1   1   4   0   1   0   0   0   1   0   1   23   23454; % cue at location 4 % four stimuli at all locations; orientation change at location 4
@@ -490,9 +481,6 @@ table =           [1   1   1   0   0   0   1   0   1   0   0   0   1   0   1   1
                    4   1   0   1   0   0   0   0   0   0   0   0   0   0   1   3    23420; % cue at location 4 % single stimulus at location 2; no change
                    4   1   1   0   0   0   0   0   0   0   0   0   0   0   1   3    23410; % cue at location 4 % single stimulus at location 1; no change
                    4   4   1   1   1   1   0   0   0   0   0   0   0   0   1   13   23450; % cue at location 4 % four stimuli at all locations; no change
-                   3   4   1   1   1   1   1   0   1   0   0   0   1   0   1   1    23451; % cue at location 4 % four stimuli at all locations; orientation change at location 1
-                   3   4   1   1   1   1   2   0   1   0   0   0   1   0   1   1    23452; % cue at location 4 % four stimuli at all locations; orientation change at location 2
-                   3   4   1   1   1   1   3   0   1   0   0   0   1   0   1   1    23453; % cue at location 4 % four stimuli at all locations; orientation change at location 3
                  ];
 end
 
@@ -501,23 +489,23 @@ end
 % No change trials have an 'empty cue' -- cued location does not have a
 % stimulus.
 
-function table = tableDef_stimDimPlusOrientChange_learn_cue_f
-table =           [1   1   1   0   0   0   1   0   1   0   0   0   1   0   1   40   23001; % cue at location 1 % single stimulus at location 1; orientation change at location 1
+function table = tableDef_stimDimPlusOrientChange_learn_cue
+table =           [1   1   1   0   0   0   1   0   1   0   0   0   1   0   1   16   23001; % cue at location 1 % single stimulus at location 1; orientation change at location 1
                    1   1   0   1   0   0   0   0   0   0   0   0   0   0   1   1    23002; % cue at location 1 % single stimulus at location 2; no change
                    1   1   0   0   1   0   0   0   0   0   0   0   0   0   1   1    23005; % cue at location 1 % single stimulus at location 3; no change
                    1   1   0   0   0   1   0   0   0   0   0   0   0   0   1   1    23006; % cue at location 1 % single stimulus at location 4; no change
 
-                   2   1   0   1   0   0   2   0   1   0   0   0   1   0   1   40   23001; % cue at location 1 % single stimulus at location 1; orientation change at location 1
+                   2   1   0   1   0   0   2   0   1   0   0   0   1   0   1   16   23001; % cue at location 1 % single stimulus at location 1; orientation change at location 1
                    2   1   1   0   0   0   0   0   0   0   0   0   0   0   1   1    23002; % cue at location 1 % single stimulus at location 2; no change
                    2   1   0   0   1   0   0   0   0   0   0   0   0   0   1   1    23005; % cue at location 1 % single stimulus at location 3; no change
                    2   1   0   0   0   1   0   0   0   0   0   0   0   0   1   1    23006; % cue at location 1 % single stimulus at location 4; no change
 
-                   3   1   0   0   1   0   3   0   1   0   0   0   1   0   1   40   23001; % cue at location 1 % single stimulus at location 1; orientation change at location 1
+                   3   1   0   0   1   0   3   0   1   0   0   0   1   0   1   16   23001; % cue at location 1 % single stimulus at location 1; orientation change at location 1
                    3   1   1   0   0   0   0   0   0   0   0   0   0   0   1   1    23002; % cue at location 1 % single stimulus at location 2; no change
                    3   1   0   1   0   0   0   0   0   0   0   0   0   0   1   1    23005; % cue at location 1 % single stimulus at location 3; no change
                    3   1   0   0   0   1   0   0   0   0   0   0   0   0   1   1    23006; % cue at location 1 % single stimulus at location 4; no change
 
-                   4   1   0   0   0   1   4   0   1   0   0   0   1   0   1   40   23001; % cue at location 1 % single stimulus at location 1; orientation change at location 1
+                   4   1   0   0   0   1   4   0   1   0   0   0   1   0   1   16   23001; % cue at location 1 % single stimulus at location 1; orientation change at location 1
                    4   1   0   0   1   0   0   0   0   0   0   0   0   0   1   1    23002; % cue at location 1 % single stimulus at location 2; no change
                    4   1   0   1   0   0   0   0   0   0   0   0   0   0   1   1    23005; % cue at location 1 % single stimulus at location 3; no change
                    4   1   1   0   0   0   0   0   0   0   0   0   0   0   1   1    23006; % cue at location 1 % single stimulus at location 4; no change
@@ -835,49 +823,41 @@ end
 
 % Peripheral stimulus dimming + orientation change with mostly change trials.
 function table = tableDef_stimDimPlusOrientChange_9010
-table =           [1   1   1   0   0   0   1   0   1   0   0   0   1   0   1   9   23001; % single stimulus at location 1; orientation change at location 1
-                   1   1   1   0   0   0   0   0   0   0   0   0   0   0   1   1   23002; % single stimulus at location 1; no change
-                   2   1   0   1   0   0   2   0   1   0   0   0   1   0   2   9   23003; % single stimulus at location 2; orientation change at location 2
-                   2   1   0   1   0   0   0   0   0   0   0   0   0   0   2   1   23004; % single stimulus at location 2; no change
-                   3   1   0   0   1   0   3   0   1   0   0   0   1   0   3   9   23005; % single stimulus at location 3; orientation change at location 3
-                   3   1   0   0   1   0   0   0   0   0   0   0   0   0   3   1   23006; % single stimulus at location 3; no change
-                   4   1   0   0   0   1   4   0   1   0   0   0   1   0   4   9   23007; % single stimulus at location 4; orientation change at location 4
-                   4   1   0   0   0   1   0   0   0   0   0   0   0   0   4   1   23008; % single stimulus at location 4; no change
+table =           [1   4   1   1   1   1   1   0   1   0   0   0   1   0   1   9   23001; % single stimulus at location 1; orientation change at location 1
+                   1   4   1   1   1   1   0   0   0   0   0   0   0   0   1   3   23002; % single stimulus at location 1; orientation change at location 1
+                   2   4   1   1   1   1   2   0   1   0   0   0   1   0   2   9   23003; % single stimulus at location 2; orientation change at location 2
+                   2   4   1   1   1   1   0   0   0   0   0   0   0   0   2   3   23003; % single stimulus at location 2; orientation change at location 2
+                   3   4   1   1   1   1   3   0   1   0   0   0   1   0   3   9   23005; % single stimulus at location 3; orientation change at location 3
+                   3   4   1   1   1   1   0   0   0   0   0   0   0   0   3   3   23005; % single stimulus at location 3; orientation change at location 3
+                   4   4   1   1   1   1   4   0   1   0   0   0   1   0   4   9   23007; % single stimulus at location 4; orientation change at location 4
+                   4   4   1   1   1   1   0   0   0   0   0   0   0   0   4   3   23007; % single stimulus at location 4; orientation change at location 4
                  ];
 end
 
 % Peripheral stimulus dimming + orientation change with mostly change trials.
 function table = tableDef_stimDimPlusOrientChange_7030
-table =           [1   1   1   0   0   0   1   0   1   0   0   0   1   0   1   7   23001; % single stimulus at location 1; orientation change at location 1
-                   1   1   1   0   0   0   0   0   0   0   0   0   0   0   1   3   23002; % single stimulus at location 1; no change
-                   2   1   0   1   0   0   2   0   1   0   0   0   1   0   2   7   23003; % single stimulus at location 2; orientation change at location 2
-                   2   1   0   1   0   0   0   0   0   0   0   0   0   0   2   3   23004; % single stimulus at location 2; no change
-                   3   1   0   0   1   0   3   0   1   0   0   0   1   0   3   7   23005; % single stimulus at location 3; orientation change at location 3
-                   3   1   0   0   1   0   0   0   0   0   0   0   0   0   3   3   23006; % single stimulus at location 3; no change
-                   4   1   0   0   0   1   4   0   1   0   0   0   1   0   4   7   23007; % single stimulus at location 4; orientation change at location 4
-                   4   1   0   0   0   1   0   0   0   0   0   0   0   0   4   3   23008; % single stimulus at location 4; no change
-
-                   1   2   1   0   1   0   1   0   1   0   0   0   1   0   1   7   23001; % 2 stimulus at location 1; orientation change at location 1
-                   1   2   1   0   1   0   0   0   0   0   0   0   0   0   1   3   23002; % 2 stimulus at location 1; no change
-                   3   2   1   0   1   0   2   0   1   0   0   0   1   0   2   7   23003; % 2 stimulus at location 2; orientation change at location 2
-                   3   2   1   0   1   0   0   0   0   0   0   0   0   0   2   3   23004; % 2 stimulus at location 2; no change
-                   2   2   0   1   0   1   3   0   1   0   0   0   1   0   3   7   23005; % 2 stimulus at location 3; orientation change at location 3
-                   2   2   0   1   0   1   0   0   0   0   0   0   0   0   3   3   23006; % 2 stimulus at location 3; no change
+table =           [1   2   1   0   1   0   1   0   1   0   0   0   1   0   1   7   23001; % 2 stimulus at location 1; orientation change at location 1
+                   1   2   1   0   1   0   0   0   0   0   0   0   0   0   1   3   23001; % 2 stimulus at location 1; orientation change at location 1
+                   3   2   1   0   1   0   3   0   1   0   0   0   1   0   2   7   23003; % 2 stimulus at location 2; orientation change at location 2
+                   3   2   1   0   1   0   0   0   0   0   0   0   0   0   2   3   23003; % 2 stimulus at location 2; orientation change at location 2
+                   2   2   0   1   0   1   2   0   1   0   0   0   1   0   3   7   23005; % 2 stimulus at location 3; orientation change at location 3
+                   2   2   0   1   0   1   0   0   0   0   0   0   0   0   3   3   23005; % 2 stimulus at location 3; orientation change at location 3
                    4   2   0   1   0   1   4   0   1   0   0   0   1   0   4   7   23007; % 2 stimulus at location 4; orientation change at location 4
-                   4   2   0   1   0   1   0   0   0   0   0   0   0   0   4   3   23008; % 2 stimulus at location 4; no change
-                 ];
+                   4   2   0   1   0   1   0   0   0   0   0   0   0   0   4   7   23007; % 2 stimulus at location 4; orientation change at location 4
+                 ]; 
+                  
 end
 
 % Peripheral stimulus dimming + orientation change with mostly change trials.
 function table = tableDef_stimDimPlusOrientChange_6040
-table =           [1   1   1   0   0   0   1   0   1   0   0   0   1   0   1   6   23001; % single stimulus at location 1; orientation change at location 1
-                   1   1   1   0   0   0   0   0   0   0   0   0   0   0   1   4   23002; % single stimulus at location 1; no change
-                   2   1   0   1   0   0   2   0   1   0   0   0   1   0   2   6   23003; % single stimulus at location 2; orientation change at location 2
-                   2   1   0   1   0   0   0   0   0   0   0   0   0   0   2   4   23004; % single stimulus at location 2; no change
-                   3   1   0   0   1   0   3   0   1   0   0   0   1   0   3   6   23005; % single stimulus at location 3; orientation change at location 3
-                   3   1   0   0   1   0   0   0   0   0   0   0   0   0   3   4   23006; % single stimulus at location 3; no change
-                   4   1   0   0   0   1   4   0   1   0   0   0   1   0   4   6   23007; % single stimulus at location 4; orientation change at location 4
-                   4   1   0   0   0   1   0   0   0   0   0   0   0   0   4   4   23008; % single stimulus at location 4; no change
+table =           [1   2   1   0   1   0   1   0   1   0   0   0   1   0   1   6   23001; % single stimulus at location 1; orientation change at location 1
+                   1   2   1   0   1   0   0   0   0   0   0   0   0   0   1   3   23001; % single stimulus at location 1; orientation change at location 1
+                   2   2   0   1   0   1   2   0   1   0   0   0   1   0   2   6   23003; % single stimulus at location 2; orientation change at location 2
+                   2   2   0   1   0   1   0   0   0   0   0   0   0   0   2   3   23003; % single stimulus at location 2; orientation change at location 2
+                   3   2   1   0   1   0   3   0   1   0   0   0   1   0   3   6   23005; % single stimulus at location 3; orientation change at location 3
+                   3   2   1   0   1   0   0   0   0   0   0   0   0   0   3   3   23005; % single stimulus at location 3; orientation change at location 3
+                   4   2   0   1   0   1   4   0   1   0   0   0   1   0   4   6   23007; % single stimulus at location 4; orientation change at location 4
+                   4   2   0   1   0   1   0   0   0   0   0   0   0   0   4   3   23007; % single stimulus at location 4; orientation change at location 4
                  ];
 end
 

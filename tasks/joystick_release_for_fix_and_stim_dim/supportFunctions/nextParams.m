@@ -189,6 +189,7 @@ for i = 1:p.stim.nFeatures
     end
 end
 catch me
+    
     keyboard
 end
 
