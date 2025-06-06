@@ -14,10 +14,10 @@ bgRGB       = 0.45*[1 1 1];
 % mutGreen    = [0.3953 0.7459 0.5244];
 mutGreen    = [0.5 0.9 0.4];
 
-redISH      = [225 0 76]/255;
+redISH      = [255 0 0]/255;
 orangeISH   = [255 146 0]/255;
-blueISH     = [11 97 164]/255;
-greenISH    = [112 229 0]/255;
+blueISH     = [0 0 255]/255;
+greenISH    = [0 255 0]/255;
 oldGreen    = [0.45, 0.63, 0.45];
 visGreen    = [0.1 0.9 0.1];
 memMagenta  = [1 0 1];
@@ -72,13 +72,13 @@ c.draw.clut.subColors = ...
     bgRGB;        % 2
     bgRGB;        % 3
     1, 1, 1;      % 4
-    bgRGB;        % 5
+    redISH;        % 5
     bgRGB;        % 6
     bgRGB;        % 7
     0, 1, 1;      % 8
     bgRGB;        % 9
     mutGreen;     % 10
-    bgRGB;        % 11
+    greenISH;        % 11
     bgRGB;        % 12
     oldGreen;     % 13
     bgRGB;        % 14
