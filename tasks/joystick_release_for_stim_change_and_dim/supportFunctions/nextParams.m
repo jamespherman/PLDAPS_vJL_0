@@ -235,11 +235,18 @@ p.stim.orientArray = repmat(...
     circshift(p.trVars.orientInit + [0; 45; 90; 135], ...
     p.stim.primStim - 1), 1, p.trVars.nEpochs);
 
+% if we're using QUEST run "getQuestSuggestedDelta" - this both gets a
+% suggested signal strength AND initializes the QUEST object if it doesn't
+% yet exist (though it only stores the suggested signal strength if this is
+% a cue change trial).
+if isfield(p.trVars, 'useQuest') && p.trVars.useQuest
+    p = getQuestSuggestedDelta(p);
+end
+
 % depending on the info present in the current row of the trials array
 % ("p.init.trialsArray"), define the "stimulus feature value arrays."
 % These have one entry for each stimulus patch (one row per patch) and
 % each "epoch" (one column per epoch).
-
 try
 % loop over stimulus features
 for i = 1:p.stim.nFeatures
@@ -261,19 +268,20 @@ for i = 1:p.stim.nFeatures
     % to the appropriate entry of the feature array
     if tempDelta ~= 0
 
-        % if this is a psychometric function estimation task, then we will
-        % dynamically change the (orient) delta vlaue on a trial-by-trial
-        % basis.
-        if contains(p.init.exptType, 'psycho') && ...
-                strcmp(p.stim.featureValueNames{i}, 'orient')
-            p.stim.deltasArray = linspace(p.trVars.orientDeltaMin, ...
-                p.trVars.orientDeltaMax, 4);
+        % if this is a QUEST task...
+        if p.trVars.useQuest && strcmp(p.stim.featureValueNames{i}, ...
+                'orient')
+            % For orientation on a Quest trial, use the value from QUEST.
+            featureDelta = tempDelta * p.trVars.oriChangeQuestValue;
 
-            % choose a random integer 
-            deltasArrayIndex = randi(4);
-            featureDelta = tempDelta * p.stim.deltasArray(deltasArrayIndex);
-            p.stim.deltasArrayIndex = deltasArrayIndex;
+            % Clamp the final delta to our desired min/max range
+            if abs(featureDelta) > p.init.quest.maxVal
+                featureDelta = sign(featureDelta) * p.init.quest.maxVal;
+            elseif abs(featureDelta) < p.init.quest.minVal
+                featureDelta = sign(featureDelta) * p.init.quest.minVal;
+            end
 
+            disp(['Upcoming Delta Value: ' num2str(featureDelta)]);
         else
             % find the right delta, and multiply by "tempDelta" to allow
             % for "increases" and "decreases" of various features.
@@ -324,14 +332,6 @@ end
 p.trVars.isContrastChangeTrial = ...
     p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
     strcmp(p.init.trialArrayColumnNames, 'contrast')) == 1;
-
-% if we're using QUEST run "getQuestSuggestedDelta" - this both gets a
-% suggested signal strength AND initializes the QUEST object if it doesn't
-% yet exist (though it only stores the suggested signal strength if this is
-% a cue change trial).
-if isfield(p.trVars, 'useQuest') && p.trVars.useQuest
-    p = getQuestSuggestedDelta(p);
-end
     
 end
 

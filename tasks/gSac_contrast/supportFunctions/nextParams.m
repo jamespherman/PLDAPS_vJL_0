@@ -392,6 +392,11 @@ if ~isfield(p.status, 'trialsArrayRowsPossible') || ...
     p.status.tLoc1HighRwdFirst = rand < 0;
 end
 
+% if the last trial needs to be repeated, do one thing, otherwise do
+% another:
+if ~(isfield(p, 'trData') && p.trData.trialRepeatFlag && ...
+        isfield(p.trVars, 'currentTrialsArrayRow'))
+
 % Depending on which target location is "high reward" first, and which
 % trials have been completed, define which rows of the trials array are
 % available. To do this easily and legibly we first define variables that
@@ -430,10 +435,12 @@ end
 tempList = shuff(find(g));
 
 % choose the first row number in the shuffled list.
-p.trVars.currentTrialsArrayRow = tempList(1);
+p.trVars.currentTrialsArrayRow = tempList(1); 
 
 % store "rwdSize" for use elsewhere:
 p.trVars.rwdSize = rwdSize(p.trVars.currentTrialsArrayRow);
+
+end
 
 end
 
