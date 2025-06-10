@@ -10,6 +10,12 @@ p.status.iGoodTrial = p.status.iGoodTrial + double(~p.trData.trialRepeatFlag);
 p.status.iGoodVis = p.status.iGoodVis + (p.trVars.isVisSac & double(~p.trData.trialRepeatFlag));
 p.status.iGoodMem = p.status.iGoodMem + (~p.trVars.isVisSac & double(~p.trData.trialRepeatFlag));
 
+% iterator for two target and one vs two dot tasks:
+p.status.iGoodOneTargetOneDot = p.status.iGoodOneTargetOneDot + (~p.trVars.showBothTargs & (p.trVars.numDots == 1) & double(~p.trData.trialRepeatFlag));
+p.status.iGoodOneTargetTwoDots = p.status.iGoodOneTargetTwoDots + (~p.trVars.showBothTargs & (p.trVars.numDots == 2) & double(~p.trData.trialRepeatFlag));
+p.status.iGoodTwoTargetOneDot = p.status.iGoodTwoTargetOneDot + (p.trVars.showBothTargs & (p.trVars.numDots == 1) & double(~p.trData.trialRepeatFlag));
+p.status.iGoodTwoTargetTwoDots = p.status.iGoodTwoTargetTwoDots + (p.trVars.showBothTargs & (p.trVars.numDots == 2) & double(~p.trData.trialRepeatFlag));
+
 % proportion good for visual & memeory saccades:
 p.status.pGoodVis = p.status.iGoodVis / p.status.iGoodTrial;
 p.status.pGoodMem = p.status.iGoodMem / p.status.iGoodTrial;

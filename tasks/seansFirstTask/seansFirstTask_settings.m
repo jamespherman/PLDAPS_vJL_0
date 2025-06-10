@@ -118,6 +118,13 @@ p.status.pGoodMem                   = 0; % proportion good (ie successfuly compl
 p.status.iTarget                    = 1; % iterator into the list of target locations (defined in _init). Used when multiple locations are predeteremined (e.g. a grid of targets).  
 p.status.trialsLeftInBlock          = 0; % how many trials remain in the current block?
 
+p.status.iGoodOneTargetOneDot		    = 0;
+p.status.iGoodOneTargetTwoDots		    = 0;
+
+p.status.iGoodTwoTargetOneDot		    = 0;
+p.status.iGoodTwoTargetTwoDots		    = 0;
+
+
 
 p.rig.guiStatVals = {...
     'iTrial'; ...   
@@ -189,6 +196,8 @@ p.trVarsInit.mouseEyeSim            = 0;
 p.trVarsInit.setTargLocViaMouse         = false;
 p.trVarsInit.setTargLocViaGui           = false;
 p.trVarsInit.setTargLocViaTrialArray    = false;
+
+p.trVarsInit.ratioShowBothTargs	 = 0.5; % Proportion of trials in which both targets are shown simultaneously
 
 % geometry/stimulus vars:
 p.trVarsInit.propVis             = 1;  % proportion of visually-guided saccades out of the total (i.e. propMem would equal 1 - pVis )

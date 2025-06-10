@@ -48,7 +48,7 @@ p.trVars.numDots   = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
 
 % Where will the stimulus be displayed?
 
-% randomly chosen x and y coordinates within given radius
+% randomly choose x and y coordinates within given radius
 p.trVars.stimDegX  = p.trVars.stimRangeRadius .* cos(2*pi*rand);
 p.trVars.stimDegY  = p.trVars.stimRangeRadius .* sin(2*pi*rand);
 
@@ -60,16 +60,33 @@ p.draw.stimRadius = unifrnd(p.trVars.stimSizeMin, p.trVars.stimSizeMax);
 
 % Where will the target be displayed? We want the 1-dot target to always
 % appear above the fixation and the 2-dot target to always appear below the
-% fixation. We use a little trick to make this happen:
-p.trVars.targDegX   = 0;
-p.trVars.targDegY   = p.trVars.targDegY * (-1)^((p.trVars.numDots == 1)+1);
+% fixation. These will be shown at the same distance based on targDegY
+
+p.trVars.targOneDegX	= p.trVars.targDegX;
+p.trVars.targOneDegY	= p.trVars.targDegY;
+
+p.trVars.targTwoDegX	= p.trVars.targDegX;
+p.trVars.targTwoDegY	= p.trVars.targDegY * (-1);
+
+% This if statement is here because eyeInWindow doesn't have "target1" and "target2" cases yet
+if p.trVars.numDots == 2
+    p.trVars.targDegY = p.trVars.targDegY * (-1);	
+end
+
+if unifrnd (0, 1) <= p.trVars.ratioShowBothTargs
+    p.trVars.showBothTargs	= true;
+else
+    p.trVars.showBothTargs	= false;
+end
 
 % fixation location in pixels relative to the center of the screen!
 % (Y is flipped because positive is down in psychophysics toolbox).
 p.draw.fixPointPix      =  p.draw.middleXY + [1, -1] .* ...
     pds.deg2pix([p.trVars.fixDegX, p.trVars.fixDegY], p);
-p.draw.targPointPix     =  p.draw.middleXY + [1, -1] .* ...
-    pds.deg2pix([p.trVars.targDegX, p.trVars.targDegY], p);
+p.draw.targOnePointPix     =  p.draw.middleXY + [1, -1] .* ...
+    pds.deg2pix([p.trVars.targOneDegX, p.trVars.targOneDegY], p);
+p.draw.targTwoPointPix     =  p.draw.middleXY + [1, -1] .* ...
+    pds.deg2pix([p.trVars.targTwoDegX, p.trVars.targTwoDegY], p);
 p.draw.stimPointPix	=  p.draw.middleXY + [1, -1] .* ...
     pds.deg2pix([p.trVars.stimDegX, p.trVars.stimDegY], p);
 
@@ -88,6 +105,7 @@ p.draw.twoStimSepPix = pds.deg2pix(unifrnd(p.trVars.twoStimSepDegMin, p.trVars.t
 
 % Convert target X & Y into radius and theta so that we can strobe:
 % (can't strobe negative values, so r/th solves that)
+
 [tmpTheta, tmpRadius]   = cart2pol(p.trVars.targDegX, p.trVars.targDegY);
 
 % In order to strobe I need round positive numbers. 
