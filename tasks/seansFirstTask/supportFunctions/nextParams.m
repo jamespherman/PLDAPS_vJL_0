@@ -46,6 +46,18 @@ numDotsCol = strcmp(p.init.trialArrayColumnNames, 'numDots');
 p.trVars.numDots   = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
     numDotsCol);
 
+% Where will the stimulus be displayed?
+
+% randomly chosen x and y coordinates within given radius
+p.trVars.stimDegX  = p.trVars.stimRangeRadius .* cos(2*pi*rand);
+p.trVars.stimDegY  = p.trVars.stimRangeRadius .* sin(2*pi*rand);
+
+% randomly rotate the stimulus by between 0 and 180 degrees (will only affect two-dot stim)
+p.trVars.stimRotation = rand*180;
+
+% randomly choose size of stimulus between min and max
+p.draw.stimRadius = unifrnd(p.trVars.stimSizeMin, p.trVars.stimSizeMax);
+
 % Where will the target be displayed? We want the 1-dot target to always
 % appear above the fixation and the 2-dot target to always appear below the
 % fixation. We use a little trick to make this happen:
@@ -58,6 +70,8 @@ p.draw.fixPointPix      =  p.draw.middleXY + [1, -1] .* ...
     pds.deg2pix([p.trVars.fixDegX, p.trVars.fixDegY], p);
 p.draw.targPointPix     =  p.draw.middleXY + [1, -1] .* ...
     pds.deg2pix([p.trVars.targDegX, p.trVars.targDegY], p);
+p.draw.stimPointPix	=  p.draw.middleXY + [1, -1] .* ...
+    pds.deg2pix([p.trVars.stimDegX, p.trVars.stimDegY], p);
 
 % fixation window width and height in pixels.
 p.draw.fixWinWidthPix       = pds.deg2pix(p.trVars.fixWinWidthDeg, p);
@@ -69,7 +83,8 @@ p.draw.targWinHeightPix     = pds.deg2pix(p.trVars.targWinHeightDeg, p);
 
 % what is the separation between the two dots (when there are two dots
 % shown) in pixels?
-p.draw.twoDotSepPix = pds.deg2pix(p.trVars.twoDotSepDeg, p);
+p.draw.twoTargSepPix = pds.deg2pix(p.trVars.twoTargSepDeg, p);
+p.draw.twoStimSepPix = pds.deg2pix(unifrnd(p.trVars.twoStimSepDegMin, p.trVars.twoStimSepDegMax), p);
 
 % Convert target X & Y into radius and theta so that we can strobe:
 % (can't strobe negative values, so r/th solves that)
@@ -88,9 +103,15 @@ end
 
 %
 function p = timingInfo(p)
+	
+% time of stim onset wrt fixAcq:
+p.trVars.timeStimOnset		= unifrnd(p.trVars.stimOnsetMin, p.trVars.stimOnsetMax);
+
+% time of stim offset wrt fixAcq:
+p.trVars.timeStimOffset		= p.trVars.timeStimOnset + unifrnd(p.trVars.stimDurMin, p.trVars.stimDurMax);
 
 % time of target onset wrt fixAcq:
-p.trVars.timeTargOnset          = unifrnd(p.trVars.targOnsetMin, p.trVars.targOnsetMax);
+p.trVars.timeTargOnset          = p.trVars.timeStimOffset + unifrnd(p.trVars.targOnsetMin, p.trVars.targOnsetMax);
 
 % time of target offset wrt fixAcq:
 if p.trVars.isVisSac

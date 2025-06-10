@@ -192,12 +192,17 @@ p.trVarsInit.setTargLocViaTrialArray    = false;
 
 % geometry/stimulus vars:
 p.trVarsInit.propVis             = 1;  % proportion of visually-guided saccades out of the total (i.e. propMem would equal 1 - pVis )
-p.trVarsInit.fixDegX             = 0;    % fixation X location in degrees
+p.trVarsInit.fixDegX             = 0;    % fixation X location in degrees 
 p.trVarsInit.fixDegY             = 0;    % fixation Y location in degrees
 p.trVarsInit.targDegX            = 0;
 p.trVarsInit.targDegY            = 5;
 p.trVarsInit.numDots             = 0; % how many dots does the target stimulus have on this trial?
-p.trVarsInit.twoDotSepDeg        = 1; % how far apart should the two dots be?
+p.trVarsInit.twoTargSepDeg       = 0.75; % how far apart should the two target dots be? (in dva?)
+p.trVarsInit.twoStimSepDegMin    = 1.5; % how far apart should the two stim dots be? (in dva?)
+p.trVarsInit.twoStimSepDegMax    = 2;
+p.trVarsInit.stimRangeRadius	 = 1; % create stimuli randomly within radius of __? (in pixels?)
+p.trVarsInit.stimSizeMin	 = 10; % create stimuli of what size? (randomly chosen between min and max) (in pixels?)
+p.trVarsInit.stimSizeMax	 = 15;
 
 % times/latencies/durations:
 p.trVarsInit.rewardDurationMs        = 150; % reward duration
@@ -224,10 +229,15 @@ p.trVarsInit.goLatencyMin            = 0.1;  % minimum saccade-latency criterion
 p.trVarsInit.goLatencyMax            = 0.5;  % maximum saccade-latency criterion
 % p.trVarsInit.preTargMin            = 0.75; % minimum fixation-only time before target onset
 % p.trVarsInit.preTargMax            = 1;    % maximum fixation-only time before target onset
-p.trVarsInit.targOnsetMin            = 0.4; % minimum fixation-only time before target onset
-p.trVarsInit.targOnsetMax            = 0.7;
-p.trVarsInit.goTimePostTargMin       = 1; % min duration from targ onset to the 'go' signal to saccade (which is fixation offset)
-p.trVarsInit.goTimePostTargMax       = 2; % max duration from targ onset to the 'go' signal to saccade (which is fixation offset)
+
+p.trVarsInit.stimOnsetMin	     = 0.3; % Time after fixation before stim comes on
+p.trVarsInit.stimOnsetMax	     = 0.5;
+p.trVarsInit.stimDurMin		     = 0.3; % Time stim stays on
+p.trVarsInit.stimDurMax		     = 0.35;
+p.trVarsInit.targOnsetMin            = 0.15; % Time after stim goes off before target onset
+p.trVarsInit.targOnsetMax            = 0.2;
+p.trVarsInit.goTimePostTargMin       = 0.3; % min duration from targ onset to the 'go' signal to saccade (which is fixation offset)
+p.trVarsInit.goTimePostTargMax       = 0.8; % max duration from targ onset to the 'go' signal to saccade (which is fixation offset)
 
 p.trVarsInit.maxFixWait              = 5;    % maximum time to wait for fixation-acquisition
 p.trVarsInit.targOnSacOnly           = 1;    % condition target reappearance on saccade?
@@ -253,6 +263,7 @@ p.trVarsInit.targWinHeightDeg     = 3;        % target window height in degrees
 p.trVarsInit.currentState     = p.state.trialBegun;  % initialize "state" variable.
 p.trVarsInit.exitWhileLoop    = false;  % do we want to exit the "run" while loop?
 
+p.trVarsInit.stimIsOn 	= false;
 p.trVarsInit.targetIsOn = false;
 
 p.trVarsInit.postMemSacTargOn = false;  % do we want the target on because a memory guided saccade has been successfully completed?

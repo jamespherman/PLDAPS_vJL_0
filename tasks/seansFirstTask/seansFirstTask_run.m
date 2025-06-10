@@ -433,6 +433,25 @@ if p.trData.timing.fixAq > 0
     % time elapsed from fixation acquisition:
     timeFromFixAq = timeNow - p.trData.timing.fixAq;
     
+    %% Determine if stim should be on/off:
+    
+    % if stim is off but time is now after timeStimOnset, then turn it on
+    if (p.trData.timing.stimOn == -1 && ...
+    	timeFromFixAq >= p.trVars.timeStimOnset && timeFromFixAq < p.trVars.timeStimOffset)
+    	p.trVars.stimIsOn 	 = true;
+    	p.trData.timing.stimOn   = timeNow;
+    	% No strobe for now; need to figure out how to set that up
+    	
+    % if stim is on but it's time to turn it off, then turn it off
+    elseif (p.trData.timing.stimOn~=-1 && p.trData.timing.stimOff==-1 && ...
+    	timeFromFixAq >= p.trVars.timeStimOffset)
+	p.trVars.stimIsOn	 = false;
+	p.trData.timing.stimOff  = timeNow;
+    	% No strobe for now; need to figure out how to set that up
+    else
+%    	p.trVars.stimIsOn 	 = false;
+    end
+    
     %% Determine if target should be on/off and send appropriate strobes:
     
     % if target is off, but time now is after timeTargOnset, turn it on:
@@ -513,7 +532,29 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     % draw fixation window
     Screen('FrameRect',p.draw.window, p.draw.color.fixWin, repmat(p.draw.fixPointPix, 1, 2) +  [-p.draw.fixWinWidthPix -p.draw.fixWinHeightPix p.draw.fixWinWidthPix p.draw.fixWinHeightPix], p.draw.fixWinPenDraw)
     
-
+    % draw the stimulus (if it is time)
+    if p.trVars.stimIsOn
+    	switch p.trVars.numDots
+    	    case 1
+    	    	Screen('FillOval', p.draw.window, 11, ...
+                    repmat(p.draw.stimPointPix, 1, 2) + ...
+                    p.draw.stimRadius*[-1 -1 1 1]); 
+    	    case 2
+                rotationMatrix = [cos(p.trVars.stimRotation), -sin(p.trVars.stimRotation);
+                		  sin(p.trVars.stimRotation), cos(p.trVars.stimRotation)];
+                rotatedTwoStimSepPix = rotationMatrix * [p.draw.twoStimSepPix/2; 0];
+                
+                Screen('FillOval', p.draw.window, 5, ...
+                    repmat(p.draw.stimPointPix - ...
+                    rotatedTwoStimSepPix', 1, 2) + ...
+                    p.draw.stimRadius*[-1 -1 1 1]);
+                Screen('FillOval', p.draw.window, 5, ...
+                    repmat(p.draw.stimPointPix + ...
+                    rotatedTwoStimSepPix', 1, 2) + ...
+                    p.draw.stimRadius*[-1 -1 1 1]);
+    	end
+    end
+    	
     % draw the target (if it is time)
     if p.trVars.targetIsOn
         
@@ -526,11 +567,11 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
             case 2
                 Screen('FillOval', p.draw.window, 5, ...
                     repmat(p.draw.targPointPix - ...
-                    [p.draw.twoDotSepPix/2 0], 1, 2) + ...
+                    [p.draw.twoTargSepPix/2 0], 1, 2) + ...
                     p.draw.targRadius*[-1 -1 1 1]);
                 Screen('FillOval', p.draw.window, 5, ...
                     repmat(p.draw.targPointPix + ...
-                    [p.draw.twoDotSepPix/2 0], 1, 2) + ...
+                    [p.draw.twoTargSepPix/2 0], 1, 2) + ...
                     p.draw.targRadius*[-1 -1 1 1]);
         end
         
