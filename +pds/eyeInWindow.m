@@ -1,4 +1,4 @@
-function inWindowLogical = eyeInWindow(p, whichWinString)
+function inWindowLogical = eyeInWindow(p, whichWinString, varargin)
 %
 % inWindowLogical = eyeInWindow(p, ['target' / 'fixation'])
 %
@@ -11,6 +11,8 @@ function inWindowLogical = eyeInWindow(p, whichWinString)
 % target or fixation, assume we're checking relative to fixation.
 if nargin < 2
     whichWinString = 'fixation';
+elseif nargin > 2
+    targRow = varargin{1}; % first input for varargin should be the specified "N" of targetN
 end
 
 % check "in-window-ness" appropriately
@@ -35,6 +37,15 @@ switch whichWinString
           p.trVars.imageWinWidthDeg && ...
             abs(p.trVars.eyeDegY - p.trVars.fixDegY) < ...
             p.trVars.imageWinHeightDeg) || p.trVars.passEye;
+            
+% for targetN, p.trVars.NdegX and p.trVars.NdegY contain a list of target 
+% window centers (x-coordinates and y-coordinates, respectively).
+    case 'targetN'
+      inWindowLogical = ...
+          (abs(p.trVars.eyeDegX - p.trVars.targNdegX(targRow)) < ...
+          p.trVars.targWinWidthDeg && ...
+            abs(p.trVars.eyeDegY - p.trVars.targNdegY(targRow)) < ...
+            p.trVars.targWinHeightDeg) || p.trVars.passEye;
         
 end
 

@@ -543,7 +543,7 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     	    case 1
     	    	Screen('FillOval', p.draw.window, 11, ...
                     repmat(p.draw.stimPointPix, 1, 2) + ...
-                    p.draw.stimRadius*[-1 -1 1 1]); 
+                    p.draw.stimRadius*(sqrt(2))*[-1 -1 1 1]); 
     	    case 2
                 rotationMatrix = [cos(p.trVars.stimRotation), -sin(p.trVars.stimRotation);
                 		  sin(p.trVars.stimRotation), cos(p.trVars.stimRotation)];
