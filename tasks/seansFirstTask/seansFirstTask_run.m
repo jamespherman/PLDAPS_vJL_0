@@ -527,6 +527,7 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     Screen('FillRect', p.draw.window, p.draw.color.eyePos, [p.trVars.eyePixX p.trVars.eyePixY p.trVars.eyePixX p.trVars.eyePixY] + [-1 -1 1 1]*p.draw.eyePosWidth + repmat(p.draw.middleXY, 1, 2));
     
     % draw targWin:
+    
     switch p.trVars.numDots
     	case 1
     		Screen('FrameRect',p.draw.window, p.draw.color.targWin, repmat(p.draw.targOnePointPix, 1, 2) +  [-p.draw.targWinWidthPix -p.draw.targWinHeightPix p.draw.targWinWidthPix p.draw.targWinHeightPix], p.draw.targWinPenDraw)   
@@ -534,6 +535,7 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     		Screen('FrameRect',p.draw.window, p.draw.color.targWin, repmat(p.draw.targTwoPointPix, 1, 2) +  [-p.draw.targWinWidthPix -p.draw.targWinHeightPix p.draw.targWinWidthPix p.draw.targWinHeightPix], p.draw.targWinPenDraw)   
     end
     
+
     % draw fixation window
     Screen('FrameRect',p.draw.window, p.draw.color.fixWin, repmat(p.draw.fixPointPix, 1, 2) +  [-p.draw.fixWinWidthPix -p.draw.fixWinHeightPix p.draw.fixWinWidthPix p.draw.fixWinHeightPix], p.draw.fixWinPenDraw)
     
@@ -586,14 +588,14 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
 
         % New method
 
-        if p.trVars.showBothTargs || p.trVars.numDots == 1
+        if p.trVars.numTargets == 2 || p.trVars.numDots == 1
             % Target for one
             Screen('FillOval', p.draw.window, 11, ...
        		    repmat(p.draw.targOnePointPix, 1, 2) + ...
                     p.draw.targRadius*[-1 -1 1 1]);
         end
                              
-        if p.trVars.showBothTargs || p.trVars.numDots == 2     
+        if p.trVars.numTargets == 2 || p.trVars.numDots == 2     
             % Target for two        
             Screen('FillOval', p.draw.window, 5, ...
                     repmat(p.draw.targTwoPointPix - ...

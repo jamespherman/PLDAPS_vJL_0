@@ -189,7 +189,7 @@ p.trVarsInit.eyeDegX                = 0;
 p.trVarsInit.eyeDegY                = 0;
 p.trVarsInit.eyePixX                = 0;
 p.trVarsInit.eyePixY                = 0;
-p.trVarsInit.mouseEyeSim            = 0;
+p.trVarsInit.mouseEyeSim            = 1;
 
 % how to set the next target location (via mouse, gui, or neither). If
 % neither, then they get set at random from the predefined grid.
@@ -197,7 +197,7 @@ p.trVarsInit.setTargLocViaMouse         = false;
 p.trVarsInit.setTargLocViaGui           = false;
 p.trVarsInit.setTargLocViaTrialArray    = false;
 
-p.trVarsInit.ratioShowBothTargs	 = 0.5; % Proportion of trials in which both targets are shown simultaneously
+% p.trVarsInit.ratioShowBothTargs	 = 0.8; % Proportion of trials in which both targets are shown simultaneously
 
 % geometry/stimulus vars:
 p.trVarsInit.propVis             = 1;  % proportion of visually-guided saccades out of the total (i.e. propMem would equal 1 - pVis )
@@ -206,15 +206,17 @@ p.trVarsInit.fixDegY             = 0;    % fixation Y location in degrees
 p.trVarsInit.targDegX            = 0;
 p.trVarsInit.targDegY            = 5;
 p.trVarsInit.numDots             = 0; % how many dots does the target stimulus have on this trial?
-p.trVarsInit.twoTargSepDeg       = 0.75; % how far apart should the two target dots be? (in dva?)
-p.trVarsInit.twoStimSepDegMin    = 1.5; % how far apart should the two stim dots be? (in dva?)
+p.trVarsInit.twoTargSepDeg       = 1; % how far apart should the two target dots be? (in dva?)
+p.trVarsInit.twoStimSepDegMin    = 1.8; % how far apart should the two stim dots be? (in dva?)
 p.trVarsInit.twoStimSepDegMax    = 2;
-p.trVarsInit.stimRangeRadius	 = 1; % create stimuli randomly within radius of __? (in pixels?)
-p.trVarsInit.stimSizeMin	 = 10; % create stimuli of what size? (randomly chosen between min and max) (in pixels?)
-p.trVarsInit.stimSizeMax	 = 15;
+p.trVarsInit.stimRangeRadius	 = 0; % create stimuli randomly within radius of __? (in pixels?)
+p.trVarsInit.stimSizeMin	 = 15; % create stimuli of what size? (randomly chosen between min and max) (in pixels?)
+p.trVarsInit.stimSizeMax	 = 20;
+p.trVarsInit.stimRotationRange	 = 0; % Range within which stimulus is rotated (randomly chosen between 0 and given value, max 180).
+
 
 % times/latencies/durations:
-p.trVarsInit.rewardDurationMs        = 150; % reward duration
+p.trVarsInit.rewardDurationMs        = 180; % reward duration
 p.trVarsInit.rewardDelay             = 0;        % delay between cued change and reward delivery for hits.
 p.trVarsInit.timeoutAfterFa          = 2;        % timeout duration following false alarm.
 p.trVarsInit.joyWaitDur              = 5;        % how long to wait for the subject to press the joystick at the beginning of a trial?
@@ -241,10 +243,10 @@ p.trVarsInit.goLatencyMax            = 0.5;  % maximum saccade-latency criterion
 
 p.trVarsInit.stimOnsetMin	     = 0.3; % Time after fixation before stim comes on
 p.trVarsInit.stimOnsetMax	     = 0.5;
-p.trVarsInit.stimDurMin		     = 0.3; % Time stim stays on
-p.trVarsInit.stimDurMax		     = 0.35;
-p.trVarsInit.targOnsetMin            = 0.15; % Time after stim goes off before target onset
-p.trVarsInit.targOnsetMax            = 0.2;
+p.trVarsInit.stimDurMin		     = 0.5; % Time stim stays on
+p.trVarsInit.stimDurMax		     = 0.6;
+p.trVarsInit.targOnsetMin            = 0.01; % Time after stim goes off before target onset
+p.trVarsInit.targOnsetMax            = 0.02;
 p.trVarsInit.goTimePostTargMin       = 0.3; % min duration from targ onset to the 'go' signal to saccade (which is fixation offset)
 p.trVarsInit.goTimePostTargMax       = 0.8; % max duration from targ onset to the 'go' signal to saccade (which is fixation offset)
 
@@ -453,7 +455,7 @@ p.draw.fixWinPenDraw        = [];       % gets assigned either the pre or the po
 
 % target and target win:
 p.draw.targWidth            = 4;        % fixation point indicator line width in pixels
-p.draw.targRadius           = 6;        % fixation point "radius" in pixels
+p.draw.targRadius           = 10;        % fixation point "radius" in pixels
 p.draw.targWinPenThin       = 4;        % fixation window width (prior to 'go' signal).
 p.draw.targWinPenThick      = 8;        % fixation window width (post 'go' signal).
 p.draw.targWinPenDraw       = [];       % gets assigned either the pre or the post during the run function

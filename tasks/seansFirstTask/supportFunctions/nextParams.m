@@ -45,6 +45,10 @@ function p = setLocations(p)
 numDotsCol = strcmp(p.init.trialArrayColumnNames, 'numDots');
 p.trVars.numDots   = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
     numDotsCol);
+    
+numTargetsCol = strcmp(p.init.trialArrayColumnNames, 'numTargets');  
+p.trVars.numTargets = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
+    numTargetsCol);  
 
 % Where will the stimulus be displayed?
 
@@ -53,7 +57,7 @@ p.trVars.stimDegX  = p.trVars.stimRangeRadius .* cos(2*pi*rand);
 p.trVars.stimDegY  = p.trVars.stimRangeRadius .* sin(2*pi*rand);
 
 % randomly rotate the stimulus by between 0 and 180 degrees (will only affect two-dot stim)
-p.trVars.stimRotation = rand*180;
+p.trVars.stimRotation = rand*p.trVars.stimRotationRange;
 
 % randomly choose size of stimulus between min and max
 p.draw.stimRadius = unifrnd(p.trVars.stimSizeMin, p.trVars.stimSizeMax);
@@ -73,11 +77,6 @@ if p.trVars.numDots == 2
     p.trVars.targDegY = p.trVars.targDegY * (-1);	
 end
 
-if unifrnd (0, 1) <= p.trVars.ratioShowBothTargs
-    p.trVars.showBothTargs	= true;
-else
-    p.trVars.showBothTargs	= false;
-end
 
 % fixation location in pixels relative to the center of the screen!
 % (Y is flipped because positive is down in psychophysics toolbox).
