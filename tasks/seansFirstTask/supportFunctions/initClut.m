@@ -14,13 +14,14 @@ bgRGB       = 0.45*[1 1 1];
 % mutGreen    = [0.3953 0.7459 0.5244];
 mutGreen    = [0.5 0.9 0.4];
 
-redISH      = [1 0 0];
+redISH      = [1 0.5 0];
 orangeISH   = [255 146 0]/255;
 blueISH     = [0 0 255]/255;
-greenISH    = [0 1 0];
+greenISH    = [0.5 1 0];
 oldGreen    = [0.45, 0.63, 0.45];
 visGreen    = [0.1 0.9 0.1];
 memMagenta  = [1 0 1];
+yellowISH   = [1 1 0];
 
 % colors for exp's display
 % black                     0
@@ -51,7 +52,8 @@ c.draw.clut.expColors = ...
     oldGreen;           % 13
     visGreen;           % 14
     memMagenta;         % 15
-    0, 1, 1];            % 16
+    0, 1, 1;		% 16
+    yellowISH];         % 17
 
 
 % colors for subject's display
@@ -83,7 +85,8 @@ c.draw.clut.subColors = ...
     oldGreen;     % 13
     bgRGB;        % 14
     bgRGB;        % 15
-    bgRGB];       % 16
+    bgRGB;	  % 16
+    yellowISH];   % 17
 
 assert(size(c.draw.clut.subColors,1)==size(c.draw.clut.expColors,1), 'ERROR-- exp & sub Colors must have equal length')
 

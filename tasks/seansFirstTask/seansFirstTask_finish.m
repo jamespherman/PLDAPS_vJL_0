@@ -76,7 +76,7 @@ pds.saveP(p);
 
 % (7) update trials list IF we're using the trials array.
 if p.trVars.setTargLocViaTrialArray
-    p           = updateTrialsList(p);
+    p           = updateTrialsList(p); % Comment out this to remove drumming
 end
 
 % keyboard

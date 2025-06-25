@@ -10,7 +10,7 @@ function p = initTrialStructure(p)
 
 % column descriptions
 % p.init.trialColumnNames = {'number of target stimuli', 'no of trials' 'trialcode'};
-p.init.trialArrayColumnNames = {'numDots', 'numTargets', 'no of trials', 'trialcode'};
+p.init.trialArrayColumnNames = {'numDots', 'numTargets', 'targsSameColor','no of trials', 'trialcode'};
 
 % table definition
 switch p.init.exptType
@@ -55,10 +55,14 @@ end
 
 function table = step1
 table = [
-    1 1 2 24001; ... % one dots, one targets, 5 reps, 24001 trial code
-    1 2 8 24002; ... % one dots, two targets, 5 reps, 24002 trial code
-    2 1 2 24003; ... % two dots, one targets, 5 reps, 24003 trial code
-    2 2 8 24004; ... % two dots, two targets, 5 reps, 24004 trial code
+    1 1 true 0 24001; ... %  one dots, one targets, targets same color, 0 reps, 24001 trial code
+    1 1 false 0 24001; ... % one dots, one targets, targets diff color, 0 reps, 24001 trial code
+    1 2 true 1 24002; ... %  one dots, two targets, targets same color, 1 reps, 24002 trial code
+    1 2 false 3 24002; ... % one dots, two targets, targets diff color, 3 reps, 24002 trial code  
+    2 1 true 0 24003; ... %  two dots, one targets, targets same color, 0 reps, 24003 trial code
+    2 1 false 0 24003; ... % two dots, one targets, targets diff color, 0 reps, 24003 trial code    
+    2 2 true 1 24004; ... %  two dots, two targets, targets same color, 1 reps, 24004 trial code
+    2 2 false 3 24004; ... % two dots, two targets, targets diff color, 3 reps, 24004 trial code    
     ];
 end
 

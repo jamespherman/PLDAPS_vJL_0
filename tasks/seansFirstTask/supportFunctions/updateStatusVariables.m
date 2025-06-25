@@ -16,6 +16,9 @@ p.status.iGoodOneTargetTwoDots = p.status.iGoodOneTargetTwoDots + (p.trVars.numT
 p.status.iGoodTwoTargetOneDot = p.status.iGoodTwoTargetOneDot + (p.trVars.numTargets == 2 & (p.trVars.numDots == 1) & double(~p.trData.trialRepeatFlag));
 p.status.iGoodTwoTargetTwoDots = p.status.iGoodTwoTargetTwoDots + (p.trVars.numTargets == 2 & (p.trVars.numDots == 2) & double(~p.trData.trialRepeatFlag));
 
+p.status.iGoodTargsSameColor = p.status.iGoodTargsSameColor + (p.trVars.targsSameColor & double(~p.trData.trialRepeatFlag));
+p.status.iGoodTargsDiffColor = p.status.iGoodTargsDiffColor + (~p.trVars.targsSameColor & double(~p.trData.trialRepeatFlag));
+
 % proportion good for visual & memeory saccades:
 p.status.pGoodVis = p.status.iGoodVis / p.status.iGoodTrial;
 p.status.pGoodMem = p.status.iGoodMem / p.status.iGoodTrial;

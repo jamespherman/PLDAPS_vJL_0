@@ -260,7 +260,9 @@ switch p.trVars.currentState
         end
              
         % check if eyes are in target window:
-        eyeInTargetWin = pds.eyeInWindow(p, 'target');
+        eyeInTargetWin = pds.eyeInWindow(p, 'target', p.trVars.correctTarget);
+       	eyeInTargetWinWrong = pds.eyeInWindow(p, 'target', p.trVars.wrongTarget);
+       
        
         if ~eyeInTargetWin && (timeNow < p.trData.timing.saccadeOnset + p.trVars.maxSacDurationToAccept)
             % do nothing. Wait for monkey to get into targWin, but no
@@ -282,7 +284,20 @@ switch p.trVars.currentState
             
             % and thicken up that targWin:
             p.draw.targWinPenDraw = p.draw.targWinPenThick;
-        
+       
+        elseif eyeInTargetWinWrong %&& (timeNow < p.trData.timing.saccadeOnset + p.trVars.maxSacDurationToAccept)
+            
+            p.trData.timing.fixBreak         = timeNow;
+            p.trVars.currentState	     = p.state.fixBreak;
+
+            p.status.iWrongOneTargetOneDot = p.status.iWrongOneTargetOneDot + (p.trVars.numTargets == 1 & (p.trVars.numDots == 1));
+	    p.status.iWrongOneTargetTwoDots = p.status.iWrongOneTargetTwoDots + (p.trVars.numTargets == 1 & (p.trVars.numDots == 2));
+	    p.status.iWrongTwoTargetOneDot = p.status.iWrongTwoTargetOneDot + (p.trVars.numTargets == 2 & (p.trVars.numDots == 1));
+	    p.status.iWrongTwoTargetTwoDots = p.status.iWrongTwoTargetTwoDots + (p.trVars.numTargets == 2 & (p.trVars.numDots == 2));
+            
+            p.status.iWrongTargsSameColor = p.status.iWrongTargsSameColor + (p.trVars.targsSameColor);
+	    p.status.iWrongTargsDiffColor = p.status.iWrongTargsDiffColor + (~p.trVars.targsSameColor);
+         
         else %if (eyeInTargetWin && (timeNow > p.trData.timing.saccadeOnset + p.trVars.maxSacDurationToAccept)) %|| ~p.trVars.passEye
             % this means subject got into the target win too late. Likely
             % performed an intermediate saccade. This is unacceptable. 
@@ -318,7 +333,7 @@ switch p.trVars.currentState
         % elapsed, it is a breakFix.
        
         % check if eyes are in target window:
-        eyeInTargetWin = pds.eyeInWindow(p, 'target');
+        eyeInTargetWin = pds.eyeInWindow(p, 'target', p.trVars.correctTarget);
         
         
         % if eyes stayed on target for full duration, bravo!
@@ -539,11 +554,23 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     % draw fixation window
     Screen('FrameRect',p.draw.window, p.draw.color.fixWin, repmat(p.draw.fixPointPix, 1, 2) +  [-p.draw.fixWinWidthPix -p.draw.fixWinHeightPix p.draw.fixWinWidthPix p.draw.fixWinHeightPix], p.draw.fixWinPenDraw)
     
+    
+    % pick colors for stim/target
+    
+    if p.trVars.targsSameColor
+    	targColor1 = 17;
+    	targColor2 = 17;
+    else
+    	targColor1 = 11;
+    	targColor2 = 5;
+    end
+    
+    
     % draw the stimulus (if it is time)
     if p.trVars.stimIsOn
     	switch p.trVars.numDots
     	    case 1
-    	    	Screen('FillOval', p.draw.window, 11, ...
+    	    	Screen('FillOval', p.draw.window, targColor1, ...
                     repmat(p.draw.stimPointPix, 1, 2) + ...
                     p.draw.stimRadius*(sqrt(2))*[-1 -1 1 1]); 
     	    case 2
@@ -551,11 +578,11 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
                 		  sin(p.trVars.stimRotation), cos(p.trVars.stimRotation)];
                 rotatedTwoStimSepPix = rotationMatrix * [p.draw.twoStimSepPix/2; 0];
                 
-                Screen('FillOval', p.draw.window, 5, ...
+                Screen('FillOval', p.draw.window, targColor2, ...
                     repmat(p.draw.stimPointPix - ...
                     rotatedTwoStimSepPix', 1, 2) + ...
                     p.draw.stimRadius*[-1 -1 1 1]);
-                Screen('FillOval', p.draw.window, 5, ...
+                Screen('FillOval', p.draw.window, targColor2, ...
                     repmat(p.draw.stimPointPix + ...
                     rotatedTwoStimSepPix', 1, 2) + ...
                     p.draw.stimRadius*[-1 -1 1 1]);
@@ -590,18 +617,18 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
 
         if p.trVars.numTargets == 2 || p.trVars.numDots == 1
             % Target for one
-            Screen('FillOval', p.draw.window, 11, ...
+            Screen('FillOval', p.draw.window, targColor1, ...
        		    repmat(p.draw.targOnePointPix, 1, 2) + ...
                     p.draw.targRadius*[-1 -1 1 1]);
         end
                              
         if p.trVars.numTargets == 2 || p.trVars.numDots == 2     
             % Target for two        
-            Screen('FillOval', p.draw.window, 5, ...
+            Screen('FillOval', p.draw.window, targColor2, ...
                     repmat(p.draw.targTwoPointPix - ...
                     [p.draw.twoTargSepPix/2 0], 1, 2) + ...
                     p.draw.targRadius*[-1 -1 1 1]);
-            Screen('FillOval', p.draw.window, 5, ...
+            Screen('FillOval', p.draw.window, targColor2, ...
                     repmat(p.draw.targTwoPointPix + ...
                     [p.draw.twoTargSepPix/2 0], 1, 2) + ...
                     p.draw.targRadius*[-1 -1 1 1]);

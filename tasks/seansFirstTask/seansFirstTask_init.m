@@ -32,7 +32,7 @@ p   = pds.initDataPixx(p);
 p   = pds.initAudio(p);
 
 % define online-plotting windows (and reposition others).
-p   = pds.plotWindowSetup(p);
+p   = plotWindowSetup(p);
 
 % define grid line locations:
 p   = pds.defineGridLines(p);

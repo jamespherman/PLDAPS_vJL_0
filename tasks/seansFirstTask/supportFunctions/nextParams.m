@@ -50,6 +50,10 @@ numTargetsCol = strcmp(p.init.trialArrayColumnNames, 'numTargets');
 p.trVars.numTargets = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
     numTargetsCol);  
 
+targsSameColorCol = strcmp(p.init.trialArrayColumnNames, 'targsSameColor');
+p.trVars.targsSameColor = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
+   targsSameColorCol);
+
 % Where will the stimulus be displayed?
 
 % randomly choose x and y coordinates within given radius
@@ -57,7 +61,7 @@ p.trVars.stimDegX  = p.trVars.stimRangeRadius .* cos(2*pi*rand);
 p.trVars.stimDegY  = p.trVars.stimRangeRadius .* sin(2*pi*rand);
 
 % randomly rotate the stimulus by between 0 and 180 degrees (will only affect two-dot stim)
-p.trVars.stimRotation = rand*p.trVars.stimRotationRange;
+p.trVars.stimRotation = unifrnd(0, p.trVars.stimRotationRange);
 
 % randomly choose size of stimulus between min and max
 p.draw.stimRadius = unifrnd(p.trVars.stimSizeMin, p.trVars.stimSizeMax);
@@ -66,17 +70,21 @@ p.draw.stimRadius = unifrnd(p.trVars.stimSizeMin, p.trVars.stimSizeMax);
 % appear above the fixation and the 2-dot target to always appear below the
 % fixation. These will be shown at the same distance based on targDegY
 
+%{
 p.trVars.targOneDegX	= p.trVars.targDegX;
 p.trVars.targOneDegY	= p.trVars.targDegY;
 
 p.trVars.targTwoDegX	= p.trVars.targDegX;
 p.trVars.targTwoDegY	= p.trVars.targDegY * (-1);
+%}
 
-% This if statement is here because eyeInWindow doesn't have "target1" and "target2" cases yet
-if p.trVars.numDots == 2
-    p.trVars.targDegY = p.trVars.targDegY * (-1);	
+if p.trVars.numDots == 1
+    p.trVars.correctTarget = 1;
+    p.trVars.wrongTarget = 2;
+else
+    p.trVars.correctTarget = 2;
+    p.trVars.wrongTarget = 1;    	
 end
-
 
 % fixation location in pixels relative to the center of the screen!
 % (Y is flipped because positive is down in psychophysics toolbox).

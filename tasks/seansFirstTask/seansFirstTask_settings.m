@@ -124,6 +124,18 @@ p.status.iGoodOneTargetTwoDots		    = 0;
 p.status.iGoodTwoTargetOneDot		    = 0;
 p.status.iGoodTwoTargetTwoDots		    = 0;
 
+p.status.iWrongOneTargetOneDot		    = 0;
+p.status.iWrongOneTargetTwoDots		    = 0;
+
+p.status.iWrongTwoTargetOneDot		    = 0;
+p.status.iWrongTwoTargetTwoDots		    = 0;
+
+p.status.iGoodTargsSameColor		    = 0;
+p.status.iGoodTargsDiffColor		    = 0;
+
+p.status.iWrongTargsSameColor		    = 0;
+p.status.iWrongTargsDiffColor		    = 0;
+
 
 
 p.rig.guiStatVals = {...
@@ -189,6 +201,7 @@ p.trVarsInit.eyeDegX                = 0;
 p.trVarsInit.eyeDegY                = 0;
 p.trVarsInit.eyePixX                = 0;
 p.trVarsInit.eyePixY                = 0;
+p.trVarsInit.wantOnlinePlots	    = true;
 p.trVarsInit.mouseEyeSim            = 1;
 
 % how to set the next target location (via mouse, gui, or neither). If
@@ -203,8 +216,12 @@ p.trVarsInit.setTargLocViaTrialArray    = false;
 p.trVarsInit.propVis             = 1;  % proportion of visually-guided saccades out of the total (i.e. propMem would equal 1 - pVis )
 p.trVarsInit.fixDegX             = 0;    % fixation X location in degrees 
 p.trVarsInit.fixDegY             = 0;    % fixation Y location in degrees
-p.trVarsInit.targDegX            = 0;
-p.trVarsInit.targDegY            = 5;
+p.trVarsInit.targOneDegX         = 0;
+p.trVarsInit.targOneDegY         = 6;
+p.trVarsInit.targTwoDegX         = 0;
+p.trVarsInit.targTwoDegY         = -6;
+p.trVarsInit.targDegX		 = [p.trVarsInit.targOneDegX p.trVarsInit.targTwoDegX];
+p.trVarsInit.targDegY		 = [p.trVarsInit.targOneDegY p.trVarsInit.targTwoDegY];
 p.trVarsInit.numDots             = 0; % how many dots does the target stimulus have on this trial?
 p.trVarsInit.twoTargSepDeg       = 1; % how far apart should the two target dots be? (in dva?)
 p.trVarsInit.twoStimSepDegMin    = 1.8; % how far apart should the two stim dots be? (in dva?)
@@ -214,6 +231,7 @@ p.trVarsInit.stimSizeMin	 = 15; % create stimuli of what size? (randomly chosen 
 p.trVarsInit.stimSizeMax	 = 20;
 p.trVarsInit.stimRotationRange	 = 0; % Range within which stimulus is rotated (randomly chosen between 0 and given value, max 180).
 
+p.trVarsInit.targsSameColor	 = false;
 
 % times/latencies/durations:
 p.trVarsInit.rewardDurationMs        = 180; % reward duration
@@ -265,8 +283,8 @@ p.trVarsInit.staticTargAmp           = 12;  % fixed target amplitude
 
 p.trVarsInit.fixWinWidthDeg       = 2;        % fixation window width in degrees
 p.trVarsInit.fixWinHeightDeg      = 2;        % fixation window height in degrees
-p.trVarsInit.targWinWidthDeg      = 3;        % target window width in degrees
-p.trVarsInit.targWinHeightDeg     = 3;        % target window height in degrees
+p.trVarsInit.targWinWidthDeg      = 4;        % target window width in degrees
+p.trVarsInit.targWinHeightDeg     = 4;        % target window height in degrees
 
 
 % I don't think I need to carry these around in 'p'....
