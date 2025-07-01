@@ -14,10 +14,10 @@ bgRGB       = 0.45*[1 1 1];
 % mutGreen    = [0.3953 0.7459 0.5244];
 mutGreen    = [0.5 0.9 0.4];
 
-redISH      = [1 0.5 0];
+redISH      = [1 0.9 0];
 orangeISH   = [255 146 0]/255;
 blueISH     = [0 0 255]/255;
-greenISH    = [0.5 1 0];
+greenISH    = [0.9 1 0];
 oldGreen    = [0.45, 0.63, 0.45];
 visGreen    = [0.1 0.9 0.1];
 memMagenta  = [1 0 1];

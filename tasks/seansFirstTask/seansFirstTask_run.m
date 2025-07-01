@@ -259,45 +259,62 @@ switch p.trVars.currentState
             p.trVars.currentState       = p.state.joyBreak;
         end
              
-        % check if eyes are in target window:
-        eyeInTargetWin = pds.eyeInWindow(p, 'target', p.trVars.correctTarget);
-       	eyeInTargetWinWrong = pds.eyeInWindow(p, 'target', p.trVars.wrongTarget);
-       
-       
-        if ~eyeInTargetWin && (timeNow < p.trData.timing.saccadeOnset + p.trVars.maxSacDurationToAccept)
+        % check if eyes are in target windows
+        eyeInTargetWin1 = pds.eyeInWindow(p, 'target', 1);
+       	eyeInTargetWin2 = pds.eyeInWindow(p, 'target', 2);
+      
+        if ~eyeInTargetWin1 && ~eyeInTargetWin2 && (timeNow < p.trData.timing.saccadeOnset + p.trVars.maxSacDurationToAccept)
             % do nothing. Wait for monkey to get into targWin, but no
             % longer than the maxSacDurationToAccept.
 %         elseif ~eyeInTargetWin && (timeNow > p.trData.timing.saccadeOnset + p.trVars.maxSacDurationToAccept)
 %             p.init.strb.addValue(p.init.codes.fixBreak);
 %             p.trData.timing.fixBreak    = timeNow;
 %             p.trVars.currentState       = p.state.fixBreak;
-%             
-        elseif (eyeInTargetWin && (timeNow < p.trData.timing.saccadeOnset + p.trVars.maxSacDurationToAccept)) || p.trVars.passEye
-            % if the eyes entered the target window we consdier that
-            % the real-time estiamte of saccade offset:
+%       
+	elseif (eyeInTargetWin1 && (timeNow < p.trData.timing.saccadeOnset + p.trVars.maxSacDurationToAccept)) || p.trVars.passEye
+	    % if the eyes entered target window 1 we onsider that the real-time estimate of saccade offset
             p.init.strb.addValue(p.init.codes.saccadeOffset);
             p.trData.timing.saccadeOffset    = timeNow;
-            p.trVars.currentState           = p.state.holdTarg;
             % and 'target acquired':
             p.init.strb.addValue(p.init.codes.targetAq);
             p.trData.timing.targetAq        = timeNow;
-            
-            % and thicken up that targWin:
-            p.draw.targWinPenDraw = p.draw.targWinPenThick;
-       
-        elseif eyeInTargetWinWrong %&& (timeNow < p.trData.timing.saccadeOnset + p.trVars.maxSacDurationToAccept)
-            
-            p.trData.timing.fixBreak         = timeNow;
-            p.trVars.currentState	     = p.state.fixBreak;
 
-            p.status.iWrongOneTargetOneDot = p.status.iWrongOneTargetOneDot + (p.trVars.numTargets == 1 & (p.trVars.numDots == 1));
-	    p.status.iWrongOneTargetTwoDots = p.status.iWrongOneTargetTwoDots + (p.trVars.numTargets == 1 & (p.trVars.numDots == 2));
-	    p.status.iWrongTwoTargetOneDot = p.status.iWrongTwoTargetOneDot + (p.trVars.numTargets == 2 & (p.trVars.numDots == 1));
-	    p.status.iWrongTwoTargetTwoDots = p.status.iWrongTwoTargetTwoDots + (p.trVars.numTargets == 2 & (p.trVars.numDots == 2));
+	    % strobe to indicate we looked at target 1
+	    p.init.strb.addValue(p.init.codes.saccToTargetOne);
+		
+	    % If Target 1 was the correct target, we switch state to holdTarg. Otherwise, we switch state to wrongTarget
             
-            p.status.iWrongTargsSameColor = p.status.iWrongTargsSameColor + (p.trVars.targsSameColor);
-	    p.status.iWrongTargsDiffColor = p.status.iWrongTargsDiffColor + (~p.trVars.targsSameColor);
-         
+            if p.trVars.numDots == 1
+                p.trVars.currentState           = p.state.holdTarg;
+                % and thicken up that targWin:
+            	p.draw.targWinPenDraw = p.draw.targWinPenThick;
+            else
+            	p.trVars.currentState		= p.state.wrongTarget;
+                p.trData.wrongTargetFlag	= true;
+            end
+
+	elseif (eyeInTargetWin2 && (timeNow < p.trData.timing.saccadeOnset + p.trVars.maxSacDurationToAccept)) || p.trVars.passEye
+	    % if the eyes entered target window 1 we onsider that the real-time estimate of saccade offset
+            p.init.strb.addValue(p.init.codes.saccadeOffset);
+            p.trData.timing.saccadeOffset    = timeNow;
+            % and 'target acquired':
+            p.init.strb.addValue(p.init.codes.targetAq);
+            p.trData.timing.targetAq        = timeNow;
+
+	    % strobe to indicate we looked at target 2
+	    p.init.strb.addValue(p.init.codes.saccToTargetTwo);
+	    
+	    % If Target 1 was the correct target, we switch state to holdTarg. Otherwise, we switch state to wrongTarget
+            
+            if p.trVars.numDots == 2
+                p.trVars.currentState           = p.state.holdTarg;
+                % and thicken up that targWin:
+            	p.draw.targWinPenDraw = p.draw.targWinPenThick;
+            else
+            	p.trVars.currentState		= p.state.wrongTarget;
+                p.trData.wrongTargetFlag	= true;
+	    end
+	    
         else %if (eyeInTargetWin && (timeNow > p.trData.timing.saccadeOnset + p.trVars.maxSacDurationToAccept)) %|| ~p.trVars.passEye
             % this means subject got into the target win too late. Likely
             % performed an intermediate saccade. This is unacceptable. 
@@ -333,7 +350,7 @@ switch p.trVars.currentState
         % elapsed, it is a breakFix.
        
         % check if eyes are in target window:
-        eyeInTargetWin = pds.eyeInWindow(p, 'target', p.trVars.correctTarget);
+        eyeInTargetWin = pds.eyeInWindow(p, 'target', p.trVars.numDots);
         
         
         % if eyes stayed on target for full duration, bravo!
@@ -375,7 +392,7 @@ switch p.trVars.currentState
             p.trVars.exitWhileLoop = true;
         end
         
-              
+
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% end states: trial ABORTED %%%
@@ -396,6 +413,14 @@ switch p.trVars.currentState
         % trila is considered a non-start.
         p = playTone(p, 'low');
         p.trVars.exitWhileLoop = true;
+
+    case p.state.wrongTarget   
+        %% WRONG TARGET
+        % subject looked at the incorrect target
+	p = playTone(p, 'low');
+	p.trVars.exitWhileLoop = true;        
+               
+        
 end
 
 if p.trVars.exitWhileLoop

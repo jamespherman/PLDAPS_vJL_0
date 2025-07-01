@@ -23,7 +23,7 @@ p           = pds.readDatapixxBuffers(p);
 
 % Was the previous trial aborted?
 p.trData.trialRepeatFlag = ismember(p.trData.trialEndState, ...
-    [p.state.fixBreak, p.state.joyBreak, p.state.nonStart]);
+    [p.state.fixBreak, p.state.joyBreak, p.state.nonStart, p.state.wrongTarget]);
 
 % update status variables
 p           = updateStatusVariables(p);

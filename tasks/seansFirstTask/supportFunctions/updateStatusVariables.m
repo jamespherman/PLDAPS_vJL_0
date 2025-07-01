@@ -16,8 +16,21 @@ p.status.iGoodOneTargetTwoDots = p.status.iGoodOneTargetTwoDots + (p.trVars.numT
 p.status.iGoodTwoTargetOneDot = p.status.iGoodTwoTargetOneDot + (p.trVars.numTargets == 2 & (p.trVars.numDots == 1) & double(~p.trData.trialRepeatFlag));
 p.status.iGoodTwoTargetTwoDots = p.status.iGoodTwoTargetTwoDots + (p.trVars.numTargets == 2 & (p.trVars.numDots == 2) & double(~p.trData.trialRepeatFlag));
 
-p.status.iGoodTargsSameColor = p.status.iGoodTargsSameColor + (p.trVars.targsSameColor & double(~p.trData.trialRepeatFlag));
-p.status.iGoodTargsDiffColor = p.status.iGoodTargsDiffColor + (~p.trVars.targsSameColor & double(~p.trData.trialRepeatFlag));
+p.status.iWrongOneTargetOneDot = p.status.iWrongOneTargetOneDot + (p.trVars.numTargets == 1 & (p.trVars.numDots == 1) & (p.trData.trialEndState == p.state.wrongTarget));
+p.status.iWrongOneTargetTwoDots = p.status.iWrongOneTargetTwoDots + (p.trVars.numTargets == 1 & (p.trVars.numDots == 2) & (p.trData.trialEndState == p.state.wrongTarget));
+p.status.iWrongTwoTargetOneDot = p.status.iWrongTwoTargetOneDot + (p.trVars.numTargets == 2 & (p.trVars.numDots == 1) & (p.trData.trialEndState == p.state.wrongTarget));
+p.status.iWrongTwoTargetTwoDots = p.status.iWrongTwoTargetTwoDots + (p.trVars.numTargets == 2 & (p.trVars.numDots == 2) & (p.trData.trialEndState == p.state.wrongTarget));
+            
+% iterator for diff/same color and one vs two dot tasks:
+p.status.iGoodUpTargsSameColor = p.status.iGoodUpTargsSameColor + (p.trVars.targsSameColor & (p.trVars.numDots == 1) & double(~p.trData.trialRepeatFlag));
+p.status.iGoodUpTargsDiffColor = p.status.iGoodUpTargsDiffColor + (~p.trVars.targsSameColor & (p.trVars.numDots == 1) & double(~p.trData.trialRepeatFlag));
+p.status.iGoodDownTargsSameColor = p.status.iGoodDownTargsSameColor + (p.trVars.targsSameColor & (p.trVars.numDots == 2) & double(~p.trData.trialRepeatFlag));
+p.status.iGoodDownTargsDiffColor = p.status.iGoodDownTargsDiffColor + (~p.trVars.targsSameColor & (p.trVars.numDots == 2) & double(~p.trData.trialRepeatFlag));
+
+p.status.iWrongUpTargsSameColor = p.status.iWrongUpTargsSameColor + (p.trVars.targsSameColor & (p.trVars.numDots == 1) & (p.trData.trialEndState == p.state.wrongTarget));
+p.status.iWrongUpTargsDiffColor = p.status.iWrongUpTargsDiffColor + (~p.trVars.targsSameColor & (p.trVars.numDots == 1) & (p.trData.trialEndState == p.state.wrongTarget));
+p.status.iWrongDownTargsSameColor = p.status.iWrongDownTargsSameColor + (p.trVars.targsSameColor & (p.trVars.numDots == 2) & (p.trData.trialEndState == p.state.wrongTarget));
+p.status.iWrongDownTargsDiffColor = p.status.iWrongDownTargsDiffColor + (~p.trVars.targsSameColor & (p.trVars.numDots == 2) & (p.trData.trialEndState == p.state.wrongTarget));
 
 % proportion good for visual & memeory saccades:
 p.status.pGoodVis = p.status.iGoodVis / p.status.iGoodTrial;

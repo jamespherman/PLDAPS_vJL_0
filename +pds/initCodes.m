@@ -90,6 +90,9 @@ codes.joyBreak              = 2005;
 codes.fixBreak          = 3005;
 codes.fixBreak2         = 3006; % this is if monkey breaks fixation whennot holding joystick in attn task
 
+codes.saccToTargetOne	= 3007; % Used to identify which target monkey made a saccade to
+codes.saccToTargetTwo	= 3008;
+
 %% optical stimulation codes
 codes.optoStimOn        = 17001;
 codes.optoStimTrial     = 17002;

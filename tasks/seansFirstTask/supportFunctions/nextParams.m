@@ -78,14 +78,6 @@ p.trVars.targTwoDegX	= p.trVars.targDegX;
 p.trVars.targTwoDegY	= p.trVars.targDegY * (-1);
 %}
 
-if p.trVars.numDots == 1
-    p.trVars.correctTarget = 1;
-    p.trVars.wrongTarget = 2;
-else
-    p.trVars.correctTarget = 2;
-    p.trVars.wrongTarget = 1;    	
-end
-
 % fixation location in pixels relative to the center of the screen!
 % (Y is flipped because positive is down in psychophysics toolbox).
 p.draw.fixPointPix      =  p.draw.middleXY + [1, -1] .* ...
