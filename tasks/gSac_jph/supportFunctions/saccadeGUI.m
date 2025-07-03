@@ -1382,6 +1382,9 @@ if nnz(uiData.sacDataArray(:, 9)) > 2
         % "raw" reaction time (srt) values
         uiData.heatMaps.srtCurr.rawVals = uiData.sacDataArray(g, 8);
 
+        temp = guidata(findall(0, 'Name','PLDAPS_vK2_GUI'));
+        uiData.pldapsData.p.init = temp.p.init;
+        
         % "raw" spike count values. multiple steps here. first we need to
         % get target radius and theta for each trial's spike data, then
         % convert to target X / target Y. Then we need to get the spike
@@ -1419,39 +1422,41 @@ if nnz(uiData.sacDataArray(:, 9)) > 2
             % map name / type; append with "curr" to indicate that the map
             % is based on data being collected in the "current" session.
             mapString = [mapTypes{i}, 'Curr'];
-            
-            % at the moment we have to use a different set of X / Y
-            % coordinates for the spikes-based map. FIX THIS! (JPH -
-            % 3/2/2023).
-            varNames = whos;
-            if contains(mapTypes{i}, 'spk') && ...
-                    any(contains({varNames.name}, 'tXY'))
-                % make map function (interpolant).
-                uiData.heatMaps.(mapString).F = scatteredInterpolant(...
-                    tXY(:,1), tXY(:,2), ...
-                    uiData.heatMaps.(mapString).rawVals, ...
-                    'linear', 'none');
-            else
-                % make map function (interpolant).
-                uiData.heatMaps.(mapString).F = scatteredInterpolant(...
-                    X, Y, ...
-                    uiData.heatMaps.(mapString).rawVals, ...
-                    'linear', 'none');
+
+            % --- 1. Create the interpolant based on map type ---
+            F = []; % Start with an empty interpolant
+            if contains(mapString, 'spk')
+                if exist('tXY', 'var') && size(tXY, 1) > 2
+                    F = scatteredInterpolant(tXY(:,1), tXY(:,2), ...
+                        uiData.heatMaps.(mapString).rawVals, ...
+                        'linear', 'none');
+                end
+            else % For 'pkv', 'srt', etc.
+                if exist('X', 'var') && length(X) > 2
+                    F = scatteredInterpolant(X, Y, ...
+                        uiData.heatMaps.(mapString).rawVals, ...
+                        'linear', 'none');
+                end
             end
 
-            % evaluate map functions at map vertex points
-            uiData.heatMaps.(mapString).mapVals = reshape(...
-                uiData.heatMaps.(mapString).F(...
-                [flatt(repmat(mapX, nY, 1)), repmat(mapY', nX, 1)]...
-                ), nY, nX);
+            % --- 2. If the interpolant was created successfully, 
+            % evaluate it ---
+            if ~isempty(F)
+                uiData.heatMaps.(mapString).F = F;
 
-            % NEED TO INCLUDE CODE FOR COMPUTING DIFFERENCES IF DESIRED
+                % Evaluate map functions at map vertex points
+                uiData.heatMaps.(mapString).mapVals = reshape(...
+                    F([flatt(repmat(mapX, nY, 1)), repmat(mapY', nX, 1)]), ...
+                    nY, nX);
+
+                % Calculate colorbar stuff
+                [uiData.heatMaps.(mapString).colorBarVals, ...
+                    uiData.heatMaps.(mapString).colorBarTickVals, ...
+                    uiData.heatMaps.(mapString).colorBarLim] = ...
+                    colorBarCalcs(uiData.heatMaps.(mapString).mapVals(:));
+            end
+
             
-            % calculate colorbar stuff
-            [uiData.heatMaps.(mapString).colorBarVals, ...
-                uiData.heatMaps.(mapString).colorBarTickVals, ...
-                uiData.heatMaps.(mapString).colorBarLim] = ...
-                colorBarCalcs(uiData.heatMaps.(mapString).mapVals(:));
         end
         
         % update heatMapSelection listbox with names of available maps

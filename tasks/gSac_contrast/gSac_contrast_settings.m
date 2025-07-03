@@ -29,6 +29,9 @@ function p = gSac_contrast_settings
 %%
 % p.init;           % all things that are saved once except for trialVarsInit
 % p.rig;            % all rig (monitor, PTB stuff, distances) related stuff
+% 
+
+
 % p.audio;          % all things audio related
 % p.draw;           % all widths/hieghts/etc of stuff that's drawn. (all except for stimulus, which is saved uniquely in stim struct)
 % p.state           % all the states that we use and their id integer
@@ -179,8 +182,8 @@ p.rig.guiVars = {...
     'targWinHeightDeg'; ...
     'targWinWidthDeg'; ...
     'rewardDelay'; ...        % 6
-    'passEye'; ...
-    'passJoy'};              % 12
+    'rewardDurationHigh'; ...
+    'rewardDurationLow'};              % 12
 
 
 
@@ -214,6 +217,7 @@ p.trVarsInit.eyeDegX                = 0;
 p.trVarsInit.eyeDegY                = 0;
 p.trVarsInit.eyePixX                = 0;
 p.trVarsInit.eyePixY                = 0;
+p.trVarsInit.mouseEyeSim            = 0;
 
 % how to set the next target location (via mouse, gui, or neither). If
 % neither, then they get set at random from the predefined grid.
@@ -229,8 +233,8 @@ p.trVarsInit.targDegX            = -6;  % default target X location if one isn't
 p.trVarsInit.targDegY            = 0;    % default target Y location if one isn't specified by other means
 
 % times/latencies/durations:
-p.trVarsInit.rewardDurationHigh      = 450;      % reward duration (solenoid open time) for "large reward" target
-p.trVarsInit.rewardDurationLow       = 200;       % reward duration for "small reward" target
+p.trVarsInit.rewardDurationHigh      = 350;      % reward duration (solenoid open time) for "large reward" target
+p.trVarsInit.rewardDurationLow       = 160;       % reward duration for "small reward" target
 p.trVarsInit.rewardDurationMs        = 165;      % reward duration variable used to define solenoid opening "schedule" (VPixx)
 p.trVarsInit.rwdSize                 = 0;        % variable to store whether the current trial is "high" or "low" reward (coded as 1 or 2).
 p.trVarsInit.rewardDelay             = 0.25;     % delay between successful target fixation and reward delivery
@@ -338,6 +342,7 @@ p.init.trDataInitList = {...
     'p.trData.postSacXY',               '[]'; ...
     'p.trData.peakVel',                 '[]'; ...
     'p.trData.SRT',                     '[]'; ...
+    'p.trData.spikeClusters',           '[]'; ...
     'p.trData.trialEndState',           '-1'; ...   % final state in trial
     'p.trData.trialRepeatFlag',         'false'; ...
     'p.trData.timing.lastFrameTime',    '0'; ...    % time at which last video frame was displayed
@@ -359,7 +364,7 @@ p.init.trDataInitList = {...
     'p.trData.timing.frameNow',         '-1'; ...   % current frame number
     };
 
-% since the list above is fixed, count its rows now for looping over later.
+% since the list above is 50fixed, count its rows now for looping over later.
 p.init.nTrDataListRows                  = size(p.init.trDataInitList, 1);
 
 %% stimulus-specific:

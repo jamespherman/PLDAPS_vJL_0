@@ -3,12 +3,15 @@ function p = getRippleData(p)
 [~, tempSpikeTimes, ~, unitIdx] = pds.xippmex('spike', ...
     p.rig.ripple.recChans, 0);
 
+% how many channels?
+nChannels = length(tempSpikeTimes);
+
 % Initialize spike counters
 totalSpikes = 0;
 p.trData.spikeTimes = [];
 
 % Convert and store spike data for current trial
-for iChan = 1:1
+for iChan = 1:nChannels
     if ~isempty(tempSpikeTimes{iChan})
         nSpikesThisChan = length(tempSpikeTimes{iChan});
         totalSpikes = totalSpikes + nSpikesThisChan;
@@ -23,13 +26,13 @@ for iChan = 1:1
             p.trData.spikeTimes = [p.trData.spikeTimes; ...
                 (tempSpikeTimes{iChan} / 30000)'];
             p.trData.spikeClusters = [p.trData.spikeClusters; ...
-                zeros(nSpikesThisChan, 1)];
+                zeros(nSpikesThisChan, 1)+iChan];
         end
     end
 end
 
 disp(['Received ' num2str(totalSpikes) ' spikes from ' ...
-    num2str(nnz(~cellfun(@isempty, tempSpikeTimes))) ' channels']);
+    num2str(nChannels) ' channels']);
 
 % get strobed event values and event times from ripple
 [~, tempEventTimes, tempEventValues] = pds.xippmex('digin');

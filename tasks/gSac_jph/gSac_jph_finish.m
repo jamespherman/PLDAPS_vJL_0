@@ -125,10 +125,19 @@ if p.trData.trialEndState == p.state.sacComplete
     % spikes regardless of how recently we've retreived them so we want to
     % make sure we''re keeping only new spikes:
     if ~isempty(p.trData.spikeTimes) && ~isempty(p.trData.eventValues)
+
+        % if we're using "rippleChanSelect", only grab spiketimes from the
+        % cluster we're interested in.
+        if p.trVars.rippleChanSelect > 0
+            newSpikes = p.trData.spikeTimes(...
+            p.trData.spikeTimes > p.trData.eventTimes(1) & ...
+            p.trData.spikeTimes < p.trData.eventTimes(end) & ...
+            p.trData.spikeClusters == p.trVars.rippleChanSelect);
+        else
         newSpikes = p.trData.spikeTimes(...
             p.trData.spikeTimes > p.trData.eventTimes(1) & ...
             p.trData.spikeTimes < p.trData.eventTimes(end));
-
+        end
 
         % if p.rig.guiData.spikesAndEvents is empty, this is the first
         % successful trial and we're going to populate spikesAndEvents with
@@ -148,6 +157,10 @@ if p.trData.trialEndState == p.state.sacComplete
 
         % assign "tempSAE" to p.rig.guiData.spikesAndEvents:
         p.rig.guiData.spikesAndEvents = tempSAE;
+
+        % make sure that the full version of "p" is populated into the
+        % saccade gui:
+        p.rig.guiData.pldapsData.p = p;
     end
 
 end
