@@ -586,31 +586,55 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     	targColor1 = 17;
     	targColor2 = 17;
     else
-    	targColor1 = 11;
-    	targColor2 = 5;
+    	targColor1 = 0;
+    	targColor2 = 0;
     end
     
-    
     % draw the stimulus (if it is time)
+    
+    %{
+    
+    If we want to make blocks of 30 "pink trials", then 30 "blue trials", etc.:
+    
+    if iGoodTrial > 30
+    	stimColor = 17;
+    	
+    	elseif >60
+    	stimColor = 18;
+    	...
+    	
+    	
+    	Screen (...stimColor)
+    	
+    	%}
+   
+if p.trVars.stimShape == 1
+	stimShape = 'FillOval';
+elseif p.trVars.stimShape == 2
+	stimShape = 'FillRect';
+else
+	stimShape = 'FillOval';
+end    	
+    
     if p.trVars.stimIsOn
     	switch p.trVars.numDots
     	    case 1
-    	    	Screen('FillOval', p.draw.window, targColor1, ...
+    	    	Screen(stimShape, p.draw.window, p.trVars.stimColor, ...
                     repmat(p.draw.stimPointPix, 1, 2) + ...
-                    p.draw.stimRadius*(sqrt(2))*[-1 -1 1 1]); 
+                    (sqrt(2))*[-p.draw.stimWidth/2 -p.draw.stimHeight/2 p.draw.stimWidth/2 p.draw.stimHeight/2]); 
     	    case 2
-                rotationMatrix = [cos(p.trVars.stimRotation), -sin(p.trVars.stimRotation);
-                		  sin(p.trVars.stimRotation), cos(p.trVars.stimRotation)];
+                rotationMatrix = [cosd(p.trVars.stimRotation), -sind(p.trVars.stimRotation);
+                		  sind(p.trVars.stimRotation), cosd(p.trVars.stimRotation)];
                 rotatedTwoStimSepPix = rotationMatrix * [p.draw.twoStimSepPix/2; 0];
                 
-                Screen('FillOval', p.draw.window, targColor2, ...
+                Screen(stimShape, p.draw.window, p.trVars.stimColor, ...
                     repmat(p.draw.stimPointPix - ...
                     rotatedTwoStimSepPix', 1, 2) + ...
-                    p.draw.stimRadius*[-1 -1 1 1]);
-                Screen('FillOval', p.draw.window, targColor2, ...
+                    [-p.draw.stimWidth/2 -p.draw.stimHeight/2 p.draw.stimWidth/2 p.draw.stimHeight/2]);
+                Screen(stimShape, p.draw.window, p.trVars.stimColor, ...
                     repmat(p.draw.stimPointPix + ...
                     rotatedTwoStimSepPix', 1, 2) + ...
-                    p.draw.stimRadius*[-1 -1 1 1]);
+                    [-p.draw.stimWidth2/2 -p.draw.stimHeight2/2 p.draw.stimWidth2/2 p.draw.stimHeight2/2]);
     	end
     end
     	

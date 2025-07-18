@@ -53,18 +53,31 @@ p.trVars.numTargets = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
 targsSameColorCol = strcmp(p.init.trialArrayColumnNames, 'targsSameColor');
 p.trVars.targsSameColor = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
    targsSameColorCol);
+   
+stimShapeCol = strcmp(p.init.trialArrayColumnNames, 'stimShape');
+p.trVars.stimShape = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
+   stimShapeCol);
+
 
 % Where will the stimulus be displayed?
+
+% randomly choose stim color
+p.trVars.stimColor = randi([24, 123]);
 
 % randomly choose x and y coordinates within given radius
 p.trVars.stimDegX  = p.trVars.stimRangeRadius .* cos(2*pi*rand);
 p.trVars.stimDegY  = p.trVars.stimRangeRadius .* sin(2*pi*rand);
 
 % randomly rotate the stimulus by between 0 and 180 degrees (will only affect two-dot stim)
-p.trVars.stimRotation = unifrnd(0, p.trVars.stimRotationRange);
+p.trVars.stimRotation = unifrnd(-p.trVars.stimRotationRange/2, p.trVars.stimRotationRange/2);
 
 % randomly choose size of stimulus between min and max
-p.draw.stimRadius = unifrnd(p.trVars.stimSizeMin, p.trVars.stimSizeMax);
+p.draw.stimWidth = unifrnd(p.trVars.stimSizeMin, p.trVars.stimSizeMax);
+p.draw.stimHeight = unifrnd(p.trVars.stimSizeMin, p.trVars.stimSizeMax);
+
+% Second set chosen for two-stim trials
+p.draw.stimWidth2 = unifrnd(p.trVars.stimSizeMin, p.trVars.stimSizeMax);
+p.draw.stimHeight2 = unifrnd(p.trVars.stimSizeMin, p.trVars.stimSizeMax);
 
 % Where will the target be displayed? We want the 1-dot target to always
 % appear above the fixation and the 2-dot target to always appear below the

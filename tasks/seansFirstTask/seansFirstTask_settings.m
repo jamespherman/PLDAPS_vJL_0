@@ -141,18 +141,27 @@ p.status.iWrongUpTargsDiffColor		    = 0;
 p.status.iWrongDownTargsSameColor	    = 0;
 p.status.iWrongDownTargsDiffColor	    = 0;
 
+p.status.iGoodUpOval			    = 0;
+p.status.iGoodUpRect			    = 0;
+p.status.iGoodDownOval			    = 0;
+p.status.iGoodDownRect			    = 0;
+
+p.status.iWrongUpOval			    = 0;
+p.status.iWrongUpRect			    = 0;
+p.status.iWrongDownOval			    = 0;
+p.status.iWrongDownRect			    = 0;
 
 p.rig.guiStatVals = {...
     'iTrial'; ...   
     'iGoodTrial'; ...
-    'iGoodUpTargsDiffColor'; ...
-    'iWrongUpTargsDiffColor'; ...
-    'iGoodDownTargsDiffColor'; ...
-    'iWrongDownTargsDiffColor'; ...
-    'iGoodUpTargsSameColor'; ...
-    'iWrongUpTargsSameColor'; ...
-    'iGoodDownTargsSameColor'; ...
-    'iWrongDownTargsSameColor'; ...
+    'iGoodUpOval'; ...
+    'iWrongUpOval'; ...
+    'iGoodDownOval'; ...
+    'iWrongDownOval'; ...
+    'iGoodUpRect'; ...
+    'iWrongUpRect'; ...
+    'iGoodDownRect'; ...
+    'iWrongDownRect'; ...
     'trialsLeftInBlock'; ...
     'trialsLeftInBlock'; ...   
 };              
@@ -218,27 +227,27 @@ p.trVarsInit.setTargLocViaMouse         = false;
 p.trVarsInit.setTargLocViaGui           = false;
 p.trVarsInit.setTargLocViaTrialArray    = false;
 
-% p.trVarsInit.ratioShowBothTargs	 = 0.8; % Proportion of trials in which both targets are shown simultaneously
 
 % geometry/stimulus vars:
 p.trVarsInit.propVis             = 1;  % proportion of visually-guided saccades out of the total (i.e. propMem would equal 1 - pVis )
 p.trVarsInit.fixDegX             = 0;    % fixation X location in degrees 
 p.trVarsInit.fixDegY             = 0;    % fixation Y location in degrees
 p.trVarsInit.targOneDegX         = 0;
-p.trVarsInit.targOneDegY         = 6;
+p.trVarsInit.targOneDegY         = 8;
 p.trVarsInit.targTwoDegX         = 0;
-p.trVarsInit.targTwoDegY         = -6;
+p.trVarsInit.targTwoDegY         = -8;
 p.trVarsInit.targDegX		 = [p.trVarsInit.targOneDegX p.trVarsInit.targTwoDegX];
 p.trVarsInit.targDegY		 = [p.trVarsInit.targOneDegY p.trVarsInit.targTwoDegY];
 p.trVarsInit.numDots             = 0; % how many dots does the target stimulus have on this trial?
 p.trVarsInit.twoTargSepDeg       = 1; % how far apart should the two target dots be? (in dva?)
-p.trVarsInit.twoStimSepDegMin    = 1.8; % how far apart should the two stim dots be? (in dva?)
-p.trVarsInit.twoStimSepDegMax    = 2;
-p.trVarsInit.stimRangeRadius	 = 0.35; % create stimuli randomly within radius of __? (in pixels?)
-p.trVarsInit.stimSizeMin	 = 15; % create stimuli of what size? (randomly chosen between min and max) (in pixels?)
-p.trVarsInit.stimSizeMax	 = 20;
-p.trVarsInit.stimRotationRange	 = 0.5; % Range within which stimulus is rotated (randomly chosen between 0 and given value, max 180).
+p.trVarsInit.twoStimSepDegMin    = 1.9; % how far apart should the two stim dots be? (in dva?)
+p.trVarsInit.twoStimSepDegMax    = 2.1;
+p.trVarsInit.stimRangeRadius	 = 1.5; % create stimuli randomly within radius of __? (in pixels?)
+p.trVarsInit.stimSizeMin	 = 25; % create stimuli of what size? (randomly chosen between min and max) (in pixels?)
+p.trVarsInit.stimSizeMax	 = 40;
+p.trVarsInit.stimRotationRange	 = 120; % Range within which stimulus is rotated (randomly chosen between -value/2 and value/2, max 180).
 
+p.trVarsInit.stimShape		 = 0;
 p.trVarsInit.targsSameColor	 = false;
 
 % times/latencies/durations:

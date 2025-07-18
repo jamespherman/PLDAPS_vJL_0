@@ -23,6 +23,33 @@ visGreen    = [0.1 0.9 0.1];
 memMagenta  = [1 0 1];
 yellowISH   = [1 1 0];
 
+randColors = rand (100, 3);
+
+% Alternative way to generate random colors, using LAB colorspace
+% randomly generate angle values (thetas)
+% choose radius values within a certain range (r)
+% convert to ab coordinates for the LAB colorspace (ab)
+% choose luminance values within a certain range (L) 
+% convert to RGB values using lab2rgb
+thetas = randn(100,1)*10 + 90;
+r = rand(100,1)*20 + 80;
+ab = repmat(r,1,2).*[cosd(thetas), sind(thetas)];
+L = rand(100,1)*10 + 60;
+rgbVals = lab2rgb([L,ab]);
+
+
+% Scans the "randColors" array for any row with all three elements between 0.4 and 0.5
+% (i.e. too close in color to background grey) and rerolls them, then rechecks that row
+
+
+for i = 1:100
+    if ((randColors (i, 1) > 0.4 & randColors (i, 1) < 0.5) & ...
+	(randColors (i, 2) > 0.4 & randColors (i, 1) < 0.5) & ...
+	(randColors (i, 3) > 0.4 & randColors (i, 1) < 0.5))
+		randColors (i, :) = rand (1, 3);
+		i = i - 1;
+end
+
 % colors for exp's display
 % black                     0
 % grey-1 (grid-lines)       1
@@ -53,8 +80,16 @@ c.draw.clut.expColors = ...
     visGreen;           % 14
     memMagenta;         % 15
     0, 1, 1;		% 16
-    yellowISH];         % 17
+    yellowISH;		% 17
+    1, 0, 0;		% 18 (Note: 18-23 used for varying color of stim)
+    0, 1, 0;		% 19
+    0, 0 ,1;		% 20
+    0, 1, 1;		% 21
+    1, 0, 1;		% 22
+    1, 1, 0];         	% 23
 
+% 24-123 (below) randomly generated to create randomly colored stim
+c.draw.clut.expColors (25:124, :) = randColors;
 
 % colors for subject's display
 % black                     0
@@ -86,8 +121,18 @@ c.draw.clut.subColors = ...
     bgRGB;        % 14
     bgRGB;        % 15
     bgRGB;	  % 16
-    yellowISH];   % 17
+    yellowISH;    % 17
+    1, 0, 0;		% 18-23 used for varying color of stim
+    0, 1, 0;		% 19
+    0, 0 ,1;		% 20
+    0, 1, 1;		% 21
+    1, 0, 1;		% 22
+    1, 1, 0];         	% 23
 
+% 24-123 (below) randomly generated to create randomly colored stim    
+c.draw.clut.subColors (25:124, :) = randColors;
+
+    
 assert(size(c.draw.clut.subColors,1)==size(c.draw.clut.expColors,1), 'ERROR-- exp & sub Colors must have equal length')
 
 %%

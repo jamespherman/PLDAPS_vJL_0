@@ -10,7 +10,7 @@ function p = initTrialStructure(p)
 
 % column descriptions
 % p.init.trialColumnNames = {'number of target stimuli', 'no of trials' 'trialcode'};
-p.init.trialArrayColumnNames = {'numDots', 'numTargets', 'targsSameColor','no of trials', 'trialcode'};
+p.init.trialArrayColumnNames = {'numDots', 'numTargets', 'targsSameColor', 'stimShape','no of trials', 'trialcode'};
 
 % table definition
 switch p.init.exptType
@@ -55,14 +55,22 @@ end
 
 function table = step1
 table = [
-    1 1 true 0 24001; ... %  one dots, one targets, targets same color, 0 reps, 24001 trial code
-    1 1 false 0 24002; ... % one dots, one targets, targets diff color, 0 reps, 24002 trial code
-    1 2 true 1 24003; ... %  one dots, two targets, targets same color, 1 reps, 24003 trial code
-    1 2 false 3 24004; ... % one dots, two targets, targets diff color, 3 reps, 24004 trial code  
-    2 1 true 0 24005; ... %  two dots, one targets, targets same color, 0 reps, 24005 trial code
-    2 1 false 0 24006; ... % two dots, one targets, targets diff color, 0 reps, 24006 trial code    
-    2 2 true 1 24007; ... %  two dots, two targets, targets same color, 1 reps, 24007 trial code
-    2 2 false 3 24008; ... % two dots, two targets, targets diff color, 3 reps, 24008 trial code    
+    1 1 true 1 0 24001; ... %  one dots, one targets, targets same color, oval stim, 0 reps, 24001 trial code
+    1 1 false 1 0 24002; ... % one dots, one targets, targets diff color, oval stim, 0 reps, 24002 trial code
+    1 2 true 1 0 24003; ... %  one dots, two targets, targets same color, oval stim, 0 reps, 24003 trial code
+    1 2 false 1 5 24004; ... % one dots, two targets, targets diff color, oval stim, 3 reps, 24004 trial code  
+    2 1 true 1 0 24005; ... %  two dots, one targets, targets same color, oval stim, 0 reps, 24005 trial code
+    2 1 false 1 0 24006; ... % two dots, one targets, targets diff color, oval stim, 0 reps, 24006 trial code    
+    2 2 true 1 0 24007; ... %  two dots, two targets, targets same color, oval stim, 0 reps, 24007 trial code
+    2 2 false 1 5 24008; ... % two dots, two targets, targets diff color, oval stim, 3 reps, 24008 trial code
+    1 1 true 2 0 24001; ... %  one dots, one targets, targets same color, rect stim, 0 reps, 24001 trial code
+    1 1 false 2 0 24002; ... % one dots, one targets, targets diff color, rect stim, 0 reps, 24002 trial code
+    1 2 true 2 0 24003; ... %  one dots, two targets, targets same color, rect stim, 0 reps, 24003 trial code
+    1 2 false 2 5 24004; ... % one dots, two targets, targets diff color, rect stim, 3 reps, 24004 trial code  
+    2 1 true 2 0 24005; ... %  two dots, one targets, targets same color, rect stim, 0 reps, 24005 trial code
+    2 1 false 2 0 24006; ... % two dots, one targets, targets diff color, rect stim, 0 reps, 24006 trial code    
+    2 2 true 2 0 24007; ... %  two dots, two targets, targets same color, rect stim, 0 reps, 24007 trial code
+    2 2 false 2 5 24008; ... % two dots, two targets, targets diff color, rect stim, 3 reps, 24008 trial code       
     ];
 end
 
