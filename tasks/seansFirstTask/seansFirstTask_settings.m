@@ -176,7 +176,7 @@ p.rig.guiVars = {...
     'passJoy'; ...          
     'passEye'; ...
     'rewardDurationMs'; ...       
-    'propVis'; ...
+    'leftOrRight'; ...
     'fixWinHeightDeg'; ...
     'fixWinWidthDeg'; ...
     'targWinHeightDeg'; ...
@@ -221,6 +221,8 @@ p.trVarsInit.eyePixY                = 0;
 p.trVarsInit.wantOnlinePlots	    = true;
 p.trVarsInit.mouseEyeSim            = 1;
 
+p.trVarsInit.leftOrRight	    = 0; % If 0, ignore. If 1, only present stimuli on left. If 2, only present stimuli on right
+
 % how to set the next target location (via mouse, gui, or neither). If
 % neither, then they get set at random from the predefined grid.
 p.trVarsInit.setTargLocViaMouse         = false;
@@ -233,19 +235,19 @@ p.trVarsInit.propVis             = 1;  % proportion of visually-guided saccades 
 p.trVarsInit.fixDegX             = 0;    % fixation X location in degrees 
 p.trVarsInit.fixDegY             = 0;    % fixation Y location in degrees
 p.trVarsInit.targOneDegX         = 0;
-p.trVarsInit.targOneDegY         = 8;
+p.trVarsInit.targOneDegY         = 8.7;
 p.trVarsInit.targTwoDegX         = 0;
-p.trVarsInit.targTwoDegY         = -8;
+p.trVarsInit.targTwoDegY         = -8.7;
 p.trVarsInit.targDegX		 = [p.trVarsInit.targOneDegX p.trVarsInit.targTwoDegX];
 p.trVarsInit.targDegY		 = [p.trVarsInit.targOneDegY p.trVarsInit.targTwoDegY];
 p.trVarsInit.numDots             = 0; % how many dots does the target stimulus have on this trial?
 p.trVarsInit.twoTargSepDeg       = 1; % how far apart should the two target dots be? (in dva?)
-p.trVarsInit.twoStimSepDegMin    = 1.9; % how far apart should the two stim dots be? (in dva?)
-p.trVarsInit.twoStimSepDegMax    = 2.1;
-p.trVarsInit.stimRangeRadius	 = 1.5; % create stimuli randomly within radius of __? (in pixels?)
+p.trVarsInit.twoStimSepDegMin    = 1.7; % how far apart should the two stim dots be? (in dva?)
+p.trVarsInit.twoStimSepDegMax    = 1.9;
+p.trVarsInit.stimRangeRadius	 = 0.5; % create stimuli randomly within radius of __? (in pixels?)
 p.trVarsInit.stimSizeMin	 = 25; % create stimuli of what size? (randomly chosen between min and max) (in pixels?)
-p.trVarsInit.stimSizeMax	 = 40;
-p.trVarsInit.stimRotationRange	 = 120; % Range within which stimulus is rotated (randomly chosen between -value/2 and value/2, max 180).
+p.trVarsInit.stimSizeMax	 = 35;
+p.trVarsInit.stimRotationRange	 = 90; % Range within which stimulus is rotated (randomly chosen between -value/2 and value/2, max 180).
 
 p.trVarsInit.stimShape		 = 0;
 p.trVarsInit.targsSameColor	 = false;
@@ -283,7 +285,7 @@ p.trVarsInit.stimDurMax		     = 0.6;
 p.trVarsInit.targOnsetMin            = 0.01; % Time after stim goes off before target onset
 p.trVarsInit.targOnsetMax            = 0.02;
 p.trVarsInit.goTimePostTargMin       = 0.3; % min duration from targ onset to the 'go' signal to saccade (which is fixation offset)
-p.trVarsInit.goTimePostTargMax       = 0.8; % max duration from targ onset to the 'go' signal to saccade (which is fixation offset)
+p.trVarsInit.goTimePostTargMax       = 0.6; % max duration from targ onset to the 'go' signal to saccade (which is fixation offset)
 
 p.trVarsInit.maxFixWait              = 5;    % maximum time to wait for fixation-acquisition
 p.trVarsInit.targOnSacOnly           = 1;    % condition target reappearance on saccade?

@@ -389,7 +389,7 @@ switch p.trVars.currentState
         % after reward delivery has elapsed, it's time to exit the
         % while-loop.
         elseif p.trData.timing.reward > 0 && (timeNow - p.trData.timing.reward) > (p.trVars.postRewardDuration + p.rig.dp.dacPadDur + p.trVars.rewardDurationMs/1000)
-            p.trVars.exitWhileLoop = true;
+            p.trVars.exitWhileLoop = true;            
         end
         
 
@@ -621,7 +621,7 @@ end
     	    case 1
     	    	Screen(stimShape, p.draw.window, p.trVars.stimColor, ...
                     repmat(p.draw.stimPointPix, 1, 2) + ...
-                    (sqrt(2))*[-p.draw.stimWidth/2 -p.draw.stimHeight/2 p.draw.stimWidth/2 p.draw.stimHeight/2]); 
+                    [-p.draw.stimWidth/2 -p.draw.stimHeight/2 p.draw.stimWidth/2 p.draw.stimHeight/2]); 
     	    case 2
                 rotationMatrix = [cosd(p.trVars.stimRotation), -sind(p.trVars.stimRotation);
                 		  sind(p.trVars.stimRotation), cosd(p.trVars.stimRotation)];

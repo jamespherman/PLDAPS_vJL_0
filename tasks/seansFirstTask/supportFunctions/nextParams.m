@@ -68,12 +68,24 @@ p.trVars.stimColor = randi([24, 123]);
 p.trVars.stimDegX  = p.trVars.stimRangeRadius .* cos(2*pi*rand);
 p.trVars.stimDegY  = p.trVars.stimRangeRadius .* sin(2*pi*rand);
 
+
+if p.trVars.leftOrRight == 1
+	p.trVars.stimDegX = -abs(p.trVars.stimDegX) - 1;
+elseif p.trVars.leftOrRight == 2
+	p.trVars.stimDegX = abs(p.trVars.stimDegX) + 1;
+end
+
 % randomly rotate the stimulus by between 0 and 180 degrees (will only affect two-dot stim)
-p.trVars.stimRotation = unifrnd(-p.trVars.stimRotationRange/2, p.trVars.stimRotationRange/2);
+p.trVars.stimRotation = 90 + unifrnd(-p.trVars.stimRotationRange/2, p.trVars.stimRotationRange/2);
 
 % randomly choose size of stimulus between min and max
 p.draw.stimWidth = unifrnd(p.trVars.stimSizeMin, p.trVars.stimSizeMax);
 p.draw.stimHeight = unifrnd(p.trVars.stimSizeMin, p.trVars.stimSizeMax);
+
+if p.trVars.numDots == 1
+	p.draw.stimWidth = p.draw.stimWidth*(unifrnd(1, sqrt(2)));
+	p.draw.stimHeight = p.draw.stimHeight*(unifrnd(1, sqrt(2)));
+end
 
 % Second set chosen for two-stim trials
 p.draw.stimWidth2 = unifrnd(p.trVars.stimSizeMin, p.trVars.stimSizeMax);

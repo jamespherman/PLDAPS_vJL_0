@@ -39,6 +39,7 @@ codes.uniqueTaskCode_nfl        	= 32010;
 codes.uniqueTaskCode_gSac_jph  		= 32011;
 codes.uniqueTaskCode_gSac_contrast  = 32012;
 codes.uniqueTaskCode_seansFirstTask = 32013;
+codes.uniqueTaskCode_tokens         = 32014;
 
 %% unique codes that are internal to the 'classyStrobe' function class
 % (see pds.classyStrobe.m for more details)
@@ -204,6 +205,13 @@ codes.imageId           = 6660;     % id of image
 codes.imageOn           = 6661;     % time of image onset
 codes.imageOff          = 6662;     % time of image offset
 codes.freeViewDur       = 6663;     % duration of free image viewing
+
+% tokens task codes
+codes.CUE_ON = 5; % [cite: 1]
+codes.REWARD_GIVEN = 7; % [cite: 1]
+codes.TRIAL_END = 6; % [cite: 1]
+codes.REWARD_AMOUNT_BASE = 100; % Base for strobing reward amount [cite: 1]
+codes.OUTCOME_DIST_BASE = 90; % Base for strobing outcome distribution type [cite: 1]
 
 %% validation
 
