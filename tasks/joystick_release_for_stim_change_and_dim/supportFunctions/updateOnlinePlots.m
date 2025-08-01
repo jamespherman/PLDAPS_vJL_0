@@ -105,193 +105,7 @@ psthLims = [...
 % drawnow;
 % end
 
-% Cued vs. uncued stimulus change plot
 
-% update accumulators
-
-% if it's a no change trial (redundancy) or a one-stimulus trial, skip
-if p.trVars.isStimChangeTrial && p.stim.nStim ~= 1
-
-    if p.status.chgLoc(end) == 0 % No change trial, skip
-
-        % if it's a cued change trial, add to the total number of cued change
-        % trials
-    elseif p.status.chgLoc(end) == p.stim.cueLoc
-        p.status.cuedTotalCount.global = ...
-            p.status.cuedTotalCount.global + 1;
-
-        % if it's a correct response, add to the cued hit count
-        if p.trData.trialEndState == p.state.hit
-            p.status.cuedHitCount.global = ...
-                p.status.cuedHitCount.global + 1;
-        end
-
-
-        % if it's an uncued change trial, add to the total number of uncued
-        % change trials
-    else
-        p.status.uncuedTotalCount.global = ...
-            p.status.uncuedTotalCount.global + 1;
-        if p.trData.trialEndState == p.state.hit
-            p.status.uncuedHitCount.global = ...
-                p.status.uncuedHitCount.global + 1;
-        end
-    end
-end
-
-% Compute performance
-[cuedPerf, cuedPCI] = binofit(p.status.cuedHitCount.global, ...
-    p.status.cuedTotalCount.global);
-[uncuedPerf, uncuedPCI] = binofit(p.status.uncuedHitCount.global, ...
-    p.status.uncuedTotalCount.global);
-
-barHalfWidth = 0.25;
-
-% Bar colors
-cueColor = [12 123 220] / 255; % blue
-uncuedColor = [255 194 10] / 255; % gold
-
-% Update the plot objects
-fillXCued = 1 + barHalfWidth*[-1 1 1 -1 -1];
-fillXUncued = 2 + barHalfWidth*[-1 1 1 -1 -1];
-
-% Define y data for performance fill
-perfFillYCuedGlobal = [cuedPCI(1) cuedPCI(1) cuedPCI(2) ...
-    cuedPCI(2) cuedPCI(1)];
-perfFillYUncuedGlobal = [uncuedPCI(1) uncuedPCI(1) uncuedPCI(2) ...
-    uncuedPCI(2) uncuedPCI(1)];
-
-% only update plot if window is still open:
-if isgraphics(p.draw.onlineCuePerfPlotWindow)
-set(p.draw.onlineCuePerfFillObj(1), 'XData', fillXCued, ...
-    'YData', perfFillYCuedGlobal, 'FaceColor', cueColor);
-set(p.draw.onlineCuePerfPlotObj(1), 'XData', fillXCued(1:2), ...
-    'YData', [cuedPerf cuedPerf]);
-set(p.draw.onlineCuePerfFillObj(2), 'XData', fillXUncued, ...
-    'YData', perfFillYUncuedGlobal, 'FaceColor', uncuedColor);
-set(p.draw.onlineCuePerfPlotObj(2), 'XData', fillXUncued(1:2), ...
-    'YData', [uncuedPerf uncuedPerf]);
-
-% update ticks:
-set(p.draw.onlineCuePerfPlotAxes, 'XTick', ...
-    [1 2], 'XTickLabel', ...
-    {'Cued Change', 'Uncued Change'});
-
-drawnow;
-end
-
-% Split cued vs. uncued stimulus change plot
-
-% update accumulators
-
-% if it's a no change trial (redundancy) or a one-stimulus trial, skip
-if p.trVars.isStimChangeTrial && p.stim.nStim ~= 1
-    chgLoc = p.status.chgLoc(end); % The location of the change
-    isHit = (p.trData.trialEndState == p.state.hit); % if monkey is correct
-
-    % if it's a no change trial (redundancy), skip
-    if chgLoc == 0
-
-
-        % if it's a cued change trial, add to the total number of cued change
-        % trials
-    elseif chgLoc == p.stim.cueLoc
-        p.status.cuedTotalCount.global = p.status.cuedTotalCount.global + 1;
-        % p.status.cuedTotalCount.(['loc' num2str(chgLoc)]) = p.status.cuedTotalCount.(['loc' num2str(chgLoc)]) + 1;
-
-        % if it's a correct response, add to the cued hit count
-        if isHit
-            p.status.cuedHitCount.global = p.status.cuedHitCount.global + 1;
-            % p.status.cuedHitCount.(['loc' num2str(chgLoc)]) = p.status.cuedHitCount.(['loc' num2str(chgLoc)]) + 1;
-        end
-
-
-        % if it's an uncued change trial, add to the total number of uncued
-        % change trials
-    else
-        p.status.uncuedTotalCount.global = p.status.uncuedTotalCount.global + 1;
-        % p.status.uncuedTotalCount.(['loc' num2str(chgLoc)]) = p.status.uncuedTotalCount.(['loc' num2str(chgLoc)]) + 1;
-
-        % if it's a correct response, add to the uncued hit count
-        if isHit
-            p.status.uncuedHitCount.global = p.status.uncuedHitCount.global + 1;
-            % p.status.uncuedHitCount.(['loc' num2str(chgLoc)]) = p.status.uncuedHitCount.(['loc' num2str(chgLoc)]) + 1;
-        end
-    end
-end
-
-% Update plot objects
-xPosCued1 = 0.5 + 0.2;
-xPosUncued1 = 0.62 + 0.2;
-xPosCued3 = 1.38 - 0.2;
-xPosUncued3 = 1.5 - 0.2;
-
-xPositions = [xPosCued1, xPosUncued1, xPosCued3, xPosUncued3];
-
-barHalfWidth = 0.05;
-
-% only try to draw if window is open!
-if isgraphics(p.draw.onlineCuePerfPlotWindow)
-for i = 1:length(xPositions)
-    loc = ceil(i / 2); % Determine actual location (1 and 3)
-
-    % Check if cued or uncued and assign the correct color
-    if loc == 1 && mod(i, 2) == 1 % Cued Location 1
-        perfCount = p.status.cuedHitCount.loc1;
-        totalCount = p.status.cuedTotalCount.loc1;
-    elseif loc == 1 % Uncued Location 1
-        perfCount = p.status.uncuedHitCount.loc1;
-        totalCount = p.status.uncuedTotalCount.loc1;
-    elseif loc == 3 && mod(i, 2) == 1 % Cued Location 3
-        perfCount = p.status.cuedHitCount.loc3;
-        totalCount = p.status.cuedTotalCount.loc3;
-    else % Uncued Location 3
-        perfCount = p.status.uncuedHitCount.loc3;
-        totalCount = p.status.uncuedTotalCount.loc3;
-    end
-
-  
-    [perf, pci] = binofit(perfCount, totalCount);
-
-    fillX = xPositions(i) + barHalfWidth * [-1 1 1 -1 -1];
-    perfFillY = [pci(1) pci(1) pci(2) pci(2) pci(1)];
-
-    if mod(i, 2) == 1
-        color = cueColor;
-    else
-        color = uncuedColor;
-    end
-
-    % Update plot objects
-    set(p.draw.onlineSplitCuePerfFillObj(i), 'XData', fillX, ...
-        'YData', perfFillY, 'FaceColor', color);
-    set(p.draw.onlineSplitCuePerfPlotObj(i), 'XData', fillX(1:2), ...
-        'YData', [perf perf]);
-end
-
-% Positions for the grouped tick labels
-centerPos1 = mean([xPosCued1, xPosUncued1]);
-centerPos3 = mean([xPosCued3, xPosUncued3]);
-set(p.draw.onlineSplitCuePerfPlotAxes, 'XTick', ...
-    [centerPos1, centerPos3], 'XTickLabel', {'Location 1', 'Location 3'});
-
-% Dummy plot objects for the legend
-hold(p.draw.onlineSplitCuePerfPlotAxes, 'on');
-dummyCue = plot(p.draw.onlineSplitCuePerfPlotAxes, NaN, NaN, ...
-    's', 'Color', cueColor, 'MarkerFaceColor', cueColor, 'MarkerSize', 10);
-dummyUncued = plot(p.draw.onlineSplitCuePerfPlotAxes, NaN, NaN, ...
-    's', 'Color', uncuedColor, 'MarkerFaceColor', uncuedColor, ...
-    'MarkerSize', 10);
-
-% Legend
-lgd = legend(p.draw.onlineSplitCuePerfPlotAxes, ...
-    [dummyCue, dummyUncued], {'Cued', 'Uncued'}, ...
-    'Location', 'northoutside', 'Orientation', 'horizontal');
-title(lgd, 'Change Type');
-
-hold(p.draw.onlineSplitCuePerfPlotAxes, 'off');
-drawnow;
-end
 
 % Confusion matrix plot
 
@@ -376,58 +190,142 @@ ylim([0 1]);
 hold off;
 drawnow;
 
+% Cued vs. Uncued Performance Plot
+if isgraphics(p.draw.onlineCuedPlotWindow)
+    % --- Step 1: Create logical indices for different trial types ---
+
+    % Master filter: Only include multi-stim trials (nStim > 1) that could result in a hit or miss.
+    masterFilter = (p.status.nStim > 1) & ismember(p.status.trialEndStates, [p.state.hit, p.state.miss]);
+    
+    % Cued Change Trials: change location matches cue location
+    isCuedChange = p.status.cueLoc == p.status.chgLoc & p.status.chgLoc > 0;
+    
+    % Uncued Change Trials: change location does not match cue location
+    isUncuedChange = p.status.cueLoc ~= p.status.chgLoc & p.status.chgLoc > 0;
+    
+    % Change occurred at Location 1
+    atLoc1 = p.status.chgLoc == 1;
+    
+    % Change occurred at Location 3
+    atLoc3 = p.status.chgLoc == 3;
+    
+    % --- Step 2: Calculate Hit Counts (Numerators) ---
+    
+    % Overall Performance
+    cuedHits_all = nnz(masterFilter & isCuedChange & p.status.trialEndStates == p.state.hit);
+    uncuedHits_all = nnz(masterFilter & isUncuedChange & p.status.trialEndStates == p.state.hit);
+    
+    % Location 1 Performance
+    cuedHits_loc1 = nnz(masterFilter & isCuedChange & atLoc1 & p.status.trialEndStates == p.state.hit);
+    uncuedHits_loc1 = nnz(masterFilter & isUncuedChange & atLoc1 & p.status.trialEndStates == p.state.hit);
+    
+    % Location 3 Performance
+    cuedHits_loc3 = nnz(masterFilter & isCuedChange & atLoc3 & p.status.trialEndStates == p.state.hit);
+    uncuedHits_loc3 = nnz(masterFilter & isUncuedChange & atLoc3 & p.status.trialEndStates == p.state.hit);
+    
+    % --- Step 3: Calculate Total Trials (Denominators) ---
+    
+    % Overall Totals
+    cuedTotal_all = nnz(masterFilter & isCuedChange);
+    uncuedTotal_all = nnz(masterFilter & isUncuedChange);
+    
+    % Location 1 Totals
+    cuedTotal_loc1 = nnz(masterFilter & isCuedChange & atLoc1);
+    uncuedTotal_loc1 = nnz(masterFilter & isUncuedChange & atLoc1);
+    
+    % Location 3 Totals
+    cuedTotal_loc3 = nnz(masterFilter & isCuedChange & atLoc3);
+    uncuedTotal_loc3 = nnz(masterFilter & isUncuedChange & atLoc3);
+    
+    % --- Step 4: Calculate Rates and Confidence Intervals ---
+    
+    hitCounts = [cuedHits_all, uncuedHits_all, cuedHits_loc1, uncuedHits_loc1, cuedHits_loc3, uncuedHits_loc3];
+    totalCounts = [cuedTotal_all, uncuedTotal_all, cuedTotal_loc1, uncuedTotal_loc1, cuedTotal_loc3, uncuedTotal_loc3];
+    
+    % Use binofit to get rates and error bars. Handle cases where totalCounts is zero.
+    zeroTotals = totalCounts == 0;
+    hitCounts(zeroTotals) = 0; % Ensure binofit doesn't fail
+    totalCounts(zeroTotals) = 1; % Set denominator to 1 to avoid NaN results
+    
+    [hitRates, errorBars] = binofit(hitCounts, totalCounts);
+    
+    hitRates(zeroTotals) = 0; % Manually set rate to 0 if no trials occurred
+    errorBars(zeroTotals, :) = 0; % Manually set error to 0
+
+    % --- Step 5: Update the Plot Objects ---
+    
+    nPlots = length(hitRates);
+    for i = 1:nPlots
+        % Update the fill object (error bar)
+        yFill = [errorBars(i, 1), errorBars(i, 1), errorBars(i, 2), errorBars(i, 2), errorBars(i, 1)];
+        set(p.draw.onlineCuedFillObj(i), 'YData', yFill);
+        
+        % Update the plot object (mean line)
+        centerY = hitRates(i);
+        xMin = i - 0.3;
+        xMax = i + 0.3;
+        xPlot = [xMin, xMax];
+        yPlot = [centerY, centerY];
+        set(p.draw.onlineCuedPlotObj(i), 'XData', xPlot, 'YData', yPlot);
+    end
+    
+    % Set Y-axis limits and refresh the plot
+    ylim(p.draw.onlineCuedPlotAxes, [0 1]);
+    drawnow;
+end
+
 
 % % Psychometric function estimation plot
-% if contains(p.init.exptType, 'psycho')
-% 
-%     % Update accumulators
-% 
-%     % if it's a no change trial, skip
-%     if p.trVars.isStimChangeTrial
-%         isHit = (p.trData.trialEndState == p.state.hit); % if monkey is correct
-% 
-%         % if it's a hit, add to the appropriate accumulator
-%         if isHit
-%             p.status.orientDelta{p.stim.deltasArrayIndex}.hitCount = ...
-%                 p.status.orientDelta{p.stim.deltasArrayIndex}.hitCount + 1;
-%         end
-% 
-%         % add to the total count after each trial
-%         p.status.orientDelta{p.stim.deltasArrayIndex}.totalCount = ...
-%             p.status.orientDelta{p.stim.deltasArrayIndex}.totalCount + 1;
-%     end
-% 
-%     % Update plot objects
-%     barHalfWidth = 0.05;
-%     xPositions = [0.75, 1.25, 1.75, 2.25];
-% 
-%     for i = 1:length(p.status.orientDelta)
-%         % Retrieve performance count and total count for this delta
-%         perfCount = p.status.orientDelta{i}.hitCount;
-%         totalCount = p.status.orientDelta{i}.totalCount;
-% 
-%         % Compute performance and confidence interval
-%         [perf, pci] = binofit(perfCount, totalCount);
-% 
-%         % Set x positions for the fill objects
-%         fillX = xPositions(i) + barHalfWidth * [-1 1 1 -1 -1];
-% 
-%         % Set Y positions for confidence interval and performance line
-%         perfFillY = [pci(1) pci(1) pci(2) pci(2) pci(1)];
-%         perfLineY = [perf perf];
-% 
-%         % Update the plot objects for this delta
-%         set(p.draw.onlinePsychoPerfFillObj(i), 'XData', fillX, 'YData', perfFillY, 'FaceColor', 0.7*[1 1 1]); % Adjust color as needed
-%         set(p.draw.onlinePsychoPerfPlotObj(i), 'XData', fillX(1:2), 'YData', perfLineY, 'Color', [0 0 0], 'LineWidth', 2); % Adjust color and line width as needed
-%     end
-%     try
-%         set(p.draw.onlinePsychoPerfPlotAxes, 'XTick', xPositions, 'XTickLabel', {p.stim.deltasArray(1), p.stim.deltasArray(2), p.stim.deltasArray(3), p.stim.deltasArray(4)});
-%     catch me
-%     end
-%     % Refresh the plot to show updates
-%     drawnow;
-% 
-% end
+if contains(p.init.exptType, 'psycho') && false
+
+    % Update accumulators
+
+    % if it's a no change trial, skip
+    if p.trVars.isStimChangeTrial
+        isHit = (p.trData.trialEndState == p.state.hit); % if monkey is correct
+
+        % if it's a hit, add to the appropriate accumulator
+        if isHit
+            p.status.orientDelta{p.stim.deltasArrayIndex}.hitCount = ...
+                p.status.orientDelta{p.stim.deltasArrayIndex}.hitCount + 1;
+        end
+
+        % add to the total count after each trial
+        p.status.orientDelta{p.stim.deltasArrayIndex}.totalCount = ...
+            p.status.orientDelta{p.stim.deltasArrayIndex}.totalCount + 1;
+    end
+
+    % Update plot objects
+    barHalfWidth = 0.05;
+    xPositions = [0.75, 1.25, 1.75, 2.25];
+
+    for i = 1:length(p.status.orientDelta)
+        % Retrieve performance count and total count for this delta
+        perfCount = p.status.orientDelta{i}.hitCount;
+        totalCount = p.status.orientDelta{i}.totalCount;
+
+        % Compute performance and confidence interval
+        [perf, pci] = binofit(perfCount, totalCount);
+
+        % Set x positions for the fill objects
+        fillX = xPositions(i) + barHalfWidth * [-1 1 1 -1 -1];
+
+        % Set Y positions for confidence interval and performance line
+        perfFillY = [pci(1) pci(1) pci(2) pci(2) pci(1)];
+        perfLineY = [perf perf];
+
+        % Update the plot objects for this delta
+        set(p.draw.onlinePsychoPerfFillObj(i), 'XData', fillX, 'YData', perfFillY, 'FaceColor', 0.7*[1 1 1]); % Adjust color as needed
+        set(p.draw.onlinePsychoPerfPlotObj(i), 'XData', fillX(1:2), 'YData', perfLineY, 'Color', [0 0 0], 'LineWidth', 2); % Adjust color and line width as needed
+    end
+    try
+        set(p.draw.onlinePsychoPerfPlotAxes, 'XTick', xPositions, 'XTickLabel', {p.stim.deltasArray(1), p.stim.deltasArray(2), p.stim.deltasArray(3), p.stim.deltasArray(4)});
+    catch me
+    end
+    % Refresh the plot to show updates
+    drawnow;
+
+end
 % 
 % % Learning curve plot
 % 

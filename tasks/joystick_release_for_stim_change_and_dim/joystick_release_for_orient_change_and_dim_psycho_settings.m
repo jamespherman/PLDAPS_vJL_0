@@ -186,6 +186,12 @@ p.status.foil2CtLoc1                = 0; % count of two patch foil change trials
 p.status.cue2CtLoc2                 = 0; % count of two patch cue change trials at location 2
 p.status.foil2CtLoc2                = 0; % count of two patch foil change trials at location 2
 
+p.status.totalHits                  = 0; % count of correct rejects
+p.status.totalMisses                = 0; % count of misses
+p.status.totalChangeFalseAlarms     = 0; % count of change FAs
+p.status.totalNoChangeFalseAlarms   = 0; % count of no change FAs
+p.status.totalCorrectRejects        = 0; % count of correct rejects
+
 p.status.missedFrames               = 0; % count of missed frames as reported by psychtoolbox
 p.status.freeRwdRand                = 0; % random number drawn for deciding whether or not to deliver free reward
 p.status.freeRwdTotal               = 0; % total count of free inter trial interval rewards delivered
@@ -198,6 +204,16 @@ p.status.trialEndStates             = []; % vector of trial end state values
 p.status.reactionTimes              = []; % vector of joystick release reaction times (relative to dimming).
 p.status.dimVals                    = []; % vector of dim values.
 p.status.changeDelta                = []; % magnitude of stimulus change in current trial
+p.status.trialsArrayRowsOrientDelta = []; % magnitude of stimulus change for each trial in the trials array
+
+% Initialize a cell array to hold psychometric performance data.
+% Each cell will contain a struct for one of the difficulty levels.
+nDeltas = 4; % This should match the number of values in p.stim.deltasArray
+p.status.orientDelta = cell(1, nDeltas);
+for i = 1:nDeltas
+    p.status.orientDelta{i} = struct('hitCount', 0, 'totalCount', 0);
+end
+
 p.rig.guiStatVals = {...
     'blockNumber'; ...
     'iTrial'; ...   
@@ -320,17 +336,17 @@ p.trVarsInit.highDimVal          = 0.9;        % high brightness ABOVE backgroun
 
 % Initial / base values for each stimulus feature.
 p.trVarsInit.speedInit                = 0.0;      % initial motion magniutde
-p.trVarsInit.ctrstInit                = 0.375;    % initial contrast
+p.trVarsInit.ctrstInit                = 0.175;    % initial contrast
 p.trVarsInit.orientInit               = 30;       % initial orientation
 p.trVarsInit.freqInit                 = 0.25;     % initial spatial frequency (cycles per degree)
 p.trVarsInit.satInit                  = 0.0;      % initial color saturation
-p.trVarsInit.lumInit                  = 0.3;      % initial luminance
+p.trVarsInit.lumInit                  = -0.8;      % initial luminance
 p.trVarsInit.hueInit                  = 20;       % initial hue (color angle)
 
 % Variance of feature dimensions that can be variable in this way:
-p.trVarsInit.orientVar                = 8;        % variability in orientation
+p.trVarsInit.orientVar                = 5;        % variability in orientation
 p.trVarsInit.hueVar                   = 0.00;     % variability in hue (angle)
-p.trVarsInit.lumVar                   = 0.02;     % variability in luminance
+p.trVarsInit.lumVar                   = 0.00;     % variability in luminance
 p.trVarsInit.satVar                   = 0.00;     % variability in saturation
 
 % Magnitude of stimulus delta if desired:
@@ -354,8 +370,12 @@ p.trVarsInit.nEpochs                  = 2;        % just one "pre-change" and on
 % times/latencies/durations:
 p.trVarsInit.rewardDurationMs        = 300;      % reward duration
 p.trVarsInit.fix2CueIntvl            = 0.3;      % Time delay between acquiring fixation and cue onset.
-p.trVarsInit.cueDur                  = 0.25;      % Duration of cue presentaiton.
-p.trVarsInit.cue2StimItvl            = 0.3;     % time between cue offset and stimulus onset (stimulus onset asynchrony).
+p.trVarsInit.fix2CueIntvlMin         = 0.25;
+p.trVarsInit.fix2CueIntvlWin         = 0.25;
+p.trVarsInit.cueDur                  = 0.3;     % Duration of cue presentaiton.
+p.trVarsInit.cue2StimItvl            = 0.3;      % time between cue offset and stimulus onset (stimulus onset asynchrony).
+p.trVarsInit.cue2StimIntvlMin        = 0.25;     % Minimum time between cue presentation (offset) and stimulus onset.
+p.trVarsInit.cue2StimIntvlWin        = 0.25;     % Duration of possible stimulus onset window after cue presentation (between "min" and "min + win").
 p.trVarsInit.stim2ChgIntvl           = 0.5;      % minimum time between stimulus onset and change.
 p.trVarsInit.chgWinDur               = 1.5;      % time window during which a change is possible.
 p.trVarsInit.rewardDelay             = 0.65;     % delay between cued change and reward delivery for hits.
@@ -378,6 +398,7 @@ p.trVarsInit.postRewardDurMax        = 1.2;      % how long should the trial las
 p.trVarsInit.useQuest                = false;    % use "QUEST" to determine next stimulus value?
 p.trVarsInit.numTrialsForPerfCalc    = 100;      % how many of the most recently completed trials should be used to calculate % correct / median RT?
 p.trVarsInit.freeRewardProbability   = 0.1;      % How probable is it that the monkey will get a free reward in between trials?
+p.trVarsInit.freeRewardFlag          = false;    % do we want free rewards delivered in this session?
 
 p.trVarsInit.connectRipple           = true;
 p.trVarsInit.rippleChanSelect        = 1;
@@ -511,6 +532,7 @@ p.rig.dp.dacChannelOut         = 0;        % Which channel to use for DAC outpt 
 % contrast change trial occurs).
 p.stim.featureValueNames = {'speed', 'ctrst', 'orient', 'freq', 'sat', 'lum', 'hue'};
 p.stim.nFeatures         = length(p.stim.featureValueNames);
+p.stim.deltasArray       = linspace(p.trVarsInit.orientDeltaMin, p.trVarsInit.orientDeltaMax, 4);
 
 %% CLUT - Color Look Up Table
 % the CLUT gets initialized in the _init file, but here we set character

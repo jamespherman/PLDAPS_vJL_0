@@ -12,7 +12,6 @@ function p = joystick_release_for_stim_change_and_dim_next(p)
 % "next" file runs for the first time after "init" and before "run".
 % Thereafter, runs after "finish" and before "run" until experiment is
 % done.
-
 %% In this fuction, you may expect:
 % (1) Iterate trial counter
 % (2) Initialize trial variables (fixation color, joystick release time,
@@ -25,25 +24,24 @@ function p = joystick_release_for_stim_change_and_dim_next(p)
 % (7) Generate stimuli
 % (8) record stimulus details
 % (9) Start (or "unpause") electrophysiology system and start schedules.
-
 %% update p.trialVars:
 % p.trialVars inherits whatever was set in p.userVars which inherited its
 % goodies from initVars. Thus, the variables on every trial (ie trialVars)
 % stem from the initVars (in settings file) btu may be overriden by user
 % via userVars
-
 % (1) iterate trial counter
 p.status.iTrial = p.status.iTrial + 1;
-
 % (2) initialize trial variables.
 p.trVars = p.trVarsGuiComm;
-
 % (3) define next trial parameters
 p  = nextParams(p);
 
+% Find the index of the current orientation delta to use for online plotting.
+% This needs to happen after nextParams so that p.trVars.orientDelta is defined.
+% p.stim.deltasArrayIndex = find(p.stim.deltasArray == p.trVars.orientDelta);
+
 % (4) define visual elements (experimenter display only)
 p  = defineVisuals(p);
-
 % (5) set schedules; first make sure that no schedule is running:
 Datapixx('RegWrRd');
 dacStatus = Datapixx('GetDacStatus');
@@ -53,14 +51,10 @@ while dacStatus.scheduleRunning
     dacStatus = Datapixx('GetDacStatus');
 end
 p  = pds.setSchedules(p);
-
 % (6) init trial data
 p = initTrData(p);
-
 % (7) generate stimuli
 p   = generateStimuli(p);
-
 % (10) Start ephys recording and ADC schedules
 pds.startEphysAndSchedules;
-
 end

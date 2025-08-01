@@ -411,6 +411,12 @@ switch p.trVars.currentState
         % DELIVER REWARD AFTER SOME DELAY AND WAIT UNTIL POST REWARD
         % DURATION HAS ELAPSED, THEN EXIT LOOP
 
+        % isUncuedChange = p.stim.cueLoc ~= p.stim.stimChgIdx & p.stim.stimChgIdx > 0;
+        % 
+        % if isUncuedChange
+        %     p.trVars.rewardDurationMs = p.trVars.rewardDurationMsSmall;
+        % end
+
         % if the delay for reward delivery has elapsed and reward delivery
         % hasn't yet been triggered, deliver the reward.
         if (timeNow - p.trData.timing.fixAq) > p.trVars.hitRwdTime && ...

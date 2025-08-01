@@ -3,27 +3,20 @@ function p = nextParams(p)
 % p = nextParams(p)
 %
 % Define parameters for upcoming trial.
-
 % Choose a row of "p.init.trialsArray" for the upcoming trial.
 p = chooseRow(p);
-
 % Trial type information:
 % is this a release on fix off trial or a release after reward trial?
 p = trialTypeInfo(p);
-
 % Cue / foil locations in cartesian coordinates and rectangle outlining the
 % cue-ring.
 p = locationInfo(p);
-
 % Timing info:
 % - cue / foil change times, reward timing, dot duration
 p = timingInfo(p);
-
 end
-
 %%
 function p = chooseRow(p)
-
 % If p.status.trialsArrayRowsPossible is empty, we're at the beginning of
 % the experiment and we need to define it. This also means we're starting
 % block 1 and we should set "p.status.blockNumber" accordingly. At the
@@ -36,7 +29,6 @@ function p = chooseRow(p)
 if isempty(p.status.trialsArrayRowsPossible)
     p.status.trialsArrayRowsPossible =  true(p.init.blockLength, 1);
     p.status.blockNumber = 1;
-
     % define a vector of booleans to determine which trials will have a
     % free reward after they're completed and which will not:
     if p.trVarsInit.freeRewardProbability > 0
@@ -64,14 +56,11 @@ if isempty(p.status.trialsArrayRowsPossible)
         strcmp(p.init.trialArrayColumnNames, 'stim chg'));
     arcAngleProp = nnz(nStim > 1 & cueLoc == chgLoc) / ...
         nnz(nStim > 1 & chgLoc > 0);
-
     % Here we define the proportion of the cue arc that will be colored.
     % Later in "defineVisuals.m" we calculate the actual angles of the
     % start & end of the colored / gray proportions.
     p.draw.cueArcProp = arcAngleProp;
-
 end
-
 % To choose a row of "p.init.trialsArray", we define a logical vector "g"
 % including all the trials that haven't been completed yet, with additional
 % ordering criteria based on number of stimuli and cue location. We first
@@ -94,11 +83,9 @@ elseif any(cueLocs == 4 & p.status.trialsArrayRowsPossible)
 else
     gC = p.status.trialsArrayRowsPossible;
 end
-
 % now we further select based on number of stimuli in the trial:
 nStim = p.init.trialsArray(:, ...
     strcmp(p.init.trialArrayColumnNames, 'n stim'));
-
 % 1st: single stimulus trials
 if any(nStim == 1 & p.status.trialsArrayRowsPossible & gC)
     g = nStim == 1 & ...
@@ -119,48 +106,54 @@ elseif any(nStim == 4 & p.status.trialsArrayRowsPossible & gC)
     g = nStim == 4 & ...
         p.status.trialsArrayRowsPossible & gC;
 end
-
 % choose 1st available row after shuffling list of available rows.
 tempList = shuff(find(g));
 p.trVars.currentTrialsArrayRow = tempList(1);
-
 end
-
 %%
 function p = trialTypeInfo(p)
-
 % retreive random seed values ("trialSeed" and "stimSeed" from trials
 % array.
 p.trVars.stimSeed = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
     strcmp(p.init.trialArrayColumnNames, 'stim seed'));
 p.trVars.trialSeed = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
     strcmp(p.init.trialArrayColumnNames, 'trial seed'));
-
 % use trialSeed to determine following pseudorandom number sequence
 rng(p.trVars.trialSeed);
-
 % Which stimulus is changing on the current trial?
 p.stim.stimChgIdx = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
     strcmp(p.init.trialArrayColumnNames, 'stim chg'));
-
 % which stimulus location is the "cued" location?
 p.stim.cueLoc  = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
     strcmp(p.init.trialArrayColumnNames, 'cue loc'));
-
 % set a couple simple variables that will be helpful during "run"
 p.trVars.isNoChangeTrial    = p.stim.stimChgIdx == 0;
 p.trVars.isStimChangeTrial  = ~p.trVars.isNoChangeTrial;
-
 % how many stimuli will be shown on this trial?
 p.stim.nStim = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
     strcmp(p.init.trialArrayColumnNames, 'n stim'));
+
+
+% isUncuedChange = p.stim.cueLoc ~= p.stim.stimChgIdx & p.stim.stimChgIdx > 0;
+% if isUncuedChange
+%     disp('this is an uncued change.');
+%     p.trVars.orientDelta = 20;
+% end
+
+% If this is a psychometric task, randomly select one of the orientation
+% deltas from our predefined array for this trial. This ensures the value
+% can be found later by the plotting and _next functions.
+if contains(p.init.exptType, 'psycho')
+    p.trVars.orientDelta = p.status.trialsArrayRowsOrientDelta(...
+        p.trVars.currentTrialsArrayRow);
+    disp(['Orient Delta = ' num2str(p.trVars.orientDelta)]);
+end
 
 % Is this an opto stim trial? Opto stim trials have a 4 in the thousands
 % digit of their trial code:
 trialCode = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
     strcmp(p.init.trialArrayColumnNames, 'trialCode'));
 p.trVars.isOptoStimTrial = mod(floor(trialCode / 1000), 10) == 4;
-
 % On a certain proportion of trials, we want the peripheral stimulus to
 % change in some feature without dimming. We use a random number draw to
 % decide which trials this should happen on. At the moment (6/29/23) we're
@@ -169,7 +162,6 @@ p.trVars.isOptoStimTrial = mod(floor(trialCode / 1000), 10) == 4;
 % multiple stimuli, not change trials with single stimuli. Figure all that
 % out here:
 if p.trVars.isStimChangeTrial
-
     % If this is a change trial with multiple stimuli, draw a random number
     % between 0 & 1 and compare it to "propHueChgOnly" to decide if this
     % will be a stim + dim change or just a stim change; if it's instead a
@@ -183,10 +175,8 @@ if p.trVars.isStimChangeTrial
 else
     p.trVars.isStimChgNoDim = false;
 end
-
 % randomize initial gabor orientation for "primary" stimulus location
 p.trVars.orientInit = randi(360);
-
 % Define stimulus arrays for several features. We do this by defining a
 % generic string with "FEATURE" in certain places that gets replaced by
 % regexp in the loop below. We furthe break down each string into a 1st and
@@ -201,7 +191,6 @@ varArrayEvalString1 = ...
 varArrayEvalString2 = 'ones(p.trVars.nPatches, p.trVars.nEpochs);';
 patternString = 'FEATURE';
 varArrayFeatures = {'orient', 'hue', 'lum', 'sat'};
-
 % loop over features and use "regexprep.m" to modify "arrayEvalString" and
 % / or "varArrayEvalString" as needed for each feature.
 for i = 1:p.stim.nFeatures
@@ -220,21 +209,17 @@ for i = 1:p.stim.nFeatures
             p.stim.featureValueNames{i}), varArrayEvalString2]);
     end
 end
-
 % Determine which stimulus is "primary"
 p.stim.primStim     = p.init.trialsArray(p.trVars.currentTrialsArrayRow,...
     strcmp(p.init.trialArrayColumnNames, 'primary'));
-
 % Redefine Hue array so that each patch has a unique hue:
 p.stim.hueArray = repmat(...
     circshift(p.trVars.hueInit + [0; 90; 180; 270], ...
     p.stim.primStim - 1), 1, p.trVars.nEpochs);
-
 % Redefine orientation array so that each patch has a unique orientation:
 p.stim.orientArray = repmat(...
     circshift(p.trVars.orientInit + [0; 45; 90; 135], ...
     p.stim.primStim - 1), 1, p.trVars.nEpochs);
-
 % if we're using QUEST run "getQuestSuggestedDelta" - this both gets a
 % suggested signal strength AND initializes the QUEST object if it doesn't
 % yet exist (though it only stores the suggested signal strength if this is
@@ -242,7 +227,6 @@ p.stim.orientArray = repmat(...
 if isfield(p.trVars, 'useQuest') && p.trVars.useQuest
     p = getQuestSuggestedDelta(p);
 end
-
 % depending on the info present in the current row of the trials array
 % ("p.init.trialsArray"), define the "stimulus feature value arrays."
 % These have one entry for each stimulus patch (one row per patch) and
@@ -261,40 +245,42 @@ for i = 1:p.stim.nFeatures
     % luminance here:
     if p.trVars.isStimChgNoDim && ...
             strcmp(p.stim.featureValueNames{i}, 'lum')
-        tempDelta = 0;
+        % tempDelta = 0;
     end
     
     % if "tempDelta" is non-zero, add the corresponding feature delta
     % to the appropriate entry of the feature array
     if tempDelta ~= 0
-
         % if this is a QUEST task...
         if p.trVars.useQuest && strcmp(p.stim.featureValueNames{i}, ...
                 'orient')
             % For orientation on a Quest trial, use the value from QUEST.
             featureDelta = tempDelta * p.trVars.oriChangeQuestValue;
-
             % Clamp the final delta to our desired min/max range
             if abs(featureDelta) > p.init.quest.maxVal
                 featureDelta = sign(featureDelta) * p.init.quest.maxVal;
             elseif abs(featureDelta) < p.init.quest.minVal
                 featureDelta = sign(featureDelta) * p.init.quest.minVal;
             end
-
             disp(['Upcoming Delta Value: ' num2str(featureDelta)]);
         else
             % find the right delta, and multiply by "tempDelta" to allow
             % for "increases" and "decreases" of various features.
             featureDelta = tempDelta * ...
                 p.trVars.([p.stim.featureValueNames{i} 'Delta']);
+            
+            if strcmp(p.stim.featureValueNames{i}, 'orient')
+                disp(['Feature Delta = ' num2str(featureDelta)]);
+                if featureDelta == 0 && p.trVars.orientDelta ~= 0
+                    keyboard
+                end
+            end
         end
-
         % add to stim array
         p.stim.([p.stim.featureValueNames{i} ...
             'Array'])(p.stim.stimChgIdx, 2) = ...
             p.stim.([p.stim.featureValueNames{i} ...
             'Array'])(p.stim.stimChgIdx, 2) + featureDelta;
-
         % store feature delta in "status"
         p.status.changeDelta = featureDelta;
     end
@@ -302,21 +288,18 @@ end
 catch me
     keyboard
 end
-
 % which stimuli are shown in the current trial?
 for i = 1:p.trVars.nPatches
 p.trVars.(['stim' num2str(i) 'On']) = logical(...
     p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
     strcmp(p.init.trialArrayColumnNames, ['stim' num2str(i) ' on'])));
 end
-
 % make a numerical list of the stimulus locations that are on in this
 % trial:
 p.trVars.stimOnList = find(...
     [p.trVars.stim1On, p.trVars.stim2On, ...
     p.trVars.stim3On, p.trVars.stim4On, ...
     ]);
-
 % If this is a change trial, we set "dimVal" to 1, otherwise to 0. This is
 % left over from the previous training step. It's a hack (of course). We
 % need to change this. JPH (11/7/2022).
@@ -325,51 +308,40 @@ if p.trVars.isStimChangeTrial
 else
     p.trData.dimVal = 0;
 end
-
-
-
 % define a variable indicating if this is a contrast change trial
 p.trVars.isContrastChangeTrial = ...
     p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
     strcmp(p.init.trialArrayColumnNames, 'contrast')) == 1;
     
 end
-
 %%
 function p = locationInfo(p)
-
 % randomize fixation point location
 tempX = p.trVars.fixDegX + (rand - 0.5)*p.trVars.fixLocRandX;
 tempY = p.trVars.fixDegY + (rand - 0.5)*p.trVars.fixLocRandY;
-
 % fixation location in pixels relative to the center of the screen!
 % (Y is flipped because positive is down in psychophysics toolbox).
 p.draw.fixPointPix      =  p.draw.middleXY + [1, -1] .* ...
     pds.deg2pix([tempX, tempY], p);
-
 % define fixation point radius from trVars, fixation point line weight
 % from trVars, and fixation point rectangle.
 p.draw.fixPointRadius = p.trVars.fixPointRadPix;
 p.draw.fixPointWidth = p.trVars.fixPointLinePix;
 p.draw.fixPointRect = repmat(p.draw.fixPointPix, 1, 2) + ...
     p.draw.fixPointRadius*[-1 -1 1 1];
-
 % store fix point after adding random bit
 p.trVars.fixDegX = tempX;
 p.trVars.fixDegY = tempY;
-
 % based on stimulus radius and size of boxes / "checks" in pixels,
 % calculate patch diameter in pixels (rounded to the nearest box) and the
 % patch diameter in boxes / checks.
 p.stim.patchDiamPix = round(p.trVars.stimRadius * 2 * pds.deg2pix(1, p) ...
     / p.trVars.boxSizePix) * p.trVars.boxSizePix;
 p.stim.patchDiamBox = floor(p.stim.patchDiamPix / p.trVars.boxSizePix);
-
 % Define stimulus elevations and eccentricities. Assume we have 4 stimulus
 % locations:
 p.trVars.stimElevs = p.trVars.stimLoc1Elev + [0 90 180 270];
 p.trVars.stimEccs  = p.trVars.stimLoc1Ecc * [1 1 1 1];
-
 % If we have non-zero values of "stimLoc#Elev" or "stimLoc#Ecc", redefine
 % the elevation / eccentricity of the stimuli accordingly:
 tweakElevs = [0 p.trVars.stimLoc2Elev p.trVars.stimLoc3Elev ...
@@ -382,7 +354,6 @@ end
 if any(tweakEccs > 0)
     p.trVars.stimEccs(tweakEccs > 0) = tweakEccs(tweakEccs > 0);
 end
-
 % depending on which side the cue ring will be presented on, define
 % locations of cue / foil stimulus patches.
 % if  p.stim.cueSide == 1
@@ -398,42 +369,31 @@ end
 %     p.trVars.cueEccDeg      = p.trVars.stimLoc2Ecc;
 %     p.trVars.foilEccDeg     = p.trVars.stimLoc1Ecc;
 % end
-
 % loop over stimulus locations:
 for i = 1:length(p.trVars.stimElevs)
-
     % calculate locations of stimulus patches in cartesian coordinates.
     % Must invert "y" value for psychtoolbox (down = positive).
     p.trVars.stimLocCart(i, :) = p.trVars.stimEccs(i) * ...
         [cosd(p.trVars.stimElevs(i)), -sind(p.trVars.stimElevs(i))];
-
     % calculate stimulus patch location centers in pixels
     p.trVars.stimLocCartPix(i, :)  = pds.deg2pix(...
         p.trVars.stimLocCart(i, :), p) + ...
         p.draw.fixPointPix;
-
     % calculate rectangles containing stimulus patches
     p.trVars.stimRects(i, :)       = ...
         repmat(p.trVars.stimLocCartPix(i, :), 1, 2) +  ...
         p.stim.patchDiamPix / 2 * [-1 -1 1 1];
 end
-
 % compute rectangle containing cue-ring (in pixels).
 ringRadPix  = pds.deg2pix(p.draw.ringRadDeg, p);
+p.draw.cueRingRect = [...
+    p.trVars.stimLocCartPix(p.stim.cueLoc, 1) - ringRadPix...
+    p.trVars.stimLocCartPix(p.stim.cueLoc, 2) - ringRadPix ...
+    p.trVars.stimLocCartPix(p.stim.cueLoc, 1) + ringRadPix ...
+    p.trVars.stimLocCartPix(p.stim.cueLoc, 2) + ringRadPix];
 
-
-if contains(p.init.exptType, 'psycho')
-    p.draw.cueRingRect = [0 0 0 0];
-else
-    p.draw.cueRingRect = [...
-        p.trVars.stimLocCartPix(p.stim.cueLoc, 1) - ringRadPix...
-        p.trVars.stimLocCartPix(p.stim.cueLoc, 2) - ringRadPix ...
-        p.trVars.stimLocCartPix(p.stim.cueLoc, 1) + ringRadPix ...
-        p.trVars.stimLocCartPix(p.stim.cueLoc, 2) + ringRadPix];
-end
 % convert ring thickness in degrees to pixels
 p.draw.ringThickPix = pds.deg2pix(p.draw.ringThickDeg, p);
-
 end
 
 %%

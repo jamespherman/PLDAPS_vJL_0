@@ -195,6 +195,8 @@ p.status.trialEndStates             = []; % vector of trial end state values
 p.status.reactionTimes              = []; % vector of joystick release reaction times (relative to dimming).
 p.status.dimVals                    = []; % vector of dim values.
 p.status.changeDelta                = []; % magnitude of stimulus change in current trial
+p.status.chgLoc                     = [];
+p.status.cueLoc                     = [];
 p.status.nStim                      = []; % vector of number of stimuli on current trial
 p.rig.guiStatVals = {...
     'blockNumber'; ...
@@ -326,9 +328,9 @@ p.trVarsInit.lumInit                  = -0.8;     % initial luminance
 p.trVarsInit.hueInit                  = 20;       % initial hue (color angle)
 
 % Variance of feature dimensions that can be variable in this way:
-p.trVarsInit.orientVar                = 0;        % variability in orientation
+p.trVarsInit.orientVar                = 5;        % variability in orientation
 p.trVarsInit.hueVar                   = 0.00;     % variability in hue (angle)
-p.trVarsInit.lumVar                   = 0.02;     % variability in luminance
+p.trVarsInit.lumVar                   = 0.005;     % variability in luminance
 p.trVarsInit.satVar                   = 0.00;     % variability in saturation
 
 % Magnitude of stimulus delta if desired:
@@ -349,6 +351,7 @@ p.trVarsInit.nEpochs                  = 2;        % just one "pre-change" and on
 
 % times/latencies/durations:
 p.trVarsInit.rewardDurationMs        = 400;      % Reward duration
+p.trVarsInit.rewardDurationMsSmall   = 100;      % Small reward duration
 p.trVarsInit.fix2CueIntvlMin         = 0.25;     % Minimum time between fixation acquisition and cue presentation (onset).
 p.trVarsInit.fix2CueIntvlWin         = 0.25;     % Duration of possibile cue presentation window (between "min" and "min + win"). 
 p.trVarsInit.fix2CueIntvl            = 0.5;      % The value of this variable is updated before each trial but we set it to the max here just in case.
