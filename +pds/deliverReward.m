@@ -30,4 +30,6 @@ Datapixx('RegWrRd');
 Datapixx('StartDacSchedule');
 Datapixx('RegWrRd');
 p.init.strb.strobeNow(p.init.codes.reward);
+if p.trData.timing.reward < 0
 p.trData.timing.reward = GetSecs - p.trData.timing.trialStartPTB;
+end

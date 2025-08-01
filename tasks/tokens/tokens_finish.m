@@ -38,11 +38,6 @@ p.init.strb.flushStrobedList;
 % Pause ephys recording
 pds.stopOmniPlex;
 
-% NOTE: The 'postTrialTimeOut' function should be configured with a
-% duration of zero for this task, as we are handling the ITI at the
-% start of the 'run' function.
-postTrialTimeOut(p);
-
 % Retrieve data from Omniplex PC if desired
 if p.rig.connectToOmniplex
     p = pds.getOmniplexData(p);

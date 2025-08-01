@@ -212,6 +212,7 @@ codes.REWARD_GIVEN = 7; % [cite: 1]
 codes.TRIAL_END = 6; % [cite: 1]
 codes.REWARD_AMOUNT_BASE = 100; % Base for strobing reward amount [cite: 1]
 codes.OUTCOME_DIST_BASE = 90; % Base for strobing outcome distribution type [cite: 1]
+codes.rwdAmt = 101;
 
 %% validation
 

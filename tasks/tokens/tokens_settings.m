@@ -93,7 +93,7 @@ p.init.taskActions{5} = 'pdsActions.rewardDrain';
 p.init.taskActions{6} = 'pdsActions.singleReward';
 p.init.taskActions{7} = 'pdsActions.catOldOutput';
 
-p.init.trialsPerCondition = 10; % The number of repetitions of each condition WITHIN a single block
+p.init.trialsPerCondition = 100; % The number of repetitions of each condition WITHIN a single block
 
 
 %% audio:
@@ -120,7 +120,7 @@ p.state.cashInTokens    = 7;
 % --- End States (Aborted) ---
 % These states are reached when a trial ends prematurely due to error.
 p.state.fixBreak        = 11; % Monkey looked away during holdFix
-p.state.noFix           = 12; % Monkey never acquired fixation
+p.state.nonStart        = 12; % Monkey never acquired fixation
 
 % --- End States (Success) ---
 % This state is reached when a trial is completed successfully.
@@ -153,16 +153,16 @@ p.rig.guiStatVals = {...
 % The list of vars should be in string format eg 'p.trVarsInit.cueDelta'
 
 p.rig.guiVars = {...
-    'rewardDurationMs'; ...   %1
-    'rewardDelay'; ...
-    'fixDurReqMin'; ...
-    'fixDurReqMax'; ...
-    'fixWinWidthDeg'; ...
-    'fixWinHeightDeg'; ...
-    'fixDegX'; ...       % 6
+    'fixDur'; ...   %1
+    'fixWin'; ...
+    'rewardDurationMs'; ...
+    'juicePause'; ...
+    'outcomeDelay'; ...
+    'itiMean'; ...
+    'itiMin'; ...       % 6
+    'itiMax'; ...
+    'fixDegX'; ...
     'fixDegY'; ...
-    'fixPointLinePix'; ...
-    'fixPointRadPix'; ...
     'passJoy'; ...          
     'passEye'};              % 12
 
@@ -203,9 +203,10 @@ p.trVarsInit.fixWin = 2.0;                  % Fixation window radius in degrees 
 p.trVarsInit.fixAqDur = 10;                 % Time allowed to acquire fixation in seconds[cite: 1].
 
 % -- Reward Parameters
-p.trVarsInit.rewardDur = 45;                % Juice pulse duration in ms [cite: 1]
+p.trVarsInit.rewardDurationMs = 45;         % Juice pulse duration in ms [cite: 1]
 p.trVarsInit.juicePause = 0.5;              % Pause after each juice delivery in seconds, from juice_pausetime = 500 [cite: 1]
 p.trVarsInit.outcomeDelay = 1.0;            % Pause before "cashing in" tokens, from idle(1000) [cite: 1]
+p.trVarsInit.tokenI = 1;
 
 % -- Inter-Trial Interval (ITI) Parameters
 p.trVarsInit.itiMean = 3.0; % seconds
@@ -217,7 +218,7 @@ p.trVarsInit.itiMax = 5.0;  % seconds
 p.stim.token.radius = 0.7; % Radius in degrees of visual angle [cite: 2]
 p.stim.token.color = [0.458 1 1]; % Token color [cite: 2]
 % Token positions in degrees [X,Y] [cite: 2]
-p.stim.token.pos = [-10, -8; -8, -8; -6, -8; -4, -8; -2, -8; 0, -8; 2, -8; 4, -8; 6, -8; 8, -8];
+p.stim.token.pos = [-10, 8; -8, 8; -6, 8; -4, 8; -2, 8; 0, 8; 2, 8; 4, 8; 6, 8; 8, 8];
 
 % I don't think I need to carry these around in 'p'....
 % can't I just define them in the 'run' worksapce and forget avbout them?
@@ -232,11 +233,12 @@ p.trVarsInit.fixPointLinePix      = 12;       % fixation point line weight in pi
 % variables related to how the experiment is run / what is shown, etc.
 p.trVarsInit.useCellsForDraw        = false;
 p.trVarsInit.wantEndFlicker         = false;    % have screen flicker / low tone play repeatedly while waiting for joystick release?
-p.trVarsInit.wantOnlinePlots        = true;     % use online plotting window?
+p.trVarsInit.wantOnlinePlots        = false;     % use online plotting window?
 
 % substructure for marking stimulus-events after each flip
 p.trVarsInit.postFlip.logical         = false;
 p.trVarsInit.postFlip.varNames        = cell(0);
+p.trVarsInit.flipIdx                  = 1;
 
 % Add this to tokens_settings.m
 
@@ -269,9 +271,12 @@ p.init.trDataInitList = {...
     'p.trData.timing.fixAq',            '-1'; ...   % time of fixation acquisition
     'p.trData.timing.stimOn',           '-1'; ...   % time of stimulus onset
     'p.trData.timing.stimOff',          '-1'; ...   % time of stimulus offset
-    'p.trData.timing.brokeFix',         '-1'; ...   % time of fixation break
-    'p.trData.timing.brokeJoy',         '-1'; ...   % time of joystick release
+    'p.trData.timing.fixBreak',         '-1'; ...   % time of fixation break
+    'p.trData.timing.cueOn',            '-1'; ...   % time of reward delivery
+    'p.trData.timing.stimOn',           '-1'; ...   % time of reward delivery
     'p.trData.timing.reward',           '-1'; ...   % time of reward delivery
+    'p.trData.timing.trialEnd',         '-1'; ...   % time of reward delivery
+    'p.trData.timing.outcomeOn',        '-1'; ...   % time of reward delivery
     };
 
 % since the list above is fixed, count its rows now for looping over later.
@@ -362,6 +367,7 @@ p.init.strobeList = fliplr({...
     'p.init.date_1yyyy',                                'date_1yyyy'; ...        
     'p.init.date_1mmdd',                                'date_1mmdd'; ...      
     'p.init.time_1hhmm',                                'time_1hhmm'; ...
-    'p.codes.REWARD_AMOUNT_BASE + p.trVars.rewardAmt',  'REWARD_AMOUNT_BASE'; ...               
+    'p.init.codes.REWARD_AMOUNT_BASE + p.trVars.rewardAmt',  'REWARD_AMOUNT_BASE'; ...
+    'p.trVars.rewardAmt',                               'rwdAmt'; ...
     });
 end

@@ -45,7 +45,7 @@ function p = generateTrialsArray(p)
     table = p.init.trialsTable;
     
     % Find the column that specifies the number of repetitions ('nReps').
-    repCol = find(strcmp(p.init.trialArrayColumnNames, 'nReps'));
+    repCol = contains(p.init.trialArrayColumnNames, 'nReps');
     
     % Initialize an empty cell array to hold the full trial list for the block.
     trialsArray = {};

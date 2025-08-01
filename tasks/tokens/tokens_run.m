@@ -161,7 +161,7 @@ switch p.trVars.currentState
         if p.trData.timing.outcomeOn < 0
             p.trVars.postFlip.logical = true;
             p.trVars.postFlip.varNames{end + 1} = 'outcomeOn';
-            p.init.strb.addValueOnce(p.codes.OUTCOME_DIST_BASE + p.trVars.dist);
+            p.init.strb.addValueOnce(p.init.codes.OUTCOME_DIST_BASE + p.trVars.dist);
         end
         
         % Set a timer for the pause before the "cash in" animation begins
@@ -191,8 +191,7 @@ switch p.trVars.currentState
             % If we haven't delivered juice for the current token yet...
             if ~p.trVars.juiceGiven_thisToken
                 % Deliver juice and strobe the event code
-                p = pds.giveJuice(p);
-                p.init.strb.addValue(p.codes.REWARD_GIVEN);
+                p = pds.deliverReward(p);
                 
                 % Set the timer for when to advance to the next token
                 p.trVars.nextTokenTime = timeNow + p.trVars.juicePause;
@@ -262,44 +261,50 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     Screen('FillRect', p.draw.window, p.draw.color.background);
     
     % 2. Draw the reference grid for the experimenter.
-    Screen('DrawLines', p.draw.window, p.draw.gridXY, [], p.draw.color.gridMajor);
+%     Screen('DrawLines', p.draw.window, p.draw.gridXY, [], ...
+%         p.draw.color.gridMajor);
     
     % 3. Draw the gaze position indicator.
-    gazePosition = [p.trVars.eyePixX p.trVars.eyePixY p.trVars.eyePixX p.trVars.eyePixY] + ...
-        [-1 -1 1 1]*p.draw.eyePosWidth + repmat(p.draw.middleXY, 1, 2);
-    Screen('FillRect', p.draw.window, p.draw.color.eyePos, gazePosition);
+%     gazePosition = [p.trVars.eyePixX p.trVars.eyePixY p.trVars.eyePixX ...
+%         p.trVars.eyePixY] + ...
+%         [-1 -1 1 1]*p.draw.eyePosWidth + repmat(p.draw.middleXY, 1, 2);
+%     Screen('FillRect', p.draw.window, p.draw.color.eyePos, gazePosition);
     
     % 4. Draw the Cue Image (if applicable)
     % Only draw if we are in a state where the cue should be visible
     % and if a valid texture was created for this trial.
-    if ismember(p.trVars.currentState, [p.state.showCue, p.state.waitForFix, p.state.holdFix]) && ~isnan(p.stim.cue.texture)
-        Screen('DrawTexture', p.draw.window, p.stim.cue.texture, [], p.stim.cue.rect, 0);
+    if ismember(p.trVars.currentState, [p.state.showCue, ...
+            p.state.waitForFix, p.state.holdFix]) && ...
+            ~isnan(p.stim.cue.texture)
+        Screen('DrawTexture', p.draw.window, p.stim.cue.texture, [], ...
+            p.stim.cue.rect, 0);
     end
     
     % 5. Draw the Token Stimuli (if applicable)
-    % Only draw if we are in a state where tokens should be visible
-    % and if it's a token trial.
     if ismember(p.trVars.currentState, [p.state.showOutcome, p.state.cashInTokens]) && p.trVars.isToken
-        % Determine which tokens to draw. During the 'cashInTokens' state,
-        % p.trVars.tokenI is incremented, so fewer tokens are drawn over time.
         tokens_to_draw = p.trVars.tokenI : p.trVars.rewardAmt;
         
         if ~isempty(tokens_to_draw)
-            % Get the screen positions for the tokens that are left
-            token_positions = p.stim.token.pos(tokens_to_draw, :)'; % Transpose for DrawDots
+            token_positions_deg = p.stim.token.pos(tokens_to_draw, :)';
+            
+            % --- ADD THIS LINE ---
+            % Convert the token positions from degrees to pixels
+            token_positions_pix = pds.deg2pix(token_positions_deg, p);
+            
             token_diameter_pix = pds.deg2pix(2 * p.stim.token.radius, p);
             
-            Screen('DrawDots', p.draw.window, token_positions, token_diameter_pix, p.stim.token.color, p.draw.middleXY, 1);
+            % Use the new '_pix' variable in the drawing command
+            Screen('DrawDots', p.draw.window, token_positions_pix, token_diameter_pix, [50 100 250], p.draw.middleXY, 1);
         end
     end
     
     % 6. Draw the fixation spot and fixation window.
-    Screen('FrameRect',p.draw.window, p.draw.color.fix, repmat(p.draw.fixPointPix, 1, 2) + ...
-        p.draw.fixPointRadius*[-1 -1 1 1], p.draw.fixPointWidth);
-        
-    Screen('FrameRect',p.draw.window, p.draw.color.fixWin, repmat(p.draw.fixPointPix, 1, 2) +  ...
-        [-p.draw.fixWinWidthPix -p.draw.fixWinHeightPix ...
-        p.draw.fixWinWidthPix p.draw.fixWinHeightPix], p.draw.fixWinPenDraw);
+%     Screen('FrameRect',p.draw.window, p.draw.color.fix, repmat(p.draw.fixPointPix, 1, 2) + ...
+%         p.draw.fixPointRadius*[-1 -1 1 1], p.draw.fixPointWidth);
+%         
+%     Screen('FrameRect',p.draw.window, p.draw.color.fixWin, repmat(p.draw.fixPointPix, 1, 2) +  ...
+%         [-p.draw.fixWinWidthPix -p.draw.fixWinHeightPix ...
+%         p.draw.fixWinWidthPix p.draw.fixWinHeightPix], p.draw.fixWinPenDraw);
     
     
     % --- Finish Drawing ---
