@@ -18,7 +18,7 @@ for ii = 1:nStrobesToSend
     strbVal  = eval(p.init.strobeList{ii, 2});
     
     % if each varCode is followed by 1 varVal then all's good:
-    if numel(strbVal)==1
+    if isscalar(strbVal)
         % add variableCode and variableValue to list:
         p.init.strb.addValue(strbCode);
         p.init.strb.addValue(strbVal);

@@ -12,9 +12,11 @@ function inWindowLogical = eyeInWindow(p, whichWinString, varargin)
 if nargin < 2
     whichWinString = 'fixation';
 elseif nargin > 2
-    targRow = varargin{1}; % first input for varargin should be the specified target number
+     % first input for varargin should be the specified target number
+    targRow = varargin{1};
 else
-    targRow = 1; % If no value is passed in for varargin, simply take the value of targDegX and Y
+     % If no value is passed for varargin, take the value of targDegX and Y
+    targRow = 1;
 end
 
 % check "in-window-ness" appropriately
