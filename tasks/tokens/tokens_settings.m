@@ -204,7 +204,7 @@ p.trVarsInit.fixWinWidthDeg     = 2.0;
 p.trVarsInit.fixWinHeightDeg    = 2.0;
 
 % -- Reward Parameters
-p.trVarsInit.rewardDurationMs = 45;         % Juice pulse duration in ms [cite: 1]
+p.trVarsInit.rewardDurationMs = 65;         % Juice pulse duration in ms [cite: 1]
 p.trVarsInit.juicePause = 0.5;              % Pause after each juice delivery in seconds, from juice_pausetime = 500 [cite: 1]
 p.trVarsInit.outcomeDelay = 1.0;            % Pause before "cashing in" tokens, from idle(1000) [cite: 1]
 p.trVarsInit.tokenI = 1;

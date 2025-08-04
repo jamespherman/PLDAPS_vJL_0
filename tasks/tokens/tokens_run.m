@@ -196,7 +196,8 @@ switch p.trVars.currentState
                 p = pds.deliverReward(p);
                 
                 % Set the timer for when to advance to the next token
-                p.trVars.nextTokenTime = timeNow + p.trVars.juicePause;
+                p.trVars.nextTokenTime = (GetSecs - ...
+                    p.trData.timing.trialStartPTB) + p.trVars.juicePause;
                 p.trVars.juiceGiven_thisToken = true;
             end
             
