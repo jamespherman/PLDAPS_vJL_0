@@ -76,7 +76,7 @@ elseif p.trVars.leftOrRight == 2
 end
 
 % randomly rotate the stimulus by between 0 and 180 degrees (will only affect two-dot stim)
-p.trVars.stimRotation = 90 + unifrnd(-p.trVars.stimRotationRange/2, p.trVars.stimRotationRange/2);
+p.trVars.stimRotation = unifrnd(-p.trVars.stimRotationRange/2, p.trVars.stimRotationRange/2);
 
 % randomly choose size of stimulus between min and max
 p.draw.stimWidth = unifrnd(p.trVars.stimSizeMin, p.trVars.stimSizeMax);

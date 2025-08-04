@@ -131,8 +131,8 @@ switch p.trVars.currentState
         elseif timeNow > (p.trData.timing.cueOn + p.trVars.fixAqDur)
             % If time is up, abort the trial
             p.status.trialRepeatFlag = true;
-            p.init.strb.addValue(p.init.codes.noFix);
-            p.trVars.currentState = p.state.noFix;
+            p.init.strb.addValue(p.init.codes.nonStart);
+            p.trVars.currentState = p.state.nonStart;
         end
         
     case p.state.holdFix
@@ -141,7 +141,8 @@ switch p.trVars.currentState
         
         % Check if the hold duration has been met
         if timeNow > (p.trData.timing.fixAq + p.trVars.fixDur)
-            % If yes, the fixation requirement is complete. Proceed to the outcome.
+            % If yes, the fixation requirement is complete. Proceed to 
+            % the outcome.
             p.trVars.currentState = p.state.showOutcome;
             
         % Check if the eye has left the window (fixation break)
@@ -161,7 +162,8 @@ switch p.trVars.currentState
         if p.trData.timing.outcomeOn < 0
             p.trVars.postFlip.logical = true;
             p.trVars.postFlip.varNames{end + 1} = 'outcomeOn';
-            p.init.strb.addValueOnce(p.init.codes.OUTCOME_DIST_BASE + p.trVars.dist);
+            p.init.strb.addValueOnce(p.init.codes.OUTCOME_DIST_BASE + ...
+                p.trVars.dist);
         end
         
         % Set a timer for the pause before the "cash in" animation begins
@@ -224,7 +226,7 @@ switch p.trVars.currentState
         p = playTone(p, 'low');
         p.trVars.exitWhileLoop = true;
         
-    case p.state.noFix
+    case p.state.nonStart
         % --- State 12: No Fixation ---
         % The monkey never acquired fixation on the cue.
         
