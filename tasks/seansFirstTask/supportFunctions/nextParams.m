@@ -58,7 +58,6 @@ stimShapeCol = strcmp(p.init.trialArrayColumnNames, 'stimShape');
 p.trVars.stimShape = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
    stimShapeCol);
 
-
 % Where will the stimulus be displayed?
 
 % randomly choose stim color
