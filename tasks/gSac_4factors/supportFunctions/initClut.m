@@ -1,123 +1,80 @@
-function c                      = initClut(c)
-% initialize color lookup tables
-% CLUTs may be customized as needed
-% CLUTS also need to be defined before initializing DataPixx
-% also define variables as pointers to certain colors (for ease of
-% reference in other places).
+function p = initClut(p)
+% initClut
+%
+% 1. Initializes the DKL color palette for the experiment.
+% 2. Builds a full, default CLUT for both subject and experimenter so that
+%    pds.initDataPixx can open the PTB window without errors.
 
-
-% initialize DKL conversion variables
-c.init.initMonFile = ['LUT_VPIXX_rig' c.init.pcName(end-1)];
-initmon(c.init.initMonFile);
-
-% set Background color to black.
-[bgRGB(1), bgRGB(2), bgRGB(3)] = dkl2rgb([-0.8 0 0]');
-
-% define some new DKL colors with equal saturation and luminance. Note, the
-% "dklLum" values defined here were empirically identified as those that
-% result in < 0.4% measured luminance difference between the "target"
-% luminance (68).
+%% 1. Define empirically measured isoluminant DKL color palette
 satRad      = 0.4;
 dklLum      = [-0.4888, -0.4871, -0.4958, -0.4944, -0.4975, -0.5012, ...
-                -0.4974, -0.4922, -0.4896];
+               -0.4974, -0.4922, -0.4896];
 dklThetas   = 0:45:360;
 
+dkl_palette_rgb = zeros(length(dklThetas), 3);
 for i = 1:length(dklThetas)
-    [r(i), g(i), b(i)] = dkl2rgb(...
-        [dklLum(i) satRad *[cosd(dklThetas(i)) sind(dklThetas(i))]]');
+    dkl_color = [dklLum(i); satRad * cosd(dklThetas(i)); satRad * ...
+        sind(dklThetas(i))];
+    dkl_palette_rgb(i, :) = dkl2rgb(dkl_color);
 end
 
+p.draw.colors.dklPalette = dkl_palette_rgb;
+mean_lum = mean(dklLum);
+p.draw.colors.isolumGray = dkl2rgb([mean_lum; 0; 0]);
 
-mutGreen = [0.5 0.9 0.4];
-redISH = [225 0 76]/255;
-orangeISH = [255 146 0]/255;
-blueISH = [11 97 164]/255;
-greenISH = [112 229 0]/255;
-oldGreen = [0.45, 0.63, 0.45];
-visGreen = [0.1 0.9 0.1];
-memMagenta = [1 0 1];
-% colors for exp's display
-% black 0
-% grey-1 (grid-lines) 1
-% grey-2 (background) 2
-% grey-3 (fix-window) 3
-% white (fix-point) 4
-% red 5
-% orange 6
-% blue 7
-% cue ring 8
-% muted green (fixation) 9
-c.draw.clut.expColors = ...
-    [ 0, 0, 0; % 0
-    0.25, 0.25, 0.25; % 1
-    bgRGB; % 2
-    0.7, 0.7, 0.7; % 3
-    1, 1, 1; % 4
-    redISH; % 5
-    orangeISH; % 6
-    blueISH; % 7
-    0, 1, 1; % 8
-    0.9,0.9,0.9; % 9
-    mutGreen; % 10
-    greenISH; % 11
-    0, 0, 0; % 12
-    oldGreen; % 13
-    visGreen; % 14
-    memMagenta; % 15
-    0, 1, 1; % 16
-    [r', g', b']]; % 17
+%% 2. Build the initial, default CLUTs
+% These full 256x3 matrices are required to open the PTB window.
+% We will use the isoluminant gray as the default background.
+default_bg = p.draw.colors.isolumGray;
 
-% colors for subject's display
-% black 0
-% grey-2 (grid-lines) 2
-% grey-2 (background) 2
-% grey-2 (fix-window) 3
-% white (fix-point) 4
-% grey-2 (red) 2
-% grey-2 (green) 2
-% grey-2 (blue) 2
-% cuering 8
-% muted green (fixation) 9
-c.draw.clut.subColors = ...
-    [0, 0, 0; % 0
-    bgRGB; % 1
-    bgRGB; % 2
-    bgRGB; % 3
-    1, 1, 1; % 4
-    bgRGB; % 5
-    bgRGB; % 6
-    bgRGB; % 7
-    0, 1, 1; % 8
-    bgRGB; % 9
-    mutGreen; % 10
-    bgRGB; % 11
-    bgRGB; % 12
-    oldGreen; % 13
-    bgRGB; % 14
-    bgRGB; % 15
-    bgRGB; % 16
-    [r', g', b']]; % 17
+% Pre-allocate full 256x3 matrices
+expCLUT = zeros(256, 3);
+subCLUT = zeros(256, 3);
 
+% Define some named colors for the static entries
+mutGreen    = [0.5 0.9 0.4];
+redISH      = [225 0 76]/255;
+orangeISH   = [255 146 0]/255;
+blueISH     = [11 97 164]/255;
+oldGreen    = [0.45, 0.63, 0.45];
 
+% --- Fill static entries (0-16) based on clutIdx from settings ---
+% Note: MATLAB uses 1-based indexing, so we add 1 to each clutIdx
+idx = p.draw.clutIdx;
 
+% Experimenter CLUT (visible colors)
+expCLUT(idx.expBlack_subBlack + 1, :)       = [0 0 0];
+expCLUT(idx.expGrey25_subBg + 1, :)         = [0.25 0.25 0.25];
+expCLUT(idx.expBg_subBg + 1, :)             = default_bg;
+expCLUT(idx.expGrey70_subBg + 1, :)         = [0.7 0.7 0.7];
+expCLUT(idx.expWhite_subWhite + 1, :)       = [1 1 1];
+expCLUT(idx.expRed_subBg + 1, :)            = redISH;
+expCLUT(idx.expOrange_subBg + 1, :)         = orangeISH;
+expCLUT(idx.expBlue_subBg + 1, :)           = blueISH;
+expCLUT(idx.expCyan_subCyan + 1, :)         = [0 1 1];
+expCLUT(idx.expMutGreen_subBg + 1, :)       = mutGreen;
+expCLUT(idx.expOldGreen_subOldGreen + 1, :) = oldGreen;
+% ... (other static colors would be defined here) ...
 
-assert(size(c.draw.clut.subColors,1)==size(c.draw.clut.expColors,1), 'ERROR-- exp & sub Colors must have equal length')
+% Subject CLUT (many elements match the default background)
+subCLUT(idx.expBlack_subBlack + 1, :)       = [0 0 0];
+subCLUT(idx.expGrey25_subBg + 1, :)         = default_bg;
+subCLUT(idx.expBg_subBg + 1, :)             = default_bg;
+subCLUT(idx.expGrey70_subBg + 1, :)         = default_bg;
+subCLUT(idx.expWhite_subWhite + 1, :)       = [1 1 1];
+subCLUT(idx.expRed_subBg + 1, :)            = default_bg;
+subCLUT(idx.expOrange_subBg + 1, :)         = default_bg;
+subCLUT(idx.expBlue_subBg + 1, :)           = default_bg;
+subCLUT(idx.expCyan_subCyan + 1, :)         = [0 1 1];
+subCLUT(idx.expMutGreen_subBg + 1, :)       = default_bg;
+subCLUT(idx.expOldGreen_subOldGreen + 1, :) = oldGreen;
+% ... (other static colors would be defined here) ...
 
-%%
+% Fill the rest of the CLUT (indices 17-255) with the default background
+expCLUT(18:256, :) = repmat(default_bg, 256-17, 1);
+subCLUT(18:256, :) = repmat(default_bg, 256-17, 1);
 
-% fill the remaining LUT slots with background RGB.
-nColors         = size(c.draw.clut.subColors,1);
-nTotalColors    = 256;
-c.draw.clut.expColors(nColors+1:nTotalColors, :) = repmat(bgRGB, nTotalColors-nColors, 1);
-c.draw.clut.subColors(nColors+1:nTotalColors, :) = repmat(bgRGB, nTotalColors-nColors, 1);
-
-% populate the rest with 0's
-c.draw.clut.ffc      = nColors + 1;
-c.draw.clut.expCLUT  = c.draw.clut.expColors;
-c.draw.clut.subCLUT  = c.draw.clut.subColors;
-
-
+% --- Store the final CLUTs in the p struct ---
+p.draw.clut.expCLUT = expCLUT;
+p.draw.clut.subCLUT = subCLUT;
 end
-
-
-

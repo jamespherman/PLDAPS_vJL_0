@@ -517,24 +517,8 @@ function p = drawMachine(p)
 
 % time is relative to trial Start
 timeNow = GetSecs - p.trData.timing.trialStartPTB;
-%% set Joystick indicator
-% Given joystick state, determine color for joystick indicator:
-[~, joyState] = pds.joyHeld(p);
-if isnan(joyState)
-    p.draw.color.joyInd = p.draw.clutIdx.expGrey25_subBg;   % neither press nor released
-elseif joyState == 0
-    p.draw.color.joyInd = p.draw.clutIdx.expGrey70_subBg;   % released
-elseif joyState == -1
-    p.draw.color.joyInd = p.draw.clutIdx.expBlue_subBg;   % pressed in low voltage
-elseif joyState == 1
-    p.draw.color.joyInd = p.draw.clutIdx.expOrange_subBg;   % pressed in high voltage
-end
 
-% now calculate size of joystick-fill rectangle
-joyRectNow = pds.joyRectFillCalc(p);
-
-%% if we're close enough to next screen flip, start drawing:
-
+% if we're close enough to next screen flip, start drawing:
 if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - ...
         p.rig.magicNumber
     
@@ -544,14 +528,7 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - ...
     % Draw the grid
     Screen('DrawLines', p.draw.window, p.draw.gridXY, [], ...
         p.draw.color.gridMajor);
-    
-    % draw mouse cursor:
-    if p.trVarsInit.setTargLocViaMouse
-        Screen('FillRect', p.draw.window, p.draw.color.mouseCursor, ...
-            [p.trVars.mouseCursorX p.trVars.mouseCursorY ...
-            p.trVars.mouseCursorX p.trVars.mouseCursorY] + ...
-            [-1 -1 1 1] * p.draw.cursorW)
-    end
+
         
     % Draw the gaze position, MUST DRAW THE GAZE BEFORE THE
     % FIXATION. Otherwise, when the gaze indicator goes over any
@@ -599,23 +576,40 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - ...
     % draw the target (if it is time)
     if p.trVars.targetIsOn
         
-        % draw target:
-        Screen('FrameRect', p.draw.window, p.draw.color.targ, ...
-            repmat(p.draw.targPointPix, 1, 2) + p.trVars.targRadius * ...
-            [-1 -1 1 1], p.trVars.targWidth);
-        
+        % --- In the 'drawMachine' subfunction of gSac_4factors_run.m ---
+
+        % draw the target (if it is time)
+        if p.trVars.targetIsOn
+
+            % Calculate the destination rectangle for the stimulus
+            stimSize_pix_w = pds.deg2pix(p.stim.stimDiamDeg, p);
+            stimSize_pix_h = pds.deg2pix(p.stim.stimDiamDeg, p);
+            targRect = CenterRectOnPoint(...
+                [0 0 stimSize_pix_w stimSize_pix_h], ...
+                p.draw.targPointPix(1), p.draw.targPointPix(2));
+
+            % Use the appropriate drawing command based on the stimulus type
+            if p.stim.isProceduralSpot
+                % It's a Spot trial: draw a filled oval (dot).
+                % We will use the 'white' index, which is visible to the subject.
+                Screen('FillOval', p.draw.window, ...
+                    p.draw.clutIdx.expWhite_subWhite, targRect);
+            else
+                % It's a Face or Non-Face trial: draw the pre-loaded texture.
+                % The color is handled by the CLUT we uploaded in nextParams.
+                Screen('DrawTexture', p.draw.window, ...
+                    p.stim.currentTexture, [], targRect);
+            end
+
+        end
+
     end
-    
+
     % draw fixation spot
     Screen('FrameRect',p.draw.window, p.draw.color.fix, ...
         repmat(p.draw.fixPointPix, 1, 2) + ...
         p.draw.fixPointRadius*[-1 -1 1 1], p.draw.fixPointWidth);
     
-    
-        % Draw the joystick-bar graphic.
-    Screen('FrameRect', p.draw.window, p.draw.color.joyInd, ...
-        p.draw.joyRect);
-    Screen('FillRect',  p.draw.window, p.draw.color.joyInd, joyRectNow);
     
     % flip and record time of flip.
     [p.trData.timing.flipTime(p.trVars.flipIdx), ~, ~, frMs] = ...

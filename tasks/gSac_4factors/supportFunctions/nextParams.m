@@ -24,101 +24,95 @@ p = timingInfo(p);
 end
 
 function p = redefClut(p)
+% redefClut
+%
+% Explicitly defines and uploads the Experimenter and Subject CLUTs for
+% the upcoming trial based on the "Single Hue Ramp" model.
 
-% what color do we want to make "invisible" to the monkey.
-bgRGB = p.draw.clut.combinedClut(p.draw.color.background+1, :);
+%% 1. Select the Target and Background Hues for this trial
+dkl_palette = p.draw.colors.dklPalette;
 
-% redefine CLUT using current background color:
+% Map the 'targetColor' condition (1 or 2) to a DKL palette index
+% Example: Color 1 -> 0 deg (Red-ish), Color 2 -> 90 deg (Green-ish)
+if p.trVars.targetColor == 1
+    target_hue_idx = 1; % 0 degrees
+else
+    target_hue_idx = 3; % 90 degrees
+end
+targetHue_rgb = dkl_palette(target_hue_idx, :);
 
-mutGreen = [0.5 0.9 0.4];
-redISH = [225 0 76]/255;
-orangeISH = [255 146 0]/255;
-blueISH = [11 97 164]/255;
-greenISH = [112 229 0]/255;
-oldGreen = [0.45, 0.63, 0.45];
-visGreen = [0.1 0.9 0.1];
-memMagenta = [1 0 1];
-% colors for exp's display
-% black 0
-% grey-1 (grid-lines) 1
-% grey-2 (background) 2
-% grey-3 (fix-window) 3
-% white (fix-point) 4
-% red 5
-% orange 6
-% blue 7
-% cue ring 8
-% muted green (fixation) 9
-p.draw.clut.expColors = ...
-    [ 0, 0, 0; % 0
-    0.25, 0.25, 0.25; % 1
-    bgRGB; % 2
-    0.7, 0.7, 0.7; % 3
-    1, 1, 1; % 4
-    redISH; % 5
-    orangeISH; % 6
-    blueISH; % 7
-    0, 1, 1; % 8
-    0.9,0.9,0.9; % 9
-    mutGreen; % 10
-    greenISH; % 11
-    0, 0, 0; % 12
-    oldGreen; % 13
-    visGreen; % 14
-    memMagenta; % 15
-    0, 1, 1; % 16
-    p.draw.clut.combinedClut(18:25,:)]; % 17-24
+% Determine the background hue index based on the salience condition
+if p.trVars.salience == 1 % High Salience (180 deg rotation)
+    bg_hue_idx = mod(target_hue_idx + 4 - 1, 8) + 1;
+else % Low Salience (45 deg rotation)
+    bg_hue_idx = mod(target_hue_idx + 1 - 1, 8) + 1;
+end
+backgroundHue_rgb = dkl_palette(bg_hue_idx, :);
 
-% colors for subject's display
-% black 0
-% grey-2 (grid-lines) 2
-% grey-2 (background) 2
-% grey-2 (fix-window) 3
-% white (fix-point) 4
-% grey-2 (red) 2
-% grey-2 (green) 2
-% grey-2 (blue) 2
-% cuering 8
-% muted green (fixation) 9
-p.draw.clut.subColors = ...
-    [0, 0, 0; % 0
-    bgRGB; % 1
-    bgRGB; % 2
-    bgRGB; % 3
-    1, 1, 1; % 4
-    bgRGB; % 5
-    bgRGB; % 6
-    bgRGB; % 7
-    0, 1, 1; % 8
-    bgRGB; % 9
-    mutGreen; % 10
-    bgRGB; % 11
-    bgRGB; % 12
-    oldGreen; % 13
-    bgRGB; % 14
-    bgRGB; % 15
-    bgRGB; % 16
-    p.draw.clut.combinedClut(18:25,:)]; % 17-24
+%% 2. Generate the "Single Hue Ramp" for the stimulus
+n_stim_levels = 238; % Reserving indices 18-255
+isolum_gray = p.draw.colors.isolumGray;
+stim_ramp = interp1([0, 1], [isolum_gray; targetHue_rgb], ...
+    linspace(0, 1, n_stim_levels));
 
-% fill the remaining LUT slots with background RGB.
-nColors         = size(p.draw.clut.subColors,1);
-nTotalColors    = 256;
-p.draw.clut.expColors(nColors+1:nTotalColors, :) = ...
-    repmat(bgRGB, nTotalColors-nColors, 1);
-p.draw.clut.subColors(nColors+1:nTotalColors, :) = ...
-    repmat(bgRGB, nTotalColors-nColors, 1);
+%% 3. Explicitly define the CLUTs
+% Pre-allocate full 256x3 matrices
+expCLUT = zeros(256, 3);
+subCLUT = zeros(256, 3);
 
-% populate the rest with 0's
-p.draw.clut.ffc      = nColors + 1;
-p.draw.clut.expCLUT  = p.draw.clut.expColors;
-p.draw.clut.subCLUT  = p.draw.clut.subColors;
+% Define some named colors for the static entries
+mutGreen    = [0.5 0.9 0.4];
+redISH      = [225 0 76]/255;
+orangeISH   = [255 146 0]/255;
+blueISH     = [11 97 164]/255;
+oldGreen    = [0.45, 0.63, 0.45];
 
-% Push (possibly new) color look-up table to ViewPIXX based on
-% current frame (frame determined based on time in trial).
-% Screen('LoadNormalizedGammaTable', p.draw.window, ...
-%     [p.draw.clut.subCLUT; p.draw.clut.expCLUT], 2);
+% --- Fill static entries (0-16) based on clutIdx from settings ---
+% Note: MATLAB uses 1-based indexing, so we add 1 to each clutIdx
+idx = p.draw.clutIdx;
 
-Datapixx('SetVideoClut', [p.draw.clut.subCLUT; p.draw.clut.expCLUT]);
+% Experimenter CLUT (visible colors)
+expCLUT(idx.expBlack_subBlack + 1, :)       = [0 0 0];
+expCLUT(idx.expGrey25_subBg + 1, :)         = [0.25 0.25 0.25];
+expCLUT(idx.expBg_subBg + 1, :)             = backgroundHue_rgb;
+expCLUT(idx.expGrey70_subBg + 1, :)         = [0.7 0.7 0.7];
+expCLUT(idx.expWhite_subWhite + 1, :)       = [1 1 1];
+expCLUT(idx.expRed_subBg + 1, :)            = redISH;
+expCLUT(idx.expOrange_subBg + 1, :)         = orangeISH;
+expCLUT(idx.expBlue_subBg + 1, :)           = blueISH;
+expCLUT(idx.expCyan_subCyan + 1, :)         = [0 1 1];
+expCLUT(idx.expGrey90_subBg + 1, :)         = [0.9 0.9 0.9];
+expCLUT(idx.expMutGreen_subBg + 1, :)       = mutGreen;
+expCLUT(idx.expOldGreen_subOldGreen + 1, :) = oldGreen;
+% ... Add any other static colors from your clutIdx here ...
+
+% Subject CLUT (many elements are invisible, matching the background)
+subCLUT(idx.expBlack_subBlack + 1, :)       = [0 0 0];
+subCLUT(idx.expGrey25_subBg + 1, :)         = backgroundHue_rgb;
+subCLUT(idx.expBg_subBg + 1, :)             = backgroundHue_rgb;
+subCLUT(idx.expGrey70_subBg + 1, :)         = backgroundHue_rgb;
+subCLUT(idx.expWhite_subWhite + 1, :)       = [1 1 1];
+subCLUT(idx.expRed_subBg + 1, :)            = backgroundHue_rgb;
+subCLUT(idx.expOrange_subBg + 1, :)         = backgroundHue_rgb;
+subCLUT(idx.expBlue_subBg + 1, :)           = backgroundHue_rgb;
+subCLUT(idx.expCyan_subCyan + 1, :)         = [0 1 1];
+subCLUT(idx.expGrey90_subBg + 1, :)         = backgroundHue_rgb;
+subCLUT(idx.expMutGreen_subBg + 1, :)       = backgroundHue_rgb;
+subCLUT(idx.expOldGreen_subOldGreen + 1, :) = oldGreen;
+% ... Add any other static colors from your clutIdx here ...
+
+% --- Fill dynamic entries (17-255) ---
+% Index 17 is the background for the stimulus image area
+expCLUT(18, :) = backgroundHue_rgb;
+subCLUT(18, :) = backgroundHue_rgb;
+
+% Indices 18-255 (MATLAB indices 19-256) are the stimulus ramp
+expCLUT(19:256, :) = stim_ramp;
+subCLUT(19:256, :) = stim_ramp;
+
+
+%% 4. Upload the CLUTs to the VIEWPixx
+Datapixx('SetVideoClut', [subCLUT; expCLUT]);
 
 end
 
