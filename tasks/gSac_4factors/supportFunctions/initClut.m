@@ -27,12 +27,7 @@ for i = 1:length(dklThetas)
         [dklLum(i) satRad *[cosd(dklThetas(i)) sind(dklThetas(i))]]');
 end
 
-% fortyfivedegree_pospos = [ 0.6235 0.4863 0.4157];
-% fortyfivedegree_posneg = [0.6431 0.4078 0.6392];
-% fortyfivedegree_negneg = [ 0.3922 0.5686 0.6235];
-% fortyfivedegree_negpos = [0.3647 0.6235 0.3843];
-% define muted green (mutGreen):
-% mutGreen = [0.3953 0.7459 0.5244];
+
 mutGreen = [0.5 0.9 0.4];
 redISH = [225 0 76]/255;
 orangeISH = [255 146 0]/255;
@@ -70,7 +65,7 @@ c.draw.clut.expColors = ...
     visGreen; % 14
     memMagenta; % 15
     0, 1, 1; % 16
-    [r', g', b']]; % 17-24
+    [r', g', b']]; % 17
 
 % colors for subject's display
 % black 0
@@ -101,7 +96,7 @@ c.draw.clut.subColors = ...
     bgRGB; % 14
     bgRGB; % 15
     bgRGB; % 16
-    [r', g', b']]; % 17-24
+    [r', g', b']]; % 17
 
 
 

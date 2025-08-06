@@ -189,6 +189,7 @@ end
 
 
 % function p = setTargetLocation(p)
+% --- Final setLocations Subfunction ---
 function p = setLocations(p)
 
 % Convert base location to polar coordinates for easy rotation
@@ -285,14 +286,12 @@ end
 
 % Find all possible trials for the current half-block
 col_hb = strcmp(p.init.trialArrayColumnNames, 'halfBlock');
-trialsPossible = p.status.trialsArrayRowsPossible & ...
-    p.init.trialsArray(:, col_hb) == p.trVars.halfBlockToCheck;
+trialsPossible = p.status.trialsArrayRowsPossible & p.init.trialsArray(:, col_hb) == p.trVars.halfBlockToCheck;
 
 % If no trials are left in this half-block, advance the counter and try again
 if ~any(trialsPossible)
     p.trVars.halfBlockToCheck = p.trVars.halfBlockToCheck + 1;
-    trialsPossible = p.status.trialsArrayRowsPossible & ...
-        p.init.trialsArray(:, col_hb) == p.trVars.halfBlockToCheck;
+    trialsPossible = p.status.trialsArrayRowsPossible & p.init.trialsArray(:, col_hb) == p.trVars.halfBlockToCheck;
 end
 
 % If no trials are left in the whole experiment, exit
@@ -305,5 +304,42 @@ end
 % Select one of the possible trials for this half-block at random
 choicePool = find(trialsPossible);
 p.trVars.currentTrialsArrayRow = choicePool(randi(length(choicePool)));
+
+end
+
+%
+function y = shuff(x)
+    y = x(randperm(length(x)));
+end
+
+function r = getRadius(theta, a, bX, bY)
+
+% Choose radius to lie in a rectangular annulus with inner "radius" = a and
+% outer radius = b, depending on angle. First step is calculating a
+% "special case" angle because the annulus is rectangular.
+spAng = atand(bY/bX);
+
+% There are several cases for ranges of theta; I suspect there's a way to
+% do this more cleanly / simply. Let's see what LNK has to say tomorrow!
+if (theta > (360 - spAng) || theta <= spAng) || ...
+        (theta > (180 - spAng) && theta <= (180 + spAng))
+    r = abs((a./cosd(theta)) + ...
+        rand*((bX./cosd(theta)) - (a./cosd(theta))));
+elseif (theta > spAng && theta <= 45)
+    r = abs((a./cosd(theta)) + ...
+        rand*((bY./sind(theta)) - (a./cosd(theta))));
+elseif (theta > 135 && theta <= (180 - spAng))
+    r = abs(-(a./cosd(theta)) + ...
+        rand*((bY./sind(theta)) + (a./cosd(theta))));
+elseif (theta > (180 + spAng) && theta <= 225)
+    r = abs(-(a./cosd(theta)) + ...
+        rand*(-(bY./sind(theta)) + (a./cosd(theta))));
+elseif (theta > 315 && theta <= (270 + spAng))
+    r = abs((a./cosd(theta)) + ...
+        rand*(-(bY./sind(theta)) - (a./cosd(theta))));
+else
+    r = abs((a./sind(theta)) + ...
+        rand*((bY./sind(theta)) - (a./sind(theta))));
+end
 
 end
