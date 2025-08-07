@@ -597,8 +597,11 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - ...
             else
                 % It's a Face or Non-Face trial: draw the pre-loaded texture.
                 % The color is handled by the CLUT we uploaded in nextParams.
+                % Draw the RGBA texture, tinting it with the modulateColor
                 Screen('DrawTexture', p.draw.window, ...
-                    p.stim.currentTexture, [], targRect);
+                    p.stim.currentTexture, [], targRect, [], [], [], ...
+                    p.stim.modulateColor);
+
             end
 
         end

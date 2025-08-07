@@ -24,11 +24,18 @@ p   = initClut(p);
 % initialize VIEWPixx/DATAPixx
 p   = pds.initDataPixx(p);
 
+% --- ENABLE ALPHA BLENDING ---
+Screen('BlendFunction', p.draw.window, ...
+	GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+% initialize image textures
+p = initImageTextures(p);
+
 % define audio waveforms and load to VIEWPixx
 p   = pds.initAudio(p);
 
 % define online-plotting windows (and reposition others).
-p   = extraWindowSetup(p);
+%p   = extraWindowSetup(p);
 
 % define grid line locations:
 p   = pds.defineGridLines(p);
