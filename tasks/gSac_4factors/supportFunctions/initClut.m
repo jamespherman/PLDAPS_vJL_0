@@ -1,113 +1,71 @@
 function p = initClut(p)
 % initClut
 %
-% DEFINITIVE FINAL VERSION (August 7, 2025)
-% 1. Initializes the DKL color palette (both DKL and RGB versions).
-% 2. Programmatically calculates stimStart/End indices based on nStimLevels from settings.
-% 3. Builds the complete STATIC 17-row portions of the exp/sub CLUTs.
-% 4. Builds a full, default CLUT for opening the PTB window.
+% Builds the single, static CLUT for the redesigned gSac_4factors experiment.
+% This function is called only once during initialization.
 
-fprintf('--- Initializing color palette and static CLUT portions ---\n');
+fprintf('--- Building static CLUT ---\n');
 
-%% 1. Define DKL color palette
+%% 1. Initialize DKL conversion and define color palette
 p.init.initMonFile = ['LUT_VPIXX_rig' p.init.pcName(end-1)];
 initmon(p.init.initMonFile);
 
-satRad      = 0.4;
-p.rig.dklLum      = [-0.4888, -0.4871, -0.4958, -0.4944, -0.4975, -0.5012, ...
-                   -0.4974, -0.4922, -0.4896];
-dklThetas   = 0:45:360;
+% We only need to calculate the 4 specific hues for the bullseye trials
+% and the isoluminant gray.
+dkl_hues_to_calc = [0, 45, 180, 225];
+p.draw.colors.bullseye_hues = zeros(length(dkl_hues_to_calc), 3);
 
-% Pre-allocate matrices for both DKL and RGB palettes
-dkl_palette_dkl = zeros(length(dklThetas), 3);
-dkl_palette_rgb = zeros(length(dklThetas), 3);
+% Use the mean luminance from your empirical measurements
+mean_lum = -0.495; % Approx. mean of your dklLum vector
+satRad = 0.4;
 
-for i = 1:length(dklThetas)
-    dkl_color_vec = [p.rig.dklLum(i); satRad * cosd(dklThetas(i)); satRad * sind(dklThetas(i))];
-    dkl_palette_dkl(i, :) = dkl_color_vec';
-    [r, g, b] = dkl2rgb(dkl_color_vec);
-    dkl_palette_rgb(i, :) = [r, g, b];
+for i = 1:length(dkl_hues_to_calc)
+    theta = dkl_hues_to_calc(i);
+    dkl_color = [mean_lum; satRad * cosd(theta); satRad * sind(theta)];
+    [r, g, b] = dkl2rgb(dkl_color);
+    p.draw.colors.bullseye_hues(i, :) = [r, g, b];
 end
-p.draw.colors.dklPalette_dkl = dkl_palette_dkl;
-p.draw.colors.dklPalette_rgb = dkl_palette_rgb;
 
-mean_lum = mean(p.rig.dklLum);
 [r_gray, g_gray, b_gray] = dkl2rgb([mean_lum; 0; 0]);
 p.draw.colors.isolumGray = [r_gray, g_gray, b_gray];
-fprintf('  ... DKL and RGB color palettes defined.\n');
+fprintf('  ... DKL colors defined.\n');
 
+%% 2. Generate the Grayscale Ramp
+% This ramp will occupy indices 18-255. It's a linear ramp from
+% black to white in gun values (0 to 1).
+n_ramp_levels = p.draw.clutIdx.grayscale_ramp_end - p.draw.clutIdx.grayscale_ramp_start + 1;
+gray_ramp = linspace(0, 1, n_ramp_levels)';
+gray_ramp = [gray_ramp, gray_ramp, gray_ramp]; % Create Nx3 matrix
 
-%% 2. Programmatically define dynamic CLUT indices
-% Uses the parameter from the settings file to define the indices.
-p.draw.clutIdx.stimStart = p.draw.clutIdx.stimBg + 1;
-p.draw.clutIdx.stimEnd   = p.draw.clutIdx.stimStart + p.stim.nStimLevels - 1;
+%% 3. Assemble the Final 256x3 CLUT
+clut = zeros(256, 3);
+idx = p.draw.clutIdx; % Get the indices from the settings file
 
-% Add a check to ensure we don't exceed the CLUT's capacity
-if p.draw.clutIdx.stimEnd > 255
-    error('FATAL: The number of static CLUT entries plus nStimLevels exceeds 256!');
-end
-fprintf('  ... Dynamic stimulus indices defined: %d to %d.\n', p.draw.clutIdx.stimStart, p.draw.clutIdx.stimEnd);
+% --- Fill in all entries explicitly ---
+% Core Task Colors (0-7)
+clut(idx.black + 1, :)      = [0 0 0];
+clut(idx.gridLines + 1, :)  = [0.25 0.25 0.25];
+clut(idx.bg_image + 1, :)   = p.draw.colors.isolumGray;
+clut(idx.fixWin + 1, :)     = [0.7 0.7 0.7];
+clut(idx.white + 1, :)      = [1 1 1];
+clut(idx.eyePos + 1, :)     = [0.04 0.38 0.64]; % "blueISH"
+clut(idx.rwd_high + 1, :)   = [0 1 0]; % Bright Green
+clut(idx.rwd_low + 1, :)    = [0 0.5 0]; % Dim Green
 
+% Bullseye Hues (8-11)
+clut(idx.dkl_0 + 1, :)      = p.draw.colors.bullseye_hues(1,:);
+clut(idx.dkl_45 + 1, :)     = p.draw.colors.bullseye_hues(2,:);
+clut(idx.dkl_180 + 1, :)    = p.draw.colors.bullseye_hues(3,:);
+clut(idx.dkl_225 + 1, :)    = p.draw.colors.bullseye_hues(4,:);
 
-%% 3. Build and store the STATIC (17-row) CLUTs
-idx = p.draw.clutIdx;
-static_expCLUT = zeros(17, 3);
-static_subCLUT = zeros(17, 3);
+% Grayscale Ramp (18-255)
+ramp_indices = (idx.grayscale_ramp_start:idx.grayscale_ramp_end) + 1;
+clut(ramp_indices, :) = gray_ramp;
 
-% Define named colors for static entries
-mutGreen    = [0.5 0.9 0.4];
-redISH      = [225 0 76]/255;
-orangeISH   = [255 146 0]/255;
-blueISH     = [11 97 164]/255;
-oldGreen    = [0.45, 0.63, 0.45];
-visGreen    = [0.1 0.9 0.1];
-memMagenta  = [1 0 1];
-
-% --- Populate the 17-row static Experimenter CLUT ---
-static_expCLUT(idx.expBlack_subBlack + 1, :)       = [0 0 0];
-static_expCLUT(idx.expGrey25_subBg + 1, :)         = [0.25 0.25 0.25];
-static_expCLUT(idx.expBg_subBg + 1, :)             = p.draw.colors.isolumGray; % Default BG
-static_expCLUT(idx.expGrey70_subBg + 1, :)         = [0.7 0.7 0.7];
-static_expCLUT(idx.expWhite_subWhite + 1, :)       = [1 1 1];
-static_expCLUT(idx.expRed_subBg + 1, :)            = redISH;
-static_expCLUT(idx.expOrange_subBg + 1, :)         = orangeISH;
-static_expCLUT(idx.expBlue_subBg + 1, :)           = blueISH;
-static_expCLUT(idx.expCyan_subCyan + 1, :)         = [0 1 1];
-static_expCLUT(idx.expGrey90_subBg + 1, :)         = [0.9 0.9 0.9];
-static_expCLUT(idx.expMutGreen_subBg + 1, :)       = mutGreen;
-static_expCLUT(idx.expGreen_subBg + 1, :)          = [112 229 0]/255;
-static_expCLUT(idx.expOldGreen_subOldGreen + 1, :) = oldGreen;
-static_expCLUT(idx.expVisGreen_subBg + 1, :)       = visGreen;
-static_expCLUT(idx.expMemMagenta_subBg + 1, :)     = memMagenta;
-static_expCLUT(idx.expCyan_subBg + 1, :)           = [0 1 1];
-
-% --- Populate the 17-row static Subject CLUT ---
-static_subCLUT(idx.expBlack_subBlack + 1, :)       = [0 0 0];
-static_subCLUT(idx.expWhite_subWhite + 1, :)       = [1 1 1];
-static_subCLUT(idx.expCyan_subCyan + 1, :)         = [0 1 1];
-static_subCLUT(idx.expOldGreen_subOldGreen + 1, :) = oldGreen;
-static_subCLUT(idx.expGrey25_subBg + 1, :)         = p.draw.colors.isolumGray;
-static_subCLUT(idx.expBg_subBg + 1, :)             = p.draw.colors.isolumGray;
-static_subCLUT(idx.expGrey70_subBg + 1, :)         = p.draw.colors.isolumGray;
-static_subCLUT(idx.expRed_subBg + 1, :)            = p.draw.colors.isolumGray;
-static_subCLUT(idx.expOrange_subBg + 1, :)         = p.draw.colors.isolumGray;
-static_subCLUT(idx.expBlue_subBg + 1, :)           = p.draw.colors.isolumGray;
-static_subCLUT(idx.expGrey90_subBg + 1, :)         = p.draw.colors.isolumGray;
-static_subCLUT(idx.expMutGreen_subBg + 1, :)       = p.draw.colors.isolumGray;
-static_subCLUT(idx.expGreen_subBg + 1, :)          = p.draw.colors.isolumGray;
-static_subCLUT(idx.expVisGreen_subBg + 1, :)       = p.draw.colors.isolumGray;
-static_subCLUT(idx.expMemMagenta_subBg + 1, :)     = p.draw.colors.isolumGray;
-static_subCLUT(idx.expCyan_subBg + 1, :)           = p.draw.colors.isolumGray;
-
-% --- Store the static portions for efficient use in redefClut ---
-p.draw.clut.static_expCLUT = static_expCLUT;
-p.draw.clut.static_subCLUT = static_subCLUT;
-fprintf('  ... Static CLUT portions built.\n');
-
-%% 4. Build a full, default CLUT for opening the PTB window
-default_ramp = repmat(p.draw.colors.isolumGray, 256-17, 1);
-p.draw.clut.expCLUT = [p.draw.clut.static_expCLUT; default_ramp];
-p.draw.clut.subCLUT = [p.draw.clut.static_subCLUT; default_ramp];
-fprintf('  ... default CLUTs built.\n\n');
+%% 4. Store the final CLUT
+% In a static CLUT design, the experimenter and subject CLUTs are identical
+p.draw.clut.expCLUT = clut;
+p.draw.clut.subCLUT = clut;
+fprintf('  ... Static CLUT built successfully.\n\n');
 
 end

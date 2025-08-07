@@ -2,249 +2,175 @@ function p = nextParams(p)
 %
 % p = nextParams(p)
 %
-% Define parameters for upcoming trial.
+% FINAL VERSION for gSac_4factors. Defines all parameters for the upcoming trial.
 
-% if we're using p.init.trialsArray to determine target locations, do the
-% book keeping for that here:
-if p.trVars.setTargLocViaTrialArray
-    p = chooseRow(p);
-end
+%% 1. Choose a row from the trial array
+p = chooseRow(p);
+if p.trVars.exitWhileLoop, return; end
 
-% Trial type information:
-% vis- or mem-guided saccade
+%% 2. Set trial type info and select the stimulus
 p = trialTypeInfo(p);
 
-% set fixation and target locations for next trial:
+%% 3. Set target locations
 p = setLocations(p);
 
-% Timing info:
-% target onset/offset time
+%% 4. Set timing parameters
 p = timingInfo(p);
 
 end
 
-function p = redefClut(p)
-% redefClut
-%
-% EFFICIENT VERSION: Only calculates the dynamic stimulus ramp and assembles
-% the final CLUTs from pre-built static portions.
 
-%% 1. Calculate dynamic colors and ramp for this trial
-screenBackgroundColor = p.draw.colors.isolumGray;
-dkl_palette_rgb = p.draw.colors.dklPalette_rgb;
-dkl_palette_dkl = p.draw.colors.dklPalette_dkl;
-% ... (The logic for generating the 'stim_ramp' based on salience remains the same)
-if p.trVars.targetColor == 1, target_hue_idx = 1; else, target_hue_idx = 3; end
-targetColor_dkl = dkl_palette_dkl(target_hue_idx, :)';
-if p.trVars.salience == 1, ramp_start_idx = mod(target_hue_idx + 4 - 1, 8) + 1; else, ramp_start_idx = mod(target_hue_idx + 1 - 1, 8) + 1; end
-rampStartColor_dkl = dkl_palette_dkl(ramp_start_idx, :)';
-n_stim_levels = p.stim.nStimLevels;
-dkl_origin = [mean(p.rig.dklLum); 0; 0];
-if p.trVars.salience == 1
-    dkl_ramp = interp1([0, 1], [rampStartColor_dkl, targetColor_dkl]', linspace(0, 1, n_stim_levels));
-else
-    half_ramp_levels = n_stim_levels / 2;
-    ramp_part1 = interp1([0, 1], [rampStartColor_dkl, dkl_origin]', linspace(0, 1, half_ramp_levels));
-    ramp_part2 = interp1([0, 1], [dkl_origin, targetColor_dkl]', linspace(0, 1, half_ramp_levels));
-    dkl_ramp = [ramp_part1; ramp_part2];
+%% --- SUBFUNCTIONS ---
+
+function p = trialTypeInfo(p)
+% Reads trial conditions, selects the stimulus, and calls updateTrialClut.
+
+colNames = p.init.trialArrayColumnNames;
+for i = 1:length(colNames), cols.(colNames{i}) = i; end
+currentRow = p.init.trialsArray(p.trVars.currentTrialsArrayRow, :);
+
+% Copy all factorial conditions into p.trVars
+p.trVars.stimType = currentRow(cols.stimType);
+% ... (and any other variables you need in p.trVars)
+
+% Set Stimulus Parameters
+if p.trVars.stimType <= 2 % Image Trial
+    p.stim.isProcedural = false;
+    if p.trVars.stimType == 1, rand_idx = randi(length(p.stim.faceTextures)); p.stim.currentTexture = p.stim.faceTextures(rand_idx);
+    else, rand_idx = randi(length(p.stim.nonFaceTextures)); p.stim.currentTexture = p.stim.nonFaceTextures(rand_idx); end
+else % Bullseye Trial
+    p.stim.isProcedural = true;
+    p.stim.currentTexture = [];
 end
-stim_ramp_rgb = zeros(n_stim_levels, 3);
-for i = 1:n_stim_levels, [r, g, b] = dkl2rgb(dkl_ramp(i, :)'); stim_ramp_rgb(i, :) = [r, g, b]; end
 
-%% 2. Assemble the full CLUTs
-% Start with the static portions we built in initClut
-expCLUT = [p.draw.clut.static_expCLUT; zeros(239, 3)];
-subCLUT = [p.draw.clut.static_subCLUT; zeros(239, 3)];
+% Now that trial conditions are set, update the CLUT for this trial
+p = updateTrialClut(p);
 
-% Insert the dynamic background and ramp
+end
+
+
+function p = updateTrialClut(p)
+% This function runs ONCE per trial to set the correct background color and
+% update the subject's CLUT to ensure elements are invisible.
+
 idx = p.draw.clutIdx;
-ramp_indices = (idx.stimStart:idx.stimEnd) + 1;
 
-expCLUT(ramp_indices, :) = stim_ramp_rgb;
-subCLUT(ramp_indices, :) = stim_ramp_rgb;
-expCLUT(idx.stimBg + 1, :) = screenBackgroundColor;
-subCLUT(idx.stimBg + 1, :) = screenBackgroundColor;
+% Start with the default CLUTs created in initClut
+expCLUT = p.draw.clut.expCLUT;
+subCLUT = p.draw.clut.subCLUT;
 
-%% 3. Upload the final CLUTs to the VIEWPixx
+% 1. Determine the correct background color INDEX for this trial
+switch p.trVars.stimType
+    case {1, 2} % Image Trial
+        p.draw.color.background = idx.bg_image;
+    case 3 % Bullseye: High Salience, Target 0 deg
+        p.draw.color.background = idx.dkl_180;
+    case 4 % Bullseye: Low Salience, Target 0 deg
+        p.draw.color.background = idx.dkl_45;
+    case 5 % Bullseye: High Salience, Target 180 deg
+        p.draw.color.background = idx.dkl_0;
+    case 6 % Bullseye: Low Salience, Target 180 deg
+        p.draw.color.background = idx.dkl_225;
+end
+
+% 2. Get the actual [R G B] value for the chosen background
+current_bg_color_rgb = expCLUT(p.draw.color.background + 1, :);
+
+% 3. CRITICAL STEP: Update the Subject's CLUT
+% Make all '_subBg' elements invisible by setting their color to match the
+% current trial's background color.
+subCLUT(idx.gridLines + 1, :) = current_bg_color_rgb;
+subCLUT(idx.fixWin + 1, :)    = current_bg_color_rgb;
+% (Add any other indices here that need to be invisible)
+
+% 4. Upload the newly updated CLUTs to the VIEWPixx
 Datapixx('SetVideoClut', [subCLUT; expCLUT]);
 
-% Also update the p struct so the run function has the latest version
-p.draw.clut.expCLUT = expCLUT;
+% Store the updated subCLUT in the p struct for use by the drawing functions
 p.draw.clut.subCLUT = subCLUT;
 
 end
 
-%
-function p = trialTypeInfo(p)
-% trialTypeInfo
-%
-% Reads all factorial conditions from the trialsArray for the current trial,
-% copies them to p.trVars, and then calls redefClut to build the CLUT.
 
-% For convenience, create a struct to access columns by name
-colNames = p.init.trialArrayColumnNames;
-for i = 1:length(colNames)
-    cols.(colNames{i}) = i;
+function p = chooseRow(p)
+% Selects the next trial row, progressing sequentially through half-blocks.
+if ~isfield(p.trVars, 'halfBlockToCheck'), p.trVars.halfBlockToCheck = 1; end
+col_hb = strcmp(p.init.trialArrayColumnNames, 'halfBlock');
+trialsPossible = p.status.trialsArrayRowsPossible & p.init.trialsArray(:, col_hb) == p.trVars.halfBlockToCheck;
+if ~any(trialsPossible)
+    p.trVars.halfBlockToCheck = p.trVars.halfBlockToCheck + 1;
+    trialsPossible = p.status.trialsArrayRowsPossible & p.init.trialsArray(:, col_hb) == p.trVars.halfBlockToCheck;
 end
-currentRow = p.init.trialsArray(p.trVars.currentTrialsArrayRow, :);
-
-% Copy all factorial conditions into p.trVars for easy access and saving
-p.trVars.halfBlock    = currentRow(cols.halfBlock);
-p.trVars.targetLocIdx = currentRow(cols.targetLocIdx);
-p.trVars.stimType     = currentRow(cols.stimType);
-p.trVars.salience     = currentRow(cols.salience);
-p.trVars.reward       = currentRow(cols.reward);
-p.trVars.targetColor  = currentRow(cols.targetColor);
-p.trVars.trialCode    = currentRow(cols.trialCode);
-
-% --- Set Stimulus Parameters ---
-p.stim.isProceduralSpot = false; % Default to texture-based stimulus
-
-if p.trVars.stimType == 1 % Face
-    rand_idx = randi(length(p.stim.faceTextures));
-    p.stim.currentTexture = p.stim.faceTextures(rand_idx);
-elseif p.trVars.stimType == 2 % Non-Face
-    rand_idx = randi(length(p.stim.nonFaceTextures));
-    p.stim.currentTexture = p.stim.nonFaceTextures(rand_idx);
-elseif p.trVars.stimType == 3 % Spot
-    % Set a flag to draw a procedural spot instead of a texture
-    p.stim.isProceduralSpot = true;
-    p.stim.currentTexture = [];
+if ~any(trialsPossible), p.trVars.exitWhileLoop = true; p.pldaps.finish = true; return; end
+choicePool = find(trialsPossible);
+p.trVars.currentTrialsArrayRow = choicePool(randi(length(choicePool)));
 end
 
-% This task is always memory-guided, not visually-guided
-p.trVars.isVisSac = 0;
 
-% Now that the trial conditions (p.trVars.salience, p.trVars.targetColor)
-% are set, we can build and upload the specific CLUT for this trial.
-p = redefClut(p);
-
-end
-
-% function p = setTargetLocation(p)
 function p = setLocations(p)
-
-% Convert base location to polar coordinates for easy rotation
-[theta_rad, r] = cart2pol(p.trVars.targDegX, p.trVars.targDegY);
-
-% --- Determine rotation direction based on quadrant ---
-% If signs of X and Y are the same (upper-right or lower-left quadrants),
-% the rotation is clockwise. Otherwise, it's counter-clockwise.
-if sign(p.trVars.targDegX) == sign(p.trVars.targDegY)
-    rotation_deg = -90; % Clockwise
-else
-    rotation_deg = 90;  % Counter-clockwise
-end
+% Sets target locations based on a rotational scheme.
+baseX = p.trVarsInit.targDegX; baseY = p.trVarsInit.targDegY;
+[theta_rad, r] = cart2pol(baseX, baseY);
+if sign(baseX) == sign(baseY), rotation_deg = -90; else, rotation_deg = 90; end
 rotation_rad = deg2rad(rotation_deg);
-
-% --- Define the four potential target locations by rotation ---
 locations = zeros(4, 2);
 for i = 1:4
-    % Rotation angles are 0, 1, 2, and 3 steps of the rotation amount
     current_rotation = theta_rad + ( (i-1) * rotation_rad );
     [x, y] = pol2cart(current_rotation, r);
     locations(i, :) = [x, y];
 end
-
-% Get the target location index for the current trial
 locIdxCol = strcmp(p.init.trialArrayColumnNames, 'targetLocIdx');
-currentTargetLocIdx = p.init.trialsArray(...
-    p.trVars.currentTrialsArrayRow, locIdxCol);
+p.trVars.targetLocIdx = p.init.trialsArray(p.trVars.currentTrialsArrayRow, locIdxCol);
+p.stim.targetPos = locations(p.trVars.targetLocIdx, :);
+p.draw.fixPointPix      = p.draw.middleXY + [1, -1] .* pds.deg2pix([p.trVars.fixDegX, p.trVars.fixDegY], p);
+p.draw.targPointPix = p.draw.middleXY + [1, -1] .* pds.deg2pix(p.stim.targetPos, p);
+p.draw.fixWinWidthPix = pds.deg2pix(p.trVars.fixWinWidthDeg, p);
+p.draw.fixWinHeightPix = pds.deg2pix(p.trVars.fixWinHeightDeg, p);
+p.draw.targWinWidthPix = pds.deg2pix(p.trVars.targWinWidthDeg, p);
+p.draw.targWinHeightPix = pds.deg2pix(p.trVars.targWinHeightDeg, p);
 
-% Set the final target position for this trial
-currentTargDeg = locations(currentTargetLocIdx, :);
-p.trVars.targDegX = currentTargDeg(1);
-p.trVars.targDegY = currentTargDeg(2);
-
-% --- Convert to pixels and strobe values (this logic is preserved) ---
-p.draw.fixPointPix  = p.draw.middleXY + [1, -1] .* ...
-    pds.deg2pix([p.trVars.fixDegX, p.trVars.fixDegY], p);
-p.draw.targPointPix = p.draw.middleXY + [1, -1] .* ...
-    pds.deg2pix([p.trVars.targDegX, p.trVars.targDegY], p);
-
-% fixation window width and height in pixels.
-p.draw.fixWinWidthPix       = pds.deg2pix(p.trVars.fixWinWidthDeg, p);
-p.draw.fixWinHeightPix      = pds.deg2pix(p.trVars.fixWinHeightDeg, p);
-
-% target window width and height in pixels.
-p.draw.targWinWidthPix      = pds.deg2pix(p.trVars.targWinWidthDeg, p);
-p.draw.targWinHeightPix     = pds.deg2pix(p.trVars.targWinHeightDeg, p);
-
-[tmpTheta, tmpRadius] = cart2pol(p.trVars.targDegX, p.trVars.targDegY);
+% Convert final target X & Y into strobe-able radius and theta values
+[tmpTheta, tmpRadius]   = cart2pol(p.stim.targetPos(1), p.stim.targetPos(2));
 p.trVars.targTheta_x10  = round(mod(rad2deg(tmpTheta), 360) * 10);
 p.trVars.targRadius_x100 = round(tmpRadius * 100);
-
 end
 
-%
+
 function p = timingInfo(p)
+% timingInfo
+%
+% DEFINITIVE VERSION: Defines all state durations for the memory-guided
+% saccade task using only the pre-existing variables from the settings file.
 
-% time of target onset wrt fixAcq:
-p.trVars.timeTargOnset       = unifrnd(p.trVars.targOnsetMin, ...
-    p.trVars.targOnsetMax);
+% --- All times are in seconds, relative to Fixation Acquisition ---
 
-% time of target offset wrt fixAcq:
-% This is always a memory-guided saccade task with a fixed flash duration.
+% Time from fixation acquisition to target onset (variable delay)
+p.trVars.timeTargOnset = unifrnd(p.trVarsInit.targOnsetMin, ...
+    p.trVarsInit.targOnsetMax);
+
+% Time from fixation acquisition to target offset (a fixed 400ms flash)
+% Note: p.trVarsInit.targetFlashDuration is already in seconds (0.4)
 p.trVars.timeTargOffset = p.trVars.timeTargOnset + ...
-    p.trVars.targetFlashDuration;
+    p.trVarsInit.targetFlashDuration;
 
-% time of fix offset wrt fix acquired:
-p.trVars.timeFixOffset      = p.trVars.timeTargOnset + ...
-    unifrnd(p.trVars.goTimePostTargMin, p.trVars.goTimePostTargMax);
+% Time from fixation acquisition to fixation offset (the "go" signal).
+% This uses the goTimePostTarg variables to define the memory delay.
+p.trVars.timeFixOffset = p.trVars.timeTargOnset + ...
+    unifrnd(p.trVarsInit.goTimePostTargMin, p.trVarsInit.goTimePostTargMax);
 
-% target fixation duration required
-p.trVars.targHoldDuration =  unifrnd(p.trVars.targHoldDurationMin, ...
-    p.trVars.targHoldDurationMax);
+% Duration to hold fixation on the target after the saccade lands
+p.trVars.targHoldDuration =  unifrnd(p.trVarsInit.targHoldDurationMin, ...
+    p.trVarsInit.targHoldDurationMax);
 
-% --- timingInfo subfunction (inside nextParams.m) ---
-% ... (top part of the function is unchanged) ...
-
-% time of target offset wrt fixAcq:
-% This is always a memory-guided saccade task with a fixed flash duration.
-p.trVars.timeTargOffset = p.trVars.timeTargOnset + ...
-    p.trVars.targetFlashDuration;
-
-% ... (timeFixOffset and targHoldDuration are unchanged) ...
-
-% reward duration depends on whether this is a "high" or "low" reward trial.
+% Set reward duration based on the trial condition
 rewardCol = strcmp(p.init.trialArrayColumnNames, 'reward');
-if p.init.trialsArray(p.trVars.currentTrialsArrayRow, rewardCol) == 1
-    p.trVars.rewardDurationMs = p.trVars.rewardDurationHigh;
+p.trVars.reward = p.init.trialsArray(p.trVars.currentTrialsArrayRow, rewardCol);
+if p.trVars.reward == 1
+    p.trVars.rewardDurationMs = p.trVarsInit.rewardDurationHigh;
 else
-    p.trVars.rewardDurationMs = p.trVars.rewardDurationLow;
+    p.trVars.rewardDurationMs = p.trVarsInit.rewardDurationLow;
 end
 
-end
-
-% --- Simplified chooseRow Subfunction ---
-function p = chooseRow(p)
-
-% On the first trial, initialize the half-block counter
-if ~isfield(p.trVars, 'currentTrialsArrayRow') || isempty(p.trVars.currentTrialsArrayRow)
-    p.trVars.halfBlockToCheck = 1;
-end
-
-% Find all possible trials for the current half-block
-col_hb = strcmp(p.init.trialArrayColumnNames, 'halfBlock');
-trialsPossible = p.status.trialsArrayRowsPossible & ...
-    p.init.trialsArray(:, col_hb) == p.trVars.halfBlockToCheck;
-
-% If no trials are left in this half-block, advance the counter and try again
-if ~any(trialsPossible)
-    p.trVars.halfBlockToCheck = p.trVars.halfBlockToCheck + 1;
-    trialsPossible = p.status.trialsArrayRowsPossible & ...
-        p.init.trialsArray(:, col_hb) == p.trVars.halfBlockToCheck;
-end
-
-% If no trials are left in the whole experiment, exit
-if ~any(trialsPossible)
-    p.trVars.exitWhileLoop = true;
-    p.pldaps.finish = true;
-    return;
-end
-
-% Select one of the possible trials for this half-block at random
-choicePool = find(trialsPossible);
-p.trVars.currentTrialsArrayRow = choicePool(randi(length(choicePool)));
+p.trVars.isVisSac = false;
 
 end

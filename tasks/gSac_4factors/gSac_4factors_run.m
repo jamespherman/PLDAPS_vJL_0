@@ -68,48 +68,21 @@ end
 %% ---------------------
 
 function p = stateMachine(p)
-
 % p = stateMachine(p)
+% CORRECTED VERSION: Uses the new, streamlined clutIdx names.
 
-%% (1) state-dependent section
-% Within each state, some variables are set (eg colors of things to
-% draw), some timings are recorded (eg time of fixation acquisition) as
-% well as strobed to the ephys recording system.
-%
-% Transition from one state to another is deteremined by evaluating
-% whether a meaningful event has occured (eg fixation acquired,
-% stimulus appeared, etc), or whether a certain amount of time has
-% elapsed.
-%
-% Each state can do a myriad of things, sure, but let it be clear:
-% THE CRITICAL COMPONENTS OF EACH STATE ARE:
-%   (a) strobing to ehpys reocrding system
-%   (b) recording of the time at which the event occured
-%   (c) setting 'p.trVars.currentState' to the next state
-%
-
-%%
 % timeNow is relative to trial Start
 timeNow = GetSecs - p.trData.timing.trialStartPTB;
 
-    %%
 switch p.trVars.currentState
     case p.state.trialBegun
-        %% STATE 1:
-        %   TRIAL HAS BEGUN!
-        
-        % strobing trial start time and onward to state 0.1.
+        %% STATE 1: TRIAL HAS BEGUN
         p.init.strb.addValue(p.init.codes.trialBegin);
         p.trData.timing.trialBegin      = timeNow;
         p.trVars.currentState        = p.state.waitForJoy;
         
-        
     case p.state.waitForJoy
-        %% STATE 2:
-        %   WAITING FOR SUBJECT TO HOLD JOYSTICK DOWN
-        
-        % If joystick is held down, onwards to state 0.25
-        % If not, onward to state 3.3 (non-start)
+        %% STATE 2: WAITING FOR JOYSTICK
         if pds.joyHeld(p)
             p.init.strb.addValue(p.init.codes.joyPress);
             p.trData.timing.joyPress    = timeNow;
@@ -119,68 +92,42 @@ switch p.trVars.currentState
             p.trVars.currentState    = p.state.nonStart;
         end
         
-%         disp(num2str(double(timeNow > p.trVars.joyWaitDur)))
     case p.state.showFix
-        %% STATE 3:
-        %   JOYSTICK IS HELD, SO SHOW FIXATION POINT AND WAIT FOR
-        %   SUBJECT TO ACQUIRE FIXATION.
+        %% STATE 3: SHOW FIXATION
+        % Use the new, simplified clutIdx names
+        p.draw.color.fix    = p.draw.clutIdx.black; % Fixation point is white
+        p.draw.color.fixWin = p.draw.clutIdx.fixWin;  % Use the experimenter's fix window color
+        p.draw.fixWinPenDraw = p.draw.fixWinPenThin;
         
-        % show fixation point & fixation window on exp-display
-        p.draw.color.fix    = p.draw.clutIdx.expBlack_subBlack;
-
-        p.draw.color.fixWin         = p.draw.clutIdx.expGrey70_subBg;
-        p.draw.fixWinPenDraw        = p.draw.fixWinPenThin;
-        
-        % strobe fixation onset (we only want to strobe this once):
         p.init.strb.addValueOnce(p.init.codes.fixOn);
-        
-        % note time of fixation onset if it hasn't yet been set
         if p.trData.timing.fixOn < 0
-            p.trData.timing.fixOn          = timeNow;
+            p.trData.timing.fixOn = timeNow;
         end
         
-        % If fixation is aquired within alotted time, and joystick is
-        % still held, onwards to p.state.dontMove:
-        if pds.eyeInWindow(p) && pds.joyHeld(p) && ...
-            timeNow < (p.trData.timing.fixOn + p.trVars.fixWaitDur)
-    
+        if pds.eyeInWindow(p) && pds.joyHeld(p) && timeNow < (p.trData.timing.fixOn + p.trVars.fixWaitDur)
             p.init.strb.addValue(p.init.codes.fixAq);
             p.trData.timing.fixAq      = timeNow;
             p.trVars.currentState      = p.state.dontMove;
             
         elseif ~pds.joyHeld(p)
-            % joystick released when it wasn't supposed to:
             p.init.strb.addValue(p.init.codes.joyRelease);
             p.trData.timing.joyRelease = timeNow;
             p.trVars.currentState      = p.state.joyBreak;
             
         elseif timeNow > (p.trData.timing.fixOn + p.trVars.fixWaitDur)
-            % fixation was never acquired
             p.init.strb.addValue(p.init.codes.nonStart);
             p.trData.timing.joyRelease = timeNow;
             p.trVars.currentState      = p.state.nonStart;
         end
         
     case p.state.dontMove
-        %% STATE 4:
-        %   "DON'T MOVE" - SUBJECT HOLDS FIXATION AND JOYSTICK.
-        %   STUFF HAPPENS ON SCREEN (eg cue flashes, target appears,
-        %   but these are determined in the time-dependant section,
-        %   below). HERE, THE KEY THING IS THAT THE SUSBJECT SHOULD NOT
-        %   DO A SINGLE THING.
-        %
-        %   The next state is money time, where subject is to either 
-        %   respond or not, and the outcome of the trial is determiend.
+        %% STATE 4: HOLD FIXATION
         
-        % show target window to experimenter
-        if p.trVars.isVisSac
-            p.draw.color.targWin    = p.draw.clutIdx.expVisGreen_subBg;
-        else
-            p.draw.color.targWin    = p.draw.clutIdx.expMemMagenta_subBg;
-        end
+        % Set target window color for experimenter. Since this task is
+        % always memory-guided, we can remove the old if/else logic.
+        p.draw.color.targWin = p.draw.clutIdx.fixWin;
         
-        % increase the thickness of the fixation window to inform
-        % the experimenter that the subject has acquired fixation.
+        % Thicken fix window to show subject has acquired fixation
         p.draw.fixWinPenDraw = p.draw.fixWinPenThick;
         
         if (timeNow - p.trData.timing.fixAq) > p.trVars.timeFixOffset
@@ -200,246 +147,207 @@ switch p.trVars.currentState
         end
         
     case p.state.makeSaccade
-        %% STATE 5:
-        %   MAKE A SACCADE!
-        % Fixation point has disappeared. This is the 'go' signal. 
-        % Subject is required to saccade within a specified time window and
-        % land in the target window.
-        % joystick should be held throughout.
+        %% STATE 5: GO SIGNAL
         
-        % turn off fixation point "go signal"
+        % Turn off fixation point by setting its color to the background index
         p.draw.color.fix = p.draw.color.background;
         
-        % if joystick is broken then to hell with all this
+        % ... (rest of the logic for this state is OK) ...
         if ~pds.joyHeld(p)
             p.init.strb.addValue(p.init.codes.joyRelease);
             p.trData.timing.joyRelease  = timeNow;
             p.trVars.currentState       = p.state.joyBreak;
         end
-        
-        % if sub left window before goTime + minLatency, that's a fixBreak:
-        if ~pds.eyeInWindow(p) && ...
-                timeNow < (p.trData.timing.fixOff + p.trVars.goLatencyMin)
+        if ~pds.eyeInWindow(p) && timeNow < (p.trData.timing.fixOff + p.trVars.goLatencyMin)
             p.init.strb.addValue(p.init.codes.fixBreak);
             p.trData.timing.fixBreak    = timeNow;
             p.trVars.currentState       = p.state.fixBreak;
-            
-        % if left window within specified time window, that's great! We
-        % note that as the real-time estimate of saccade onset.
-        % strobe/note saccade onset and move to next state
-        elseif (~pds.eyeInWindow(p) && ...
-                timeNow > ...
-                (p.trData.timing.fixOff + p.trVars.goLatencyMin) && ...
-                timeNow < ...
-                (p.trData.timing.fixOff + p.trVars.goLatencyMax) && ...
-                gazeVelThreshCheck(p, timeNow)) || p.trVars.passEye
-            
-            % strobe saccade onset, mark time of strobe and set state
-            % "checkLanding".
+        elseif (~pds.eyeInWindow(p) && timeNow > (p.trData.timing.fixOff + p.trVars.goLatencyMin) && timeNow < (p.trData.timing.fixOff + p.trVars.goLatencyMax) && gazeVelThreshCheck(p, timeNow)) || p.trVars.passEye
             p.init.strb.addValue(p.init.codes.saccadeOnset);
             p.trData.timing.saccadeOnset    = timeNow;
             p.trVars.currentState           = p.state.checkLanding;
-            
-            % decrease the thickness of the fixation window to inform
-            % the experimenter that the subject has acquired fixation.
             p.draw.fixWinPenDraw = p.draw.fixWinPenThin;
-            
-        % and if neither has happened and the goLatencyMax is elapsed, move
-        % to breakFix
         elseif timeNow > (p.trData.timing.fixOff + p.trVars.goLatencyMax)  
             p.init.strb.addValue(p.init.codes.fixBreak);
             p.trData.timing.fixBreak    = timeNow;
             p.trVars.currentState       = p.state.fixBreak;
         end
-        
-      case p.state.checkLanding
-        %% STATE 6:
-        %   CHECK LANDING POINT
-        % Subject has saccaded, sure, but we have yet to check where! This
-        % state checks whether he has landed in the target window or not. 
-        % joystick should be held throughout. 
-        
-          
-        % if joystick is broken then to hell with all this
-        if ~pds.joyHeld(p)
-            p.init.strb.addValue(p.init.codes.joyRelease);
-            p.trData.timing.joyRelease  = timeNow;
-            p.trVars.currentState       = p.state.joyBreak;
-        end
-        
-        % calculate several relevant quantities:
-        % (1) is gaze velocity above threshold?
-        sacInFlight     = gazeVelThreshCheck(p, timeNow);
-        
-        % (2) logically index all times since fixation offset, then check
-        % if eye position has exceeded 35 in any of those samples to check
-        % for blinks:
-        sinceFixOffLogical = p.trData.onlineGaze(:,3) > ...
-            p.trData.timing.fixOff & p.trData.onlineGaze(:,3) < timeNow;
-        blinkDetected   = any(any(...
-            abs(p.trData.onlineGaze(sinceFixOffLogical, 1:2)) > 35));
-        
-        % (3) is gaze inside the target window?
-        gazeInTargetWin = pds.eyeInWindow(p, 'target');
-        
-        % First check if the saccade is ongoing (eye velocity above
-        % threshold). If it is, do nothing, go through the while-loop
-        % again. If saccade is NOT ongoing, there are 3 possibilities: (1)
-        % subject blinked during saccade (trial abort); (2) saccade landed
-        % inside target window (move on to checking target fixation); (3)
-        % saccade landed outside target window (trial abort).
-        if sacInFlight
-            % saccade IN-FLIGHT, do nothing, check again next time through
-            % the while-loop.
-            
-        elseif blinkDetected
-    
-            % Blink during saccade.
-            disp('blink detected')
-            p.init.strb.addValue(p.init.codes.blinkDuringSac);
-            p.trData.timing.fixBreak    = timeNow;
-            p.trVars.currentState       = p.state.fixBreak;
-            
-        elseif gazeInTargetWin || p.trVars.passEye
-            % if the eyes entered the target window we consdier that
-            % the real-time estiamte of saccade offset:
-            p.init.strb.addValue(p.init.codes.saccadeOffset);
-            p.trData.timing.saccadeOffset   = timeNow;
-            p.trVars.currentState           = p.state.holdTarg;
-            % and 'target acquired':
-            p.init.strb.addValue(p.init.codes.targetAq);
-            p.trData.timing.targetAq        = timeNow;
-            
-            % and thicken up that targWin:
-            p.draw.targWinPenDraw = p.draw.targWinPenThick;
-            
-        elseif ~gazeInTargetWin || ~p.trVars.passEye
-            % this means subject got into the target win too late. Likely
-            % performed an intermediate saccade. This is unacceptable. 
-            p.init.strb.addValue(p.init.codes.fixBreak);
-            p.trData.timing.fixBreak    = timeNow;
-            p.trVars.currentState       = p.state.fixBreak;
-            
-            % and thin up that targWin:
-            p.draw.targWinPenDraw = p.draw.targWinPenThin;
-        end
-           
-      case p.state.holdTarg
-        %% STATE 7:
-        %   HOLD TARGET FIXATION!
-        % Subject has made a saccade into the target window, check to see
-        % if target fixation is maintained for sufficient duration to count
-        % the saccade as "completed"; joystick should be held throughout. 
-        
-        % if joystick is broken then to hell with all this
-        if ~pds.joyHeld(p)
-            p.init.strb.addValue(p.init.codes.joyRelease);
-            p.trData.timing.joyRelease  = timeNow;
-            p.trVars.currentState       = p.state.joyBreak;
-        end
- 
-        % we reached this state because the eyes have entered the target
-        % window. If they exit the window before the holdTargDuration has
-        % elapsed, it is a breakFix.
-       
-        % check if eyes are in target window:
-        eyeInTargetWin = pds.eyeInWindow(p, 'target');
-        
-        % if eyes stayed on target for full duration, bravo!
-        if eyeInTargetWin && timeNow > p.trData.timing.saccadeOffset + ...
-                p.trVars.targHoldDuration
-            p.trVars.currentState = p.state.sacComplete;
-            
-            % and thicken up that targWin:
-            p.draw.targWinPenDraw = p.draw.targWinPenThick;
-            
-        elseif ~eyeInTargetWin
-            p.init.strb.addValue(p.init.codes.fixBreak);
-            p.trData.timing.fixBreak    = timeNow;
-            p.trVars.currentState       = p.state.fixBreak;
-            
-            % and thin up that targWin:
-            p.draw.targWinPenDraw = p.draw.targWinPenThin;
-            
-            disp('target break')
-            
-        end
-        
-   
-%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% end states: trial COMPLETED %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    case p.state.sacComplete
-        %% SACCADE COMPLETE!
-        % STATE 21 = get reward delivery
-        
-        % if the delay for reward delivery has elapsed and reward delivery
-        % hasn't yet been triggered, deliver the reward.
-        if p.trData.timing.reward < 0
-            p = pds.deliverReward(p);
+    % --- The rest of the states (checkLanding, holdTarg, and all end states) ---
+    % --- do not reference the old clutIdx names and do not need to be changed. ---
     
-        % if reward delivery has been triggered and the interval to wait
-        % after reward delivery has elapsed, it's time to exit the
-        % while-loop.
-        elseif p.trData.timing.reward > 0 && (timeNow - p.trData.timing.reward) > (p.trVars.postRewardDuration + p.rig.dp.dacPadDur + p.trVars.rewardDurationMs/1000)
-            p.trVars.exitWhileLoop = true;
-        end
-        
-  
-%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% end states: trial ABORTED %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % ... (pasting the rest of the switch statement for completeness) ...
+      case p.state.checkLanding
+        if ~pds.joyHeld(p), p.init.strb.addValue(p.init.codes.joyRelease); p.trData.timing.joyRelease  = timeNow; p.trVars.currentState = p.state.joyBreak; end
+        sacInFlight = gazeVelThreshCheck(p, timeNow);
+        sinceFixOffLogical = p.trData.onlineGaze(:,3) > p.trData.timing.fixOff & p.trData.onlineGaze(:,3) < timeNow;
+        blinkDetected = any(any(abs(p.trData.onlineGaze(sinceFixOffLogical, 1:2)) > 35));
+        gazeInTargetWin = pds.eyeInWindow(p, 'target');
+        if sacInFlight, elseif blinkDetected, disp('blink detected'); p.init.strb.addValue(p.init.codes.blinkDuringSac); p.trData.timing.fixBreak = timeNow; p.trVars.currentState = p.state.fixBreak;
+        elseif gazeInTargetWin || p.trVars.passEye, p.init.strb.addValue(p.init.codes.saccadeOffset); p.trData.timing.saccadeOffset = timeNow; p.trVars.currentState = p.state.holdTarg; p.init.strb.addValue(p.init.codes.targetAq); p.trData.timing.targetAq = timeNow; p.draw.targWinPenDraw = p.draw.targWinPenThick;
+        elseif ~gazeInTargetWin || ~p.trVars.passEye, p.init.strb.addValue(p.init.codes.fixBreak); p.trData.timing.fixBreak = timeNow; p.trVars.currentState = p.state.fixBreak; p.draw.targWinPenDraw = p.draw.targWinPenThin; end
+      case p.state.holdTarg
+        if ~pds.joyHeld(p), p.init.strb.addValue(p.init.codes.joyRelease); p.trData.timing.joyRelease  = timeNow; p.trVars.currentState = p.state.joyBreak; end
+        eyeInTargetWin = pds.eyeInWindow(p, 'target');
+        if eyeInTargetWin && timeNow > p.trData.timing.saccadeOffset + p.trVars.targHoldDuration, p.trVars.currentState = p.state.sacComplete; p.draw.targWinPenDraw = p.draw.targWinPenThick;
+        elseif ~eyeInTargetWin, p.init.strb.addValue(p.init.codes.fixBreak); p.trData.timing.fixBreak = timeNow; p.trVars.currentState = p.state.fixBreak; p.draw.targWinPenDraw = p.draw.targWinPenThin; disp('target break'); end
+    case p.state.sacComplete
+        if p.trData.timing.reward < 0, p = pds.deliverReward(p);
+        elseif p.trData.timing.reward > 0 && (timeNow - p.trData.timing.reward) > (p.trVars.postRewardDuration + p.rig.dp.dacPadDur + p.trVars.rewardDurationMs/1000), p.trVars.exitWhileLoop = true; end
     case p.state.fixBreak
-        %% FIXATION BREAK
-        p = playTone(p, 'low');
-        p.trVars.exitWhileLoop = true;
-        
+        p = playTone(p, 'low'); p.trVars.exitWhileLoop = true;
     case p.state.joyBreak
-        %% JOYSTICK BREAK
-        p = playTone(p, 'low');
-        p.trVars.exitWhileLoop = true;
-        
+        p = playTone(p, 'low'); p.trVars.exitWhileLoop = true;
     case p.state.nonStart
-        %% NON-START
-        % subject did not hold the joystick within the alloted time and
-        % trila is considered a non-start.
-        p = playTone(p, 'low');
-        p.trVars.exitWhileLoop = true;
+        p = playTone(p, 'low'); p.trVars.exitWhileLoop = true;
 end
 
 if p.trVars.exitWhileLoop
-    %% TRIAL END
-    %  All done with while loop regardless to whether trial was a
-    % success or failure.
-    % - All colors are set to to background color
-    % - strobe 'trial end' and note time.
-    % - break out of the while loop.
-    
-    % turn off fixation and fixation window: reset fixation / target window
-    % thickness.
-    p.draw.color.fix          = p.draw.color.background;
-    p.draw.color.fixWin       = p.draw.color.background;
-    
-    % increase the thickness of the fixation window to inform
-    % the experimenter that the subject has acquired fixation.
+    p.draw.color.fix = p.draw.color.background;
+    p.draw.color.fixWin = p.draw.color.background;
     p.draw.fixWinPenDraw = p.draw.fixWinPenThin;
     p.draw.targWinPenDraw = p.draw.targWinPenThin;
-    
-    % note trial end state
     p.trData.trialEndState = p.trVars.currentState;
-    
-    % STROBING TAKES PLACE IN 'finish' function!
-    
 end
-% Done with state-dependent section
-
 end
-
 
 %%
+
+
+function p = drawMachine(p)
+% drawMachine
+%
+% This is the final version for the gSac_4factors task. It dynamically sets
+% the background color based on trial type and draws the correct stimulus
+% (Image Texture or Procedural Bullseye) using the static CLUT.
+
+% time is relative to trial Start
+timeNow = GetSecs - p.trData.timing.trialStartPTB;
+
+%% 1. Set Dynamic Background Color for this Trial
+% Based on the 6-level stimType, set the background to the correct CLUT index.
+idx = p.draw.clutIdx;
+switch p.trVars.stimType
+    case {1, 2} % Face or Non-Face Image Trial
+        p.draw.color.background = idx.bg_image;
+        
+    case 3 % Bullseye: High Salience, Target 0 deg
+        p.draw.color.background = idx.dkl_180;
+        
+    case 4 % Bullseye: Low Salience, Target 0 deg
+        p.draw.color.background = idx.dkl_45;
+        
+    case 5 % Bullseye: High Salience, Target 180 deg
+        p.draw.color.background = idx.dkl_0;
+        
+    case 6 % Bullseye: Low Salience, Target 180 deg
+        p.draw.color.background = idx.dkl_225;
+end
+
+%% 2. Drawing (if it's time for the next frame)
+if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNumber
+    
+    % Fill the window with the background color we just selected.
+    Screen('FillRect', p.draw.window, p.draw.color.background);
+    
+    % Draw the grid, gaze position, and fixation/target windows
+    Screen('DrawLines', p.draw.window, p.draw.gridXY, [], p.draw.color.gridMajor);
+    Screen('FillRect', p.draw.window, p.draw.color.eyePos, [p.trVars.eyePixX p.trVars.eyePixY p.trVars.eyePixX p.trVars.eyePixY] + [-1 -1 1 1]*p.draw.eyePosWidth + repmat(p.draw.middleXY, 1, 2));
+    Screen('FrameRect',p.draw.window, p.draw.color.targWin, repmat(p.draw.targPointPix, 1, 2) +  [-p.draw.targWinWidthPix -p.draw.targWinHeightPix p.draw.targWinWidthPix p.draw.targWinHeightPix], p.draw.targWinPenDraw);
+    Screen('FrameRect',p.draw.window, p.draw.color.fixWin, repmat(p.draw.fixPointPix, 1, 2) +  [-p.draw.fixWinWidthPix -p.draw.fixWinHeightPix p.draw.fixWinWidthPix p.draw.fixWinHeightPix], p.draw.fixWinPenDraw);
+    
+    % If this is a high reward trial, draw an extra target window for the experimenter
+    if p.trVars.reward == 1 % Updated to use new 'reward' variable
+        Screen('FrameRect',p.draw.window, idx.rwd_high, repmat(p.draw.targPointPix, 1, 2) + fix(1.1 * [-p.draw.targWinWidthPix -p.draw.targWinHeightPix p.draw.targWinWidthPix p.draw.targWinHeightPix]), p.draw.targWinPenDraw);
+    end
+    
+    % Draw the target stimulus (if it is time)
+    if p.trVars.targetIsOn
+        if p.trVars.stimType <= 2 % It's an Image Trial
+            % Draw the 6-degree image texture
+            stimSize_pix = pds.deg2pix(p.stim.stimDiamDeg, p);
+            targRect = CenterRectOnPoint([0 0 stimSize_pix stimSize_pix], p.draw.targPointPix(1), p.draw.targPointPix(2));
+            Screen('DrawTexture', p.draw.window, p.stim.currentTexture, [], targRect);
+            
+        else % It's a Bullseye Trial
+            % Determine the target's hue for this condition
+            if p.trVars.stimType <= 4 % Type A target
+                target_hue_idx = idx.dkl_0;
+            else % Type B target
+                target_hue_idx = idx.dkl_180;
+            end
+            
+            % Draw two concentric rectangular rings for the bullseye
+            % Outer ring at 4 degrees
+            stimSize_pix_outer = pds.deg2pix(4, p);
+            targRect_outer = CenterRectOnPoint([0 0 stimSize_pix_outer stimSize_pix_outer], p.draw.targPointPix(1), p.draw.targPointPix(2));
+            Screen('FrameRect', p.draw.window, target_hue_idx, targRect_outer, 18);
+            
+            % Inner ring at 2 degrees
+            stimSize_pix_inner = pds.deg2pix(2, p);
+            targRect_inner = CenterRectOnPoint([0 0 stimSize_pix_inner stimSize_pix_inner], p.draw.targPointPix(1), p.draw.targPointPix(2));
+            Screen('FrameRect', p.draw.window, target_hue_idx, targRect_inner, 18);
+        end
+    end
+    
+    % Draw fixation spot
+    Screen('FrameRect',p.draw.window, p.draw.color.fix, repmat(p.draw.fixPointPix, 1, 2) + p.draw.fixPointRadius*[-1 -1 1 1], p.draw.fixPointWidth);
+    
+    % Flip the screen and manage timing
+    [p.trData.timing.flipTime(p.trVars.flipIdx)] = Screen('Flip', p.draw.window, GetSecs + 0.00);
+    p.trData.timing.lastFrameTime = p.trData.timing.flipTime(p.trVars.flipIdx) - p.trData.timing.trialStartPTB;
+    p.trVars.flipIdx = p.trVars.flipIdx + 1;
+end
+end
+
+%%
+
+function p = onlineGazeCalcs(p)
+
+% Store gaze X, Y, and sample time; leave an extra slot for
+% yet-to-be-calculated velocity
+p.trData.onlineGaze(p.trVars.whileLoopIdx, :) = ...
+    [p.trVars.eyeDegX, p.trVars.eyeDegY, ...
+    GetSecs - p.trData.timing.trialStartPTB, NaN];
+
+% If we've collected at least "p.trVarsInit.eyeVelFiltTaps" samples,
+% compute eye velocity.
+if p.trVars.whileLoopIdx > p.trVarsInit.eyeVelFiltTaps
+    
+    % compute diff of gaze position / sample time array
+    tempDiff = diff(...
+        p.trData.onlineGaze(...
+        (p.trVars.whileLoopIdx - ...
+        p.trVarsInit.eyeVelFiltTaps + 1):p.trVars.whileLoopIdx, 1:3));
+    
+    % compute rectified total gaze velocity (combined across X & Y).
+    p.trData.onlineGaze(p.trVars.whileLoopIdx, 4) = ...
+        sqrt(sum(mean((tempDiff(:, 1:2) ./ ...
+        repmat(tempDiff(:, 3), 1, 2)).^2)));
+end
+
+end
+
+%%
+
+function logOut = gazeVelThreshCheck(p, timeNow)
+
+% Several possible logical conditions that can make the value returned by
+% this function "true"
+% (1) Gaze velocity is above threshold and we're using the gaze velocity
+% threshold.
+% (2) We're not using the gaze velocity threshold but saccade onset hasn't
+% yet ocurred.
+% (3) We're not using the gaze velocity threshold but we're within the
+% maximum acceptable saccade duration window.
+% 
+% check if gaze velocity is above threshold and that we're using the
+% velocity threshold, or if we're not using the velocity threshold, that
+% the time since saccade onset 
+logOut = (p.trData.onlineGaze(p.trVars.whileLoopIdx, 4) > ...
+    p.trVars.eyeVelThresh);
+
+end
 
 function p = timingMachine(p)
 %
@@ -507,184 +415,5 @@ if p.trData.timing.fixAq > 0
     end
     
 end
-
-end
-
-%%
-
-
-function p = drawMachine(p)
-
-% time is relative to trial Start
-timeNow = GetSecs - p.trData.timing.trialStartPTB;
-
-% if we're close enough to next screen flip, start drawing:
-if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - ...
-        p.rig.magicNumber
-    
-    % Fill the window with the background color.
-    Screen('FillRect', p.draw.window, p.draw.color.background);
-    
-    % Draw the grid
-    Screen('DrawLines', p.draw.window, p.draw.gridXY, [], ...
-        p.draw.color.gridMajor);
-
-        
-    % Draw the gaze position, MUST DRAW THE GAZE BEFORE THE
-    % FIXATION. Otherwise, when the gaze indicator goes over any
-    % stimuli it will change the occluded stimulus' color!
-    Screen('FillRect', p.draw.window, p.draw.color.eyePos, ...
-        [p.trVars.eyePixX p.trVars.eyePixY ...
-        p.trVars.eyePixX p.trVars.eyePixY] + ...
-        [-1 -1 1 1]*p.draw.eyePosWidth + repmat(p.draw.middleXY, 1, 2));
-    
-    % draw targWin:
-    Screen('FrameRect',p.draw.window, p.draw.color.targWin, ...
-        repmat(p.draw.targPointPix, 1, 2) +  ...
-        [-p.draw.targWinWidthPix -p.draw.targWinHeightPix ...
-        p.draw.targWinWidthPix p.draw.targWinHeightPix], ...
-        p.draw.targWinPenDraw)
-
-    % if this is a high reward trial, draw an extra target window for the
-    % experimenter:
-    if p.trVars.rwdSize  == 1
-        Screen('FrameRect',p.draw.window, p.draw.color.targWin, ...
-        repmat(p.draw.targPointPix, 1, 2) +  ...
-        fix(1.1 * [-p.draw.targWinWidthPix -p.draw.targWinHeightPix ...
-        p.draw.targWinWidthPix p.draw.targWinHeightPix]), ...
-        p.draw.targWinPenDraw)
-    end
-    
-    % draw fixation window
-    Screen('FrameRect',p.draw.window, p.draw.color.fixWin, ...
-        repmat(p.draw.fixPointPix, 1, 2) +  [-p.draw.fixWinWidthPix ...
-        -p.draw.fixWinHeightPix p.draw.fixWinWidthPix ...
-        p.draw.fixWinHeightPix], p.draw.fixWinPenDraw)
-
-    % If this is an opto stim trial, draw a slightly larger fixation window
-    % to indicate this as an opto-stim trial to the experimenter.
-    if isfield(p.trVars, 'isOptoStimTrial') && p.trVars.isOptoStimTrial
-        % Draw larger opto indicator window
-        Screen('FrameRect',p.draw.window, p.draw.color.fixWin, ...
-            repmat(p.draw.fixPointPix, 1, 2) + ...
-            [-p.draw.fixWinWidthPix -p.draw.fixWinHeightPix ...
-            p.draw.fixWinWidthPix p.draw.fixWinHeightPix] * 1.1, ...
-            p.draw.fixWinPenDraw);
-    end
-    
-
-    % draw the target (if it is time)
-    if p.trVars.targetIsOn
-        
-        % --- In the 'drawMachine' subfunction of gSac_4factors_run.m ---
-
-        % draw the target (if it is time)
-        if p.trVars.targetIsOn
-            if p.stim.isProceduralSpot
-                % --- OPTION B: Draw the dynamic, concentric square pattern ---
-
-                % Loop backwards from 4 to 1 to draw the squares from largest to smallest
-                for stimDiam = 4:-1:1
-                    % Calculate the destination rectangle for the current square
-                    stimSize_pix = pds.deg2pix(stimDiam, p);
-                    targRect = CenterRectOnPoint([0 0 stimSize_pix ...
-                        stimSize_pix], p.draw.targPointPix(1), ...
-                        p.draw.targPointPix(2));
-
-                    % Select color based on whether the diameter is odd or even
-                    if any(stimDiam == [1 3])
-                        colorToDraw = p.draw.clutIdx.stimStart;
-                    else
-                        colorToDraw = p.draw.clutIdx.stimEnd;
-                    end
-
-                    % Draw a filled rectangle
-                    Screen('FillRect', p.draw.window, colorToDraw, targRect);
-                end
-
-            else
-                % --- Draw the 6-degree image texture ---
-                stimSize_pix = pds.deg2pix(p.stim.stimDiamDeg, p);
-                targRect = CenterRectOnPoint([0 0 stimSize_pix stimSize_pix], p.draw.targPointPix(1), p.draw.targPointPix(2));
-
-                Screen('DrawTexture', p.draw.window, p.stim.currentTexture, [], targRect);
-            end
-        end
-
-    end
-
-    % draw fixation spot
-    Screen('FrameRect',p.draw.window, p.draw.color.fix, ...
-        repmat(p.draw.fixPointPix, 1, 2) + ...
-        p.draw.fixPointRadius*[-1 -1 1 1], p.draw.fixPointWidth);
-    
-    
-    % flip and record time of flip.
-    [p.trData.timing.flipTime(p.trVars.flipIdx), ~, ~, frMs] = ...
-        Screen('Flip', p.draw.window, GetSecs + 0.00);
-    p.trData.timing.lastFrameTime   = ...
-        p.trData.timing.flipTime(p.trVars.flipIdx) - ...
-        p.trData.timing.trialStartPTB;
-    p.init.rigConfigFile     = which('rigConfigFiles.rigConfig_rig1'); 
-    
-    % strobe all values that are in the strobe list with the
-    % classyStrobe class:
-    if p.init.strb.armedToStrobe
-        p.init.strb.strobeList;
-    end
-    
-    % increment flip index
-    p.trVars.flipIdx = p.trVars.flipIdx + 1;
-end
-
-
-end
-
-%%
-
-function p = onlineGazeCalcs(p)
-
-% Store gaze X, Y, and sample time; leave an extra slot for
-% yet-to-be-calculated velocity
-p.trData.onlineGaze(p.trVars.whileLoopIdx, :) = ...
-    [p.trVars.eyeDegX, p.trVars.eyeDegY, ...
-    GetSecs - p.trData.timing.trialStartPTB, NaN];
-
-% If we've collected at least "p.trVarsInit.eyeVelFiltTaps" samples,
-% compute eye velocity.
-if p.trVars.whileLoopIdx > p.trVarsInit.eyeVelFiltTaps
-    
-    % compute diff of gaze position / sample time array
-    tempDiff = diff(...
-        p.trData.onlineGaze(...
-        (p.trVars.whileLoopIdx - ...
-        p.trVarsInit.eyeVelFiltTaps + 1):p.trVars.whileLoopIdx, 1:3));
-    
-    % compute rectified total gaze velocity (combined across X & Y).
-    p.trData.onlineGaze(p.trVars.whileLoopIdx, 4) = ...
-        sqrt(sum(mean((tempDiff(:, 1:2) ./ ...
-        repmat(tempDiff(:, 3), 1, 2)).^2)));
-end
-
-end
-
-%%
-
-function logOut = gazeVelThreshCheck(p, timeNow)
-
-% Several possible logical conditions that can make the value returned by
-% this function "true"
-% (1) Gaze velocity is above threshold and we're using the gaze velocity
-% threshold.
-% (2) We're not using the gaze velocity threshold but saccade onset hasn't
-% yet ocurred.
-% (3) We're not using the gaze velocity threshold but we're within the
-% maximum acceptable saccade duration window.
-% 
-% check if gaze velocity is above threshold and that we're using the
-% velocity threshold, or if we're not using the velocity threshold, that
-% the time since saccade onset 
-logOut = (p.trData.onlineGaze(p.trVars.whileLoopIdx, 4) > ...
-    p.trVars.eyeVelThresh);
 
 end

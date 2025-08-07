@@ -74,50 +74,83 @@ end
 
 function table = fourFactorsTable
 % fourFactorsTable
-% Generates the master "recipe" table for the 2-block, 4-factor experiment.
-% This table is then passed to initTrialStructure.m to be expanded into
-% the final trialsArray.
+%
+% Generates the master "recipe" table for the REDESIGNED experiment.
+% This version creates a trial structure with 6 distinct stimulus conditions.
 
-%% 1. Define Master Recipe Table
-% Pre-allocate the master recipe table. 4 half-blocks * 4 locations * 12 stim conditions
-table = zeros(4 * 4 * 12, 8);
+%% 1. Define Column Names (for reference)
+% {'halfBlock', 'targetLocIdx', 'stimType', 'salience', 'reward', ...
+%  'targetColor', 'numTrials', 'trialCode'};
+
+%% 2. Define the 6 Stimulus Conditions and their mapping to the columns
+% We define a mapping that translates our 6 conceptual conditions into the
+% values that will be stored in the 'stimType', 'salience', and 'targetColor' columns.
+
+% stimType | salience | targetColor
+% 1: Face      | 0        | 0
+% 2: Non-Face  | 0        | 0
+% 3: HS, TC1   | 1        | 1
+% 4: LS, TC1   | 2        | 1
+% 5: HS, TC2   | 1        | 2
+% 6: LS, TC2   | 2        | 2
+stim_condition_map = [ ...
+    1, 0, 0; ...
+    2, 0, 0; ...
+    3, 1, 1; ...
+    4, 2, 1; ...
+    5, 1, 2; ...
+    6, 2, 2; ...
+    ];
+
+n_stim_conditions = size(stim_condition_map, 1);
+n_half_blocks = 4; % 2 blocks total
+n_locations = 4;
+
+% Pre-allocate the master recipe table.
+% 4 half-blocks * 4 locations * 6 stim conditions
+table = zeros(n_half_blocks * n_locations * n_stim_conditions, 8);
 
 
-%% 2. Define the 12 Core Stimulus Conditions
-% stimType (1=Face, 2=Non-Face, 3=Spot)
-% salience (1=High, 2=Low)
-% targetColor (1=ColorA, 2=ColorB)
-stim_types    = [1; 1; 1; 1; 2; 2; 2; 2; 3; 3; 3; 3];
-saliences     = [1; 1; 2; 2; 1; 1; 2; 2; 1; 1; 2; 2];
-target_colors = [1; 2; 1; 2; 1; 2; 1; 2; 1; 2; 1; 2];
-core_stim_conditions = [stim_types, saliences, target_colors];
-
-
-%% 3. Build the Recipe Table for Each of the 4 Half-Blocks
+%% 3. Build the Recipe Table row by row
 current_row = 1;
-for i_half_block = 1:4
-    if i_half_block <= 2
+for i_half_block = 1:n_half_blocks
+    
+    % Determine the high-probability location for this block
+    block_num = ceil(i_half_block / 2);
+    if block_num == 1
         high_prob_loc = 1;
-    else
+    else % block_num == 2
         high_prob_loc = 3;
     end
     
+    % Determine if it's the first or second half of a block (for reward)
     is_first_half_of_block = mod(i_half_block, 2) == 1;
-
-    for i_loc = 1:4
-        for i_stim = 1:12
-            % Col 1: halfBlock
-            table(current_row, 1) = i_half_block;
-            % Col 2: targetLocIdx
-            table(current_row, 2) = i_loc;
-            % Col 3: stimType
-            table(current_row, 3) = core_stim_conditions(i_stim, 1);
-            % Col 4: salience
-            table(current_row, 4) = core_stim_conditions(i_stim, 2);
-            % Col 6: targetColor
-            table(current_row, 6) = core_stim_conditions(i_stim, 3);
+    
+    for i_loc = 1:n_locations
+        for i_stim = 1:n_stim_conditions
             
-            % Col 5: reward
+            % --- Get stimulus properties from our map ---
+            stimType    = stim_condition_map(i_stim, 1);
+            salience    = stim_condition_map(i_stim, 2);
+            targetColor = stim_condition_map(i_stim, 3);
+            
+            % --- Populate columns for this condition ---
+            table(current_row, 1) = i_half_block;
+            table(current_row, 2) = i_loc;
+            table(current_row, 3) = stimType;
+            table(current_row, 4) = salience;
+            table(current_row, 6) = targetColor;
+            
+            % --- Set numTrials based on location probability ---
+            % 10 reps for high-prob (split as 5 per half-block)
+            % 2 reps for low-prob (split as 1 per half-block)
+            if i_loc == high_prob_loc
+                table(current_row, 7) = 5; % numTrials
+            else
+                table(current_row, 7) = 1; % numTrials
+            end
+            
+            % --- Set Reward based on hemifield and half-block ---
             is_loc_in_high_rwd_hemi = (i_loc <= 2);
             if (is_first_half_of_block && is_loc_in_high_rwd_hemi) || ...
                (~is_first_half_of_block && ~is_loc_in_high_rwd_hemi)
@@ -126,19 +159,10 @@ for i_half_block = 1:4
                 table(current_row, 5) = 2; % Low Reward
             end
             
-            % Col 7: numTrials
-            if i_loc == high_prob_loc
-                table(current_row, 7) = 9;
-            else
-                table(current_row, 7) = 1;
-            end
-            
-            % Col 8: trialCode
-            block_num = ceil(i_half_block / 2);
-            half_in_block = mod(i_half_block - 1, 2) + 1;
-            stim_index = i_stim;
-            table(current_row, 8) = 26000 + (block_num - 1) * 2000 + ...
-                (half_in_block - 1) * 1000 + (i_loc - 1) * 100 + stim_index;
+            % --- Generate a unique trial code ---
+            % We will use a simple counter for the condition code (1-24)
+            condition_code = (i_loc - 1) * n_stim_conditions + i_stim;
+            table(current_row, 8) = 26000 + (block_num * 1000) + condition_code;
                 
             current_row = current_row + 1;
         end

@@ -248,7 +248,7 @@ p.trVarsInit.flipIdx                 = 1;        % index of
 p.trVarsInit.postRewardDuration      = 0.25;     % how long should the trial last AFTER reward delivery? This lets us record the neuronal response to reward.
 p.trVarsInit.joyPressVoltDir         = 1;
 
-p.trVarsInit.targetFlashDuration     = 0.2;      % Duration target stays on for the memory-guided trials.
+p.trVarsInit.targetFlashDuration     = 0.4;      % Duration target stays on for the memory-guided trials.
 % p.trVarsInit.postFlashFixMin       = 1;    % minimum post-flash fixation-duration
 % p.trVarsInit.postFlashFixMax       = 1.5;  % maximum post-flash fixation-duration
 p.trVarsInit.targHoldDurationMin     = 0.2;  % minimum duration to maintain fixation on the target post-saccade 
@@ -404,64 +404,44 @@ p.stim.dotWidth              = 6;        % dot width
 p.stim.stimDiamDeg = 6;
 
 % This controls the degree of intensity compression. Max is 238.
-p.stim.nStimLevels = 100; 
+p.stim.nStimLevels = 5; 
 
 %% CLUT - Color Look Up Table
-% the CLUT gets initialized in the _init file, but here I set verbal
-% identifiers that may be used. 
-% The integer number here indicates a row in the CLUT (see initClut.m)
-% (format is 'expColor_subColor' where 'exp' stands for experimenter, 'sub' 
-% for subject clut ('Bg' = background)
+% New, streamlined CLUT index definitions for the static CLUT.
+p.draw.clutIdx.black         = 0;
+p.draw.clutIdx.gridLines     = 1;
+p.draw.clutIdx.bg_image      = 2; % Will be set to isoluminant gray
+p.draw.clutIdx.fixWin        = 3; % Fixation window for experimenter
+p.draw.clutIdx.white         = 4; % Fixation point
+p.draw.clutIdx.eyePos        = 5; % Gaze cursor
+p.draw.clutIdx.rwd_high      = 6; % High reward indicator color
+p.draw.clutIdx.rwd_low       = 7; % Low reward indicator color
 
-p.draw.clutIdx.expBlack_subBlack         = 0;
-p.draw.clutIdx.expGrey25_subBg           = 1;
-p.draw.clutIdx.expBg_subBg               = 2;
-p.draw.clutIdx.expGrey70_subBg           = 3;
-p.draw.clutIdx.expWhite_subWhite         = 4;
-p.draw.clutIdx.expRed_subBg              = 5;
-p.draw.clutIdx.expOrange_subBg           = 6;
-p.draw.clutIdx.expBlue_subBg             = 7;
-p.draw.clutIdx.expCyan_subCyan           = 8;
-p.draw.clutIdx.expGrey90_subBg           = 9;
-p.draw.clutIdx.expMutGreen_subBg         = 10;
-p.draw.clutIdx.expGreen_subBg            = 11;
-p.draw.clutIdx.expBlack_subBg            = 12;
-p.draw.clutIdx.expOldGreen_subOldGreen   = 13;
-p.draw.clutIdx.expVisGreen_subBg         = 14;
-p.draw.clutIdx.expMemMagenta_subBg       = 15;
-p.draw.clutIdx.expCyan_subBg             = 16;
-p.draw.clutIdx.dkl_0                     = 17;
-p.draw.clutIdx.dkl_45                    = 18;
-p.draw.clutIdx.dkl_90                    = 19;
-p.draw.clutIdx.dkl_135                   = 20;
-p.draw.clutIdx.dkl_180                   = 21;
-p.draw.clutIdx.dkl_225                   = 22;
-p.draw.clutIdx.dkl_270                   = 23;
-p.draw.clutIdx.dkl_315                   = 24;
-% --- In gSac_4factors_settings.m ---
+% Indices for the 4 key DKL hues for Bullseye trials
+p.draw.clutIdx.dkl_0         = 8;
+p.draw.clutIdx.dkl_45        = 9;
+p.draw.clutIdx.dkl_180       = 10;
+p.draw.clutIdx.dkl_225       = 11;
 
-% ... (after p.draw.clutIdx.dkl_315) ...
+% Indices for the Grayscale Ramp for Image trials
+p.draw.clutIdx.grayscale_ramp_start = 18;
+p.draw.clutIdx.grayscale_ramp_end   = 255;
 
-% -- Indices for dynamic stimulus ramp --
-p.draw.clutIdx.stimBg       = 17; % The background color for the stimulus ramp area
+%% COLORS
+% Each color is assigned a row in the CLUT based on the clutIdx struct above.
+p.draw.color.background     = p.draw.clutIdx.bg_image;      % Default background is isoluminant gray
+p.draw.color.fix            = p.draw.clutIdx.black;         % Fixation point is always BLACK
+p.draw.color.fixWin         = p.draw.clutIdx.fixWin;        % Fixation window (for experimenter)
+p.draw.color.targWin        = p.draw.clutIdx.fixWin;        % Target window (for experimenter)
+p.draw.color.eyePos         = p.draw.clutIdx.eyePos;        % Gaze position cursor
+p.draw.color.gridMajor      = p.draw.clutIdx.gridLines;     % Grid lines
+p.draw.color.gridMinor      = p.draw.clutIdx.gridLines;     % Grid lines (using same color as major)
+p.draw.color.joyInd         = p.draw.clutIdx.gridLines;     % Joystick position indicator
+p.draw.color.mouseCursor    = p.draw.clutIdx.eyePos;        % Mouse cursor
 
-%% COLORS 
-% here we just init them. They get updated in the run function as a 
-% function of state- and time-machines. 
-% each color is assigned a row in the CLUT (see initClut.m), based on the
-% CLUT section above.
-p.draw.color.background     = p.draw.clutIdx.expBg_subBg;                   % background CLUT index
-p.draw.color.cursor         = p.draw.clutIdx.expOrange_subBg;               % cursor CLUT index
-p.draw.color.fix            = p.draw.clutIdx.expBg_subBg;                   % fixation CLUT index
-p.draw.color.fixWin         = p.draw.clutIdx.expBg_subBg;                   % fixation window CLUT index
-p.draw.color.targ           = p.draw.clutIdx.expWhite_subWhite;             % fixation CLUT index
-p.draw.color.targWin        = p.draw.clutIdx.expBg_subBg;                   % fixation window CLUT index
-p.draw.color.eyePos         = p.draw.clutIdx.expBlue_subBg;                 % eye position indicator CLUT index
-p.draw.color.gridMajor      = p.draw.clutIdx.expGrey90_subBg;               % grid line CLUT index
-p.draw.color.gridMinor      = p.draw.clutIdx.expGrey70_subBg;               % grid line CLUT index
-p.draw.color.cueRing        = p.draw.clutIdx.expOldGreen_subOldGreen;       % fixation window CLUT index
-p.draw.color.joyInd         = p.draw.clutIdx.expGrey90_subBg;               % joy position indicator CLUT index
-p.draw.color.mouseCursor    = p.draw.clutIdx.expCyan_subBg;                % mouse cursor
+% NOTE: A general p.draw.color.targ is not defined here because the target's
+% color is highly dynamic. For image trials it uses the grayscale ramp, and
+% for bullseye trials it uses one of the DKL hues.
 
 %% draw - these are paramters used for drawing
 % the boring stuff, like width and height of stuff that gets drawn.

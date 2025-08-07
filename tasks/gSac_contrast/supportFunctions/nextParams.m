@@ -342,37 +342,38 @@ end
 
 %
 function p = timingInfo(p)
+% timingInfo
+%
+% DEFINITIVE VERSION: Defines all state durations for the memory-guided
+% saccade task using only the pre-existing variables from the settings file.
 
-% time of target onset wrt fixAcq:
-p.trVars.timeTargOnset       = unifrnd(p.trVars.targOnsetMin, ...
-    p.trVars.targOnsetMax);
+% --- All times are in seconds, relative to Fixation Acquisition ---
 
-% time of target offset wrt fixAcq:
-if p.trVars.isVisSac
-    % infinity for vis"
-    p.trVars.timeTargOffset = Inf;
+% Time from fixation acquisition to target onset (variable delay)
+p.trVars.timeTargOnset = unifrnd(p.trVarsInit.targOnsetMin, ...
+    p.trVarsInit.targOnsetMax);
+
+% Time from fixation acquisition to target offset (a fixed 400ms flash)
+% Note: p.trVarsInit.targetFlashDuration is already in seconds (0.4)
+p.trVars.timeTargOffset = p.trVars.timeTargOnset + ...
+    p.trVarsInit.targetFlashDuration;
+
+% Time from fixation acquisition to fixation offset (the "go" signal).
+% This uses the goTimePostTarg variables to define the memory delay.
+p.trVars.timeFixOffset = p.trVars.timeTargOnset + ...
+    unifrnd(p.trVarsInit.goTimePostTargMin, p.trVarsInit.goTimePostTargMax);
+
+% Duration to hold fixation on the target after the saccade lands
+p.trVars.targHoldDuration =  unifrnd(p.trVarsInit.targHoldDurationMin, ...
+    p.trVarsInit.targHoldDurationMax);
+
+% Set reward duration based on the trial condition
+rewardCol = strcmp(p.init.trialArrayColumnNames, 'reward');
+p.trVars.reward = p.init.trialsArray(p.trVars.currentTrialsArrayRow, rewardCol);
+if p.trVars.reward == 1
+    p.trVars.rewardDurationMs = p.trVarsInit.rewardDurationHigh;
 else
-    % flash for mem:
-    p.trVars.timeTargOffset = p.trVars.timeTargOnset + ...
-        p.trVars.targetFlashDuration;
-end
-
-% time of fix offset wrt fix acquired:
-p.trVars.timeFixOffset      = p.trVars.timeTargOnset + ...
-    unifrnd(p.trVars.goTimePostTargMin, p.trVars.goTimePostTargMax);
-
-% target fixation duration required
-p.trVars.targHoldDuration =  unifrnd(p.trVars.targHoldDurationMin, ...
-    p.trVars.targHoldDurationMax);
-
-% reward duration depends on whether this is a "high" or "low" reward
-% trial. We add or subtract "rewardDurDelta" from "rewardDurationMs" for
-% "high" and "low" reward trials, respectively.
-if p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
-    strcmp(p.init.trialArrayColumnNames, 'highLowRwd')) == 1
-    p.trVars.rewardDurationMs = p.trVars.rewardDurationHigh;
-else
-    p.trVars.rewardDurationMs = p.trVars.rewardDurationLow;
+    p.trVars.rewardDurationMs = p.trVarsInit.rewardDurationLow;
 end
 
 end
