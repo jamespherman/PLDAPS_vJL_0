@@ -593,15 +593,13 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - ...
 
                     % Select color based on whether the diameter is odd or even
                     if any(stimDiam == [1 3])
-                        colorToDraw = p.draw.clut.expCLUT(...
-                            p.draw.clutIdx.stimStart + 1, :); % Dimmest ramp color
+                        colorToDraw = p.draw.clutIdx.stimStart;
                     else
-                        colorToDraw = p.draw.clut.expCLUT(...
-                            p.draw.clutIdx.stimEnd + 1, :);   % Brightest ramp color
+                        colorToDraw = p.draw.clutIdx.stimEnd;
                     end
 
                     % Draw a filled rectangle
-                    Screen('FillRect', p.draw.window, round(255*colorToDraw), targRect);
+                    Screen('FillRect', p.draw.window, colorToDraw, targRect);
                 end
 
             else

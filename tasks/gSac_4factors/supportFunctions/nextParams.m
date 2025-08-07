@@ -26,104 +26,51 @@ end
 function p = redefClut(p)
 % redefClut
 %
-% Defines and uploads the CLUT for the upcoming trial. This version uses
-% a constant gray background and a stimulus ramp that is either linear (high
-% salience) or piecewise linear (low salience) to ensure both ramps pass
-% through the gray origin, creating a balanced stimulus form.
+% EFFICIENT VERSION: Only calculates the dynamic stimulus ramp and assembles
+% the final CLUTs from pre-built static portions.
 
-%% 1. Define screen background and key hues for this trial
+%% 1. Calculate dynamic colors and ramp for this trial
 screenBackgroundColor = p.draw.colors.isolumGray;
-dkl_palette = p.draw.colors.dklPalette_rgb;
-
-% Map the 'targetColor' condition to a DKL palette index
-if p.trVars.targetColor == 1
-    target_hue_idx = 1; % 0 degrees (e.g., Red)
-else
-    target_hue_idx = 3; % 90 degrees (e.g., Green)
-end
-targetColor_rgb = dkl_palette(target_hue_idx, :);
-
-% Determine the starting color for the ramp based on salience
-if p.trVars.salience == 1 % High Salience
-    % Start color is 180 deg away from target
-    ramp_start_idx = mod(target_hue_idx + 4 - 1, 8) + 1;
-else % Low Salience
-    % Start color is 45 deg away from target
-    ramp_start_idx = mod(target_hue_idx + 1 - 1, 8) + 1;
-end
-rampStartColor_rgb = dkl_palette(ramp_start_idx, :);
-
-
-%% 2. Generate the Stimulus Ramp based on salience condition
-% -- NEW DYNAMIC LINE --
+dkl_palette_rgb = p.draw.colors.dklPalette_rgb;
+dkl_palette_dkl = p.draw.colors.dklPalette_dkl;
+% ... (The logic for generating the 'stim_ramp' based on salience remains the same)
+if p.trVars.targetColor == 1, target_hue_idx = 1; else, target_hue_idx = 3; end
+targetColor_dkl = dkl_palette_dkl(target_hue_idx, :)';
+if p.trVars.salience == 1, ramp_start_idx = mod(target_hue_idx + 4 - 1, 8) + 1; else, ramp_start_idx = mod(target_hue_idx + 1 - 1, 8) + 1; end
+rampStartColor_dkl = dkl_palette_dkl(ramp_start_idx, :)';
 n_stim_levels = p.stim.nStimLevels;
-
-if p.trVars.salience == 1 % High Salience: simple linear ramp
-    % A straight line between opponent colors naturally passes through gray
-    stim_ramp = interp1([0, 1], [rampStartColor_rgb; targetColor_rgb], linspace(0, 1, n_stim_levels));
-    
-else % Low Salience: piecewise linear ramp
-    % We explicitly force the ramp to go from the start color to gray,
-    % and then from gray to the target color.
+dkl_origin = [mean(p.rig.dklLum); 0; 0];
+if p.trVars.salience == 1
+    dkl_ramp = interp1([0, 1], [rampStartColor_dkl, targetColor_dkl]', linspace(0, 1, n_stim_levels));
+else
     half_ramp_levels = n_stim_levels / 2;
-    
-    ramp_part1 = interp1([0, 1], [rampStartColor_rgb; screenBackgroundColor], linspace(0, 1, half_ramp_levels));
-    ramp_part2 = interp1([0, 1], [screenBackgroundColor; targetColor_rgb], linspace(0, 1, half_ramp_levels));
-    
-    stim_ramp = [ramp_part1; ramp_part2];
+    ramp_part1 = interp1([0, 1], [rampStartColor_dkl, dkl_origin]', linspace(0, 1, half_ramp_levels));
+    ramp_part2 = interp1([0, 1], [dkl_origin, targetColor_dkl]', linspace(0, 1, half_ramp_levels));
+    dkl_ramp = [ramp_part1; ramp_part2];
 end
+stim_ramp_rgb = zeros(n_stim_levels, 3);
+for i = 1:n_stim_levels, [r, g, b] = dkl2rgb(dkl_ramp(i, :)'); stim_ramp_rgb(i, :) = [r, g, b]; end
 
+%% 2. Assemble the full CLUTs
+% Start with the static portions we built in initClut
+expCLUT = [p.draw.clut.static_expCLUT; zeros(239, 3)];
+subCLUT = [p.draw.clut.static_subCLUT; zeros(239, 3)];
 
-%% 3. Explicitly define the full CLUTs
-% Pre-allocate full 256x3 matrices and get named colors
-expCLUT = zeros(256, 3);
-subCLUT = zeros(256, 3);
-mutGreen    = [0.5 0.9 0.4];
-redISH      = [225 0 76]/255;
-orangeISH   = [255 146 0]/255;
-blueISH     = [11 97 164]/255;
-oldGreen    = [0.45, 0.63, 0.45];
+% Insert the dynamic background and ramp
 idx = p.draw.clutIdx;
+ramp_indices = (idx.stimStart:idx.stimEnd) + 1;
 
-% --- Fill static entries (0-16) ---
-% Experimenter CLUT
-expCLUT(idx.expBlack_subBlack + 1, :)       = [0 0 0];
-expCLUT(idx.expGrey25_subBg + 1, :)         = [0.25 0.25 0.25];
-expCLUT(idx.expBg_subBg + 1, :)             = screenBackgroundColor; % DYNAMIC BACKGROUND
-expCLUT(idx.expGrey70_subBg + 1, :)         = [0.7 0.7 0.7];
-expCLUT(idx.expWhite_subWhite + 1, :)       = [1 1 1];
-expCLUT(idx.expRed_subBg + 1, :)            = redISH;
-expCLUT(idx.expOrange_subBg + 1, :)         = orangeISH;
-expCLUT(idx.expBlue_subBg + 1, :)           = blueISH;
-expCLUT(idx.expCyan_subCyan + 1, :)         = [0 1 1];
-expCLUT(idx.expOldGreen_subOldGreen + 1, :) = oldGreen;
+expCLUT(ramp_indices, :) = stim_ramp_rgb;
+subCLUT(ramp_indices, :) = stim_ramp_rgb;
+expCLUT(idx.stimBg + 1, :) = screenBackgroundColor;
+subCLUT(idx.stimBg + 1, :) = screenBackgroundColor;
 
-% Subject CLUT (invisible elements match the DYNAMIC background)
-subCLUT(idx.expBlack_subBlack + 1, :)       = [0 0 0];
-subCLUT(idx.expGrey25_subBg + 1, :)         = screenBackgroundColor;
-subCLUT(idx.expBg_subBg + 1, :)             = screenBackgroundColor;
-subCLUT(idx.expGrey70_subBg + 1, :)         = screenBackgroundColor;
-subCLUT(idx.expWhite_subWhite + 1, :)       = [1 1 1];
-subCLUT(idx.expRed_subBg + 1, :)            = screenBackgroundColor;
-subCLUT(idx.expOrange_subBg + 1, :)         = screenBackgroundColor;
-subCLUT(idx.expBlue_subBg + 1, :)           = screenBackgroundColor;
-subCLUT(idx.expCyan_subCyan + 1, :)         = [0 1 1];
-subCLUT(idx.expOldGreen_subOldGreen + 1, :) = oldGreen;
+%% 3. Upload the final CLUTs to the VIEWPixx
+Datapixx('SetVideoClut', [subCLUT; expCLUT]);
 
-% --- Fill dynamic entries (17-255) ---
-% Index 17 is the background for the stimulus image area
-expCLUT(18, :) = screenBackgroundColor;
-subCLUT(18, :) = screenBackgroundColor;
-
-% Indices 18-255 (MATLAB indices 19-256) are the stimulus ramp
-expCLUT(19:256, :) = stim_ramp;
-subCLUT(19:256, :) = stim_ramp;
-
+% Also update the p struct so the run function has the latest version
 p.draw.clut.expCLUT = expCLUT;
 p.draw.clut.subCLUT = subCLUT;
-
-%% 4. Upload the CLUTs to the VIEWPixx
-Datapixx('SetVideoClut', [subCLUT; expCLUT]);
 
 end
 

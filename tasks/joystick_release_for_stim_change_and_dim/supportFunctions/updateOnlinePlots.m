@@ -192,75 +192,67 @@ drawnow;
 
 % Cued vs. Uncued Performance Plot
 if isgraphics(p.draw.onlineCuedPlotWindow)
-    % --- Step 1: Create logical indices for different trial types ---
 
-    % Master filter: Only include multi-stim trials (nStim > 1) that could result in a hit or miss.
+    % consider only multi stim trials that ends in hit or miss
     masterFilter = (p.status.nStim > 1) & ismember(p.status.trialEndStates, [p.state.hit, p.state.miss]);
     
-    % Cued Change Trials: change location matches cue location
     isCuedChange = p.status.cueLoc == p.status.chgLoc & p.status.chgLoc > 0;
-    
-    % Uncued Change Trials: change location does not match cue location
     isUncuedChange = p.status.cueLoc ~= p.status.chgLoc & p.status.chgLoc > 0;
     
-    % Change occurred at Location 1
-    atLoc1 = p.status.chgLoc == 1;
+    atLoc1 = p.status.cueLoc == 1;
+    atLoc3 = p.status.cueLoc == 3;
     
-    % Change occurred at Location 3
-    atLoc3 = p.status.chgLoc == 3;
+    % calculate hit counts
     
-    % --- Step 2: Calculate Hit Counts (Numerators) ---
-    
-    % Overall Performance
+    % overall
     cuedHits_all = nnz(masterFilter & isCuedChange & p.status.trialEndStates == p.state.hit);
     uncuedHits_all = nnz(masterFilter & isUncuedChange & p.status.trialEndStates == p.state.hit);
     
-    % Location 1 Performance
+    % loc 1
     cuedHits_loc1 = nnz(masterFilter & isCuedChange & atLoc1 & p.status.trialEndStates == p.state.hit);
     uncuedHits_loc1 = nnz(masterFilter & isUncuedChange & atLoc1 & p.status.trialEndStates == p.state.hit);
     
-    % Location 3 Performance
+    % loc 3
     cuedHits_loc3 = nnz(masterFilter & isCuedChange & atLoc3 & p.status.trialEndStates == p.state.hit);
     uncuedHits_loc3 = nnz(masterFilter & isUncuedChange & atLoc3 & p.status.trialEndStates == p.state.hit);
     
-    % --- Step 3: Calculate Total Trials (Denominators) ---
+    % total trials
     
-    % Overall Totals
+    % overall
     cuedTotal_all = nnz(masterFilter & isCuedChange);
     uncuedTotal_all = nnz(masterFilter & isUncuedChange);
     
-    % Location 1 Totals
+    % loc 1
     cuedTotal_loc1 = nnz(masterFilter & isCuedChange & atLoc1);
     uncuedTotal_loc1 = nnz(masterFilter & isUncuedChange & atLoc1);
     
-    % Location 3 Totals
+    % loc 3
     cuedTotal_loc3 = nnz(masterFilter & isCuedChange & atLoc3);
     uncuedTotal_loc3 = nnz(masterFilter & isUncuedChange & atLoc3);
     
-    % --- Step 4: Calculate Rates and Confidence Intervals ---
+    % hits and CIs
     
     hitCounts = [cuedHits_all, uncuedHits_all, cuedHits_loc1, uncuedHits_loc1, cuedHits_loc3, uncuedHits_loc3];
     totalCounts = [cuedTotal_all, uncuedTotal_all, cuedTotal_loc1, uncuedTotal_loc1, cuedTotal_loc3, uncuedTotal_loc3];
     
-    % Use binofit to get rates and error bars. Handle cases where totalCounts is zero.
     zeroTotals = totalCounts == 0;
-    hitCounts(zeroTotals) = 0; % Ensure binofit doesn't fail
-    totalCounts(zeroTotals) = 1; % Set denominator to 1 to avoid NaN results
+    hitCounts(zeroTotals) = 0; % ensure binofit doesn't fail
+    totalCounts(zeroTotals) = 1; % set denominator to 1 to avoid NaN results
     
     [hitRates, errorBars] = binofit(hitCounts, totalCounts);
     
     hitRates(zeroTotals) = 0; % Manually set rate to 0 if no trials occurred
     errorBars(zeroTotals, :) = 0; % Manually set error to 0
 
-    % --- Step 5: Update the Plot Objects ---
+    % update objects
     
     nPlots = length(hitRates);
     for i = 1:nPlots
-        % Update the fill object (error bar)
+        % fill object (error bar)
         yFill = [errorBars(i, 1), errorBars(i, 1), errorBars(i, 2), errorBars(i, 2), errorBars(i, 1)];
         set(p.draw.onlineCuedFillObj(i), 'YData', yFill);
         
-        % Update the plot object (mean line)
+        % plot object (mean line)
         centerY = hitRates(i);
         xMin = i - 0.3;
         xMax = i + 0.3;
@@ -269,7 +261,6 @@ if isgraphics(p.draw.onlineCuedPlotWindow)
         set(p.draw.onlineCuedPlotObj(i), 'XData', xPlot, 'YData', yPlot);
     end
     
-    % Set Y-axis limits and refresh the plot
     ylim(p.draw.onlineCuedPlotAxes, [0 1]);
     drawnow;
 end
