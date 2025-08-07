@@ -40,6 +40,14 @@ mean_lum = mean(p.rig.dklLum);
 [r_gray, g_gray, b_gray] = dkl2rgb([mean_lum; 0; 0]);
 p.draw.colors.isolumGray = [r_gray, g_gray, b_gray];
 
+p.draw.clutIdx.stimStart = p.draw.clutIdx.stimBg + 1;
+p.draw.clutIdx.stimEnd   = p.draw.clutIdx.stimStart + p.stim.nStimLevels - 1;
+
+% Add a check to ensure we don't exceed the CLUT's capacity
+if p.draw.clutIdx.stimEnd > 255
+    error('FATAL: The number of static CLUT entries plus nStimLevels exceeds 256!');
+end
+
 %% 2. Build the initial, default CLUTs
 default_bg = p.draw.colors.isolumGray;
 

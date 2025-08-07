@@ -55,7 +55,8 @@ rampStartColor_rgb = dkl_palette(ramp_start_idx, :);
 
 
 %% 2. Generate the Stimulus Ramp based on salience condition
-n_stim_levels = 238;
+% -- NEW DYNAMIC LINE --
+n_stim_levels = p.stim.nStimLevels;
 
 if p.trVars.salience == 1 % High Salience: simple linear ramp
     % A straight line between opponent colors naturally passes through gray

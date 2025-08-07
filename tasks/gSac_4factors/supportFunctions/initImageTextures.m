@@ -20,10 +20,10 @@ stim_data = load(stimulus_file);
 image_struct = stim_data.image;
 
 %% 2. Define CLUT Mapping
-CLUT_BACKGROUND_INDEX = 17;
-CLUT_STIM_START_INDEX = 18;
-CLUT_STIM_END_INDEX   = 255;
-n_stim_levels         = CLUT_STIM_END_INDEX - CLUT_STIM_START_INDEX + 1;
+% -- NEW DYNAMIC SECTION --
+CLUT_BACKGROUND_INDEX = p.draw.clutIdx.stimBg;
+CLUT_STIM_START_INDEX = p.draw.clutIdx.stimStart;
+n_stim_levels         = p.stim.nStimLevels;
 
 %% 3. Pre-process Images and Create Textures
 n_images = length(image_struct);

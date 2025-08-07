@@ -403,6 +403,8 @@ p.stim.dotWidth              = 6;        % dot width
 % Set the visual angle of the square stimulus images
 p.stim.stimDiamDeg = 6;
 
+% This controls the degree of intensity compression. Max is 238.
+p.stim.nStimLevels = 100; 
 
 %% CLUT - Color Look Up Table
 % the CLUT gets initialized in the _init file, but here I set verbal
@@ -442,8 +444,6 @@ p.draw.clutIdx.dkl_315                   = 24;
 
 % -- Indices for dynamic stimulus ramp --
 p.draw.clutIdx.stimBg       = 17; % The background color for the stimulus ramp area
-p.draw.clutIdx.stimStart    = 18; % The first (dimmest) color of the stimulus ramp
-p.draw.clutIdx.stimEnd      = 255;% The last (most saturated) color of the stimulus ramp
 
 %% COLORS 
 % here we just init them. They get updated in the run function as a 
