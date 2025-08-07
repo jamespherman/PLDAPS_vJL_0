@@ -35,7 +35,7 @@ p = initImageTextures(p);
 p   = pds.initAudio(p);
 
 % define online-plotting windows (and reposition others).
-%p   = extraWindowSetup(p);
+% p   = extraWindowSetup(p);
 
 % define grid line locations:
 p   = pds.defineGridLines(p);

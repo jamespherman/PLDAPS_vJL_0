@@ -436,6 +436,14 @@ p.draw.clutIdx.dkl_180                   = 21;
 p.draw.clutIdx.dkl_225                   = 22;
 p.draw.clutIdx.dkl_270                   = 23;
 p.draw.clutIdx.dkl_315                   = 24;
+% --- In gSac_4factors_settings.m ---
+
+% ... (after p.draw.clutIdx.dkl_315) ...
+
+% -- Indices for dynamic stimulus ramp --
+p.draw.clutIdx.stimBg       = 17; % The background color for the stimulus ramp area
+p.draw.clutIdx.stimStart    = 18; % The first (dimmest) color of the stimulus ramp
+p.draw.clutIdx.stimEnd      = 255;% The last (most saturated) color of the stimulus ramp
 
 %% COLORS 
 % here we just init them. They get updated in the run function as a 

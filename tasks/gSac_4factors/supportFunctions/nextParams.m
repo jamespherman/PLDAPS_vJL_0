@@ -23,134 +23,108 @@ p = timingInfo(p);
 
 end
 
-% --- In nextParams.m ---
-
 function p = redefClut(p)
-% redefClut (TRANSPARENCY TEST VERSION)
-% Sets the background color and stores the target color for modulation.
+% redefClut
+%
+% Defines and uploads the CLUT for the upcoming trial. This version uses
+% a constant gray background and a stimulus ramp that is either linear (high
+% salience) or piecewise linear (low salience) to ensure both ramps pass
+% through the gray origin, creating a balanced stimulus form.
 
-% 1. Select the Target and Background Hues for this trial
-dkl_palette_rgb = p.draw.colors.dklPalette_rgb;
+%% 1. Define screen background and key hues for this trial
+screenBackgroundColor = p.draw.colors.isolumGray;
+dkl_palette = p.draw.colors.dklPalette_rgb;
 
-if p.trVars.targetColor == 1, target_hue_idx = 1; else, target_hue_idx = 5; end
-if p.trVars.salience == 1, bg_hue_idx = mod(target_hue_idx + 4 - 1, 8) + 1; else, bg_hue_idx = mod(target_hue_idx + 1 - 1, 8) + 1; end
+% Map the 'targetColor' condition to a DKL palette index
+if p.trVars.targetColor == 1
+    target_hue_idx = 1; % 0 degrees (e.g., Red)
+else
+    target_hue_idx = 3; % 90 degrees (e.g., Green)
+end
+targetColor_rgb = dkl_palette(target_hue_idx, :);
 
-targetHue_rgb = dkl_palette_rgb(target_hue_idx, :);
-backgroundHue_rgb = dkl_palette_rgb(bg_hue_idx, :);
+% Determine the starting color for the ramp based on salience
+if p.trVars.salience == 1 % High Salience
+    % Start color is 180 deg away from target
+    ramp_start_idx = mod(target_hue_idx + 4 - 1, 8) + 1;
+else % Low Salience
+    % Start color is 45 deg away from target
+    ramp_start_idx = mod(target_hue_idx + 1 - 1, 8) + 1;
+end
+rampStartColor_rgb = dkl_palette(ramp_start_idx, :);
 
-% 2. Store the target color for the run function to use for tinting
-p.stim.modulateColor = targetHue_rgb;
 
-% 3. Set the dynamic background color in the CLUT
-% Get the current CLUT, modify only the background, and re-upload.
-expCLUT = p.draw.clut.expCLUT;
-subCLUT = p.draw.clut.subCLUT;
+%% 2. Generate the Stimulus Ramp based on salience condition
+n_stim_levels = 238;
 
-expCLUT(p.draw.clutIdx.expBg_subBg + 1, :) = backgroundHue_rgb;
-subCLUT(p.draw.clutIdx.expBg_subBg + 1, :) = backgroundHue_rgb;
-% Also make invisible elements match the new background
-subCLUT(p.draw.clutIdx.expGrey25_subBg + 1, :) = backgroundHue_rgb;
-subCLUT(p.draw.clutIdx.expGrey70_subBg + 1, :) = backgroundHue_rgb;
-
-Datapixx('SetVideoClut', [subCLUT; expCLUT]);
+if p.trVars.salience == 1 % High Salience: simple linear ramp
+    % A straight line between opponent colors naturally passes through gray
+    stim_ramp = interp1([0, 1], [rampStartColor_rgb; targetColor_rgb], linspace(0, 1, n_stim_levels));
+    
+else % Low Salience: piecewise linear ramp
+    % We explicitly force the ramp to go from the start color to gray,
+    % and then from gray to the target color.
+    half_ramp_levels = n_stim_levels / 2;
+    
+    ramp_part1 = interp1([0, 1], [rampStartColor_rgb; screenBackgroundColor], linspace(0, 1, half_ramp_levels));
+    ramp_part2 = interp1([0, 1], [screenBackgroundColor; targetColor_rgb], linspace(0, 1, half_ramp_levels));
+    
+    stim_ramp = [ramp_part1; ramp_part2];
 end
 
-% function p = redefClut(p)
-% % redefClut
-% %
-% % Defines and uploads the CLUTs for the upcoming trial. It now generates
-% % the stimulus ramp in DKL space to ensure it is truly isoluminant.
-% 
-% %% 1. Select the Target and Background Hues for this trial
-% dkl_palette_dkl = p.draw.colors.dklPalette_dkl; % Use DKL coordinates
-% dkl_palette_rgb = p.draw.colors.dklPalette_rgb; % Use final RGB values for background
-% 
-% if p.trVars.targetColor == 1, target_hue_idx = 1; else, target_hue_idx = 5; end % 0 or 180 deg
-% 
-% if p.trVars.salience == 1, bg_hue_idx = mod(target_hue_idx + 4 - 1, 8) + 1; else, bg_hue_idx = mod(target_hue_idx + 1 - 1, 8) + 1; end
-% 
-% % We need the final RGB value for the background entry in the CLUT
-% backgroundHue_rgb = dkl_palette_rgb(bg_hue_idx, :);
-% 
-% %% 2. Generate the "Single Hue Ramp" in DKL space
-% n_stim_levels = 238;
-% 
-% % Define the endpoints of the ramp in DKL coordinates
-% isolum_gray_dkl = [mean(p.rig.dklLum), 0, 0];
-% targetHue_dkl   = dkl_palette_dkl(target_hue_idx, :);
-% 
-% % Interpolate the two chromatic axes (L-M and S) from gray to the target hue
-% lm_axis_ramp = linspace(isolum_gray_dkl(2), targetHue_dkl(2), n_stim_levels);
-% s_axis_ramp  = linspace(isolum_gray_dkl(3), targetHue_dkl(3), n_stim_levels);
-% 
-% % Keep the luminance axis CONSTANT
-% lum_axis = ones(1, n_stim_levels) * isolum_gray_dkl(1);
-% 
-% % Combine axes and convert each DKL step back to RGB
-% dkl_ramp = [lum_axis; lm_axis_ramp; s_axis_ramp];
-% stim_ramp_rgb = zeros(n_stim_levels, 3);
-% for i = 1:n_stim_levels
-%     [r,g,b] = dkl2rgb(dkl_ramp(:,i));
-%     stim_ramp_rgb(i,:) = [r,g,b];
-% end
-% 
-% %% 3. Explicitly define the full CLUTs
-% % Pre-allocate full 256x3 matrices
-% expCLUT = zeros(256, 3);
-% subCLUT = zeros(256, 3);
-% 
-% % Define named colors for static entries, for clarity
-% mutGreen    = [0.5 0.9 0.4];
-% redISH      = [225 0 76]/255;
-% orangeISH   = [255 146 0]/255;
-% blueISH     = [11 97 164]/255;
-% oldGreen    = [0.45, 0.63, 0.45];
-% 
-% % Get the struct of CLUT indices from the settings file
-% idx = p.draw.clutIdx;
-% 
-% % --- Fill static entries (indices 0-16) ---
-% % Experimenter CLUT (most elements are visible)
-% expCLUT(idx.expBlack_subBlack + 1, :)       = [0 0 0];
-% expCLUT(idx.expGrey25_subBg + 1, :)         = [0.25 0.25 0.25];
-% expCLUT(idx.expBg_subBg + 1, :)             = backgroundHue_rgb; % DYNAMIC
-% expCLUT(idx.expGrey70_subBg + 1, :)         = [0.7 0.7 0.7];
-% expCLUT(idx.expWhite_subWhite + 1, :)       = [1 1 1];
-% expCLUT(idx.expRed_subBg + 1, :)            = redISH;
-% expCLUT(idx.expOrange_subBg + 1, :)         = orangeISH;
-% expCLUT(idx.expBlue_subBg + 1, :)           = blueISH;
-% expCLUT(idx.expCyan_subCyan + 1, :)         = [0 1 1];
-% expCLUT(idx.expOldGreen_subOldGreen + 1, :) = oldGreen;
-% % ... (add any other static colors as needed) ...
-% 
-% % Subject CLUT (many elements are made invisible by matching the DYNAMIC background)
-% subCLUT(idx.expBlack_subBlack + 1, :)       = [0 0 0];
-% subCLUT(idx.expGrey25_subBg + 1, :)         = backgroundHue_rgb;
-% subCLUT(idx.expBg_subBg + 1, :)             = backgroundHue_rgb;
-% subCLUT(idx.expGrey70_subBg + 1, :)         = backgroundHue_rgb;
-% subCLUT(idx.expWhite_subWhite + 1, :)       = [1 1 1];
-% subCLUT(idx.expRed_subBg + 1, :)            = backgroundHue_rgb;
-% subCLUT(idx.expOrange_subBg + 1, :)         = backgroundHue_rgb;
-% subCLUT(idx.expBlue_subBg + 1, :)           = backgroundHue_rgb;
-% subCLUT(idx.expCyan_subCyan + 1, :)         = [0 1 1];
-% subCLUT(idx.expOldGreen_subOldGreen + 1, :) = oldGreen;
-% % ... (add any other static colors as needed) ...
-% 
-% 
-% % --- Fill dynamic entries (indices 17-255) ---
-% % Index 17 is the background color for the stimulus area
-% expCLUT(18, :) = backgroundHue_rgb;
-% subCLUT(18, :) = backgroundHue_rgb;
-% 
-% % Indices 18-255 (MATLAB indices 19-256) are the stimulus ramp
-% expCLUT(19:256, :) = stim_ramp_rgb;
-% subCLUT(19:256, :) = stim_ramp_rgb;
-% 
-% 
-% %% 4. Upload the CLUTs to the VIEWPixx
-% Datapixx('SetVideoClut', [subCLUT; expCLUT]);
-% 
-% end
+
+%% 3. Explicitly define the full CLUTs
+% Pre-allocate full 256x3 matrices and get named colors
+expCLUT = zeros(256, 3);
+subCLUT = zeros(256, 3);
+mutGreen    = [0.5 0.9 0.4];
+redISH      = [225 0 76]/255;
+orangeISH   = [255 146 0]/255;
+blueISH     = [11 97 164]/255;
+oldGreen    = [0.45, 0.63, 0.45];
+idx = p.draw.clutIdx;
+
+% --- Fill static entries (0-16) ---
+% Experimenter CLUT
+expCLUT(idx.expBlack_subBlack + 1, :)       = [0 0 0];
+expCLUT(idx.expGrey25_subBg + 1, :)         = [0.25 0.25 0.25];
+expCLUT(idx.expBg_subBg + 1, :)             = screenBackgroundColor; % DYNAMIC BACKGROUND
+expCLUT(idx.expGrey70_subBg + 1, :)         = [0.7 0.7 0.7];
+expCLUT(idx.expWhite_subWhite + 1, :)       = [1 1 1];
+expCLUT(idx.expRed_subBg + 1, :)            = redISH;
+expCLUT(idx.expOrange_subBg + 1, :)         = orangeISH;
+expCLUT(idx.expBlue_subBg + 1, :)           = blueISH;
+expCLUT(idx.expCyan_subCyan + 1, :)         = [0 1 1];
+expCLUT(idx.expOldGreen_subOldGreen + 1, :) = oldGreen;
+
+% Subject CLUT (invisible elements match the DYNAMIC background)
+subCLUT(idx.expBlack_subBlack + 1, :)       = [0 0 0];
+subCLUT(idx.expGrey25_subBg + 1, :)         = screenBackgroundColor;
+subCLUT(idx.expBg_subBg + 1, :)             = screenBackgroundColor;
+subCLUT(idx.expGrey70_subBg + 1, :)         = screenBackgroundColor;
+subCLUT(idx.expWhite_subWhite + 1, :)       = [1 1 1];
+subCLUT(idx.expRed_subBg + 1, :)            = screenBackgroundColor;
+subCLUT(idx.expOrange_subBg + 1, :)         = screenBackgroundColor;
+subCLUT(idx.expBlue_subBg + 1, :)           = screenBackgroundColor;
+subCLUT(idx.expCyan_subCyan + 1, :)         = [0 1 1];
+subCLUT(idx.expOldGreen_subOldGreen + 1, :) = oldGreen;
+
+% --- Fill dynamic entries (17-255) ---
+% Index 17 is the background for the stimulus image area
+expCLUT(18, :) = screenBackgroundColor;
+subCLUT(18, :) = screenBackgroundColor;
+
+% Indices 18-255 (MATLAB indices 19-256) are the stimulus ramp
+expCLUT(19:256, :) = stim_ramp;
+subCLUT(19:256, :) = stim_ramp;
+
+p.draw.clut.expCLUT = expCLUT;
+p.draw.clut.subCLUT = subCLUT;
+
+%% 4. Upload the CLUTs to the VIEWPixx
+Datapixx('SetVideoClut', [subCLUT; expCLUT]);
+
+end
 
 %
 function p = trialTypeInfo(p)

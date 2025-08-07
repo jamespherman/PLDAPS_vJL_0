@@ -580,30 +580,37 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - ...
 
         % draw the target (if it is time)
         if p.trVars.targetIsOn
-
-            % Calculate the destination rectangle for the stimulus
-            stimSize_pix_w = pds.deg2pix(p.stim.stimDiamDeg, p);
-            stimSize_pix_h = pds.deg2pix(p.stim.stimDiamDeg, p);
-            targRect = CenterRectOnPoint(...
-                [0 0 stimSize_pix_w stimSize_pix_h], ...
-                p.draw.targPointPix(1), p.draw.targPointPix(2));
-
-            % Use the appropriate drawing command based on the stimulus type
             if p.stim.isProceduralSpot
-                % It's a Spot trial: draw a filled oval (dot).
-                % We will use the 'white' index, which is visible to the subject.
-                Screen('FillOval', p.draw.window, ...
-                    p.draw.clutIdx.expWhite_subWhite, targRect);
+                % --- OPTION B: Draw the dynamic, concentric square pattern ---
+
+                % Loop backwards from 4 to 1 to draw the squares from largest to smallest
+                for stimDiam = 4:-1:1
+                    % Calculate the destination rectangle for the current square
+                    stimSize_pix = pds.deg2pix(stimDiam, p);
+                    targRect = CenterRectOnPoint([0 0 stimSize_pix ...
+                        stimSize_pix], p.draw.targPointPix(1), ...
+                        p.draw.targPointPix(2));
+
+                    % Select color based on whether the diameter is odd or even
+                    if any(stimDiam == [1 3])
+                        colorToDraw = p.draw.clut.expCLUT(...
+                            p.draw.clutIdx.stimStart + 1, :); % Dimmest ramp color
+                    else
+                        colorToDraw = p.draw.clut.expCLUT(...
+                            p.draw.clutIdx.stimEnd + 1, :);   % Brightest ramp color
+                    end
+
+                    % Draw a filled rectangle
+                    Screen('FillRect', p.draw.window, round(255*colorToDraw), targRect);
+                end
+
             else
-                % It's a Face or Non-Face trial: draw the pre-loaded texture.
-                % The color is handled by the CLUT we uploaded in nextParams.
-                % Draw the RGBA texture, tinting it with the modulateColor
-                Screen('DrawTexture', p.draw.window, ...
-                    p.stim.currentTexture, [], targRect, [], [], [], ...
-                    p.stim.modulateColor);
+                % --- Draw the 6-degree image texture ---
+                stimSize_pix = pds.deg2pix(p.stim.stimDiamDeg, p);
+                targRect = CenterRectOnPoint([0 0 stimSize_pix stimSize_pix], p.draw.targPointPix(1), p.draw.targPointPix(2));
 
+                Screen('DrawTexture', p.draw.window, p.stim.currentTexture, [], targRect);
             end
-
         end
 
     end
