@@ -312,6 +312,8 @@ p.trVarsInit.useOnlineSort  	    = 1; % a boolean indicating whether we want to 
 % do we want online plots?
 p.trVarsInit.wantOnlinePlots        = false;
 
+p.trVarsInit.currentTrialsArrayRow = 1;
+
 %% end of trVarsInit
 % once all trial variables have been initialized in trVarsInit, we copy 
 % them to 'trVarsGuiComm' in order to inform the gui. 

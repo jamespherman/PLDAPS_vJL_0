@@ -106,16 +106,57 @@ end
 
 function p = chooseRow(p)
 % Selects the next trial row, progressing sequentially through half-blocks.
-if ~isfield(p.trVars, 'halfBlockToCheck'), p.trVars.halfBlockToCheck = 1; end
+% This version resets and repeats the full 2-block trial structure
+% continuously until the experimenter stops the task.
+
+% On the first trial of the experiment, initialize the half-block counter
+if ~isfield(p.trVars, 'halfBlockToCheck')
+    p.trVars.halfBlockToCheck = 1;
+end
+
+% Find all possible trials for the current half-block
 col_hb = strcmp(p.init.trialArrayColumnNames, 'halfBlock');
 trialsPossible = p.status.trialsArrayRowsPossible & p.init.trialsArray(:, col_hb) == p.trVars.halfBlockToCheck;
+
+% If no trials are left in this half-block, advance the counter
 if ~any(trialsPossible)
     p.trVars.halfBlockToCheck = p.trVars.halfBlockToCheck + 1;
-    trialsPossible = p.status.trialsArrayRowsPossible & p.init.trialsArray(:, col_hb) == p.trVars.halfBlockToCheck;
 end
-if ~any(trialsPossible), p.trVars.exitWhileLoop = true; p.pldaps.finish = true; return; end
+
+% --- NEW RESET LOGIC ---
+% Check if the half-block counter has exceeded the number of half-blocks in our array (4)
+n_half_blocks_in_array = p.init.trialsArray(end, col_hb);
+if p.trVars.halfBlockToCheck > n_half_blocks_in_array
+    
+    fprintf('****************************************\n');
+    fprintf('** End of 2-block structure reached.  **\n');
+    fprintf('** Resetting and starting next loop.  **\n');
+    fprintf('****************************************\n');
+    
+    % Reset the list of possible trials to all true
+    p.status.trialsArrayRowsPossible = true(size(p.init.trialsArray, 1), 1);
+    
+    % Reset the half-block counter back to 1
+    p.trVars.halfBlockToCheck = 1;
+end
+% --- END NEW LOGIC ---
+
+% Now, find the possible trials again with the potentially updated counter
+trialsPossible = p.status.trialsArrayRowsPossible & p.init.trialsArray(:, col_hb) == p.trVars.halfBlockToCheck;
+
+% This should never be empty now unless something is very wrong, but we
+% will leave the original safeguard just in case.
+if ~any(trialsPossible)
+    warning('pldaps:nextParams', 'Failed to find any possible trials. Ending experiment.');
+    p.trVars.exitWhileLoop = true;
+    p.pldaps.finish = true;
+    return;
+end
+
+% Select one of the possible trials for this half-block at random
 choicePool = find(trialsPossible);
 p.trVars.currentTrialsArrayRow = choicePool(randi(length(choicePool)));
+
 end
 
 
