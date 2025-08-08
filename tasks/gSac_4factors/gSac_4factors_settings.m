@@ -407,41 +407,38 @@ p.stim.stimDiamDeg = 6;
 p.stim.nStimLevels = 5; 
 
 %% CLUT - Color Look Up Table
-% New, streamlined CLUT index definitions for the static CLUT.
-p.draw.clutIdx.black         = 0;
-p.draw.clutIdx.gridLines     = 1;
-p.draw.clutIdx.bg_image      = 2; % Will be set to isoluminant gray
-p.draw.clutIdx.fixWin        = 3; % Fixation window for experimenter
-p.draw.clutIdx.white         = 4; % Fixation point
-p.draw.clutIdx.eyePos        = 5; % Gaze cursor
-p.draw.clutIdx.rwd_high      = 6; % High reward indicator color
-p.draw.clutIdx.rwd_low       = 7; % Low reward indicator color
+% CLUT index definitions for the static CLUT
+p.draw.clutIdx.expBlack_subBlack         = 0;
+p.draw.clutIdx.expGrey25_subBg           = 1;  % Grid lines
+p.draw.clutIdx.expGrey_subBg             = 2;  % Default background (isoluminant gray)
+p.draw.clutIdx.expGrey70_subBg           = 3;  % Fixation window
+p.draw.clutIdx.expWhite_subWhite         = 4;  % Fixation point
+p.draw.clutIdx.expBlue_subBg             = 5;  % Gaze cursor
+p.draw.clutIdx.expGreen_subBg            = 6;  % High reward indicator for experimenter
+p.draw.clutIdx.expDkGreen_subBg          = 7;  % (Optional) Low reward indicator for experimenter
 
 % Indices for the 4 key DKL hues for Bullseye trials
-p.draw.clutIdx.dkl_0         = 8;
-p.draw.clutIdx.dkl_45        = 9;
-p.draw.clutIdx.dkl_180       = 10;
-p.draw.clutIdx.dkl_225       = 11;
+p.draw.clutIdx.expDkl0_subDkl0         = 8;
+p.draw.clutIdx.expDkl45_subDkl45       = 9;
+p.draw.clutIdx.expDkl180_subDkl180     = 10;
+p.draw.clutIdx.expDkl225_subDkl225     = 11;
 
 % Indices for the Grayscale Ramp for Image trials
 p.draw.clutIdx.grayscale_ramp_start = 18;
 p.draw.clutIdx.grayscale_ramp_end   = 255;
 
 %% COLORS
-% Each color is assigned a row in the CLUT based on the clutIdx struct above.
-p.draw.color.background     = p.draw.clutIdx.bg_image;      % Default background is isoluminant gray
-p.draw.color.fix            = p.draw.clutIdx.black;         % Fixation point is always BLACK
-p.draw.color.fixWin         = p.draw.clutIdx.fixWin;        % Fixation window (for experimenter)
-p.draw.color.targWin        = p.draw.clutIdx.fixWin;        % Target window (for experimenter)
-p.draw.color.eyePos         = p.draw.clutIdx.eyePos;        % Gaze position cursor
-p.draw.color.gridMajor      = p.draw.clutIdx.gridLines;     % Grid lines
-p.draw.color.gridMinor      = p.draw.clutIdx.gridLines;     % Grid lines (using same color as major)
-p.draw.color.joyInd         = p.draw.clutIdx.gridLines;     % Joystick position indicator
-p.draw.color.mouseCursor    = p.draw.clutIdx.eyePos;        % Mouse cursor
+% Default color assignments for various task elements. These define the
+% initial state. Many of these will be changed dynamically in the _run.m file.
 
-% NOTE: A general p.draw.color.targ is not defined here because the target's
-% color is highly dynamic. For image trials it uses the grayscale ramp, and
-% for bullseye trials it uses one of the DKL hues.
+% Each color is assigned a row in the CLUT based on the clutIdx struct above.
+p.draw.color.background     = p.draw.clutIdx.expGrey_subBg;      % Default background is isoluminant gray
+p.draw.color.fix            = p.draw.clutIdx.expWhite_subWhite;  % Fixation point is always white
+p.draw.color.fixWin         = p.draw.clutIdx.expGrey70_subBg;    % Fixation window (for experimenter)
+p.draw.color.targWin        = p.draw.clutIdx.expGrey70_subBg;    % Target window (for experimenter)
+p.draw.color.eyePos         = p.draw.clutIdx.expBlue_subBg;      % Gaze position cursor
+p.draw.color.gridMajor      = p.draw.clutIdx.expGrey25_subBg;    % Grid lines
+p.draw.color.gridMinor      = p.draw.clutIdx.expGrey25_subBg;    % Grid lines (using same color as major)
 
 %% draw - these are paramters used for drawing
 % the boring stuff, like width and height of stuff that gets drawn.
