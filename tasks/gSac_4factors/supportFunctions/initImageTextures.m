@@ -15,7 +15,7 @@ stim_data = load(stimulus_file);
 image_struct = stim_data.image;
 
 %% 2. Get CLUT Mapping Info from the p struct
-CLUT_BACKGROUND_INDEX = p.draw.clutIdx.bg_image;
+CLUT_BACKGROUND_INDEX = p.draw.clutIdx.expGrey_subBg;
 CLUT_STIM_START_INDEX = p.draw.clutIdx.grayscale_ramp_start;
 n_stim_levels         = p.draw.clutIdx.grayscale_ramp_end - p.draw.clutIdx.grayscale_ramp_start + 1;
 

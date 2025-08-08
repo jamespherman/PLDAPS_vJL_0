@@ -66,6 +66,8 @@ for i = 1:length(idx_fields)
 end
 subBg_rows = unique(subBg_rows);
 
+p.draw.clut.subBg_rows = subBg_rows;
+
 % Set these rows in the subject's CLUT to the default background color
 subCLUT(subBg_rows, :) = repmat(p.draw.colors.isolumGray, length(subBg_rows), 1);
 fprintf('  ... Subject CLUT created with %d invisible elements.\n', length(subBg_rows));

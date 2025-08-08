@@ -91,7 +91,7 @@ switch p.trVars.currentState
         if (timeNow - p.trData.timing.fixAq) > p.trVars.timeFixOffset
             p.init.strb.addValue(p.init.codes.fixOff);
             p.trData.timing.fixOff    = timeNow;
-            p.trVars.currentState     = p.state.makeSade;
+            p.trVars.currentState     = p.state.makeSaccade;
         elseif ~pds.eyeInWindow(p)
             p.init.strb.addValue(p.init.codes.fixBreak);
             p.trData.timing.fixBreak    = timeNow;
