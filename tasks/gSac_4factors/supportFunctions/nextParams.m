@@ -121,7 +121,7 @@ end
 
 function p = setLocations(p)
 % Sets target locations based on a rotational scheme.
-baseX = p.trVarsInit.targDegX; baseY = p.trVarsInit.targDegY;
+baseX = p.trVars.targDegX; baseY = p.trVars.targDegY;
 [theta_rad, r] = cart2pol(baseX, baseY);
 if sign(baseX) == sign(baseY), rotation_deg = -90; else, rotation_deg = 90; end
 rotation_rad = deg2rad(rotation_deg);
@@ -157,30 +157,30 @@ function p = timingInfo(p)
 % --- All times are in seconds, relative to Fixation Acquisition ---
 
 % Time from fixation acquisition to target onset (variable delay)
-p.trVars.timeTargOnset = unifrnd(p.trVarsInit.targOnsetMin, ...
-    p.trVarsInit.targOnsetMax);
+p.trVars.timeTargOnset = unifrnd(p.trVars.targOnsetMin, ...
+    p.trVars.targOnsetMax);
 
 % Time from fixation acquisition to target offset (a fixed 400ms flash)
-% Note: p.trVarsInit.targetFlashDuration is already in seconds (0.4)
+% Note: p.trVars.targetFlashDuration is already in seconds (0.4)
 p.trVars.timeTargOffset = p.trVars.timeTargOnset + ...
-    p.trVarsInit.targetFlashDuration;
+    p.trVars.targetFlashDuration;
 
 % Time from fixation acquisition to fixation offset (the "go" signal).
 % This uses the goTimePostTarg variables to define the memory delay.
 p.trVars.timeFixOffset = p.trVars.timeTargOnset + ...
-    unifrnd(p.trVarsInit.goTimePostTargMin, p.trVarsInit.goTimePostTargMax);
+    unifrnd(p.trVars.goTimePostTargMin, p.trVars.goTimePostTargMax);
 
 % Duration to hold fixation on the target after the saccade lands
-p.trVars.targHoldDuration =  unifrnd(p.trVarsInit.targHoldDurationMin, ...
-    p.trVarsInit.targHoldDurationMax);
+p.trVars.targHoldDuration =  unifrnd(p.trVars.targHoldDurationMin, ...
+    p.trVars.targHoldDurationMax);
 
 % Set reward duration based on the trial condition
 rewardCol = strcmp(p.init.trialArrayColumnNames, 'reward');
 p.trVars.reward = p.init.trialsArray(p.trVars.currentTrialsArrayRow, rewardCol);
 if p.trVars.reward == 1
-    p.trVars.rewardDurationMs = p.trVarsInit.rewardDurationHigh;
+    p.trVars.rewardDurationMs = p.trVars.rewardDurationHigh;
 else
-    p.trVars.rewardDurationMs = p.trVarsInit.rewardDurationLow;
+    p.trVars.rewardDurationMs = p.trVars.rewardDurationLow;
 end
 
 p.trVars.isVisSac = false;

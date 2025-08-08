@@ -433,7 +433,7 @@ p.draw.clutIdx.grayscale_ramp_end   = 255;
 
 % Each color is assigned a row in the CLUT based on the clutIdx struct above.
 p.draw.color.background     = p.draw.clutIdx.expGrey_subBg;      % Default background is isoluminant gray
-p.draw.color.fix            = p.draw.clutIdx.expWhite_subWhite;  % Fixation point is always white
+p.draw.color.fix            = p.draw.clutIdx.expBlack_subBlack;  % Fixation point is always white
 p.draw.color.fixWin         = p.draw.clutIdx.expGrey70_subBg;    % Fixation window (for experimenter)
 p.draw.color.targWin        = p.draw.clutIdx.expGrey70_subBg;    % Target window (for experimenter)
 p.draw.color.eyePos         = p.draw.clutIdx.expBlue_subBg;      % Gaze position cursor

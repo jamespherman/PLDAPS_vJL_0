@@ -124,39 +124,16 @@ switch p.trVars.currentState
             p.trData.timing.fixBreak    = timeNow;
             p.trVars.currentState       = p.state.fixBreak;
             disp('fixBreak')
-            disp(num2str(p.trVars.goLatencyMax))
         end
       case p.state.checkLanding
-        if ~pds.joyHeld(p)
-            p.init.strb.addValue(p.init.codes.joyRelease);
-            p.trData.timing.joyRelease  = timeNow;
-            p.trVars.currentState = p.state.joyBreak;
-        end
+        if ~pds.joyHeld(p), p.init.strb.addValue(p.init.codes.joyRelease); p.trData.timing.joyRelease  = timeNow; p.trVars.currentState = p.state.joyBreak; end
         sacInFlight = gazeVelThreshCheck(p, timeNow);
         sinceFixOffLogical = p.trData.onlineGaze(:,3) > p.trData.timing.fixOff & p.trData.onlineGaze(:,3) < timeNow;
         blinkDetected = any(any(abs(p.trData.onlineGaze(sinceFixOffLogical, 1:2)) > 35));
         gazeInTargetWin = pds.eyeInWindow(p, 'target');
-        if sacInFlight
-        elseif blinkDetected
-            disp('blink detected'); 
-            p.init.strb.addValue(p.init.codes.blinkDuringSac);
-            p.trData.timing.fixBreak = timeNow;
-            p.trVars.currentState = p.state.fixBreak;
-        elseif gazeInTargetWin || p.trVars.passEye
-            p.init.strb.addValue(p.init.codes.saccadeOffset); 
-            p.trData.timing.saccadeOffset = timeNow; 
-            p.trVars.currentState = p.state.holdTarg; 
-            p.init.strb.addValue(p.init.codes.targetAq); 
-            p.trData.timing.targetAq = timeNow; 
-            p.draw.targWinPenDraw = p.draw.targWinPenThick;
-            disp('targHold')
-        elseif ~gazeInTargetWin || ~p.trVars.passEye
-            p.init.strb.addValue(p.init.codes.fixBreak); 
-            p.trData.timing.fixBreak = timeNow; 
-            p.trVars.currentState = p.state.fixBreak; 
-            p.draw.targWinPenDraw = p.draw.targWinPenThin;
-            disp('fixBreak')
-        end
+        if sacInFlight, elseif blinkDetected, disp('blink detected'); p.init.strb.addValue(p.init.codes.blinkDuringSac); p.trData.timing.fixBreak = timeNow; p.trVars.currentState = p.state.fixBreak;
+        elseif gazeInTargetWin || p.trVars.passEye, p.init.strb.addValue(p.init.codes.saccadeOffset); p.trData.timing.saccadeOffset = timeNow; p.trVars.currentState = p.state.holdTarg; p.init.strb.addValue(p.init.codes.targetAq); p.trData.timing.targetAq = timeNow; p.draw.targWinPenDraw = p.draw.targWinPenThick;
+        elseif ~gazeInTargetWin || ~p.trVars.passEye, p.init.strb.addValue(p.init.codes.fixBreak); p.trData.timing.fixBreak = timeNow; p.trVars.currentState = p.state.fixBreak; p.draw.targWinPenDraw = p.draw.targWinPenThin; end
       case p.state.holdTarg
         if ~pds.joyHeld(p), p.init.strb.addValue(p.init.codes.joyRelease); p.trData.timing.joyRelease  = timeNow; p.trVars.currentState = p.state.joyBreak; end
         eyeInTargetWin = pds.eyeInWindow(p, 'target');
