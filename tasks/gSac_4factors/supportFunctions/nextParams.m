@@ -121,7 +121,8 @@ end
 
 function p = setLocations(p)
 % Sets target locations based on a rotational scheme.
-baseX = p.trVars.targDegX; baseY = p.trVars.targDegY;
+baseX = p.trVars.targDegX_base; 
+baseY = p.trVars.targDegY_base;
 [theta_rad, r] = cart2pol(baseX, baseY);
 if sign(baseX) == sign(baseY), rotation_deg = -90; else, rotation_deg = 90; end
 rotation_rad = deg2rad(rotation_deg);
@@ -134,6 +135,8 @@ end
 locIdxCol = strcmp(p.init.trialArrayColumnNames, 'targetLocIdx');
 p.trVars.targetLocIdx = p.init.trialsArray(p.trVars.currentTrialsArrayRow, locIdxCol);
 p.stim.targetPos = locations(p.trVars.targetLocIdx, :);
+p.trVars.targDegX = p.stim.targetPos(1);
+p.trVars.targDegY = p.stim.targetPos(2);
 p.draw.fixPointPix      = p.draw.middleXY + [1, -1] .* pds.deg2pix([p.trVars.fixDegX, p.trVars.fixDegY], p);
 p.draw.targPointPix = p.draw.middleXY + [1, -1] .* pds.deg2pix(p.stim.targetPos, p);
 p.draw.fixWinWidthPix = pds.deg2pix(p.trVars.fixWinWidthDeg, p);
