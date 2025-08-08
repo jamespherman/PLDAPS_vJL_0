@@ -105,57 +105,53 @@ end
 
 
 function p = chooseRow(p)
-% Selects the next trial row, progressing sequentially through half-blocks.
-% This version resets and repeats the full 2-block trial structure
-% continuously until the experimenter stops the task.
+% chooseRow
+%
+% This version uses an explicit if/elseif chain to define a pool of
+% possible trials, progressing sequentially through half-blocks as requested.
 
-% On the first trial of the experiment, initialize the half-block counter
-if ~isfield(p.trVars, 'halfBlockToCheck')
-    p.trVars.halfBlockToCheck = 1;
-end
+%% 1. Define vectors for half-block values and possible rows
+% As you suggested, we define these once at the top.
+halfBlockVals = p.init.trialsArray(:, strcmp(p.init.trialArrayColumnNames, 'halfBlock'));
+rowsPossible = p.status.trialsArrayRowsPossible;
 
-% Find all possible trials for the current half-block
-col_hb = strcmp(p.init.trialArrayColumnNames, 'halfBlock');
-trialsPossible = p.status.trialsArrayRowsPossible & p.init.trialsArray(:, col_hb) == p.trVars.halfBlockToCheck;
-
-% If no trials are left in this half-block, advance the counter
-if ~any(trialsPossible)
-    p.trVars.halfBlockToCheck = p.trVars.halfBlockToCheck + 1;
-end
-
-% --- NEW RESET LOGIC ---
-% Check if the half-block counter has exceeded the number of half-blocks in our array (4)
-n_half_blocks_in_array = p.init.trialsArray(end, col_hb);
-if p.trVars.halfBlockToCheck > n_half_blocks_in_array
+%% 2. Use if/elseif to define a logical 'pool' of trials to choose from
+if any(halfBlockVals == 1 & rowsPossible)
+    % If trials are available in half-block 1, define the pool as those trials.
+    pool = (halfBlockVals == 1 & rowsPossible);
     
+elseif any(halfBlockVals == 2 & rowsPossible)
+    % Else, if trials are available in half-block 2, define the pool as those trials.
+    pool = (halfBlockVals == 2 & rowsPossible);
+    
+elseif any(halfBlockVals == 3 & rowsPossible)
+    % Else, if trials are available in half-block 3, define the pool as those trials.
+    pool = (halfBlockVals == 3 & rowsPossible);
+    
+elseif any(halfBlockVals == 4 & rowsPossible)
+    % Else, if trials are available in half-block 4, define the pool as those trials.
+    pool = (halfBlockVals == 4 & rowsPossible);
+    
+else
+    % --- If no trials are available in any half-block, reset. ---
     fprintf('****************************************\n');
-    fprintf('** End of 2-block structure reached.  **\n');
+    fprintf('** Full 2-block structure complete.  **\n');
     fprintf('** Resetting and starting next loop.  **\n');
     fprintf('****************************************\n');
-    
-    % Reset the list of possible trials to all true
+
+    % Reset the list of all possible trials to true
     p.status.trialsArrayRowsPossible = true(size(p.init.trialsArray, 1), 1);
     
-    % Reset the half-block counter back to 1
-    p.trVars.halfBlockToCheck = 1;
-end
-% --- END NEW LOGIC ---
-
-% Now, find the possible trials again with the potentially updated counter
-trialsPossible = p.status.trialsArrayRowsPossible & p.init.trialsArray(:, col_hb) == p.trVars.halfBlockToCheck;
-
-% This should never be empty now unless something is very wrong, but we
-% will leave the original safeguard just in case.
-if ~any(trialsPossible)
-    warning('pldaps:nextParams', 'Failed to find any possible trials. Ending experiment.');
-    p.trVars.exitWhileLoop = true;
-    p.pldaps.finish = true;
-    return;
+    % After resetting, the next trial must come from half-block 1
+    pool = (halfBlockVals == 1);
 end
 
-% Select one of the possible trials for this half-block at random
-choicePool = find(trialsPossible);
-p.trVars.currentTrialsArrayRow = choicePool(randi(length(choicePool)));
+%% 3. Once the pool is defined, choose a row from that pool
+% Convert the logical 'pool' vector into a list of row indices
+choiceIndices = find(pool);
+
+% Select one of those indices at random for the current trial
+p.trVars.currentTrialsArrayRow = choiceIndices(randi(length(choiceIndices)));
 
 end
 
