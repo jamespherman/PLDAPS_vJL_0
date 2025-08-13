@@ -311,7 +311,7 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
             
             token_diameter_pix = pds.deg2pix(2 * p.stim.token.radius, p);
             
-            if isfield(p.trVars, 'isAVTrial') &&  p.trVars.isAVTrial
+            if p.trVars.isAVTrial
                 % Select the color for this frame from the flicker matrix
                 thisDotColor = p.draw.flickerColors(p.trVars.flickerColorIndex, :);
 
@@ -324,10 +324,9 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
                 if isfield(p.draw, 'flickerColors')
                     thisColor = p.draw.flickerColors(1, :)*255;
                 else
-                    thisColor = [50 100 250];
-                end
+                    thisColor = [50 ]
                 % Use the default static token color
-                Screen('DrawDots', p.draw.window, token_positions_pix, token_diameter_pix, thisColor, p.draw.middleXY, 1);
+                Screen('DrawDots', p.draw.window, token_positions_pix, token_diameter_pix, , p.draw.middleXY, 1);
             end
         end
     end
