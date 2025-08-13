@@ -273,11 +273,10 @@ p.init.trDataInitList = {...
     'p.trData.timing.stimOn',           '-1'; ...   % time of stimulus onset
     'p.trData.timing.stimOff',          '-1'; ...   % time of stimulus offset
     'p.trData.timing.fixBreak',         '-1'; ...   % time of fixation break
-    'p.trData.timing.cueOn',            '-1'; ...   % time of reward delivery
-    'p.trData.timing.stimOn',           '-1'; ...   % time of reward delivery
+    'p.trData.timing.cueOn',            '-1'; ...   % time of cue onset
     'p.trData.timing.reward',           '-1'; ...   % time of reward delivery
-    'p.trData.timing.trialEnd',         '-1'; ...   % time of reward delivery
-    'p.trData.timing.outcomeOn',        '-1'; ...   % time of reward delivery
+    'p.trData.timing.trialEnd',         '-1'; ...   % time of trial end
+    'p.trData.timing.outcomeOn',        '-1'; ...   % time of outcome onset
     };
 
 % since the list above is fixed, count its rows now for looping over later.
