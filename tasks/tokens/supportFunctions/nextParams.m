@@ -58,6 +58,26 @@ function p = trialTypeInfo(p)
     p.trVars.isFixationRequired  = p.init.trialsArray{row, fixReqCol};
     p.trVars.isToken             = p.init.trialsArray{row, isTokenCol};
 
+    % If the experiment type is 'tokens_AV', handle the AV trial logic
+    if strcmp(p.init.exptType, 'tokens_AV')
+
+        % Get the column index for 'avProbability'
+        avProbCol = contains(colNames, 'avProbability');
+
+        % Extract the 'avProbability' for the current trial
+        avProbability = p.init.trialsArray{row, avProbCol};
+
+        % Initialize the trial variable
+        p.trVars.isAVTrial = false;
+
+        % Determine if this is an AV trial based on the probability
+        if avProbability == 1
+            p.trVars.isAVTrial = true;
+        elseif avProbability == 0.5 && rand < 0.5
+            p.trVars.isAVTrial = true;
+        end
+    end
+
     % --- Calculate reward amount for the current trial ---
     % This logic is taken from your colleague's script
     switch p.trVars.dist
