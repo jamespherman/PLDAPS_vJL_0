@@ -94,6 +94,18 @@ p.draw.clut.ffc      = p.draw.nColors + 1;
 p.draw.clut.expCLUT  = p.draw.clut.expColors;
 p.draw.clut.subCLUT  = p.draw.clut.subColors;
 
+% Define 8 hue angles for flicker colors
+hue_angles = 0:45:315;
+p.draw.flickerColors = zeros(length(hue_angles), 3);
+dkl_luminance = -0.495;
+dkl_saturation = 0.4;
+
+for i = 1:length(hue_angles)
+    theta = hue_angles(i);
+    dkl_color = [dkl_luminance; dkl_saturation * cosd(theta); dkl_saturation * sind(theta)];
+    [r, g, b] = dkl2rgb(dkl_color);
+    p.draw.flickerColors(i, :) = [r, g, b];
+end
 
 end
 
