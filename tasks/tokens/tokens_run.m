@@ -84,6 +84,9 @@ switch p.trVars.currentState
         % Set the absolute time for when the ITI should end.
         p.trVars.ITI_EndTime = startTime + p.trVars.iti;
         
+        % Initialize flicker color index for AV trials
+        p.trVars.flickerColorIndex = 1;
+
         % Immediately transition to the ITI waiting state.
         p.trVars.currentState = p.state.waitForITI;
         
@@ -166,6 +169,14 @@ switch p.trVars.currentState
                 p.trVars.dist);
         end
         
+        % If this is an audiovisual trial, start the sweep tone
+        if p.trVars.isAVTrial
+            nSweepFrames = length(p.audio.sweepTone);
+            Datapixx('SetAudioSchedule', 0, p.audio.freq, 0, p.audio.lrMode, p.audio.sweepBuffAdd, nSweepFrames);
+            Datapixx('StartAudioSchedule');
+            Datapixx('RegWrRd');
+        end
+
         % Set a timer for the pause before the "cash in" animation begins
         p.trVars.cashInStartTime = timeNow + p.trVars.outcomeDelay;
         
@@ -239,6 +250,10 @@ end
 %% --- End of Trial ---
 % This section runs ONCE after any state transitions to an end state.
 if p.trVars.exitWhileLoop
+    % Stop the audio schedule if it's running
+    Datapixx('StopAudioSchedule');
+    Datapixx('RegWrRd');
+
     % Log the final state of the trial
     p.trData.trialEndState = p.trVars.currentState;
     
@@ -296,8 +311,19 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
             
             token_diameter_pix = pds.deg2pix(2 * p.stim.token.radius, p);
             
-            % Use the new '_pix' variable in the drawing command
-            Screen('DrawDots', p.draw.window, token_positions_pix, token_diameter_pix, [50 100 250], p.draw.middleXY, 1);
+            if p.trVars.isAVTrial
+                % Select the color for this frame from the flicker matrix
+                thisDotColor = p.draw.flickerColors(p.trVars.flickerColorIndex, :);
+
+                % Draw the dots with the flickering color
+                Screen('DrawDots', p.draw.window, token_positions_pix, token_diameter_pix, thisDotColor, p.draw.middleXY, 1);
+
+                % Increment and wrap the color index for the next frame
+                p.trVars.flickerColorIndex = mod(p.trVars.flickerColorIndex, size(p.draw.flickerColors, 1)) + 1;
+            else
+                % Use the default static token color
+                Screen('DrawDots', p.draw.window, token_positions_pix, token_diameter_pix, [50 100 250], p.draw.middleXY, 1);
+            end
         end
     end
     
