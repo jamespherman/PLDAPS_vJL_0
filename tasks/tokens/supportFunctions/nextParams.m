@@ -104,6 +104,18 @@ function p = trialTypeInfo(p)
     
     % The ITI is set in seconds
     p.trVars.iti = random(t,1);
+
+    % --- Create token position matrix ---
+    % Dynamically create the p.stim.token.pos matrix for each trial. This
+    % logic loops from 1 to 10, calculating the [X, Y] coordinate for each
+    % token. The Y-coordinate is constant, read from p.trVars.tokenBaseY,
+    % while the X-coordinate is p.trVars.tokenBaseX plus an offset
+    % calculated using the loop index and p.trVars.tokenSpacing.
+    p.stim.token.pos = zeros(10, 2);
+    for i = 1:10
+        p.stim.token.pos(i, 1) = p.trVars.tokenBaseX + (i - 1) * p.trVars.tokenSpacing;
+        p.stim.token.pos(i, 2) = p.trVars.tokenBaseY;
+    end
 end
 
 

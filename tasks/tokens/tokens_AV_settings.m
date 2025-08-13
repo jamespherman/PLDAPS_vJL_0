@@ -164,7 +164,10 @@ p.rig.guiVars = {...
     'fixDegX'; ...
     'fixDegY'; ...
     'passJoy'; ...          
-    'passEye'};              % 12
+    'passEye'; ...
+    'tokenBaseX'; ...
+    'tokenBaseY'; ...
+    'tokenSpacing'};
 
 
 %% INIT VARIABLES 
@@ -214,12 +217,15 @@ p.trVarsInit.itiMean = 3.0; % seconds
 p.trVarsInit.itiMin = 1.0;  % seconds
 p.trVarsInit.itiMax = 5.0;  % seconds
 
+p.trVarsInit.tokenBaseX = -10;
+p.trVarsInit.tokenBaseY = 8;
+p.trVarsInit.tokenSpacing = 2;
+
 % -- Token Stimulus Parameters
 % From the crc() definitions in the .txt file [cite: 2]
 p.stim.token.radius = 0.7; % Radius in degrees of visual angle [cite: 2]
 p.stim.token.color = [0.458 1 1]; % Token color [cite: 2]
 % Token positions in degrees [X,Y] [cite: 2]
-p.stim.token.pos = [-10, 8; -8, 8; -6, 8; -4, 8; -2, 8; 0, 8; 2, 8; 4, 8; 6, 8; 8, 8];
 
 % Number of frames each flicker color is displayed for.
 p.trVarsInit.flickerFramesPerColor = 6;
