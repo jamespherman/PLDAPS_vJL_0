@@ -83,9 +83,6 @@ switch p.trVars.currentState
         
         % Set the absolute time for when the ITI should end.
         p.trVars.ITI_EndTime = startTime + p.trVars.iti;
-        
-        % Initialize flicker color index for AV trials
-        p.trVars.flickerColorIndex = 1;
 
         % Immediately transition to the ITI waiting state.
         p.trVars.currentState = p.state.waitForITI;
@@ -312,14 +309,20 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
             token_diameter_pix = pds.deg2pix(2 * p.stim.token.radius, p);
             
             if isfield(p.trVars, 'isAVTrial') &&  p.trVars.isAVTrial
-                % Select the color for this frame from the flicker matrix
-                thisDotColor = p.draw.flickerColors(p.trVars.flickerColorIndex, :);
+                % Calculate an integer for the number of frames that have passed since the outcome was displayed
+                framesSinceOutcome = round((timeNow - p.trData.timing.outcomeOn) / p.rig.frameDuration);
+
+                % Determine which color in the 8-color cycle should be active
+                colorCycleIndex = floor(framesSinceOutcome / p.trVars.flickerFramesPerColor);
+
+                % Use the mod function on that result to get the specific color index
+                flickerColorIndex = mod(colorCycleIndex, size(p.draw.flickerColors, 1)) + 1;
+
+                % Use this calculated index to select the correct RGB color triplet
+                thisDotColor = p.draw.flickerColors(flickerColorIndex, :);
 
                 % Draw the dots with the flickering color
                 Screen('DrawDots', p.draw.window, token_positions_pix, token_diameter_pix, 255*thisDotColor, p.draw.middleXY, 1);
-
-                % Increment and wrap the color index for the next frame
-                p.trVars.flickerColorIndex = mod(p.trVars.flickerColorIndex, size(p.draw.flickerColors, 1)) + 1;
             else
                 if isfield(p.draw, 'flickerColors')
                     thisColor = p.draw.flickerColors(1, :)*255;
