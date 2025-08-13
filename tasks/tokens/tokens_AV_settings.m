@@ -221,6 +221,9 @@ p.stim.token.color = [0.458 1 1]; % Token color [cite: 2]
 % Token positions in degrees [X,Y] [cite: 2]
 p.stim.token.pos = [-10, 8; -8, 8; -6, 8; -4, 8; -2, 8; 0, 8; 2, 8; 4, 8; 6, 8; 8, 8];
 
+% Number of frames each flicker color is displayed for.
+p.trVarsInit.flickerFramesPerColor = 6;
+
 % I don't think I need to carry these around in 'p'....
 % can't I just define them in the 'run' worksapce and forget avbout them?
 p.trVarsInit.currentState     = p.state.trialBegun;  % initialize "state" variable.
