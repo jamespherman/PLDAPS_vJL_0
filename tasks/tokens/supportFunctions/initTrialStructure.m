@@ -17,6 +17,10 @@ switch p.init.exptType
     case 'tokens_main'
         table = tableDef_TokensMain(p);
         
+    case 'tokens_AV'
+        p.init.trialArrayColumnNames = {'dist', 'cueFile', 'isFixationRequired', 'isToken', 'avProbability', 'trialCode', 'nReps'};
+        table = tableDef_TokensAV(p);
+        
     otherwise
         % Default to the main experiment type if not specified
         warning('p.init.exptType not specified, using ''tokens_main''.');
@@ -90,4 +94,37 @@ function p = generateTrialsArray(p)
     
     p.init.trialsArray = trialsArray;
     p.init.blockLength = size(p.init.trialsArray, 1);
+end
+
+
+function table = tableDef_TokensAV(p)
+% Defines the 14 conditions for the tokens_AV experiment.
+% The last column, nReps, is the number of trials of this type per block.
+
+    % Get the number of repetitions from the settings file
+    nReps = p.init.trialsPerCondition;
+
+    % Columns: {dist, cueFile, isFixationRequired, isToken, avProbability, trialCode, nReps}
+    table = { ...
+    % --- 12 Cued Conditions (2 dist x 2 fam x 3 AV prob) ---
+    % Normal Distribution, Familiar Cues
+    1, 'famNorm_01.jpg',   true, true, 0,   28001, nReps; ...
+    1, 'famNorm_02.jpg',  true, true, 0.5, 28002, nReps; ...
+    1, 'famNorm_03.jpg',   true, true, 1,   28003, nReps; ...
+    % Normal Distribution, Novel Cues
+    1, 'novNorm_01.jpg',   true, true, 0,   28004, nReps; ...
+    1, 'novNorm_02.jpg',  true, true, 0.5, 28005, nReps; ...
+    1, 'novNorm_03.jpg',   true, true, 1,   28006, nReps; ...
+    % Uniform Distribution, Familiar Cues
+    2, 'famUni_01.jpg',    true, true, 0,   28007, nReps; ...
+    2, 'famUni_02.jpg',   true, true, 0.5, 28008, nReps; ...
+    2, 'famUni_03.jpg',    true, true, 1,   28009, nReps; ...
+    % Uniform Distribution, Novel Cues
+    2, 'novUni_01.jpg',    true, true, 0,   28010, nReps; ...
+    2, 'novUni_02.jpg',   true, true, 0.5, 28011, nReps; ...
+    2, 'novUni_03.jpg',    true, true, 1,   28012, nReps; ...
+    % --- 2 Uncued Control Conditions ---
+    0, 'blank.jpg',         false, true, NaN, 28013, nReps; ... % Uncued, Token
+    0, 'blank.jpg',         false, false, NaN, 28014, nReps; ... % Uncued, No Token
+    };
 end
