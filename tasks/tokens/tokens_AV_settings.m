@@ -59,7 +59,7 @@ p.init.useDataPixxBool = true;
 
 %% define task name and related files:
 
-p.init.taskName         = 'tokens_AV';
+p.init.taskName         = 'tokens';
 p.init.taskType         = 1;                            % poorly defined numerical index for the task "type"
 p.init.pldapsFolder     = pwd;                          % pldaps gui takes us to taks folder automatically once we choose a settings file
 p.init.protocol_title   = [p.init.taskName '_task'];    % Define Banner text to identify the experimental protocol
@@ -170,7 +170,7 @@ p.rig.guiVars = {...
 %% INIT VARIABLES 
 % vars that are only set once
 
-p.init.exptType         = 'tokens_main';  % Which experiment are we running? The full version with all trial types? The single-stimulus-only version? Something else?
+p.init.exptType         = 'tokens_AV';  % Which experiment are we running? The full version with all trial types? The single-stimulus-only version? Something else?
 
 
 %% TRIAL VARIABLES

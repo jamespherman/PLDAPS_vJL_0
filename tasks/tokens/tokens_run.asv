@@ -316,17 +316,13 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
                 thisDotColor = p.draw.flickerColors(p.trVars.flickerColorIndex, :);
 
                 % Draw the dots with the flickering color
-                Screen('DrawDots', p.draw.window, token_positions_pix, token_diameter_pix, 255*thisDotColor, p.draw.middleXY, 1);
+                Screen('DrawDots', p.draw.window, token_positions_pix, token_diameter_pix, thisDotColor*255, p.draw.middleXY, 1);
 
                 % Increment and wrap the color index for the next frame
                 p.trVars.flickerColorIndex = mod(p.trVars.flickerColorIndex, size(p.draw.flickerColors, 1)) + 1;
             else
-                if isfield(p.draw, 'flickerColors')
-                    thisColor = p.draw.flickerColors(1, :)*255;
-                else
-                    thisColor = [50 ]
                 % Use the default static token color
-                Screen('DrawDots', p.draw.window, token_positions_pix, token_diameter_pix, , p.draw.middleXY, 1);
+                Screen('DrawDots', p.draw.window, token_positions_pix, token_diameter_pix, [50 100 250], p.draw.middleXY, 1);
             end
         end
     end
