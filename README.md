@@ -1,6 +1,6 @@
 # PLDAPS_vK2: A MATLAB-based Framework for Psychophysics
 
-PLDAPS_vK2 is a powerful, flexible framework for conducting neurophysiology and psychophysics experiments, written in MATLAB. It is based on the original PLDAPS (Plexon, Datapixx, Psychtoolbox) system, but has been re-engineered for better organization, modularity, and ease of use.
+Written in the great winter of 2018, PLDAPS_vK2 is a flexible framework for conducting neurophysiology and psychophysics experiments written in MATLAB. It is based on the original PLDAPS (Plexon, Datapixx, Psychtoolbox) system (Eastman and Huk, 2012), but has been re-engineered for better organization, modularity, and ease of use.
 
 ## Core Concepts
 
