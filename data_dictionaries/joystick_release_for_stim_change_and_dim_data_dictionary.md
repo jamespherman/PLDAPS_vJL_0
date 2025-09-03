@@ -249,33 +249,42 @@ This structure contains the data collected during the current trial.
 | `eventTimes`, `eventValues` | Store the times and values of strobed events. |
 | `onlineEyeX`, `onlineEyeY` | Store the X and Y eye position in degrees, sampled on every frame of the trial. |
 | `spikeClusters` | Stores the cluster ID for each spike. |
-| `timing` | A sub-structure containing the timestamps of various trial events, relative to the start of the trial. |
-| `timing.trialStartPTB` | The trial start time, according to Psychtoolbox's `GetSecs`. |
-| `timing.trialStartDP` | The trial start time, according to the DataPixx. |
-| `timing.trialBegin` | The time the trial began (state 1). |
-| `timing.joyPress` | The time the joystick was pressed. |
-| `timing.fixOn` | The time the fixation point appeared. |
-| `timing.fixAq` | The time fixation was acquired. |
-| `timing.stimOn` | The time the stimuli appeared. |
-| `timing.stimOff` | The time the stimuli disappeared. |
-| `timing.cueOn` | The time the cue appeared. |
-| `timing.cueOff` | The time the cue disappeared. |
-| `timing.stimChg` | The time of the stimulus change. |
-| `timing.noChg` | The time of the pseudo-change on a no-change trial. |
-| `timing.brokeFix` | The time of a fixation break. |
-| `timing.brokeJoy` | The time of a joystick break. |
-| `timing.reward` | The time of reward delivery. |
-| `timing.tone` | The time of audio feedback. |
-| `timing.joyRelease` | The time the joystick was released. |
-| `timing.reactionTime` | The reaction time, calculated as `joyRelease` - `stimChangeTime`. |
-| `timing.fixHoldReqMet` | The time the required fixation duration was met. |
-| `timing.freeReward` | The time a free reward was delivered. |
-| `timing.flipTime` | A vector of timestamps for each screen flip. |
-| `timing.lastFrameTime` | The time of the last screen flip. |
-| `timing.optoStim` | The time of optogenetic stimulation onset. |
-| `timing.optoStimSham` | The time of sham optogenetic stimulation. |
+| `timing` | A sub-structure containing the timestamps of various trial events, relative to the start of the trial. See the **Timing Information** section below for a detailed explanation. |
 | `trialEndState` | The numerical code of the state in which the trial ended. |
 | `dimVal` | Set to 1 for change trials and 0 for no-change trials. This is a legacy variable and may not be used in analysis. |
+| `reactionTime` | The reaction time, calculated as `joyRelease` - `stimChangeTime`. |
+| `fixHoldReqMet` | The time the required fixation duration was met. |
+
+### Timing Information (`p.trData.timing`)
+
+This substructure contains timestamps for all critical events within the trial. Before each trial, all timing fields are initialized to -1. During the trial, they are populated with timestamps.
+
+**All timestamps are measured in seconds relative to `p.trData.timing.trialStartPTB`**. This reference time is captured at the very beginning of the trial's `_run.m` function using `pds.getTimes`, which calls Psychtoolbox's `GetSecs`. Subsequent event times are calculated as `timeNow = GetSecs - p.trData.timing.trialStartPTB;`.
+
+| Field | Description |
+|---|---|
+| `trialStartPTB` | The trial start time as recorded by Psychtoolbox (`GetSecs`). This is the master reference time for all other timestamps in this structure. |
+| `trialStartDP` | The trial start time as recorded by the DataPixx. Can be used for synchronization. |
+| `trialBegin` | The time the trial began (state 1). |
+| `joyPress` | The time the joystick was pressed. |
+| `fixOn` | The time the fixation point appeared. |
+| `fixAq` | The time fixation was acquired. |
+| `stimOn` | The time the stimuli appeared. |
+| `stimOff` | The time the stimuli disappeared. |
+| `cueOn` | The time the cue appeared. |
+| `cueOff` | The time the cue disappeared. |
+| `stimChg` | The time of the stimulus change. |
+| `noChg` | The time of the pseudo-change on a no-change trial. |
+| `brokeFix` | The time of a fixation break. |
+| `brokeJoy` | The time of a joystick break. |
+| `reward` | The time of reward delivery. |
+| `tone` | The time of audio feedback. |
+| `joyRelease` | The time the joystick was released. |
+| `freeReward` | The time a free reward was delivered. |
+| `flipTime` | A vector of timestamps for each screen flip. |
+| `lastFrameTime` | The time of the last screen flip. |
+| `optoStim` | The time of optogenetic stimulation onset. |
+| `optoStimSham` | The time of sham optogenetic stimulation. |
 
 ### `p.stim`
 

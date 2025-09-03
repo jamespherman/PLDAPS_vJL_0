@@ -158,23 +158,25 @@ This structure contains all the data that is recorded during a single trial.
 | `dInTimes` | Array of timestamps for the digital input values. |
 | `onlineEyeX`, `onlineEyeY` | Eye position data used for online plotting during the experiment. |
 
-### Timing Information
-This sub-structure (`p.trData.timing`) contains timestamps for all key events within the trial.
+### Timing Information (`p.trData.timing`)
+This sub-structure contains timestamps for all key events within the trial. Before each trial, all timing fields are initialized to -1. During the trial, they are populated with timestamps.
+
+**All timestamps are measured in seconds relative to `p.trData.timing.trialStartPTB`**. This reference time is captured at the very beginning of the trial's `_run.m` function using `pds.getTimes`, which calls Psychtoolbox's `GetSecs`. Subsequent event times are calculated as `timeNow = GetSecs - p.trData.timing.trialStartPTB;`.
 
 | Field | Description |
 |---|---|
-| `trialStartPTB` | The time the trial began, according to Psychtoolbox's `GetSecs`. |
-| `trialStartDP` | The time the trial began, according to the DataPixx clock. |
-| `lastFrameTime` | The timestamp of the most recent screen flip. |
-| `flipTime` | An array containing the timestamp for every screen flip that occurred during the trial. |
+| `trialStartPTB` | The time the trial began, according to Psychtoolbox's `GetSecs`. This is the master reference time for all other timestamps in this structure. |
+| `trialStartDP` | The time the trial began, according to the DataPixx clock. Can be used for synchronization. |
+| `trialEnd` | The time the trial's `run` loop concluded. |
+| `lastFrameTime` | The timestamp of the most recent screen flip, relative to `trialStartPTB`. |
+| `flipTime` | An array containing the timestamp for every screen flip that occurred during the trial, relative to `trialStartPTB`. |
 | `cueOn` | The time the fixation cue appeared on the screen. |
 | `fixAq` | The time the subject's gaze first entered the fixation window. |
+| `fixBreak` | The time the subject's gaze left the fixation window during the hold period. |
+| `outcomeOn` | The time the token outcome was displayed. |
+| `reward` | The time of reward delivery. This is a vector that stores the time of each reward pulse. |
 | `stimOn` | The time the stimulus appeared (Note: this seems to be defined but not used in the `tokens_run.m` state machine, which uses `outcomeOn`). |
 | `stimOff` | The time the stimulus was removed (Note: seems unused). |
-| `fixBreak` | The time the subject's gaze left the fixation window during the hold period. |
-| `reward` | The time of reward delivery. |
-| `outcomeOn` | The time the token outcome was displayed. |
-| `trialEnd` | The time the trial's `run` loop concluded. |
 
 ## `p.stim`
 
