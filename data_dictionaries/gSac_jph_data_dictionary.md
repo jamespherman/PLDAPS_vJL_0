@@ -22,7 +22,7 @@ The `p.init` structure contains variables that are initialized once at the begin
 | `useDataPixxBool` | A boolean indicating whether the DataPixx/ViewPixx is being used. |
 | `taskActions` | A cell array of strings with the names of M-files for user-defined actions accessible from the GUI. |
 | `exptType` | A string indicating which version of the experiment is being run (e.g., 'all_locs', 'two_locs'). |
-| `trDataInitList` | A cell array that lists trial data variables and their initial values. These are reset at the start of each trial. |
+| `trDataInitList` | A cell array that lists trial data variables and their initial values. These are reset at the start of each trial. This list is defined in the `_settings.m` file and used by `initTrData.m`. |
 | `nTrDataListRows`| The number of rows in `trDataInitList`. |
 | `strobeList` | A cell array defining variables to be strobed to the ephys system at the end of each trial. |
 | `codes` | A structure containing numeric codes for various trial events (e.g., `trialBegin`, `fixOn`). These are used for strobing. |
@@ -248,16 +248,19 @@ The `p.trData` structure is where all the data collected during a single trial i
 
 ### Timing Information
 
-The `p.trData.timing` substructure contains timestamps for all critical events within the trial. All times are in seconds, relative to the trial start time (`trialStartPTB`).
+The `p.trData.timing` substructure contains timestamps for all critical events within the trial. Before each trial, all timing fields are initialized to -1. During the trial, they are populated with timestamps.
+
+**All timestamps are measured in seconds relative to `p.trData.timing.trialStartPTB`**. This reference time is captured at the very beginning of the trial's `_run.m` function using `pds.getTimes`, which calls Psychtoolbox's `GetSecs`. Subsequent event times are calculated as `timeNow = GetSecs - p.trData.timing.trialStartPTB;`.
 
 | Field | Description |
 |---|---|
-| `trialStartPTB` | The trial start time as recorded by Psychtoolbox (`GetSecs`). |
-| `trialStartDP` | The trial start time as recorded by the DataPixx. |
-| `trialBegin` | Timestamp of when the trial logic began (state 1). |
-| `trialEnd` | Timestamp of when the trial logic ended. |
-| `lastFrameTime` | The timestamp of the last screen flip. |
-| `flipTime` | A vector containing the timestamps of every screen flip during the trial. |
+| `trialStartPTB` | The trial start time as recorded by Psychtoolbox (`GetSecs`). This is the master reference time for all other timestamps in this structure. |
+| `trialStartDP` | The trial start time as recorded by the DataPixx. Can be used for synchronization. |
+| `trialBegin` | Timestamp of when the trial logic began (state 1: `trialBegun`). |
+| `joyPress` | Timestamp of when the joystick was pressed to initiate the trial. |
+| `trialEnd` | Timestamp of when the trial logic ended (when `exitWhileLoop` becomes true). |
+| `lastFrameTime` | The timestamp of the last screen flip, relative to `trialStartPTB`. |
+| `flipTime` | A vector containing the timestamps of every screen flip during the trial, relative to `trialStartPTB`. |
 | `fixOn` | Timestamp of when the fixation point appeared. |
 | `fixAq` | Timestamp of when fixation was acquired. |
 | `fixOff` | Timestamp of when the fixation point disappeared (the 'go' signal). |
@@ -265,12 +268,13 @@ The `p.trData.timing` substructure contains timestamps for all critical events w
 | `targetOff` | Timestamp of when the saccade target disappeared (in memory-guided trials). |
 | `targetReillum` | Timestamp of when the target reappeared (in memory-guided trials). |
 | `targetAq` | Timestamp of when the target was acquired (i.e., when the saccade landed in the target window). |
-| `saccadeOnset` | Timestamp of when the saccade was initiated (eye left fixation window). |
-| `saccadeOffset` | Timestamp of when the saccade ended (eye entered target window). |
+| `saccadeOnset` | Timestamp of when the saccade was initiated (detected by eye leaving fixation window or by velocity threshold). |
+| `saccadeOffset` | Timestamp of when the saccade ended (detected by eye entering target window). |
 | `brokeFix` | Timestamp of when a fixation break occurred. |
+| `joyRelease` | Timestamp of when the joystick was released prematurely. |
 | `reward` | Timestamp of when the reward was delivered. |
 | `tone` | Timestamp of when the auditory feedback was delivered. |
-| `frameNow` | The current frame number within the trial. |
+| `frameNow` | The current frame number within the trial, calculated as `fix((GetSecs - trialStartPTB) * refreshRate)`. |
 
 ## `p.stim`
 
