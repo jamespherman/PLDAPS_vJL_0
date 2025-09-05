@@ -300,6 +300,8 @@ p.trVarsInit.postMemSacTargOn = false;  % do we want the target on because a mem
 
 % variables related to online tracking of gaze position / velocity
 p.trVarsInit.whileLoopIdx           = 0;    % numerical index to current iteration of run while-loop
+p.trVarsInit.postFlip.logical       = false; % did a timing event just occur that needs to be logged precisely?
+p.trVarsInit.postFlip.varNames      = cell(0); % list of timing events that need to be logged.
 p.trVarsInit.eyeVelFiltTaps         = 5;    % length in samples of online velocity filter
 p.trVarsInit.eyeVelThresh           = 100;   % threshold in deg/s for online saccade detection
 p.trVarsInit.useVelThresh           = true; % does the experimenter want to use the velocity threshold to check saccade onset / offset?
