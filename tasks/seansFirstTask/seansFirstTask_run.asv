@@ -622,7 +622,7 @@ end
 
 	Screen('DrawTexture', p.draw.window, p.draw.stimTexture, [], repmat(p.draw.stimPointPix, 1, 2) + ...
         [-p.draw.textureWindowDimensions/2 -p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2]);
-
+    
 %{
     	switch p.trVars.numDots
     	    case 1

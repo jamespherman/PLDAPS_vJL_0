@@ -20,21 +20,27 @@ function p = chooseRow(p)
 % Manages blocks and selects the next trial by sampling without replacement
 % from the p.init.trialsArray.
 
-    % If all trials in the current block have been used, start a new block
-    % by resetting the list of possible trials. This handles running
-    % indefinite blocks.
-    if all(~p.status.trialsArrayRowsPossible)
-        p.status.trialsArrayRowsPossible(:) = true;
-        p.status.blockNumber = p.status.blockNumber + 1;
-        fprintf('All trials run. Starting new block: %d\n', p.status.blockNumber);
-    end
+% If all trials in the current block have been used, start a new block
+% by resetting the list of possible trials. This handles running
+% indefinite blocks.
+if all(~p.status.trialsArrayRowsPossible)
+    p.status.trialsArrayRowsPossible(:) = true;
+    p.status.blockNumber = p.status.blockNumber + 1;
+    fprintf('All trials run. Starting new block: %d\n', p.status.blockNumber);
+end
 
+% if we're not repeating the previous trial.
+if ~p.status.repeatLast
     % Get a list of all currently available trials
     available_trials = find(p.status.trialsArrayRowsPossible);
-    
+
     % Shuffle the list of available trials and pick the first one
     shuffled_list = shuff(available_trials);
     p.trVars.currentTrialsArrayRow = shuffled_list(1);
+else
+    p.trVars.currentTrialsArrayRow = p.status.lastTrialRow;
+end
+
 end
 
 

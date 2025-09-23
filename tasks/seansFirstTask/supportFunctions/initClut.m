@@ -23,7 +23,7 @@ visGreen    = [0.1 0.9 0.1];
 memMagenta  = [1 0 1];
 yellowISH   = [1 1 0];
 
-randColors = rand (100, 3);
+randColors = rand (98, 3);
 
 % Alternative way to generate random colors, using LAB colorspace
 % randomly generate angle values (thetas)
@@ -42,7 +42,7 @@ rgbVals = lab2rgb([L,ab]);
 % (i.e. too close in color to background grey) and rerolls them, then rechecks that row
 
 
-for i = 1:100
+for i = 1:98
     if ((randColors (i, 1) > 0.4 & randColors (i, 1) < 0.5) & ...
 	(randColors (i, 2) > 0.4 & randColors (i, 1) < 0.5) & ...
 	(randColors (i, 3) > 0.4 & randColors (i, 1) < 0.5))
@@ -86,10 +86,12 @@ c.draw.clut.expColors = ...
     0, 0 ,1;		% 20
     0, 1, 1;		% 21
     1, 0, 1;		% 22
-    1, 1, 0];         	% 23
+    1, 1, 0;		% 23
+    1, 1, 1;		% 24 (Note: 24-25 are both white, so that there are always some white stim when randomly picking
+    1, 1, 1];         	% 25
 
-% 24-123 (below) randomly generated to create randomly colored stim
-c.draw.clut.expColors (25:124, :) = randColors;
+% 26-123 (below) randomly generated to create randomly colored stim
+c.draw.clut.expColors (27:124, :) = randColors;
 
 % colors for subject's display
 % black                     0
@@ -130,7 +132,7 @@ c.draw.clut.subColors = ...
     1, 1, 0];         	% 23
 
 % 24-123 (below) randomly generated to create randomly colored stim    
-c.draw.clut.subColors (25:124, :) = randColors;
+c.draw.clut.subColors (27:124, :) = randColors;
 
     
 assert(size(c.draw.clut.subColors,1)==size(c.draw.clut.expColors,1), 'ERROR-- exp & sub Colors must have equal length')

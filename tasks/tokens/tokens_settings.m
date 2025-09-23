@@ -137,6 +137,8 @@ p.status.missedFrames               = 0; % count of missed frames as reported by
 p.status.lastTrialEndTime = 0;
 
 p.status.trialsArrayRowsPossible    = [];
+p.status.repeatLast                 = false;
+p.status.lastTrialRow               = 0;
 
 p.rig.guiStatVals = {...
     'blockNumber'; ...

@@ -325,7 +325,7 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
                 Screen('DrawDots', p.draw.window, token_positions_pix, token_diameter_pix, 255*thisDotColor, p.draw.middleXY, 1);
             else
                 if isfield(p.draw, 'flickerColors')
-                    thisColor = p.draw.flickerColors(1, :)*255;
+                    thisColor = p.draw.flickerColors(7, :)*255;
                 else
                     thisColor = [50 100 250];
                 end

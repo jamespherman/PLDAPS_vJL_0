@@ -17,7 +17,7 @@ function p = seansFirstTask_finish(p)
 % fill screen with background color
 Screen('FillRect', p.draw.window, p.draw.color.background);
 Screen('Flip', p.draw.window);
-
+Screen('Close'); % close any open textures
 % read buffered ADC and DIN data from DATAPixx
 p           = pds.readDatapixxBuffers(p);
 

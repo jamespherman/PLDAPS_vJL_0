@@ -178,12 +178,12 @@ p.rig.guiVars = {...
     'passJoy'; ...          
     'passEye'; ...
     'rewardDurationMs'; ...       
-    'leftOrRight'; ...
-    'fixWinHeightDeg'; ...
-    'fixWinWidthDeg'; ...
-    'targWinHeightDeg'; ...
-    'targWinWidthDeg'; ...
-    'rewardDelay'; ...        % 6
+    'stimRangeXmin'; ...
+    'stimRangeXmax'; ...
+    'stimRangeYmin'; ...
+    'stimRangeYmax'; ...
+    'stimDurMin'; ...
+    'stimDurMax'; ...        % 6
     'fixDegX'; ...
     'fixDegY'};              % 12
 
@@ -223,8 +223,6 @@ p.trVarsInit.eyePixY                = 0;
 p.trVarsInit.wantOnlinePlots	    = true;
 p.trVarsInit.mouseEyeSim            = 1;
 
-p.trVarsInit.leftOrRight	    = 0; % If 0, ignore. If 1, only present stimuli on left. If 2, only present stimuli on right
-
 % how to set the next target location (via mouse, gui, or neither). If
 % neither, then they get set at random from the predefined grid.
 p.trVarsInit.setTargLocViaMouse         = false;
@@ -237,19 +235,23 @@ p.trVarsInit.propVis             = 1;  % proportion of visually-guided saccades 
 p.trVarsInit.fixDegX             = 0;    % fixation X location in degrees 
 p.trVarsInit.fixDegY             = 0;    % fixation Y location in degrees
 p.trVarsInit.targOneDegX         = 0;
-p.trVarsInit.targOneDegY         = 9;
+p.trVarsInit.targOneDegY         = 10.0;
 p.trVarsInit.targTwoDegX         = 0;
-p.trVarsInit.targTwoDegY         = -9;
+p.trVarsInit.targTwoDegY         = -10.0;
 p.trVarsInit.targDegX		 = [p.trVarsInit.targOneDegX p.trVarsInit.targTwoDegX];
 p.trVarsInit.targDegY		 = [p.trVarsInit.targOneDegY p.trVarsInit.targTwoDegY];
 p.trVarsInit.numDots             = 0; % how many dots does the target stimulus have on this trial?
 p.trVarsInit.twoTargSepDeg       = 1; % how far apart should the two target dots be? (in dva?)
 p.trVarsInit.twoStimSepDegMin    = 1.8; % how far apart should the two stim dots be? (in dva?)
 p.trVarsInit.twoStimSepDegMax    = 2.1;
-p.trVarsInit.stimRangeRadius	 = 1.9; % create stimuli randomly within radius of __? (in pixels?)
-p.trVarsInit.stimSizeMin	 = 23; % create stimuli of what size? (randomly chosen between min and max) (in pixels?)
-p.trVarsInit.stimSizeMax	 = 37;
-p.trVarsInit.stimRotationRange	 = 360; % Range within which stimulus is rotated (randomly chosen between -value/2 and value/2).
+p.trVarsInit.stimRangeRadius	 = 13.0; % create stimuli randomly within radius of __? (in pixels?)
+p.trVarsInit.stimRangeXmin	 = -28.0; % Alternate method of randomly positioning stimuli, between Xmin and Xmax
+p.trVarsInit.stimRangeXmax	 = 28.0;
+p.trVarsInit.stimRangeYmin	 = -18.0; % Together with previous lines, randomly position stimuli between Ymin and Ymax
+p.trVarsInit.stimRangeYmax	 = 18.0;
+p.trVarsInit.stimSizeMin	 = 0.1; % create stimuli of what size? (randomly chosen between min and max, in dva)
+p.trVarsInit.stimSizeMax	 = 1.5;
+p.trVarsInit.twoStimRotationRange= 360; % Range within which stimulus is rotated (randomly chosen between -value/2 and value/2).
 
 p.trVarsInit.stimShape		 = 0;
 p.trVarsInit.targsSameColor	 = false;
@@ -271,8 +273,8 @@ p.trVarsInit.postRewardDuration      = 0.25;     % how long should the trial las
 p.trVarsInit.targetFlashDuration     = 0.2;      % Duration target stays on for the memory-guided trials.
 % p.trVarsInit.postFlashFixMin       = 1;    % minimum post-flash fixation-duration
 % p.trVarsInit.postFlashFixMax       = 1.5;  % maximum post-flash fixation-duration
-p.trVarsInit.targHoldDurationMin     = 0.5;  % minimum duration to maintain fixation on the target post-saccade 
-p.trVarsInit.targHoldDurationMax     = 0.7;      % maximum duration to maintain fixation on the target post-saccade 
+p.trVarsInit.targHoldDurationMin     = 0.3;  % minimum duration to maintain fixation on the target post-saccade 
+p.trVarsInit.targHoldDurationMax     = 0.5;      % maximum duration to maintain fixation on the target post-saccade 
 p.trVarsInit.maxSacDurationToAccept  = 0.1; % this is the max duration of a saccades that we're willing to wait for. 
 p.trVarsInit.targetReillumDelay      = 0.15; % the delay (s) between saccadeOffset (ie entry into target window) and target reillumination
 p.trVarsInit.goLatencyMin            = 0.1;  % minimum saccade-latency criterion
@@ -282,12 +284,12 @@ p.trVarsInit.goLatencyMax            = 0.5;  % maximum saccade-latency criterion
 
 p.trVarsInit.stimOnsetMin	     = 0.3; % Time after fixation before stim comes on
 p.trVarsInit.stimOnsetMax	     = 0.5;
-p.trVarsInit.stimDurMin		     = 0.5; % Time stim stays on
-p.trVarsInit.stimDurMax		     = 0.6;
-p.trVarsInit.targOnsetMin            = 0.01; % Time after stim goes off before target onset
-p.trVarsInit.targOnsetMax            = 0.02;
+p.trVarsInit.stimDurMin		     = 0.12; % Time stim stays on
+p.trVarsInit.stimDurMax		     = 0.20;
+p.trVarsInit.targOnsetMin            = 0.15; % Time after stim goes off before target onset
+p.trVarsInit.targOnsetMax            = 0.2;
 p.trVarsInit.goTimePostTargMin       = 0.3; % min duration from targ onset to the 'go' signal to saccade (which is fixation offset)
-p.trVarsInit.goTimePostTargMax       = 0.6; % max duration from targ onset to the 'go' signal to saccade (which is fixation offset)
+p.trVarsInit.goTimePostTargMax       = 0.5; % max duration from targ onset to the 'go' signal to saccade (which is fixation offset)
 
 p.trVarsInit.maxFixWait              = 5;    % maximum time to wait for fixation-acquisition
 p.trVarsInit.targOnSacOnly           = 1;    % condition target reappearance on saccade?

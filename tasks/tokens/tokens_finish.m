@@ -14,7 +14,13 @@ p = pds.readDatapixxBuffers(p);
 
 % Determine if the trial should be repeated based on the end state
 p.trData.trialRepeatFlag = (p.trData.trialEndState > 10) && ...
-    (p.trData.trialEndState < 20);                                                       
+    (p.trData.trialEndState < 20);
+if p.trData.trialRepeatFlag
+    p.status.repeatLast = true;
+    p.status.lastTrialRow = p.trVars.currentTrialsArrayRow;
+else
+    p.status.repeatLast = false;
+end
 
 %% Strobes and Timestamps
 % Strobe trial data summary (you will handle adding rewardAmt to this)
