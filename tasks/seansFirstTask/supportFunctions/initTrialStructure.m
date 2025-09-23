@@ -53,6 +53,7 @@ p.init.blockLength = size(p.init.trialsArray, 1);
 
 end
 
+
 function table = step1
 table = [
     1 1 true 1 0 24001; ... %  one dots, one targets, targets same color, oval stim, 0 reps, 24001 trial code
@@ -74,6 +75,10 @@ table = [
     2 2 false 3 2 24009; ... % two dots, two targets, targets diff color, both stim, 2 reps, 24009 trial code
     ];
 end
+
+
+
+
 
 
 

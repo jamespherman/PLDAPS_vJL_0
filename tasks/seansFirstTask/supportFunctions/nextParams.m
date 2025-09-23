@@ -147,8 +147,8 @@ p.draw.stimPointPix	=  p.draw.middleXY + [1, -1] .* ...
     pds.deg2pix([p.trVars.stimDegX, p.trVars.stimDegY], p);
 
 % randomly rotate the individual stims by some amount
-p.trVars.stimRotation1 = deg2rad (unifrnd (0, 360));
-p.trVars.stimRotation2 = deg2rad (unifrnd (0, 360));
+p.trVars.stimRotation1 = deg2rad(unifrnd(-p.trVars.oneStimRotationRange/2, p.trVars.oneStimRotationRange/2));
+p.trVars.stimRotation2 = deg2rad(unifrnd(-p.trVars.oneStimRotationRange/2, p.trVars.oneStimRotationRange/2));
 
 % For two-stim trials, how separated should they be (edge to edge)?
 p.draw.twoStimSepPix = pds.deg2pix(unifrnd(p.trVars.twoStimSepDegMin, p.trVars.twoStimSepDegMax), p);
@@ -200,7 +200,7 @@ end
 
 % Create color gradients between the stim color and background grey across 100 values.
 % linspace is done over Lab colorspace instead of RGB as it produces a smoother gradient
-%{
+
 labGrey = rgb2lab([0.45 0.45 0.45]);
 labStimColor1 = rgb2lab(p.trVars.stimColor1);
 labStimColor2 = rgb2lab(p.trVars.stimColor2);
@@ -218,10 +218,10 @@ stimClut2(stimClut2 > 1) = 1;
 stimClut1(stimClut1 < 0) = 0;
 stimClut2(stimClut2 < 0) = 0;
 
-%}
+
 
 % Alternatively, perform linspace over RGB space:
-
+%{
 stimClut1 = zeros (100, 3);
 stimClut2 = zeros (100, 3);
 
@@ -230,8 +230,6 @@ for i = 1:3
 	stimClut2 (:, i) = linspace (0.45, p.trVars.stimColor2(i));
 end
 %}
-
-
 
 
 % Put the color gradients into the CLUTS to be pushed to ViewPIXX
@@ -248,11 +246,12 @@ Datapixx('SetVideoClut', [p.draw.clut.subCLUT; p.draw.clut.expCLUT]);
 % Define texture window and center locations for stims %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Texture window should be large enough to accomadate two max-size stim with max size separation,
-% plus some extra empty space to allow blurring with convolution
-p.draw.textureWindowDimensions = 200; % pds.deg2pix (p.trVars.twoStimSepDegMax + p.trVars.stimSizeMax*2.5, p);
-% Initialize texture window as all zeros
-textureWindow = zeros (p.draw.textureWindowDimensions, p.draw.textureWindowDimensions);
+% Texture window should be large enough to accomadate two max-size stim with max size separation/rotation,
+% plus some extra empty space to allow blurring with convolution. Forced to be even as odd values
+% caused weird issues
+p.draw.textureWindowDimensions = 2*round(pds.deg2pix (p.trVars.twoStimSepDegMax + p.trVars.stimSizeMax*sqrt(2)*2.5, p)/2);
+
+% define center of texture window to shift things into appropriate frame
 textureWindowCenter = [p.draw.textureWindowDimensions/2; p.draw.textureWindowDimensions/2];
 
 % Calculate "pseudodiameter"; i.e. diameter of largest circle representative of the shape
@@ -299,7 +298,7 @@ if p.trVars.stimShape == 1 % Both oval %
 % Create coordinate grids
 [x1, y1] = meshgrid (1:p.draw.textureWindowDimensions, 1:p.draw.textureWindowDimensions);
 
-% Translate coordinates to be centered on the appropriate location in the texture window
+% Translate coordinates to be centered on the appropriate location in the texture 360window
 x1_shifted = x1 - center1(1);
 y1_shifted = y1 - center1(2);
 
@@ -308,7 +307,7 @@ x1_rotated = x1_shifted*cos(p.trVars.stimRotation1) + y1_shifted*sin(p.trVars.st
 y1_rotated = -x1_shifted*sin(p.trVars.stimRotation1) + y1_shifted*cos(p.trVars.stimRotation1);
 
 % Apply ellipse equation
-stim1_mask = (x1_rotated.^2 / p.draw.stimWidth1^2) + (y1_rotated.^2 / p.draw.stimHeight1^2) <= 1;
+stim1_mask = (x1_rotated.^2 / (p.draw.stimWidth1/2)^2) + (y1_rotated.^2 / (p.draw.stimHeight1/2)^2) <= 1;
 
 
 
@@ -327,7 +326,7 @@ x2_rotated = x2_shifted*cos(p.trVars.stimRotation2) + y2_shifted*sin(p.trVars.st
 y2_rotated = -x2_shifted*sin(p.trVars.stimRotation2) + y2_shifted*cos(p.trVars.stimRotation2);
 
 % Apply ellipse equation
-stim2_mask = (x2_rotated.^2 / p.draw.stimWidth2^2) + (y2_rotated.^2 / p.draw.stimHeight2^2) <= 1;
+stim2_mask = (x2_rotated.^2 / (p.draw.stimWidth2/2)^2) + (y2_rotated.^2 / (p.draw.stimHeight2/2)^2) <= 1;
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -350,7 +349,7 @@ R = [cos(p.trVars.stimRotation1), -sin(p.trVars.stimRotation1);
 % Rotate
 cornersRotated = (R*cornersUnrotated')';
 
-% Translate and separate into X's and Y's to be passed into poly2mask
+% Translate and separate into X's and Y's to be passed into poly2mask0.1
 cornersX = cornersRotated(:, 1) + center1(1);
 cornersY = cornersRotated(:, 2) + center1(2);
 
@@ -421,7 +420,7 @@ x1_rotated = x1_shifted*cos(p.trVars.stimRotation1) + y1_shifted*sin(p.trVars.st
 y1_rotated = -x1_shifted*sin(p.trVars.stimRotation1) + y1_shifted*cos(p.trVars.stimRotation1);
 
 % Apply ellipse equation
-stim1_mask = (x1_rotated.^2 / p.draw.stimWidth1^2) + (y1_rotated.^2 / p.draw.stimHeight1^2) <= 1;
+stim1_mask = (x1_rotated.^2 / (p.draw.stimWidth1/2)^2) + (y1_rotated.^2 / (p.draw.stimHeight1/2)^2) <= 1;
 
 
 % Stim 2 %
@@ -465,7 +464,7 @@ stim2_mask_preconv = stim2_mask; % for testing
 if rand > 0.5 % in 50% of cases, apply gradient to stim1
 
 % Decide on gaussian parameters dependent on size of stim (can adjust these if it doesn't look right)
-kernelSize = 0.25*p.draw.stimWidth1 + 0.25*p.draw.stimHeight1;
+kernelSize = 0.15*(p.draw.stimWidth1 + p.draw.stimHeight1);
 sigma = 5;
 
 % Round kernelSize to nearest odd number, as this value must be odd
@@ -481,7 +480,7 @@ end
 if rand > 0.5 % in 50% of cases, apply gradient to stim2
 
 % Decide on gaussian parameters dependent on size of stim (can adjust these if it doesn't look right)
-kernelSize = 0.25*p.draw.stimWidth2 + 0.25*p.draw.stimHeight2;
+kernelSize = 0.15*(p.draw.stimWidth2 + p.draw.stimHeight2);
 sigma = 5;
 
 % Round kernelSize to nearest odd number, as this value must be odd
@@ -499,11 +498,11 @@ stim2_color = round (stim2_mask*99 + 150); % 151-250 in CLUT are the color gradi
 
 % Anything out of bounds for the color gradient gets set to either grey or
 % fully saturated color, as appropriate
-stim1_color(stim1_color < 50) = 50;
-stim1_color(stim1_color > 149) = 149;
+stim1_color(stim1_color <= 50) = 50;
+stim1_color(stim1_color >= 149) = 149;
 
-stim2_color (stim2_color < 150) = 150;
-stim2_color (stim2_color > 249) = 249;
+stim2_color (stim2_color <= 150) = 150;
+stim2_color (stim2_color >= 249) = 249;
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
