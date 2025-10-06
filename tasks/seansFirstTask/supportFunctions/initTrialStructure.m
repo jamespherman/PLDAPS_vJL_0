@@ -59,7 +59,7 @@ table = [
     1 1 true 1 0 24001; ... %  one dots, one targets, targets same color, oval stim, 0 reps, 24001 trial code
     1 1 false 1 0 24002; ... % one dots, one targets, targets diff color, oval stim, 0 reps, 24002 trial code
     1 2 true 1 0 24003; ... %  one dots, two targets, targets same color, oval stim, 0 reps, 24003 trial code
-    1 2 false 1 5 24004; ... % one dots, two targets, targets diff color, oval stim, 3 reps, 24004 trial code  
+    1 2 false 1 4 24004; ... % one dots, two targets, targets diff color, oval stim, 3 reps, 24004 trial code  
     2 1 true 1 0 24005; ... %  two dots, one targets, targets same color, oval stim, 0 reps, 24005 trial code
     2 1 false 1 0 24006; ... % two dots, one targets, targets diff color, oval stim, 0 reps, 24006 trial code    
     2 2 true 1 0 24007; ... %  two dots, two targets, targets same color, oval stim, 0 reps, 24007 trial code
@@ -67,12 +67,12 @@ table = [
     1 1 true 2 0 24001; ... %  one dots, one targets, targets same color, rect stim, 0 reps, 24001 trial code
     1 1 false 2 0 24002; ... % one dots, one targets, targets diff color, rect stim, 0 reps, 24002 trial code
     1 2 true 2 0 24003; ... %  one dots, two targets, targets same color, rect stim, 0 reps, 24003 trial code
-    1 2 false 2 5 24004; ... % one dots, two targets, targets diff color, rect stim, 3 reps, 24004 trial code  
+    1 2 false 2 4 24004; ... % one dots, two targets, targets diff color, rect stim, 3 reps, 24004 trial code  
     2 1 true 2 0 24005; ... %  two dots, one targets, targets same color, rect stim, 0 reps, 24005 trial code
     2 1 false 2 0 24006; ... % two dots, one targets, targets diff color, rect stim, 0 reps, 24006 trial code    
     2 2 true 2 0 24007; ... %  two dots, two targets, targets same color, rect stim, 0 reps, 24007 trial code
     2 2 false 2 4 24008; ... % two dots, two targets, targets diff color, rect stim, 3 reps, 24008 trial code      
-    2 2 false 3 2 24009; ... % two dots, two targets, targets diff color, both stim, 2 reps, 24009 trial code
+    2 2 false 3 4 24009; ... % two dots, two targets, targets diff color, both stim, 2 reps, 24009 trial code
     ];
 end
 
