@@ -703,9 +703,11 @@ cornersY = cornersRotated(:, 2) + textureWindowCenter(2);
 stim2_mask = poly2mask(cornersX, cornersY, p.draw.textureWindowDimensions, p.draw.textureWindowDimensions);
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-elseif p.trVars.stimShape == 3 % stim1 is oval, stim2 is rect %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+elseif p.trVars.stimShape == 3 % one oval, one rect %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if rand > 0.5 % Randomly choose whether oval is first or rect is first (note: only really matters for temporal)
 
 % Stim 1 %
 %%%%%%%%%%
@@ -746,6 +748,50 @@ cornersX = cornersRotated(:, 1) + textureWindowCenter(1);
 cornersY = cornersRotated(:, 2) + textureWindowCenter(2);
 
 stim2_mask = poly2mask(cornersX, cornersY, p.draw.textureWindowDimensions, p.draw.textureWindowDimensions);
+
+else
+
+% Stim 1 %
+%%%%%%%%%%
+
+% Define positions of rectangle corners (before rotation)
+cornersUnrotated = [-p.draw.stimWidth1/2, -p.draw.stimHeight1/2;
+		   p.draw.stimWidth1/2, -p.draw.stimHeight1/2;
+		   p.draw.stimWidth1/2, p.draw.stimHeight1/2;
+		   -p.draw.stimWidth1/2, p.draw.stimHeight1/2];
+
+% Rotation matrix
+R = [cos(p.trVars.stimRotation1), -sin(p.trVars.stimRotation1);
+     sin(p.trVars.stimRotation1), cos(p.trVars.stimRotation1)];
+
+% Rotate
+cornersRotated = (R*cornersUnrotated')';
+
+% Separate into X's and Y's to be passed into poly2mask, and shift to center
+cornersX = cornersRotated(:, 1) + textureWindowCenter(1);
+cornersY = cornersRotated(:, 2) + textureWindowCenter(2);
+
+stim1_mask = poly2mask(cornersX, cornersY, p.draw.textureWindowDimensions, p.draw.textureWindowDimensions);
+
+
+% Stim 2 %
+%%%%%%%%%%
+
+% Create coordinate grids
+[x2, y2] = meshgrid (1:p.draw.textureWindowDimensions, 1:p.draw.textureWindowDimensions);
+
+% Shift coordinates to center the ellipse
+x2_shifted = x2 - textureWindowCenter(1);
+y2_shifted = y2 - textureWindowCenter(2);
+
+% Rotate coordinates
+x2_rotated = x2_shifted*cos(p.trVars.stimRotation2) + y2_shifted*sin(p.trVars.stimRotation2);
+y2_rotated = -x2_shifted*sin(p.trVars.stimRotation2) + y2_shifted*cos(p.trVars.stimRotation2);
+
+% Apply ellipse equation
+stim2_mask = (x2_rotated.^2 / (p.draw.stimWidth2/2)^2) + (y2_rotated.^2 / (p.draw.stimHeight2/2)^2) <= 1;
+
+end
 
 end
 
@@ -955,19 +1001,45 @@ stim2_color (stim2_color <= 150) = 150;
 stim2_color (stim2_color >= 249) = 249;
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Combine stims into one texture %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% If we are only presenting one stim, erase second stim
-if p.trVars.numDots == 1
-	stim2_color (:) = 0;
+
+%%%%%%%%%%%%%%%%%%%
+% Create textures %
+%%%%%%%%%%%%%%%%%%%
+
+
+if p.trVars.numDots == 1 % If we are only presenting one stim, only use stim1 for everything
+	%stim2_color (:) = 0;
+    stim2_color = stim1_color;
+    combinedStims = stim1_color;
+
+    % Make textures of the individual stims and combined
+    p.draw.stimOneTexture = Screen ('MakeTexture', p.draw.window, stim1_color);
+    p.draw.stimTwoTexture = Screen ('MakeTexture', p.draw.window, stim2_color);
+    p.draw.combinedStimTexture = Screen ('MakeTexture', p.draw.window, combinedStims);
+else % If we are presenting both...
+
+    % Make textures of the individual stims before they're adjusted for combining
+    p.draw.stimOneTexture = Screen ('MakeTexture', p.draw.window, stim1_color);
+    p.draw.stimTwoTexture = Screen ('MakeTexture', p.draw.window, stim2_color);
+
+    % Set anything that is currently at background grey to 0 so we
+    % don't add 50 or 150 to values inappropriately
+    stim1_color (stim1_color == 50) = 0;
+    stim2_color (stim2_color == 150) = 0;
+
+    % Add stim1 and stim2 to make combined texture
+    combinedStims = stim1_color + stim2_color;
+
+    % Reapply grey background to texture
+    combinedStims (combinedStims == 0) = 50;
+
+    % Make Textures of the stims combined
+    p.draw.combinedStimTexture = Screen ('MakeTexture', p.draw.window, combinedStims);
+
 end
 
-% Set anything that is currently at background grey to 0 so we
-% don't add 50 or 150 to values inappropriately
-stim1_color (stim1_color == 50) = 0;
-stim2_color (stim2_color == 150) = 0;
+
 
 
 %{
@@ -978,11 +1050,7 @@ catch me
 end
 %}
 
-% Add stim1 and stim2 to make full texture
-combinedStims = stim1_color + stim2_color;
 
-% Reapply grey background to texture
-combinedStims (combinedStims == 0) = 50;
 
 % Test %%%%%%%%%%%%%%%%%%%
 %{
@@ -1023,30 +1091,57 @@ title('combinedStims');
 %w = waitforbuttonpress;
 %}
 
-% Make Textures of the stims individually and combined
-p.draw.stim1Texture = Screen ('MakeTexture', p.draw.window, stim1_color);
-p.draw.stim2Texture = Screen ('MakeTexture', p.draw.window, stim2_color);
-p.draw.combinedStimTexture = Screen ('MakeTexture', p.draw.window, combinedStims);
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % End Texture Stuff %%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-
 end
+
+
 
 %
 function p = timingInfo(p)
-	
-% time of stim onset wrt fixAcq:
-p.trVars.timeStimOnset		= unifrnd(p.trVars.stimOnsetMin, p.trVars.stimOnsetMax);
 
-% time of stim offset wrt fixAcq:
-p.trVars.timeStimOffset		= p.trVars.timeStimOnset + unifrnd(p.trVars.stimDurMin, p.trVars.stimDurMax);
+% time of stim one onset and offset wrt fixAcq:
+p.trVars.timeStimOneOnset		= unifrnd (p.trVars.stimOnsetMin, p.trVars.stimOnsetMax);
+p.trVars.stimOneDur             = unifrnd (p.trVars.stimDurMin, p.trVars.stimDurMax);
+p.trVars.timeStimOneOffset		= p.trVars.timeStimOneOnset + p.trVars.stimOneDur;
+
+% If we're doing full version of temporal task, add interstim interval
+% if we're doing spatial task, stim1 and stim2 happen at the same time
+% If we're in transition, use temporal overlap to determine stim2 timing
+if p.trVars.temporalOverlap == 0    
+    if p.trVars.numDots == 1
+        % If presenting 1 stimulus, total duration should be between total
+        % duration of the two stimuli and that plus inter-stim-interval
+        p.trVars.interStimInterval  = unifrnd (0, p.trVars.interStimIntervalMax);
+        p.trVars.timeStimOneOffset  = p.trVars.timeStimOneOffset + p.trVars.interStimInterval;
+        p.trVars.timeStimTwoOnset   = p.trVars.timeStimOneOffset;
+        p.trVars.stimTwoDur         = unifrnd (p.trVars.stimDurMin, p.trVars.stimDurMax);
+        p.trVars.timeStimTwoOffset  = p.trVars.timeStimTwoOnset + p.trVars.stimTwoDur;
+    else
+        p.trVars.interStimInterval  = unifrnd (p.trVars.interStimIntervalMin, p.trVars.interStimIntervalMax);
+        p.trVars.timeStimTwoOnset   = p.trVars.timeStimOneOffset + p.trVars.interStimInterval;
+        p.trVars.stimTwoDur         = unifrnd (p.trVars.stimDurMin, p.trVars.stimDurMax);
+        p.trVars.timeStimTwoOffset  = p.trVars.timeStimTwoOnset + p.trVars.stimTwoDur;
+    end
+
+elseif p.trVars.temporalOverlap > 0 && p.trVars.temporalOverlap < 1
+    p.trVars.timeStimTwoOnset   = p.trVars.timeStimOneOnset + ...
+                                  (p.trVars.stimOneDur*(1-p.trVars.temporalOverlap));
+    p.trVars.stimTwoDur         = unifrnd (p.trVars.stimDurMin, p.trVars.stimDurMax);
+    p.trVars.timeStimTwoOffset  = p.trVars.timeStimTwoOnset + p.trVars.stimTwoDur;
+
+elseif p.trVars.temporalOverlap >= 1
+    p.trVars.timeStimTwoOnset  = p.trVars.timeStimOneOnset;
+    p.trVars.stimTwoDur        = p.trVars.stimOneDur;
+    p.trVars.timeStimTwoOffset = p.trVars.timeStimOneOffset;
+end
 
 % time of target onset wrt fixAcq:
-p.trVars.timeTargOnset          = p.trVars.timeStimOffset + unifrnd(p.trVars.targOnsetMin, p.trVars.targOnsetMax);
+p.trVars.timeTargOnset          = p.trVars.timeStimTwoOffset + unifrnd(p.trVars.targOnsetMin, p.trVars.targOnsetMax);
 
 % time of target offset wrt fixAcq:
 if p.trVars.isVisSac

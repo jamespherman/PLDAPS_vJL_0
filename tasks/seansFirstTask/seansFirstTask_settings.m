@@ -292,6 +292,14 @@ p.trVarsInit.targOnsetMax            = 0.2;
 p.trVarsInit.goTimePostTargMin       = 0.3; % min duration from targ onset to the 'go' signal to saccade (which is fixation offset)
 p.trVarsInit.goTimePostTargMax       = 0.5; % max duration from targ onset to the 'go' signal to saccade (which is fixation offset)
 
+p.trVarsInit.interStimIntervalMin    = 0; % For temporal task; time between stims
+p.trVarsInit.interStimIntervalMax    = 0; 
+
+% For transition version of temporal task; How much should the two stim overlap?
+% 0 = no overlap; i.e. full temporal task. 1 = complete overlap; i.e. full spatial task
+% between 0 and 1 = transition temporal task where the stim partially overlap
+p.trVarsInit.temporalOverlap         = 1;
+
 p.trVarsInit.maxFixWait              = 5;    % maximum time to wait for fixation-acquisition
 p.trVarsInit.targOnSacOnly           = 1;    % condition target reappearance on saccade?
 p.trVarsInit.rwdTime                 = -1;
@@ -317,6 +325,8 @@ p.trVarsInit.currentState     = p.state.trialBegun;  % initialize "state" variab
 p.trVarsInit.exitWhileLoop    = false;  % do we want to exit the "run" while loop?
 
 p.trVarsInit.stimIsOn 	= false;
+p.trVarsInit.stimOneIsOn = false;
+p.trVarsInit.stimTwoIsOn = false;
 p.trVarsInit.targetIsOn = false;
 
 p.trVarsInit.postMemSacTargOn = false;  % do we want the target on because a memory guided saccade has been successfully completed?

@@ -475,6 +475,30 @@ if p.trData.timing.fixAq > 0
     
     %% Determine if stim should be on/off:
     
+    if (p.trData.timing.stimOneOn == -1 && ...
+        timeFromFixAq >= p.trVars.timeStimOneOnset && timeFromFixAq < p.trVars.timeStimOneOffset)
+            p.trVars.stimOneIsOn    = true;
+            p.trData.timing.stimOneOn   = timeNow;
+
+    elseif (p.trData.timing.stimOneOn ~= -1 && p.trData.timing.stimOneOff == -1 && ...
+        timeFromFixAq >= p.trVars.timeStimOneOffset)
+            p.trVars.stimOneIsOn   = false;
+            p.trVars.timing.stimOneOff  = timeNow;
+    end
+
+    if (p.trData.timing.stimTwoOn == -1 && ...
+        timeFromFixAq >= p.trVars.timeStimTwoOnset && timeFromFixAq < p.trVars.timeStimTwoOffset)
+            p.trVars.stimTwoIsOn    = true;
+            p.trData.timing.stimTwoOn   = timeNow;
+
+    elseif (p.trData.timing.stimTwoOn ~= -1 && p.trData.timing.stimTwoOff == -1 && ...
+        timeFromFixAq >= p.trVars.timeStimTwoOffset)
+            p.trVars.stimTwoIsOn   = false;
+            p.trVars.timing.stimTwoOff  = timeNow;
+    end
+
+    % Old method
+    %{
     % if stim is off but time is now after timeStimOnset, then turn it on
     if (p.trData.timing.stimOn == -1 && ...
     	timeFromFixAq >= p.trVars.timeStimOnset && timeFromFixAq < p.trVars.timeStimOffset)
@@ -491,7 +515,8 @@ if p.trData.timing.fixAq > 0
     else
 %    	p.trVars.stimIsOn 	 = false;
     end
-    
+    %}
+
     %% Determine if target should be on/off and send appropriate strobes:
     
     % if target is off, but time now is after timeTargOnset, turn it on:
@@ -607,7 +632,7 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     	Screen (...stimColor)
     	
     	%}
-   
+   %{
 if p.trVars.stimShape == 1
 	stimShape = 'FillOval';
 elseif p.trVars.stimShape == 2
@@ -615,7 +640,26 @@ elseif p.trVars.stimShape == 2
 else
 	stimShape = 'FillOval';
 end    	
-    
+   %}
+
+
+
+    if p.trVars.stimOneIsOn && ~p.trVars.stimTwoIsOn
+        Screen('DrawTexture', p.draw.window, p.draw.stimOneTexture, [], repmat(p.draw.stimPointPix, 1, 2) + ...
+        [-p.draw.textureWindowDimensions/2 -p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2]);
+
+    elseif ~p.trVars.stimOneIsOn && p.trVars.stimTwoIsOn
+        Screen('DrawTexture', p.draw.window, p.draw.stimTwoTexture, [], repmat(p.draw.stimPointPix, 1, 2) + ...
+        [-p.draw.textureWindowDimensions/2 -p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2]);
+
+    elseif p.trVars.stimOneIsOn && p.trVars.stimTwoIsOn
+        Screen('DrawTexture', p.draw.window, p.draw.combinedStimTexture, [], repmat(p.draw.stimPointPix, 1, 2) + ...
+        [-p.draw.textureWindowDimensions/2 -p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2]);
+
+    end
+
+
+%{
     if p.trVars.stimIsOn
     
         % Texture stuff
@@ -662,7 +706,7 @@ end
 %}
     	
     end
-
+%}
     	
     % draw the target (if it is time)
     if p.trVars.targetIsOn
