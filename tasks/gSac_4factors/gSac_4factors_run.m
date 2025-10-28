@@ -44,13 +44,15 @@ timeNow = GetSecs - p.trData.timing.trialStartPTB;
 switch p.trVars.currentState
     case p.state.trialBegun
         p.init.strb.addValue(p.init.codes.trialBegin);
-        p.trData.timing.trialBegin      = timeNow;
+        p.trVars.postFlip.logical = true;
+        p.trVars.postFlip.varNames{end+1} = 'trialBegin';
         p.trVars.currentState        = p.state.waitForJoy;
         
     case p.state.waitForJoy
         if pds.joyHeld(p)
             p.init.strb.addValue(p.init.codes.joyPress);
-            p.trData.timing.joyPress    = timeNow;
+            p.trVars.postFlip.logical = true;
+            p.trVars.postFlip.varNames{end+1} = 'joyPress';
             p.trVars.currentState    = p.state.showFix;
         elseif ~pds.joyHeld(p) && (timeNow > p.trVars.joyWaitDur)
             p.trVars.currentState    = p.state.nonStart;
@@ -63,20 +65,24 @@ switch p.trVars.currentState
         
         p.init.strb.addValueOnce(p.init.codes.fixOn);
         if p.trData.timing.fixOn < 0
-            p.trData.timing.fixOn = timeNow;
+            p.trVars.postFlip.logical = true;
+            p.trVars.postFlip.varNames{end+1} = 'fixOn';
         end
         
         if pds.eyeInWindow(p) && pds.joyHeld(p) && timeNow < (p.trData.timing.fixOn + p.trVars.fixWaitDur)
             p.init.strb.addValue(p.init.codes.fixAq);
-            p.trData.timing.fixAq      = timeNow;
+            p.trVars.postFlip.logical = true;
+            p.trVars.postFlip.varNames{end+1} = 'fixAq';
             p.trVars.currentState      = p.state.dontMove;
         elseif ~pds.joyHeld(p)
             p.init.strb.addValue(p.init.codes.joyRelease);
-            p.trData.timing.joyRelease = timeNow;
+            p.trVars.postFlip.logical = true;
+            p.trVars.postFlip.varNames{end+1} = 'joyRelease';
             p.trVars.currentState      = p.state.joyBreak;
         elseif timeNow > (p.trData.timing.fixOn + p.trVars.fixWaitDur)
             p.init.strb.addValue(p.init.codes.nonStart);
-            p.trData.timing.joyRelease = timeNow;
+            p.trVars.postFlip.logical = true;
+            p.trVars.postFlip.varNames{end+1} = 'joyRelease';
             p.trVars.currentState      = p.state.nonStart;
         end
         
@@ -90,15 +96,18 @@ switch p.trVars.currentState
         
         if (timeNow - p.trData.timing.fixAq) > p.trVars.timeFixOffset
             p.init.strb.addValue(p.init.codes.fixOff);
-            p.trData.timing.fixOff    = timeNow;
+            p.trVars.postFlip.logical = true;
+            p.trVars.postFlip.varNames{end+1} = 'fixOff';
             p.trVars.currentState     = p.state.makeSaccade;
         elseif ~pds.eyeInWindow(p)
             p.init.strb.addValue(p.init.codes.fixBreak);
-            p.trData.timing.fixBreak    = timeNow;
+            p.trVars.postFlip.logical = true;
+            p.trVars.postFlip.varNames{end+1} = 'fixBreak';
             p.trVars.currentState       = p.state.fixBreak;
         elseif ~pds.joyHeld(p)
             p.init.strb.addValue(p.init.codes.joyRelease);
-            p.trData.timing.joyRelease  = timeNow;
+            p.trVars.postFlip.logical = true;
+            p.trVars.postFlip.varNames{end+1} = 'joyRelease';
             p.trVars.currentState       = p.state.joyBreak;
         end
         
@@ -106,22 +115,26 @@ switch p.trVars.currentState
         p.draw.color.fix = p.draw.color.background;
         if ~pds.joyHeld(p)
             p.init.strb.addValue(p.init.codes.joyRelease);
-            p.trData.timing.joyRelease  = timeNow;
+            p.trVars.postFlip.logical = true;
+            p.trVars.postFlip.varNames{end+1} = 'joyRelease';
             p.trVars.currentState       = p.state.joyBreak;
         end
         if ~pds.eyeInWindow(p) && timeNow < (p.trData.timing.fixOff + p.trVars.goLatencyMin)
             p.init.strb.addValue(p.init.codes.fixBreak);
-            p.trData.timing.fixBreak    = timeNow;
+            p.trVars.postFlip.logical = true;
+            p.trVars.postFlip.varNames{end+1} = 'fixBreak';
             p.trVars.currentState       = p.state.fixBreak;
         elseif (~pds.eyeInWindow(p) && timeNow > (p.trData.timing.fixOff + p.trVars.goLatencyMin) && timeNow < (p.trData.timing.fixOff + p.trVars.goLatencyMax) && gazeVelThreshCheck(p, timeNow)) || p.trVars.passEye
             p.init.strb.addValue(p.init.codes.saccadeOnset);
-            p.trData.timing.saccadeOnset    = timeNow;
+            p.trVars.postFlip.logical = true;
+            p.trVars.postFlip.varNames{end+1} = 'saccadeOnset';
             p.trVars.currentState           = p.state.checkLanding;
             p.draw.fixWinPenDraw = p.draw.fixWinPenThin;
             disp('saccadeMade')
         elseif timeNow > (p.trData.timing.fixOff + p.trVars.goLatencyMax)
             p.init.strb.addValue(p.init.codes.fixBreak);
-            p.trData.timing.fixBreak    = timeNow;
+            p.trVars.postFlip.logical = true;
+            p.trVars.postFlip.varNames{end+1} = 'fixBreak';
             p.trVars.currentState       = p.state.fixBreak;
             disp('fixBreak')
             disp(num2str(p.trVars.goLatencyMax))
@@ -129,7 +142,8 @@ switch p.trVars.currentState
       case p.state.checkLanding
         if ~pds.joyHeld(p)
             p.init.strb.addValue(p.init.codes.joyRelease);
-            p.trData.timing.joyRelease  = timeNow;
+            p.trVars.postFlip.logical = true;
+            p.trVars.postFlip.varNames{end+1} = 'joyRelease';
             p.trVars.currentState = p.state.joyBreak;
         end
         sacInFlight = gazeVelThreshCheck(p, timeNow);
@@ -140,28 +154,44 @@ switch p.trVars.currentState
         elseif blinkDetected
             disp('blink detected'); 
             p.init.strb.addValue(p.init.codes.blinkDuringSac);
-            p.trData.timing.fixBreak = timeNow;
+            p.trVars.postFlip.logical = true;
+            p.trVars.postFlip.varNames{end+1} = 'fixBreak';
             p.trVars.currentState = p.state.fixBreak;
         elseif gazeInTargetWin || p.trVars.passEye
             p.init.strb.addValue(p.init.codes.saccadeOffset); 
-            p.trData.timing.saccadeOffset = timeNow; 
+            p.trVars.postFlip.logical = true;
+            p.trVars.postFlip.varNames{end+1} = 'saccadeOffset';
             p.trVars.currentState = p.state.holdTarg; 
-            p.init.strb.addValue(p.init.codes.targetAq); 
-            p.trData.timing.targetAq = timeNow; 
+            p.init.strb.addValue(p.init.codes.targetAq);
+            p.trVars.postFlip.logical = true;
+            p.trVars.postFlip.varNames{end+1} = 'targetAq';
             p.draw.targWinPenDraw = p.draw.targWinPenThick;
             disp('targHold')
         elseif ~gazeInTargetWin || ~p.trVars.passEye
-            p.init.strb.addValue(p.init.codes.fixBreak); 
-            p.trData.timing.fixBreak = timeNow; 
+            p.init.strb.addValue(p.init.codes.fixBreak);
+            p.trVars.postFlip.logical = true;
+            p.trVars.postFlip.varNames{end+1} = 'fixBreak';
             p.trVars.currentState = p.state.fixBreak; 
             p.draw.targWinPenDraw = p.draw.targWinPenThin;
             disp('fixBreak')
         end
       case p.state.holdTarg
-        if ~pds.joyHeld(p), p.init.strb.addValue(p.init.codes.joyRelease); p.trData.timing.joyRelease  = timeNow; p.trVars.currentState = p.state.joyBreak; end
+        if ~pds.joyHeld(p)
+            p.init.strb.addValue(p.init.codes.joyRelease);
+            p.trVars.postFlip.logical = true;
+            p.trVars.postFlip.varNames{end+1} = 'joyRelease';
+            p.trVars.currentState = p.state.joyBreak;
+        end
         eyeInTargetWin = pds.eyeInWindow(p, 'target');
         if eyeInTargetWin && timeNow > p.trData.timing.saccadeOffset + p.trVars.targHoldDuration, p.trVars.currentState = p.state.sacComplete; p.draw.targWinPenDraw = p.draw.targWinPenThick;
-        elseif ~eyeInTargetWin, p.init.strb.addValue(p.init.codes.fixBreak); p.trData.timing.fixBreak = timeNow; p.trVars.currentState = p.state.fixBreak; p.draw.targWinPenDraw = p.draw.targWinPenThin; disp('target break'); end
+        elseif ~eyeInTargetWin
+            p.init.strb.addValue(p.init.codes.fixBreak);
+            p.trVars.postFlip.logical = true;
+            p.trVars.postFlip.varNames{end+1} = 'fixBreak';
+            p.trVars.currentState = p.state.fixBreak;
+            p.draw.targWinPenDraw = p.draw.targWinPenThin;
+            disp('target break');
+        end
     case p.state.sacComplete
         if p.trData.timing.reward < 0, p = pds.deliverReward(p);
         elseif p.trData.timing.reward > 0 && (timeNow - p.trData.timing.reward) > (p.trVars.postRewardDuration + p.rig.dp.dacPadDur + p.trVars.rewardDurationMs/1000), p.trVars.exitWhileLoop = true; end
@@ -247,6 +277,23 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     
     [p.trData.timing.flipTime(p.trVars.flipIdx)] = Screen('Flip', p.draw.window, GetSecs + 0.00);
     p.trData.timing.lastFrameTime = p.trData.timing.flipTime(p.trVars.flipIdx) - p.trData.timing.trialStartPTB;
+
+    % 8. Strobe any values that are queued for this frame.
+    if p.init.strb.armedToStrobe
+        p.init.strb.strobeList;
+    end
+
+    % 9. Log precise timing for any events that just occurred.
+    if p.trVars.postFlip.logical
+        for j = 1:length(p.trVars.postFlip.varNames)
+            if p.trData.timing.(p.trVars.postFlip.varNames{j}) < 0
+                p.trData.timing.(p.trVars.postFlip.varNames{j}) = p.trData.timing.lastFrameTime;
+            end
+        end
+        p.trVars.postFlip.logical = false;
+        p.trVars.postFlip.varNames = cell(0);
+    end
+
     p.trVars.flipIdx = p.trVars.flipIdx + 1;
 end
 end
@@ -270,18 +317,21 @@ if p.trData.timing.fixAq > 0
     if timeFromFixAq >= p.trVars.timeTargOnset && timeFromFixAq < p.trVars.timeTargOffset && p.trData.timing.targetOn < 0
         p.trVars.targetIsOn       = true;
         p.init.strb.addValueOnce(p.init.codes.targetOn);
-        p.trData.timing.targetOn = timeNow;
+        p.trVars.postFlip.logical = true;
+        p.trVars.postFlip.varNames{end+1} = 'targetOn';
     elseif ~p.trVars.isVisSac && (p.trVars.currentState == p.state.holdTarg || (p.trData.timing.fixOff > 0 && p.trVars.targTrainingDelay >= 0 && timeNow > (p.trData.timing.fixOff + p.trVars.targTrainingDelay)))
         p.trVars.targetIsOn       = true;
         if p.trData.timing.targetReillum < 0
             p.init.strb.addValueOnce(p.init.codes.targetReillum);
-            p.trData.timing.targetReillum = timeNow;
+            p.trVars.postFlip.logical = true;
+            p.trVars.postFlip.varNames{end+1} = 'targetReillum';
         end
     elseif ~(timeFromFixAq < p.trVars.timeTargOffset)
         p.trVars.targetIsOn       = false;
         p.init.strb.addValueOnce(p.init.codes.targetOff);
         if p.trData.timing.targetOff < 0 && p.trData.timing.targetOn > 0
-            p.trData.timing.targetOff = timeNow;
+            p.trVars.postFlip.logical = true;
+            p.trVars.postFlip.varNames{end+1} = 'targetOff';
         end
     end
 end
