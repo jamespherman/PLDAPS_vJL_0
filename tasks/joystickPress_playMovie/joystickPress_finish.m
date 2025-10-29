@@ -6,6 +6,7 @@ function p = joystickPress_finish(p)
 %   init function
 %   next function (before each trial)
 %   run function (each trial)
+
 %   finish function (after each trial)
 %
 % finish function runs at the end of every trial and is usually used to 

@@ -409,7 +409,7 @@ p.draw.movie.preloadsecs    = [];
 p.draw.movie.colorprobe     = 0;
 p.draw.movie.maxThreads     = [];
 p.draw.movie.movieIdxStart  = 0;
-p.draw.movie.movieDir       = '/home/herman_lab/Videos';
+p.draw.movie.movieDir       = '/home/herman_lab/Videos/';
 
 % list contents of directory containing movie files, then exclude names
 % that are all '.'.

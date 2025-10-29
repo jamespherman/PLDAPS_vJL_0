@@ -99,12 +99,14 @@ switch p.trVars.currentState
         % If joystick is held down, onwards to state 0.25
         % If not, onward to state 3.3 (non-start)
         if pds.joyHeld(p)
+            disp('Joystick is held down!')
             p.init.strb.addValue(p.init.codes.joyPress);
             p.trData.timing.joyPress    = timeNow;
             p.trVars.currentState       = p.state.holdJoy;
             
         elseif ~pds.joyHeld(p) && (timeNow > p.trVars.joyWaitDur)
             p.trVars.currentState       = p.state.nonStart;
+            disp('Joystick is NOT held down!')
         end
         
     case p.state.holdJoy
