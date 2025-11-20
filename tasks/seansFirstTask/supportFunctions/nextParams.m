@@ -1023,6 +1023,12 @@ else % If we are presenting both...
     p.draw.stimOneTexture = Screen ('MakeTexture', p.draw.window, stim1_color);
     p.draw.stimTwoTexture = Screen ('MakeTexture', p.draw.window, stim2_color);
 
+% If interStimInterval is greater than 0, 50% of the time make stimTwo the same as stimOne
+	if p.trVars.temporalOverlap == 0 && p.trVars.interStimIntervalMin > 0 && rand > 0.5
+   	    p.draw.stimTwoTexture = p.draw.stimOneTexture;
+	end
+
+
     % Set anything that is currently at background grey to 0 so we
     % don't add 50 or 150 to values inappropriately
     stim1_color (stim1_color == 50) = 0;

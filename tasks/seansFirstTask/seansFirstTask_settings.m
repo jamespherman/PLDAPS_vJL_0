@@ -242,15 +242,15 @@ p.trVarsInit.targDegX		 = [p.trVarsInit.targOneDegX p.trVarsInit.targTwoDegX];
 p.trVarsInit.targDegY		 = [p.trVarsInit.targOneDegY p.trVarsInit.targTwoDegY];
 p.trVarsInit.numDots             = 0; % how many dots does the target stimulus have on this trial?
 p.trVarsInit.twoTargSepDeg       = 1; % how far apart should the two target dots be? (in dva?)
-p.trVarsInit.twoStimSepDegMin    = 0.5; % how far apart should the two stim dots be? (in dva?)
-p.trVarsInit.twoStimSepDegMax    = 1.0;
+p.trVarsInit.twoStimSepDegMin    = 0.05; % how far apart should the two stim dots be? (in dva?)
+p.trVarsInit.twoStimSepDegMax    = 0.5;
 p.trVarsInit.stimRangeRadius	 = 13.0; % create stimuli randomly within radius of __? (in pixels?)
 p.trVarsInit.stimRangeXmin	 = -28.0; % Alternate method of randomly positioning stimuli, between Xmin and Xmax
 p.trVarsInit.stimRangeXmax	 = 28.0;
-p.trVarsInit.stimRangeYmin	 = -17.25; % Together with previous lines, randomly position stimuli between Ymin and Ymax
-p.trVarsInit.stimRangeYmax	 = 17.25;
+p.trVarsInit.stimRangeYmin	 = -17.5; % Together with previous lines, randomly position stimuli between Ymin and Ymax
+p.trVarsInit.stimRangeYmax	 = 17.5;
 p.trVarsInit.stimSizeMin	 = 0.1; % create stimuli of what size? (randomly chosen between min and max, in dva)
-p.trVarsInit.stimSizeMax	 = 1.5;
+p.trVarsInit.stimSizeMax	 = 1.0;
 p.trVarsInit.oneStimRotationRange= 360; % Range within which individual stimuli are rotated
 p.trVarsInit.twoStimRotationRange= 360; % Range within which stimuli are rotated relative to each other
 
@@ -283,22 +283,22 @@ p.trVarsInit.goLatencyMax            = 0.5;  % maximum saccade-latency criterion
 % p.trVarsInit.preTargMin            = 0.75; % minimum fixation-only time before target onset
 % p.trVarsInit.preTargMax            = 1;    % maximum fixation-only time before target onset
 
-p.trVarsInit.stimOnsetMin	     = 0.3; % Time after fixation before stim comes on
-p.trVarsInit.stimOnsetMax	     = 0.5;
+p.trVarsInit.stimOnsetMin	     = 0.25; % Time after fixation before stim comes on
+p.trVarsInit.stimOnsetMax	     = 0.4;
 p.trVarsInit.stimDurMin		     = 0.12; % Time stim stays on
 p.trVarsInit.stimDurMax		     = 0.20;
 p.trVarsInit.targOnsetMin            = 0.15; % Time after stim goes off before target onset
 p.trVarsInit.targOnsetMax            = 0.2;
-p.trVarsInit.goTimePostTargMin       = 0.3; % min duration from targ onset to the 'go' signal to saccade (which is fixation offset)
-p.trVarsInit.goTimePostTargMax       = 0.5; % max duration from targ onset to the 'go' signal to saccade (which is fixation offset)
+p.trVarsInit.goTimePostTargMin       = 0.25; % min duration from targ onset to the 'go' signal to saccade (which is fixation offset)
+p.trVarsInit.goTimePostTargMax       = 0.4; % max duration from targ onset to the 'go' signal to saccade (which is fixation offset)
 
-p.trVarsInit.interStimIntervalMin    = 0; % For temporal task; time between stims
-p.trVarsInit.interStimIntervalMax    = 0; 
+p.trVarsInit.interStimIntervalMin    = 0.03; % For temporal task; time between stims
+p.trVarsInit.interStimIntervalMax    = 0.36; 
 
 % For transition version of temporal task; How much should the two stim overlap?
 % 0 = no overlap; i.e. full temporal task. 1 = complete overlap; i.e. full spatial task
 % between 0 and 1 = transition temporal task where the stim partially overlap
-p.trVarsInit.temporalOverlap         = 1;
+p.trVarsInit.temporalOverlap         = 0;
 
 p.trVarsInit.maxFixWait              = 5;    % maximum time to wait for fixation-acquisition
 p.trVarsInit.targOnSacOnly           = 1;    % condition target reappearance on saccade?
