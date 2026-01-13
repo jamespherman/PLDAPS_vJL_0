@@ -93,7 +93,15 @@ p.init.taskActions{5} = 'pdsActions.rewardDrain';
 p.init.taskActions{6} = 'pdsActions.singleReward';
 p.init.taskActions{7} = 'pdsActions.catOldOutput';
 
-p.init.trialsPerCondition = 100; % The number of repetitions of each condition WITHIN a single block
+% Note: Trial counts per condition are now determined by the reward
+% distribution definitions in initTrialStructure.m, which guarantee that
+% both Normal and Uniform distributions span the same range [1-9] with the
+% same mean (5). All conditions have 18 trials each, ensuring equal
+% condition frequency within a block:
+%   tokens_main: 144 trials (8 conditions × 18 trials)
+%   tokens_AV:   252 trials (14 conditions × 18 trials)
+% The trialsPerCondition parameter is no longer used.
+% p.init.trialsPerCondition = 100;
 
 
 %% audio:

@@ -46,29 +46,35 @@ end
 
 function p = trialTypeInfo(p)
 % Extracts trial parameters from the selected row in the trials array and
-% calculates trial-specific values like reward amount and ITI.
+% calculates trial-specific values like ITI.
+%
+% Note: rewardAmt is now pre-specified in trialsArray (see initTrialStructure.m)
+% rather than being generated at runtime. This guarantees that both Normal
+% and Uniform distributions span the same range [1-9] with the same mean (5).
 
     % Get the row number for the current trial
     row = p.trVars.currentTrialsArrayRow;
 
     % Get column indices by name for clarity and robustness
     colNames = p.init.trialArrayColumnNames;
-    distCol    = contains(colNames, 'dist');
-    cueFileCol = contains(colNames, 'cueFile');
-    fixReqCol  = contains(colNames, 'isFixationRequired');
-    isTokenCol = contains(colNames, 'isToken');
+    distCol      = strcmp(colNames, 'dist');
+    cueFileCol   = strcmp(colNames, 'cueFile');
+    fixReqCol    = strcmp(colNames, 'isFixationRequired');
+    isTokenCol   = strcmp(colNames, 'isToken');
+    rewardAmtCol = strcmp(colNames, 'rewardAmt');
 
     % Extract the parameters for this trial from the cell array
     p.trVars.dist                = p.init.trialsArray{row, distCol};
     p.trVars.cueFile             = p.init.trialsArray{row, cueFileCol};
     p.trVars.isFixationRequired  = p.init.trialsArray{row, fixReqCol};
     p.trVars.isToken             = p.init.trialsArray{row, isTokenCol};
+    p.trVars.rewardAmt           = p.init.trialsArray{row, rewardAmtCol};
 
     % If the experiment type is 'tokens_AV', handle the AV trial logic
     if strcmp(p.init.exptType, 'tokens_AV')
 
         % Get the column index for 'avProbability'
-        avProbCol = contains(colNames, 'avProbability');
+        avProbCol = strcmp(colNames, 'avProbability');
 
         % Extract the 'avProbability' for the current trial
         avProbability = p.init.trialsArray{row, avProbCol};
@@ -82,24 +88,6 @@ function p = trialTypeInfo(p)
         elseif avProbability == 0.5 && rand < 0.5
             p.trVars.isAVTrial = true;
         end
-    end
-
-    % --- Calculate reward amount for the current trial ---
-    % This logic is taken from your colleague's script
-    switch p.trVars.dist
-        case 1 % Normal distribution
-            p.trVars.rewardAmt = round(randn(1,1) + 5);
-        case 2 % Uniform distribution
-            p.trVars.rewardAmt = round(0.5 + (9.5 - 0.5) .* rand(1,1));
-        case 0 % Fixed reward
-            p.trVars.rewardAmt = 5;
-    end
-
-    % Ensure reward amount is within a valid range (1-10 tokens)
-    if p.trVars.rewardAmt < 1
-        p.trVars.rewardAmt = 1;
-    elseif p.trVars.rewardAmt > 10
-        p.trVars.rewardAmt = 10;
     end
     
     % --- Set timing info for the current trial ---
