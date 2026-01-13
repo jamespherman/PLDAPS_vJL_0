@@ -48,6 +48,9 @@ p.trData.strobed = p.init.strb.strobedList;
 p.init.strb.flushVetoList;
 p.init.strb.flushStrobedList;
 
+% copy p.draw variables into p.trVars.draw so they get saved
+p.trVars.draw = p.draw;
+
 %%
 
 % (3) pause ephys

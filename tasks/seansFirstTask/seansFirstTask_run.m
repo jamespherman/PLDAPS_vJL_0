@@ -380,6 +380,8 @@ switch p.trVars.currentState
         %% SACCADE COMPLETE!
         % STATE 21 = get reward delivery
         
+        p.trData.trialCorrect = 1; % Record that trial was completed correctly
+        
         % if the delay for reward delivery has elapsed and reward delivery
         % hasn't yet been triggered, deliver the reward.
         if p.trData.timing.reward < 0
@@ -417,6 +419,9 @@ switch p.trVars.currentState
     case p.state.wrongTarget   
         %% WRONG TARGET
         % subject looked at the incorrect target
+        
+        p.trData.trialCorrect = 0; % Record that trial was completed incorrectly
+        
 	p = playTone(p, 'low');
 	p.trVars.exitWhileLoop = true;        
                

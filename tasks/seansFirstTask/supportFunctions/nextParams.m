@@ -803,6 +803,8 @@ end
 
 if rand > 0.5 % in 50% of cases, apply gradient to stim1
 
+p.trData.stim1Fuzzy = 1;
+
 % Decide on gaussian parameters dependent on size of stim (can adjust these if it doesn't look right)
 kernelSize = 0.15*(p.draw.stimWidth1 + p.draw.stimHeight1);
 sigma = 5;
@@ -819,12 +821,16 @@ stim1_mask_conv (stim1_mask_conv < 0.1) = 0;
 
 else
 
+p.trData.stim1Fuzzy = 0;
+
 stim1_mask_conv = stim1_mask;
 
 end
 
 
 if rand > 0.5 % in 50% of cases, apply gradient to stim2
+
+p.trData.stim2Fuzzy = 1;
 
 % Decide on gaussian parameters dependent on size of stim (can adjust these if it doesn't look right)
 kernelSize = 0.15*(p.draw.stimWidth2 + p.draw.stimHeight2);
@@ -841,6 +847,8 @@ stim2_mask_conv = conv2(stim2_mask, gaussianKernel, 'same');
 stim2_mask_conv (stim2_mask_conv < 0.1) = 0;
 
 else
+
+p.trData.stim2Fuzzy = 0;
 
 stim2_mask_conv = stim2_mask;
 
@@ -860,7 +868,7 @@ R = [cos(p.trVars.twoStimRotation), -sin(p.trVars.twoStimRotation);
      sin(p.trVars.twoStimRotation), cos(p.trVars.twoStimRotation)];
     
 % Define the unit vector for direction of translation 
-translation_unit_vector = R*[1; 0];
+p.trVars.translation_unit_vector = R*[1; 0];
 
 % Initialize the scalar value we will multiply the unit vector by
 translation_scalar = 0;
@@ -885,8 +893,8 @@ while stimsOverlap
 	translation_scalar = translation_scalar + 1;
 
 % Create "test versions" of the stims that are shifted by some amount determined by the scalar/unit vector
-	test_stim1 = imtranslate (test_stim1_initial, round(translation_scalar*translation_unit_vector));
-	test_stim2 = imtranslate (test_stim2_initial, round(-translation_scalar*translation_unit_vector));
+	test_stim1 = imtranslate (test_stim1_initial, round(translation_scalar*p.trVars.translation_unit_vector));
+	test_stim2 = imtranslate (test_stim2_initial, round(-translation_scalar*p.trVars.translation_unit_vector));
 
 % Add these test versions together
 	test_combined = test_stim1 + test_stim2;
@@ -900,12 +908,11 @@ while stimsOverlap
 end
 
 % Add twoStimSepPix/2 value to translation_scalar value to find the center-to-center translation
-final_translation_scalar = translation_scalar + p.draw.twoStimSepPix/2;
+p.trVars.final_translation_scalar = translation_scalar + p.draw.twoStimSepPix/2;
 
 % Translate the stims by the appropriate amount, in opposite directions
-stim1_mask_translated = imtranslate (stim1_mask_conv, round(final_translation_scalar*translation_unit_vector));
-stim2_mask_translated = imtranslate (stim2_mask_conv, round(-final_translation_scalar*translation_unit_vector));
-
+stim1_mask_translated = imtranslate (stim1_mask_conv, round(p.trVars.final_translation_scalar*p.trVars.translation_unit_vector));
+stim2_mask_translated = imtranslate (stim2_mask_conv, round(-p.trVars.final_translation_scalar*p.trVars.translation_unit_vector));
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 % Add color to the stims %
@@ -984,6 +991,15 @@ p.draw.clut.subCLUT (51:150, :) = stimClut1;
 
 p.draw.clut.expCLUT (151:250, :) = stimClut2;
 p.draw.clut.subCLUT (151:250, :) = stimClut2;
+
+if p.trVars.temporalOverlap < 1
+	p.draw.clut.expCLUT (5, :) = [0, 1, 0];
+	p.draw.clut.subCLUT (5, :) = [0, 1, 0];
+elseif p.trVars.temporalOverlap >= 1
+	p.draw.clut.expCLUT (5, :) = [1, 0, 0];
+	p.draw.clut.subCLUT (5, :) = [1, 0, 0];
+end
+
 
 % Push new CLUTs to ViewPIXX
 Datapixx('SetVideoClut', [p.draw.clut.subCLUT; p.draw.clut.expCLUT]);
