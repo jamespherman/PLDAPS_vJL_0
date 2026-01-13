@@ -1,41 +1,42 @@
 function p = gSac_4factors_next(p)
-%   function p = gSac_4factors_next(p)
-% Part of the quintet of pldpas functions:
+%   p = gSac_4factors_next(p)
 %
-%   settings function
-%   init function
-%   next function (before each trial)
-%   run function (each trial)
-%   finish function (after each trial)
-% "next" file runs for the first time after "init" and before "run".
-% Thereafter, runs after "finish" and before "run" until experiment is
-% done.
+% Part of the quintet of PLDAPS functions:
+%   settings function - defines default parameters
+%   init function     - one-time setup
+%   next function     - runs before each trial (this file)
+%   run function      - executes each trial
+%   finish function   - runs after each trial
+%
+% The "next" function runs for the first time after "init" and before
+% "run". Thereafter, it runs after "finish" and before "run" until the
+% experiment ends. It prepares all parameters needed for the upcoming
+% trial.
 
-%% update p.trialVars:
-% p.trialVars inherits whatever was set in p.userVars which inherited its
-% goodies from initVars. Thus, the variables on every trial (ie trialVars)
-% stem from the initVars (in settings file) btu may be overriden by user
-% via userVars
+%% Update p.trialVars
+% p.trVars inherits values from p.trVarsGuiComm, which inherited from
+% initVars. Variables on every trial (trialVars) stem from initVars
+% (in settings file) but may be overridden by user via GUI.
 
-% iterate trial counter
+% Increment trial counter
 p.status.iTrial = p.status.iTrial + 1;
 
-% initialize trial variables
+% Copy GUI-communicable variables to current trial variables
 p.trVars = p.trVarsGuiComm;
 
-%% (4) define next trial parameters
+%% Define next trial parameters (stimulus type, location, timing)
 p  = nextParams(p);
 
-%% (5) set schedules
+%% Set DAC schedules for reward delivery and analog outputs
 p  = pds.setSchedules(p);
 
-%% (6) init trial data
+%% Initialize trial data structure (timing, gaze, strobes)
 p = initTrData(p);
 
-%% record save the stim details (ie dot XYCW)
+%% Store stimulus details for this trial in trVars for later reference
 p.trVars.stim = p.stim;
 
-%% (9) Start ephys recording and ADC schedules
+%% Start ephys recording and ADC schedules on DATAPixx
 pds.startEphysAndSchedules;
 
 end

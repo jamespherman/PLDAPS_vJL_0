@@ -314,6 +314,10 @@ p.trVarsInit.wantOnlinePlots        = false;
 
 p.trVarsInit.currentTrialsArrayRow = 1;
 
+% substructure for marking stimulus-events after each flip
+p.trVarsInit.postFlip.logical         = false;
+p.trVarsInit.postFlip.varNames        = cell(0);
+
 %% end of trVarsInit
 % once all trial variables have been initialized in trVarsInit, we copy 
 % them to 'trVarsGuiComm' in order to inform the gui. 

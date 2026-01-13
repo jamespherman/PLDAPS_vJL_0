@@ -1,59 +1,57 @@
 function p = gSac_4factors_init(p)
 %   p = gSac_4factors_init(p)
 %
-% Part of the quintet of pldpas functions:
-%   settings function
-%   init function
-%   next function (before each trial)
-%   run function (each trial)
-%   finish function (after each trial)
+% Part of the quintet of PLDAPS functions:
+%   settings function - defines default parameters
+%   init function     - one-time setup (this file)
+%   next function     - runs before each trial
+%   run function      - executes each trial
+%   finish function   - runs after each trial
 %
-% Initialization function
-% Executed only 1 time, after the *_settings file has run and settings have 
-% been stored in "m", "c", and "s" structures. 
-% May also be run directly from the gui by clicking "Initialization".
+% This initialization function executes once after the settings file
+% has run and settings have been stored in "m", "c", and "s" structs.
+% It may also be run directly from the GUI by clicking "Initialization".
 
 %%
 
-% define rig-specific information
+% Load rig-specific configuration (monitor distance, etc.)
 p   = pds.initRigConfigFile(p);
 
-% define color look-up-table (clut). 
+% Define color look-up-table (CLUT) for dual-display gamma correction
 p   = initClut(p);
 
-% initialize VIEWPixx/DATAPixx
+% Initialize VIEWPixx/DATAPixx hardware for timing and display
 p   = pds.initDataPixx(p);
 
-% initialize image textures
+% Load image textures (faces, non-faces) into GPU memory
 p = initImageTextures(p);
 
-% define audio waveforms and load to VIEWPixx
+% Define audio waveforms (reward tones, etc.) and load to VIEWPixx
 p   = pds.initAudio(p);
 
-% define online-plotting windows (and reposition others).
+% Define online-plotting windows (and reposition others).
 % p   = extraWindowSetup(p);
 
-% define grid line locations:
+% Define grid line locations for experimenter display overlay
 p   = pds.defineGridLines(p);
 
-% set task codes:
+% Initialize task codes for event strobing to neural recording system
 p.init.codes = pds.initCodes;
 
-% initialize target locations list:
+% Initialize list of possible target locations
 p = initTargetLocationList(p);
 
-% initialize trial structure:
+% Build the trial structure array defining all trial types
 p   = initTrialStructure(p);
 
-% initialize connection to Ripple:
+% Initialize connection to Ripple neural recording system
 p = pds.initRipple(p);
 
-%% define 'strb' as classyStrboe
-% this is a class.
-% It's main methods:
-%   addValue - adds a vlaue to the valueList, which will be strobed
-%              once the 'strobe' method is called
-%   strobe - when called strobes all values that are in the valueList.
+%% Define 'strb' as classyStrobe object
+% classyStrobe is a class for managing event strobes.
+% Main methods:
+%   addValue - queues a value to be strobed on next strobe call
+%   strobe   - sends all queued values to the recording system
 p.init.strb = pds.classyStrobe;
 
 end
