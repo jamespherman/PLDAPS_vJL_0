@@ -17,17 +17,11 @@ end
 %% Sub-functions
 
 function p = chooseRow(p)
-% Manages blocks and selects the next trial by sampling without replacement
-% from the p.init.trialsArray.
-
-% If all trials in the current block have been used, start a new block
-% by resetting the list of possible trials. This handles running
-% indefinite blocks.
-if all(~p.status.trialsArrayRowsPossible)
-    p.status.trialsArrayRowsPossible(:) = true;
-    p.status.blockNumber = p.status.blockNumber + 1;
-    fprintf('All trials run. Starting new block: %d\n', p.status.blockNumber);
-end
+% Selects the next trial by sampling without replacement from the
+% p.init.trialsArray.
+%
+% Note: Block transitions are handled by updateTrialsList.m, which calls
+% generateTrialsArray() to regenerate the trialsArray from trialsTable.
 
 % if we're not repeating the previous trial.
 if ~p.status.repeatLast

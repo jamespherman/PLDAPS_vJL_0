@@ -22,22 +22,27 @@ function p = initTrialStructure(p)
 %   tokens_AV:   14 conditions × 18 = 252 trials
 
 % (1) Define the column names for the trial conditions table.
-% Note: 'rewardAmt' is now included; 'nReps' is no longer used.
-p.init.trialArrayColumnNames = {'dist', 'cueFile', 'isFixationRequired', 'isToken', 'trialCode', 'rewardAmt'};
+% Note: 'rewardAmt' is pre-specified; 'nReps' is used in trialsTable for expansion.
+% The trialsArray (expanded version) does NOT include 'nReps'.
+p.init.trialArrayColumnNames = {'dist', 'cueFile', 'isFixationRequired', 'isToken', 'trialCode', 'rewardAmt', 'nReps'};
 
 % (2) Use a switch statement to select the trial table based on experiment type.
+% Build a compact trialsTable, then expand it into trialsArray.
 switch p.init.exptType
     case 'tokens_main'
-        p.init.trialsArray = buildTrialsArray_TokensMain();
+        p.init.trialsTable = buildTrialsTable_TokensMain();
+        p.init.trialsArray = expandTrialsTable(p.init.trialsTable, p.init.trialArrayColumnNames);
 
     case 'tokens_AV'
-        p.init.trialArrayColumnNames = {'dist', 'cueFile', 'isFixationRequired', 'isToken', 'avProbability', 'trialCode', 'rewardAmt'};
-        p.init.trialsArray = buildTrialsArray_TokensAV();
+        p.init.trialArrayColumnNames = {'dist', 'cueFile', 'isFixationRequired', 'isToken', 'avProbability', 'trialCode', 'rewardAmt', 'nReps'};
+        p.init.trialsTable = buildTrialsTable_TokensAV();
+        p.init.trialsArray = expandTrialsTable(p.init.trialsTable, p.init.trialArrayColumnNames);
 
     otherwise
         % Default to the main experiment type if not specified
         warning('p.init.exptType not specified, using ''tokens_main''.');
-        p.init.trialsArray = buildTrialsArray_TokensMain();
+        p.init.trialsTable = buildTrialsTable_TokensMain();
+        p.init.trialsArray = expandTrialsTable(p.init.trialsTable, p.init.trialArrayColumnNames);
 end
 
 % (3) Store block length
@@ -54,112 +59,120 @@ p.status.iTrial = 0;
 end
 
 
-% --- Sub-functions for building trials arrays ---
+% --- Sub-functions for building trials tables ---
 
-function trialsArray = buildTrialsArray_TokensMain()
-% Builds the complete trialsArray for tokens_main experiment.
-% Each row has: {dist, cueFile, isFixationRequired, isToken, trialCode, rewardAmt}
+function trialsTable = buildTrialsTable_TokensMain()
+% Builds the compact trialsTable for tokens_main experiment.
+% Each row has: {dist, cueFile, isFixationRequired, isToken, trialCode, rewardAmt, nReps}
+%
+% This is a compact representation where each unique (condition, rewardAmt) pair
+% is one row, with nReps specifying how many times it appears in a block.
 %
 % Block contains 8 conditions × 18 trials each = 144 trials per block:
 %   3 Normal cues × 18 trials each = 54 trials
 %   3 Uniform cues × 18 trials each = 54 trials
 %   2 Uncued conditions × 18 trials each = 36 trials
 
-    trialsArray = {};
+    trialsTable = {};
 
     % --- Normal Distribution Cues (dist=1) ---
     % Each Normal cue gets 18 trials with bell-curve reward distribution
-    trialsArray = [trialsArray; expandCondition(1, 'famNorm_01.jpg', true, true, 27001)];
-    trialsArray = [trialsArray; expandCondition(1, 'famNorm_02.jpg', true, true, 27002)];
-    trialsArray = [trialsArray; expandCondition(1, 'novNorm_01.jpg', true, true, 27003)];
+    trialsTable = [trialsTable; buildCondition(1, 'famNorm_01.jpg', true, true, 27001)];
+    trialsTable = [trialsTable; buildCondition(1, 'famNorm_02.jpg', true, true, 27002)];
+    trialsTable = [trialsTable; buildCondition(1, 'novNorm_01.jpg', true, true, 27003)];
 
     % --- Uniform Distribution Cues (dist=2) ---
-    % Each Uniform cue gets 9 trials with flat reward distribution
-    trialsArray = [trialsArray; expandCondition(2, 'famUni_01.jpg', true, true, 27004)];
-    trialsArray = [trialsArray; expandCondition(2, 'famUni_02.jpg', true, true, 27005)];
-    trialsArray = [trialsArray; expandCondition(2, 'novUni_01.jpg', true, true, 27006)];
+    % Each Uniform cue gets 18 trials with flat reward distribution
+    trialsTable = [trialsTable; buildCondition(2, 'famUni_01.jpg', true, true, 27004)];
+    trialsTable = [trialsTable; buildCondition(2, 'famUni_02.jpg', true, true, 27005)];
+    trialsTable = [trialsTable; buildCondition(2, 'novUni_01.jpg', true, true, 27006)];
 
     % --- Uncued Conditions (dist=0) ---
-    % Each uncued condition gets 9 trials at mean reward value
-    trialsArray = [trialsArray; expandCondition(0, 'blank.jpg', false, true,  27007)];
-    trialsArray = [trialsArray; expandCondition(0, 'blank.jpg', false, false, 27008)];
+    % Each uncued condition gets 18 trials at mean reward value
+    trialsTable = [trialsTable; buildCondition(0, 'blank.jpg', false, true,  27007)];
+    trialsTable = [trialsTable; buildCondition(0, 'blank.jpg', false, false, 27008)];
 end
 
 
-function trialsArray = buildTrialsArray_TokensAV()
-% Builds the complete trialsArray for tokens_AV experiment.
-% Each row has: {dist, cueFile, isFixationRequired, isToken, avProbability, trialCode, rewardAmt}
+function trialsTable = buildTrialsTable_TokensAV()
+% Builds the compact trialsTable for tokens_AV experiment.
+% Each row has: {dist, cueFile, isFixationRequired, isToken, avProbability, trialCode, rewardAmt, nReps}
+%
+% This is a compact representation where each unique (condition, rewardAmt) pair
+% is one row, with nReps specifying how many times it appears in a block.
 %
 % Block contains 14 conditions × 18 trials each = 252 trials per block:
 %   6 Normal cues × 18 trials each = 108 trials
 %   6 Uniform cues × 18 trials each = 108 trials
 %   2 Uncued conditions × 18 trials each = 36 trials
 
-    trialsArray = {};
+    trialsTable = {};
 
     % --- Normal Distribution, Familiar Cues ---
-    trialsArray = [trialsArray; expandConditionAV(1, 'famNorm_01.jpg', true, true, 0,   28001)];
-    trialsArray = [trialsArray; expandConditionAV(1, 'famNorm_02.jpg', true, true, 0.5, 28002)];
-    trialsArray = [trialsArray; expandConditionAV(1, 'famNorm_03.jpg', true, true, 1,   28003)];
+    trialsTable = [trialsTable; buildConditionAV(1, 'famNorm_01.jpg', true, true, 0,   28001)];
+    trialsTable = [trialsTable; buildConditionAV(1, 'famNorm_02.jpg', true, true, 0.5, 28002)];
+    trialsTable = [trialsTable; buildConditionAV(1, 'famNorm_03.jpg', true, true, 1,   28003)];
 
     % --- Normal Distribution, Novel Cues ---
-    trialsArray = [trialsArray; expandConditionAV(1, 'novNorm_01.jpg', true, true, 0,   28004)];
-    trialsArray = [trialsArray; expandConditionAV(1, 'novNorm_02.jpg', true, true, 0.5, 28005)];
-    trialsArray = [trialsArray; expandConditionAV(1, 'novNorm_03.jpg', true, true, 1,   28006)];
+    trialsTable = [trialsTable; buildConditionAV(1, 'novNorm_01.jpg', true, true, 0,   28004)];
+    trialsTable = [trialsTable; buildConditionAV(1, 'novNorm_02.jpg', true, true, 0.5, 28005)];
+    trialsTable = [trialsTable; buildConditionAV(1, 'novNorm_03.jpg', true, true, 1,   28006)];
 
     % --- Uniform Distribution, Familiar Cues ---
-    trialsArray = [trialsArray; expandConditionAV(2, 'famUni_01.jpg', true, true, 0,   28007)];
-    trialsArray = [trialsArray; expandConditionAV(2, 'famUni_02.jpg', true, true, 0.5, 28008)];
-    trialsArray = [trialsArray; expandConditionAV(2, 'famUni_03.jpg', true, true, 1,   28009)];
+    trialsTable = [trialsTable; buildConditionAV(2, 'famUni_01.jpg', true, true, 0,   28007)];
+    trialsTable = [trialsTable; buildConditionAV(2, 'famUni_02.jpg', true, true, 0.5, 28008)];
+    trialsTable = [trialsTable; buildConditionAV(2, 'famUni_03.jpg', true, true, 1,   28009)];
 
     % --- Uniform Distribution, Novel Cues ---
-    trialsArray = [trialsArray; expandConditionAV(2, 'novUni_01.jpg', true, true, 0,   28010)];
-    trialsArray = [trialsArray; expandConditionAV(2, 'novUni_02.jpg', true, true, 0.5, 28011)];
-    trialsArray = [trialsArray; expandConditionAV(2, 'novUni_03.jpg', true, true, 1,   28012)];
+    trialsTable = [trialsTable; buildConditionAV(2, 'novUni_01.jpg', true, true, 0,   28010)];
+    trialsTable = [trialsTable; buildConditionAV(2, 'novUni_02.jpg', true, true, 0.5, 28011)];
+    trialsTable = [trialsTable; buildConditionAV(2, 'novUni_03.jpg', true, true, 1,   28012)];
 
     % --- Uncued Control Conditions ---
-    trialsArray = [trialsArray; expandConditionAV(0, 'blank.jpg', false, true,  NaN, 28013)];
-    trialsArray = [trialsArray; expandConditionAV(0, 'blank.jpg', false, false, NaN, 28014)];
+    trialsTable = [trialsTable; buildConditionAV(0, 'blank.jpg', false, true,  NaN, 28013)];
+    trialsTable = [trialsTable; buildConditionAV(0, 'blank.jpg', false, false, NaN, 28014)];
 end
 
 
-function rows = expandCondition(dist, cueFile, isFixReq, isToken, trialCode)
-% Expands a single condition into multiple rows based on the reward distribution.
-% For tokens_main format: {dist, cueFile, isFixationRequired, isToken, trialCode, rewardAmt}
+function rows = buildCondition(dist, cueFile, isFixReq, isToken, trialCode)
+% Builds compact trialsTable rows for a single condition.
+% For tokens_main format: {dist, cueFile, isFixationRequired, isToken, trialCode, rewardAmt, nReps}
+%
+% Each unique (condition, rewardAmt) pair is one row, with nReps = frequency.
 
     [values, frequencies] = getRewardDistribution(dist);
 
     rows = {};
     for i = 1:length(values)
-        for j = 1:frequencies(i)
-            rows{end+1, 1} = dist;
-            rows{end, 2} = cueFile;
-            rows{end, 3} = isFixReq;
-            rows{end, 4} = isToken;
-            rows{end, 5} = trialCode;
-            rows{end, 6} = values(i);
-        end
+        rows{end+1, 1} = dist;
+        rows{end, 2} = cueFile;
+        rows{end, 3} = isFixReq;
+        rows{end, 4} = isToken;
+        rows{end, 5} = trialCode;
+        rows{end, 6} = values(i);       % rewardAmt
+        rows{end, 7} = frequencies(i);  % nReps
     end
 end
 
 
-function rows = expandConditionAV(dist, cueFile, isFixReq, isToken, avProb, trialCode)
-% Expands a single condition into multiple rows based on the reward distribution.
-% For tokens_AV format: {dist, cueFile, isFixationRequired, isToken, avProbability, trialCode, rewardAmt}
+function rows = buildConditionAV(dist, cueFile, isFixReq, isToken, avProb, trialCode)
+% Builds compact trialsTable rows for a single condition.
+% For tokens_AV format: {dist, cueFile, isFixationRequired, isToken, avProbability, trialCode, rewardAmt, nReps}
+%
+% Each unique (condition, rewardAmt) pair is one row, with nReps = frequency.
 
     [values, frequencies] = getRewardDistribution(dist);
 
     rows = {};
     for i = 1:length(values)
-        for j = 1:frequencies(i)
-            rows{end+1, 1} = dist;
-            rows{end, 2} = cueFile;
-            rows{end, 3} = isFixReq;
-            rows{end, 4} = isToken;
-            rows{end, 5} = avProb;
-            rows{end, 6} = trialCode;
-            rows{end, 7} = values(i);
-        end
+        rows{end+1, 1} = dist;
+        rows{end, 2} = cueFile;
+        rows{end, 3} = isFixReq;
+        rows{end, 4} = isToken;
+        rows{end, 5} = avProb;
+        rows{end, 6} = trialCode;
+        rows{end, 7} = values(i);       % rewardAmt
+        rows{end, 8} = frequencies(i);  % nReps
     end
 end
 
@@ -193,5 +206,41 @@ function [values, frequencies] = getRewardDistribution(dist)
 
         otherwise
             error('Unknown distribution type: %d', dist);
+    end
+end
+
+
+function trialsArray = expandTrialsTable(table, colNames)
+% Expands a compact trialsTable into the full trialsArray.
+%
+% Input:
+%   table    - Compact cell array where each row is a unique trial type
+%              with an 'nReps' column specifying repetitions.
+%   colNames - Cell array of column names (must include 'nReps').
+%
+% Output:
+%   trialsArray - Expanded cell array where each row is one trial.
+%                 The 'nReps' column is excluded from the output.
+%
+% This function is called at initialization and after each block completes
+% (via generateTrialsArray in updateTrialsList.m) to create a fresh pool
+% of trials for sampling.
+
+    % Find the 'nReps' column
+    repCol = strcmp(colNames, 'nReps');
+
+    trialsArray = {};
+
+    for i = 1:size(table, 1)
+        % Get the number of repetitions for this trial type
+        nReps = table{i, repCol};
+
+        % Get all columns except 'nReps'
+        rowData = table(i, ~repCol);
+
+        % Replicate this row nReps times
+        for j = 1:nReps
+            trialsArray(end+1, :) = rowData;
+        end
     end
 end
