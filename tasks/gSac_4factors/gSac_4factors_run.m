@@ -166,11 +166,14 @@ switch p.trVars.currentState
             disp('saccadeMade')
 
         % Check for failure to initiate saccade in time
-        elseif timeSinceGo > p.trVars.goLatencyMax
+        elseif p.trData.timing.fixOff > 0 && ...
+                timeSinceGo > p.trVars.goLatencyMax
             p.init.strb.addValue(p.init.codes.fixBreak);
             p.trData.timing.fixBreak    = timeNow;
             p.trVars.currentState       = p.state.fixBreak;
-            disp('fixBreak')
+            disp(['late saccade at ' num2str(timeSinceGo) ...
+                ' relative to fixOffTime = ' ...
+                num2str(p.trData.timing.fixOff)])
             disp(num2str(p.trVars.goLatencyMax))
         end
 
