@@ -251,7 +251,14 @@ p.trVarsInit.postFlip.logical         = false;
 p.trVarsInit.postFlip.varNames        = cell(0);
 p.trVarsInit.flipIdx                  = 1;
 
-% Add this to tokens_settings.m
+% --- Fields that are set dynamically during trial execution ---
+% These must be initialized here to ensure struct array homogeneity when
+% concatenating trial output files. Trials that end early (e.g., fixBreak)
+% may never reach the states where these fields are normally set.
+p.trVarsInit.ITI_EndTime              = -1;    % set in trialBegun state
+p.trVarsInit.cashInStartTime          = -1;    % set in showOutcome state
+p.trVarsInit.juiceGiven_thisToken     = false; % set in showOutcome state
+p.trVarsInit.nextTokenTime            = -1;    % set in cashInTokens state
 
 %% end of trVarsInit
 % once all trial variables have been initialized in trVarsInit, we copy 

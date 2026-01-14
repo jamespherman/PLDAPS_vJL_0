@@ -40,12 +40,31 @@ idxTrial  = find(arrayfun(@(x) any(strfind(x.name, 'trial') & strfind(x.name, '.
 % load the 'p file' into 'p':
 p = load(fullfile(sessionFolder, fileList(idxP).name));
 
-% load each 'trial file' into a struct array:
+% load each 'trial file' into cell arrays first (to handle field mismatches):
 nTrials = numel(idxTrial);
+trVarsCell = cell(nTrials, 1);
+trDataCell = cell(nTrials, 1);
+
 for iTr = 1:nTrials
     filePath = fullfile(sessionFolder, fileList(idxTrial(iTr)).name);
     tmp = load(filePath);
-    
-    p.trVars(iTr,1) = tmp.trVars;
-    p.trData(iTr,1) = tmp.trData;
+    trVarsCell{iTr} = tmp.trVars;
+    trDataCell{iTr} = tmp.trData;
+end
+
+% Convert to struct arrays with unified field sets.
+% This handles cases where different trials have different fields
+% (e.g., fixBreak trials may lack fields that are only set in later states).
+p.trVars = pds.unifyStructArray(trVarsCell);
+p.trData = pds.unifyStructArray(trDataCell);
+
+% Warn if field unification was needed (indicates potential settings issue)
+if nTrials > 0
+    nFieldsFirst = numel(fieldnames(trVarsCell{1}));
+    nFieldsUnified = numel(fieldnames(p.trVars));
+    if nFieldsUnified > nFieldsFirst
+        warning('pds:loadP:fieldMismatch', ...
+            'Trial files had mismatched fields (%d -> %d). Consider initializing all fields in settings.', ...
+            nFieldsFirst, nFieldsUnified);
+    end
 end
