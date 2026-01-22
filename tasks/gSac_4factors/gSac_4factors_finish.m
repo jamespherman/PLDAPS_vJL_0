@@ -64,9 +64,11 @@ pds.saveP(p);
 p = updateStatusVariables(p);
 
 %% Update online plots for successful trials
+% Always update metrics plots (pkV, RT, err by target location) for
+% successful trials. Gaze trace plots are only updated if wantOnlinePlots
+% is true (controlled within updateOnlinePlots).
 
-if p.trData.trialEndState == p.state.sacComplete && ...
-        p.trVars.wantOnlinePlots
+if p.trData.trialEndState == p.state.sacComplete
     p = updateOnlinePlots(p);
 end
 

@@ -152,6 +152,12 @@ p.status.iTarget            = 0;
 p.status.rippleOnline       = 0;
 p.status.tLoc1HighRwdFirst  = 0;
 
+% Online data accumulation for pkV, RT, err visualization by target location
+% Each cell array stores data for target locations 1-4
+p.status.onlinePkV          = {[], [], [], []};  % peak velocity (deg/s)
+p.status.onlineRT           = {[], [], [], []};  % reaction time (s)
+p.status.onlineErr          = {[], [], [], []};  % endpoint error (deg)
+
 %% user determines the n status values shwon in gui upon init
 % here you just list the status vals you want to see. You do not set them,
 % yet. Setting them takes place below in the appropriate section.

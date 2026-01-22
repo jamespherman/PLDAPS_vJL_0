@@ -30,7 +30,7 @@ p = initImageTextures(p);
 p   = pds.initAudio(p);
 
 % Define online-plotting windows (and reposition others).
-% p   = extraWindowSetup(p);
+p   = extraWindowSetup(p);
 
 % Define grid line locations for experimenter display overlay
 p   = pds.defineGridLines(p);
