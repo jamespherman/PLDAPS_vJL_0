@@ -152,11 +152,18 @@ p.status.iTarget            = 0;
 p.status.rippleOnline       = 0;
 p.status.tLoc1HighRwdFirst  = 0;
 
-% Online data accumulation for pkV, RT, err visualization by target location
-% Each cell array stores data for target locations 1-4
-p.status.onlinePkV          = {[], [], [], []};  % peak velocity (deg/s)
-p.status.onlineRT           = {[], [], [], []};  % reaction time (s)
-p.status.onlineErr          = {[], [], [], []};  % endpoint error (deg)
+% Online data accumulation for pkV, RT, err visualization by factor level
+% Structure: onlineMetrics{factorLevel}{locIdx} where:
+%   factorLevel: 1=highSal, 2=lowSal, 3=highRwd, 4=lowRwd,
+%                5=highProb, 6=lowProb, 7=face, 8=nonFace
+%   locIdx: 1=location1, 2=location3
+% Each cell contains struct with pkV, RT, err arrays
+p.status.onlineMetrics = cell(8, 2);
+for iLevel = 1:8
+    for iLoc = 1:2
+        p.status.onlineMetrics{iLevel, iLoc} = struct('pkV', [], 'RT', [], 'err', []);
+    end
+end
 
 %% user determines the n status values shwon in gui upon init
 % here you just list the status vals you want to see. You do not set them,

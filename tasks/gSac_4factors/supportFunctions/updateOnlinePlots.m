@@ -69,8 +69,17 @@ end
 
 %% -------------------- UPDATE METRICS PLOTS --------------------
 function p = updateMetricsPlots(p)
-% Updates the pkV, RT, and endpoint error plots by target location.
-% Accumulates data across trials and updates scatter plots with means.
+% Updates the pkV, RT, and endpoint error plots by factor level.
+% Each trial contributes data points to multiple factor levels based on
+% which factors apply to that trial.
+%
+% Factor levels (x-positions):
+%   1 = High Salience, 2 = Low Salience (bullseye trials only)
+%   3 = High Reward, 4 = Low Reward (all trials)
+%   5 = High Probability, 6 = Low Probability (all trials)
+%   7 = Face, 8 = Non-Face (texture trials only)
+%
+% Location index mapping: targLocIdx 1 -> locIdx 1, targLocIdx 3 -> locIdx 2
 
 % Check if metrics figure exists
 if ~isfield(p.draw, 'metricsFig') || ~isvalid(p.draw.metricsFig)
@@ -80,9 +89,17 @@ end
 % Get current trial's target location index (1-4)
 targLocIdx = p.trVars.targetLocIdx;
 
-% Validate target location index
-if isempty(targLocIdx) || targLocIdx < 1 || targLocIdx > 4
+% Only process locations 1 and 3
+if isempty(targLocIdx) || (targLocIdx ~= 1 && targLocIdx ~= 3)
+    drawnow;
     return
+end
+
+% Map target location to storage index (loc 1 -> 1, loc 3 -> 2)
+if targLocIdx == 1
+    locIdx = 1;
+else
+    locIdx = 2;
 end
 
 % Get saccade metrics from this trial
@@ -106,58 +123,98 @@ if isnan(pkV) || isnan(rt) || isnan(err)
     return
 end
 
-% Accumulate data in p.status arrays
-p.status.onlinePkV{targLocIdx}(end+1) = pkV;
-p.status.onlineRT{targLocIdx}(end+1) = rt;
-p.status.onlineErr{targLocIdx}(end+1) = err;
+% Get trial factors
+stimType = p.trVars.stimType;     % 1=face, 2=non-face, 3-6=bullseye
+salience = p.trVars.salience;     % 0=image, 1=high, 2=low
+reward = p.trVars.reward;         % 1=high, 2=low
+halfBlock = p.trVars.halfBlock;   % 1-4
 
-% Update scatter plots for locations 1 and 3
-% Location 1 is plotted at x=1, Location 3 is plotted at x=2
-
-% Get data for locations 1 and 3
-pkV1 = p.status.onlinePkV{1};
-pkV3 = p.status.onlinePkV{3};
-rt1 = p.status.onlineRT{1};
-rt3 = p.status.onlineRT{3};
-err1 = p.status.onlineErr{1};
-err3 = p.status.onlineErr{3};
-
-% Add horizontal jitter for visibility
-jitterWidth = 0.15;
-n1 = length(pkV1);
-n3 = length(pkV3);
-jitter1 = (rand(1, n1) - 0.5) * jitterWidth * 2;
-jitter3 = (rand(1, n3) - 0.5) * jitterWidth * 2;
-
-% Update Peak Velocity scatter plots
-set(p.draw.plotObs.pkVLoc1, 'XData', ones(1, n1) + jitter1, 'YData', pkV1);
-set(p.draw.plotObs.pkVLoc3, 'XData', 2*ones(1, n3) + jitter3, 'YData', pkV3);
-
-% Update RT scatter plots (convert to ms for display)
-set(p.draw.plotObs.rtLoc1, 'XData', ones(1, n1) + jitter1, 'YData', rt1 * 1000);
-set(p.draw.plotObs.rtLoc3, 'XData', 2*ones(1, n3) + jitter3, 'YData', rt3 * 1000);
-
-% Update Error scatter plots
-set(p.draw.plotObs.errLoc1, 'XData', ones(1, n1) + jitter1, 'YData', err1);
-set(p.draw.plotObs.errLoc3, 'XData', 2*ones(1, n3) + jitter3, 'YData', err3);
-
-% Update mean markers
-if ~isempty(pkV1)
-    set(p.draw.plotObs.pkVMeanLoc1, 'XData', 1, 'YData', mean(pkV1));
-    set(p.draw.plotObs.rtMeanLoc1, 'XData', 1, 'YData', mean(rt1) * 1000);
-    set(p.draw.plotObs.errMeanLoc1, 'XData', 1, 'YData', mean(err1));
+% Determine probability level based on block and location
+% Block 1 (halfBlocks 1-2): loc 1 = high-prob, loc 3 = low-prob
+% Block 2 (halfBlocks 3-4): loc 1 = low-prob, loc 3 = high-prob
+blockNum = ceil(halfBlock / 2);
+if blockNum == 1
+    isHighProb = (targLocIdx == 1);
+else
+    isHighProb = (targLocIdx == 3);
 end
-if ~isempty(pkV3)
-    set(p.draw.plotObs.pkVMeanLoc3, 'XData', 2, 'YData', mean(pkV3));
-    set(p.draw.plotObs.rtMeanLoc3, 'XData', 2, 'YData', mean(rt3) * 1000);
-    set(p.draw.plotObs.errMeanLoc3, 'XData', 2, 'YData', mean(err3));
+
+% Determine which factor levels this trial contributes to
+factorLevels = [];
+
+% Salience (only for bullseye trials, stimType 3-6)
+if stimType >= 3 && stimType <= 6
+    if salience == 1  % high salience
+        factorLevels(end+1) = 1;
+    elseif salience == 2  % low salience
+        factorLevels(end+1) = 2;
+    end
+end
+
+% Reward (all trials)
+if reward == 1  % high reward
+    factorLevels(end+1) = 3;
+else  % low reward
+    factorLevels(end+1) = 4;
+end
+
+% Probability (all trials)
+if isHighProb
+    factorLevels(end+1) = 5;
+else
+    factorLevels(end+1) = 6;
+end
+
+% Stimulus type (only for texture trials, stimType 1-2)
+if stimType == 1  % face
+    factorLevels(end+1) = 7;
+elseif stimType == 2  % non-face
+    factorLevels(end+1) = 8;
+end
+
+% Accumulate data for each applicable factor level
+for iLevel = factorLevels
+    p.status.onlineMetrics{iLevel, locIdx}.pkV(end+1) = pkV;
+    p.status.onlineMetrics{iLevel, locIdx}.RT(end+1) = rt;
+    p.status.onlineMetrics{iLevel, locIdx}.err(end+1) = err;
+end
+
+% Update all scatter plots and mean markers
+jitterWidth = 0.12;
+allPkV = [];
+allRT = [];
+allErr = [];
+
+for iLevel = 1:8
+    for iLoc = 1:2
+        data = p.status.onlineMetrics{iLevel, iLoc};
+        n = length(data.pkV);
+
+        if n > 0
+            % Generate jitter (offset loc3 slightly to the right of loc1)
+            baseX = iLevel + (iLoc - 1.5) * 0.2;  % loc1 slightly left, loc3 slightly right
+            jitter = (rand(1, n) - 0.5) * jitterWidth * 2;
+            xData = baseX + jitter;
+
+            % Update scatter plots
+            set(p.draw.plotObs.pkVScatter{iLevel, iLoc}, 'XData', xData, 'YData', data.pkV);
+            set(p.draw.plotObs.rtScatter{iLevel, iLoc}, 'XData', xData, 'YData', data.RT * 1000);
+            set(p.draw.plotObs.errScatter{iLevel, iLoc}, 'XData', xData, 'YData', data.err);
+
+            % Update mean markers
+            set(p.draw.plotObs.pkVMean{iLevel, iLoc}, 'XData', baseX, 'YData', mean(data.pkV));
+            set(p.draw.plotObs.rtMean{iLevel, iLoc}, 'XData', baseX, 'YData', mean(data.RT) * 1000);
+            set(p.draw.plotObs.errMean{iLevel, iLoc}, 'XData', baseX, 'YData', mean(data.err));
+
+            % Collect all data for axis scaling
+            allPkV = [allPkV, data.pkV];
+            allRT = [allRT, data.RT * 1000];
+            allErr = [allErr, data.err];
+        end
+    end
 end
 
 % Dynamically adjust Y-axis limits based on data
-allPkV = [pkV1, pkV3];
-allRT = [rt1, rt3] * 1000;  % convert to ms
-allErr = [err1, err3];
-
 if ~isempty(allPkV)
     pkVRange = [min(allPkV) * 0.9, max(allPkV) * 1.1];
     if pkVRange(1) < pkVRange(2)
@@ -179,9 +236,15 @@ if ~isempty(allErr)
     end
 end
 
+% Count total trials for locations 1 and 3
+nLoc1 = length(p.status.onlineMetrics{3, 1}.pkV) + length(p.status.onlineMetrics{4, 1}.pkV);
+nLoc3 = length(p.status.onlineMetrics{3, 2}.pkV) + length(p.status.onlineMetrics{4, 2}.pkV);
+nLoc1 = nLoc1 / 2;  % Divide by 2 since each trial is counted in both high/low reward
+nLoc3 = nLoc3 / 2;
+
 % Update title with trial counts
-titleStr = sprintf('Saccade Peak Velocity (n1=%d, n3=%d)', n1, n3);
-title(p.draw.pkVAxes, titleStr, 'FontSize', 14, 'FontWeight', 'bold');
+titleStr = sprintf('Saccade Peak Velocity by Factor (Loc1: %d, Loc3: %d trials)', round(nLoc1), round(nLoc3));
+title(p.draw.pkVAxes, titleStr, 'FontSize', 12, 'FontWeight', 'bold');
 
 % Refresh figure
 drawnow;
