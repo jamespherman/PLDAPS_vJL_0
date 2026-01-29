@@ -95,6 +95,8 @@ codes.fixBreak2         = 3006; % this is if monkey breaks fixation whennot hold
 
 codes.saccToTargetOne	= 3007; % Used to identify which target monkey made a saccade to
 codes.saccToTargetTwo	= 3008;
+codes.noResponse        = 3009; % no saccade within response window (conflict_task)
+codes.inaccurate        = 3010; % saccade landed outside target window(s)
 
 %% optical stimulation codes
 codes.optoStimOn        = 17001;
@@ -222,6 +224,14 @@ codes.stimType      = 16011;
 codes.salience      = 16012;
 codes.targetColor   = 16013;
 codes.targetLocIdx  = 16014;
+
+% conflict_task codes
+codes.deltaT                = 16020;  % stimulus onset asynchrony (value + 1000 to handle negatives)
+codes.highRewardLocation    = 16021;  % 1=A, 2=B
+codes.highSalienceLocation  = 16022;  % 1=A, 2=B
+codes.hueType               = 16025;  % 1 or 2 (counterbalanced color scheme)
+codes.chosenTarget          = 16023;  % 1=A, 2=B, 0=neither
+codes.outcomeCode           = 16024;  % 1=goal-directed, 2=capture, 3+=error types
 
 %% validation
 
