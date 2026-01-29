@@ -37,10 +37,11 @@ codes.uniqueTaskCode_tod        	= 32008;
 codes.uniqueTaskCode_scd        	= 32009;
 codes.uniqueTaskCode_nfl        	= 32010;
 codes.uniqueTaskCode_gSac_jph  		= 32011;
-codes.uniqueTaskCode_gSac_contrast  = 32012;
-codes.uniqueTaskCode_seansFirstTask = 32013;
-codes.uniqueTaskCode_tokens         = 32014;
-codes.uniqueTaskCode_gSac_4factors  = 32015;
+codes.uniqueTaskCode_gSac_contrast  	= 32012;
+codes.uniqueTaskCode_seansFirstTask 	= 32013;
+codes.uniqueTaskCode_tokens         	= 32014;
+codes.uniqueTaskCode_gSac_4factors  	= 32015;
+codes.uniqueTaskCode_conflict_task  	= 32016;
 
 %% unique codes that are internal to the 'classyStrobe' function class
 % (see pds.classyStrobe.m for more details)
