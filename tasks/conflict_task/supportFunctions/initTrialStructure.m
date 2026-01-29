@@ -20,6 +20,7 @@ p.init.trialArrayColumnNames = {...
     'deltaT', ...           % Delta-t value in ms (-150 to +100)
     'highRewardLoc', ...    % Which location has high reward (1=A, 2=B)
     'highSalienceLoc', ...  % Which location has high salience (1=A, 2=B)
+    'hueType', ...          % 1 or 2 (counterbalanced background/target hue scheme)
     'completed'};           % 0=not done, 1=completed
 
 %% 2. Define trial parameters
@@ -39,6 +40,33 @@ nCols = length(p.init.trialArrayColumnNames);
 p.init.trialsArray = zeros(totalTrials, nCols);
 
 currentRow = 1;
+
+% Pre-generate hueType assignments for counterbalancing across the session.
+% For each (trialType x deltaTIdx) condition, there are 5 trials/block x 6 blocks = 30 trials.
+% We assign 15 to hueType=1 and 15 to hueType=2.
+% Distribution per block alternates: 3-2, 2-3, 3-2, 2-3, 3-2, 2-3 to ensure balance.
+%
+% hueTypeAssignments{trialType, deltaTIdx} = [6x5] array of hueTypes for each block
+hueTypeAssignments = cell(2, nDeltaT);
+for iType = 1:2
+    for iDeltaT = 1:nDeltaT
+        assignments = zeros(nBlocks, trialsPerDeltaTPerType);
+        for iBlock = 1:nBlocks
+            % Alternate 3-2 and 2-3 distribution across blocks
+            % Use both iType and iDeltaT to vary the starting pattern
+            if mod(iBlock + iType + iDeltaT, 2) == 0
+                % 3 of hueType 1, 2 of hueType 2
+                assignments(iBlock, :) = [1 1 1 2 2];
+            else
+                % 2 of hueType 1, 3 of hueType 2
+                assignments(iBlock, :) = [1 1 2 2 2];
+            end
+            % Shuffle within block to randomize which specific trials get which hueType
+            assignments(iBlock, :) = assignments(iBlock, randperm(trialsPerDeltaTPerType));
+        end
+        hueTypeAssignments{iType, iDeltaT} = assignments;
+    end
+end
 
 for iBlock = 1:nBlocks
 
@@ -66,6 +94,9 @@ for iBlock = 1:nBlocks
                 highSalienceLoc = 1;  % Salience at A when reward at B
             end
 
+            % Get counterbalanced hueType for this trial
+            hueType = hueTypeAssignments{CONFLICT, iDeltaT}(iBlock, iTrial);
+
             trialRow = [...
                 iBlock, ...             % blockNumber
                 0, ...                  % trialInBlock (filled after shuffle)
@@ -74,6 +105,7 @@ for iBlock = 1:nBlocks
                 deltaT, ...             % deltaT
                 highRewardLoc, ...      % highRewardLoc
                 highSalienceLoc, ...    % highSalienceLoc
+                hueType, ...            % hueType (1 or 2)
                 0];                     % completed
 
             blockTrials = [blockTrials; trialRow]; %#ok<AGROW>
@@ -84,6 +116,9 @@ for iBlock = 1:nBlocks
             % CONGRUENT: high salience at HIGH reward location
             highSalienceLoc = highRewardLoc;
 
+            % Get counterbalanced hueType for this trial
+            hueType = hueTypeAssignments{CONGRUENT, iDeltaT}(iBlock, iTrial);
+
             trialRow = [...
                 iBlock, ...
                 0, ...
@@ -92,6 +127,7 @@ for iBlock = 1:nBlocks
                 deltaT, ...
                 highRewardLoc, ...
                 highSalienceLoc, ...
+                hueType, ...            % hueType (1 or 2)
                 0];
 
             blockTrials = [blockTrials; trialRow]; %#ok<AGROW>
@@ -126,6 +162,7 @@ fprintf('  Blocks: %d\n', nBlocks);
 fprintf('  Trials per block: %d\n', trialsPerBlock);
 fprintf('  Delta-t values: %s ms\n', mat2str(deltaTValues));
 fprintf('  Trials per condition per delta-t: %d\n', trialsPerDeltaTPerType);
+fprintf('  HueType counterbalanced: 15 type-1, 15 type-2 per condition\n');
 fprintf('----------------------------------------\n');
 
 end

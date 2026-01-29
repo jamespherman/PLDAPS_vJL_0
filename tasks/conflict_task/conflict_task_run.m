@@ -159,8 +159,8 @@ switch p.trVars.currentState
             p.draw.fixWinPenDraw = p.draw.fixWinPenThin;
             disp('saccadeMade')
 
-        elseif timeSinceGo > p.trVars.responseWindow
-            % No saccade within response window
+        elseif p.trData.timing.fixOff > 0 && timeSinceGo > p.trVars.responseWindow
+            % No saccade within response window (only check after fixOff is recorded)
             p.init.strb.addValue(p.init.codes.noResponse);
             p.trData.timing.fixBreak = timeNow;
             p.trVars.currentState = p.state.noResponse;
@@ -380,9 +380,8 @@ function p = drawMachine(p)
 
 timeNow = GetSecs - p.trData.timing.trialStartPTB;
 
-%% Set background color (fixed for this task)
-% Use isoluminant grey background
-p.draw.color.background = p.draw.clutIdx.expGrey_subBg;
+%% Background color is set per-trial in nextParams.m based on salience
+% (p.draw.color.background is already set via updateTrialClut)
 
 %% Draw frame if enough time has elapsed since last frame
 frameDue = p.trData.timing.lastFrameTime + ...
@@ -445,15 +444,32 @@ if timeNow > frameDue
     if p.trVars.stimuliVisible
         % Draw both bullseyes simultaneously
 
-        % Determine which location gets high salience
-        if p.trVars.highSalienceLocation == 1
-            % Location A = high salience (180 deg DKL), Location B = low salience (0 deg)
-            targetA_hue_idx = p.draw.clutIdx.expDkl180_subDkl180;
-            targetB_hue_idx = p.draw.clutIdx.expDkl0_subDkl0;
+        % Determine target colors based on hueType and highSalienceLocation.
+        % hueType (counterbalanced) determines which colors are used:
+        %   hueType 1: Background=0deg, HighSal=180deg, LowSal=45deg
+        %   hueType 2: Background=180deg, HighSal=0deg, LowSal=225deg
+        % highSalienceLocation determines which target gets which color.
+        %
+        % This ensures background color is NOT predictive of salience location.
+        if p.trVars.hueType == 1
+            % Hue scheme 1: high salience = 180 deg, low salience = 45 deg
+            highSalColor = p.draw.clutIdx.expDkl180_subDkl180;
+            lowSalColor = p.draw.clutIdx.expDkl45_subDkl45;
         else
-            % Location B = high salience, Location A = low salience
-            targetA_hue_idx = p.draw.clutIdx.expDkl0_subDkl0;
-            targetB_hue_idx = p.draw.clutIdx.expDkl180_subDkl180;
+            % Hue scheme 2: high salience = 0 deg, low salience = 225 deg
+            highSalColor = p.draw.clutIdx.expDkl0_subDkl0;
+            lowSalColor = p.draw.clutIdx.expDkl225_subDkl225;
+        end
+
+        % Assign colors to targets based on which location has high salience
+        if p.trVars.highSalienceLocation == 1
+            % Target A = high salience, Target B = low salience
+            targetA_hue_idx = highSalColor;
+            targetB_hue_idx = lowSalColor;
+        else
+            % Target A = low salience, Target B = high salience
+            targetA_hue_idx = lowSalColor;
+            targetB_hue_idx = highSalColor;
         end
 
         % Draw Target A bullseye (outer ring then inner ring)

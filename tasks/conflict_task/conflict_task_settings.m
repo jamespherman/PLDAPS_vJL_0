@@ -255,6 +255,7 @@ p.trVarsInit.deltaTIdx            = 4;      % index into deltaTValues array
 p.trVarsInit.trialType            = 1;      % 1=CONFLICT, 2=CONGRUENT
 p.trVarsInit.highRewardLocation   = 1;      % 1=A, 2=B (block-determined)
 p.trVarsInit.highSalienceLocation = 1;      % 1=A, 2=B (trial-determined)
+p.trVarsInit.hueType              = 1;      % 1 or 2 (counterbalanced color scheme)
 p.trVarsInit.chosenTarget         = 0;      % which target was chosen (1=A, 2=B)
 p.trVarsInit.outcome              = '';     % GOAL_DIRECTED, CAPTURE, FIX_BREAK, etc.
 
@@ -263,6 +264,10 @@ p.trVarsInit.targA_degX           = -7;
 p.trVarsInit.targA_degY           = 5;
 p.trVarsInit.targB_degX           = 7;
 p.trVarsInit.targB_degY           = -5;
+
+% Polar coordinates for strobing (computed in nextParams, same as gSac_4factors)
+p.trVarsInit.targTheta_x10        = 0;    % target angle * 10 (0-3600)
+p.trVarsInit.targRadius_x100      = 0;    % target eccentricity * 100
 
 % State tracking
 p.trVarsInit.currentState         = p.state.trialBegun;
@@ -322,6 +327,7 @@ p.init.trDataInitList = {...
     'p.trData.trialEndState',           '-1'; ...
     'p.trData.trialRepeatFlag',         'false'; ...
     'p.trData.chosenTarget',            '0'; ...   % 1=A, 2=B, 0=neither
+    'p.trData.outcomeCode',             '0'; ...   % 1=goal, 2=capture, 3+=error types
     'p.trData.outcome',                 ''''''; ...
     'p.trData.timing.lastFrameTime',    '0'; ...
     'p.trData.timing.fixOn',            '-1'; ...
@@ -357,10 +363,13 @@ p.draw.clutIdx.expGreen_subBg            = 6;   % High reward indicator
 p.draw.clutIdx.expDkGreen_subBg          = 7;   % Low reward indicator (optional)
 
 % Indices for DKL hues for Bullseye stimuli
-p.draw.clutIdx.expDkl0_subDkl0         = 8;     % Low salience (0 deg = isoluminant)
-p.draw.clutIdx.expDkl45_subDkl45       = 9;     % Background for low salience
-p.draw.clutIdx.expDkl180_subDkl180     = 10;    % High salience (180 deg = max contrast)
-p.draw.clutIdx.expDkl225_subDkl225     = 11;    % Background for high salience
+% Salience is defined by hue contrast between target and background:
+%   High salience = 180 deg hue difference (maximum chromatic contrast)
+%   Low salience = 45 deg hue difference (reduced chromatic contrast)
+p.draw.clutIdx.expDkl0_subDkl0         = 8;     % 0 deg DKL hue (background when A=high sal)
+p.draw.clutIdx.expDkl45_subDkl45       = 9;     % 45 deg DKL hue (low sal target, 45 deg from 0)
+p.draw.clutIdx.expDkl180_subDkl180     = 10;    % 180 deg DKL hue (high sal target, 180 deg from 0; or bg when B=high sal)
+p.draw.clutIdx.expDkl225_subDkl225     = 11;    % 225 deg DKL hue (low sal target, 45 deg from 180)
 
 % Grayscale ramp (not needed for this task but kept for compatibility)
 p.draw.clutIdx.grayscale_ramp_start = 18;
@@ -415,12 +424,14 @@ p.init.strobeList = {...
     'deltaT',               'p.trVars.deltaT + 1000'; ...       % offset by 1000 to handle negatives
     'highRewardLocation',   'p.trVars.highRewardLocation'; ...  % 1=A, 2=B
     'highSalienceLocation', 'p.trVars.highSalienceLocation'; ...% 1=A, 2=B
+    'hueType',              'p.trVars.hueType'; ...             % 1 or 2 (counterbalanced color scheme)
     'chosenTarget',         'p.trData.chosenTarget'; ...        % 1=A, 2=B, 0=neither
     'outcomeCode',          'p.trData.outcomeCode'; ...         % 1=goal, 2=capture, 3+=error
 
-    % --- Location coordinates (x10 for precision) ---
-    'locationA_x10',        'round(p.trVars.targA_degX * 10)'; ...
-    'locationA_y10',        'round(p.trVars.targA_degY * 10)'; ...
+    % --- Location A in polar coordinates (same approach as gSac_4factors) ---
+    % Location B is always 180 deg opposite, so only A needs to be strobed
+    'targetTheta',          'p.trVars.targTheta_x10'; ...       % theta * 10 (0-3600)
+    'targetRadius',         'p.trVars.targRadius_x100'; ...     % radius * 100
     };
 
 end

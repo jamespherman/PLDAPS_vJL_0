@@ -21,10 +21,13 @@ end
 %% 2. Set trial parameters from the array
 p = trialTypeInfo(p);
 
-%% 3. Compute target locations
+%% 3. Update CLUT for this trial's background color (based on salience)
+p = updateTrialClut(p);
+
+%% 4. Compute target locations
 p = setLocations(p);
 
-%% 4. Set timing parameters (including delta-t)
+%% 5. Set timing parameters (including delta-t)
 p = timingInfo(p);
 
 end
@@ -102,6 +105,7 @@ p.trVars.deltaTIdx          = currentRow(cols.deltaTIdx);
 p.trVars.deltaT             = currentRow(cols.deltaT);
 p.trVars.highRewardLocation = currentRow(cols.highRewardLoc);
 p.trVars.highSalienceLocation = currentRow(cols.highSalienceLoc);
+p.trVars.hueType            = currentRow(cols.hueType);
 
 %% Print trial info
 if p.trVars.trialType == 1
@@ -116,9 +120,60 @@ else
     rwdLocStr = 'B';
 end
 
-fprintf('Block %d, Trial %d: %s, deltaT=%+dms, HighRwd=%s\n', ...
+fprintf('Block %d, Trial %d: %s, deltaT=%+dms, HighRwd=%s, HueType=%d\n', ...
     p.trVars.blockNumber, p.status.iTrialInBlock, typeStr, ...
-    p.trVars.deltaT, rwdLocStr);
+    p.trVars.deltaT, rwdLocStr, p.trVars.hueType);
+
+end
+
+
+function p = updateTrialClut(p)
+% Updates the color lookup table (CLUT) for this trial.
+% Sets background color based on hueType (NOT highSalienceLocation) to
+% ensure background color is counterbalanced and not predictive of
+% which target will be high salience.
+%
+% Salience contrast definition (matching gSac_4factors):
+%   - High salience target: 180 degrees away from background
+%   - Low salience target: 45 degrees away from background
+%
+% Color schemes (hueType determines background, independent of salience location):
+%   hueType == 1:
+%       Background = 0 deg DKL
+%       High salience target = 180 deg DKL (180 deg contrast)
+%       Low salience target = 45 deg DKL (45 deg contrast)
+%
+%   hueType == 2:
+%       Background = 180 deg DKL
+%       High salience target = 0 deg DKL (180 deg contrast)
+%       Low salience target = 225 deg DKL (45 deg contrast)
+
+% Get default CLUTs from initialization
+expCLUT = p.draw.clut.expCLUT;
+subCLUT = p.draw.clut.subCLUT;
+
+% Determine background color based on hueType (counterbalanced across trials)
+if p.trVars.hueType == 1
+    % Hue scheme 1: 0 deg DKL background
+    p.draw.color.background = p.draw.clutIdx.expDkl0_subDkl0;
+else
+    % Hue scheme 2: 180 deg DKL background
+    p.draw.color.background = p.draw.clutIdx.expDkl180_subDkl180;
+end
+
+% Get RGB value for chosen background (CLUT is 0-indexed, MATLAB is 1)
+current_bg_color_rgb = expCLUT(p.draw.color.background + 1, :);
+
+% Update subject CLUT rows that should be invisible (match background)
+% Uses pre-compiled list of row indices from initClut.m
+subCLUT(p.draw.clut.subBg_rows, :) = ...
+    repmat(current_bg_color_rgb, length(p.draw.clut.subBg_rows), 1);
+
+% Upload updated CLUTs to VIEWPixx hardware
+Datapixx('SetVideoClut', [subCLUT; expCLUT]);
+
+% Store updated subCLUT for reference
+p.draw.clut.subCLUT = subCLUT;
 
 end
 
@@ -153,6 +208,12 @@ p.draw.fixWinWidthPix = pds.deg2pix(p.trVars.fixWinWidthDeg, p);
 p.draw.fixWinHeightPix = pds.deg2pix(p.trVars.fixWinHeightDeg, p);
 p.draw.targWinWidthPix = pds.deg2pix(p.trVars.targWinWidthDeg, p);
 p.draw.targWinHeightPix = pds.deg2pix(p.trVars.targWinHeightDeg, p);
+
+%% Convert Location A to polar coordinates for strobing (same as gSac_4factors)
+% Location B is always 180 deg opposite, so only A needs to be recorded
+[tmpTheta, tmpRadius] = cart2pol(p.trVars.targA_degX, p.trVars.targA_degY);
+p.trVars.targTheta_x10 = round(mod(rad2deg(tmpTheta), 360) * 10);
+p.trVars.targRadius_x100 = round(tmpRadius * 100);
 
 end
 
