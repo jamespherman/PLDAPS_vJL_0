@@ -26,7 +26,7 @@ p.init.trialArrayColumnNames = {...
 %% 2. Define trial parameters
 nBlocks = 6;
 trialsPerBlock = 60;
-deltaTValues = [-150, -100, -50, 0, 50, 100];  % ms
+deltaTValues = [-100, -50, 0, 50, 100, 150];  % ms
 nDeltaT = length(deltaTValues);
 trialsPerDeltaTPerType = 5;
 
@@ -147,8 +147,24 @@ for iBlock = 1:nBlocks
     currentRow = currentRow + trialsPerBlock;
 end
 
-%% 4. Store delta-t values for reference
+%% 4. Store delta-t values for reference and update status variables
+% These must be consistent for online plotting to work correctly
 p.init.deltaTValues = deltaTValues;
+p.status.deltaTValues = deltaTValues;
+p.status.nDeltaT = nDeltaT;
+
+% Reinitialize onlineMetrics structure with correct size
+p.status.onlineMetrics = struct();
+p.status.onlineMetrics.conflict = cell(nDeltaT, 1);
+p.status.onlineMetrics.congruent = cell(nDeltaT, 1);
+for iDT = 1:nDeltaT
+    p.status.onlineMetrics.conflict{iDT} = struct(...
+        'nGoalDirected', 0, 'nCapture', 0, ...
+        'rtGoalDirected', [], 'rtCapture', []);
+    p.status.onlineMetrics.congruent{iDT} = struct(...
+        'nGoalDirected', 0, 'nCapture', 0, ...
+        'rtGoalDirected', [], 'rtCapture', []);
+end
 
 %% 5. Create logical array tracking which trials are still available
 % For each block, we track which trials remain to be completed

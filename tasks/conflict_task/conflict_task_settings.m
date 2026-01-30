@@ -131,9 +131,10 @@ p.status.nInaccurate        = 0;
 
 % Online metrics for tachometric curve
 % Structure: onlineMetrics.conflict{deltaTIdx} and onlineMetrics.congruent{deltaTIdx}
-% deltaTIdx: 1=-150ms, 2=-100ms, 3=-50ms, 4=0ms, 5=+50ms, 6=+100ms
 % Each cell contains struct with nGoalDirected, nCapture, RTs
-p.status.deltaTValues = [-150, -100, -50, 0, 50, 100];  % ms
+% NOTE: deltaTValues and onlineMetrics are reinitialized in initTrialStructure.m
+% to ensure consistency with the actual trial array. Values here are placeholders.
+p.status.deltaTValues = [-100, -50, 0, 50, 100, 150];  % ms (updated by initTrialStructure)
 p.status.nDeltaT = length(p.status.deltaTValues);
 
 p.status.onlineMetrics = struct();
