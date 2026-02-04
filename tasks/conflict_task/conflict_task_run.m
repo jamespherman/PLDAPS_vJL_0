@@ -159,8 +159,8 @@ switch p.trVars.currentState
             p.draw.fixWinPenDraw = p.draw.fixWinPenThin;
             disp('saccadeMade')
 
-        elseif p.trData.timing.fixOff > 0 && timeSinceGo > p.trVars.responseWindow
-            % No saccade within response window (only check after fixOff is recorded)
+        elseif timeSinceGo > p.trVars.responseWindow
+            % No saccade within response window
             p.init.strb.addValue(p.init.codes.noResponse);
             p.trData.timing.fixBreak = timeNow;
             p.trVars.currentState = p.state.noResponse;

@@ -118,54 +118,97 @@ p.state.inaccurate          = 35;  % saccade landed outside both targets
 
 p.status.iTrial             = 0;
 p.status.iGoodTrial         = 0;
-p.status.iBlock             = 1;
-p.status.iTrialInBlock      = 0;
 p.status.rippleOnline       = 0;
 
+% Phase tracking (new design: 3 phases with different reward ratios)
+% Phase 1: 1:1 reward ratio (128 trials)
+% Phase 2: 1:2 reward ratio - left:right (128 trials)
+% Phase 3: 2:1 reward ratio - left:right (128 trials)
+p.status.currentPhase           = 1;
+p.status.trialsPerPhase         = 128;
+p.status.totalPhases            = 3;
+p.status.completedTrialsInPhase = 0;
+p.status.totalTrialsTarget      = 384;  % 128 * 3
+
 % Outcome counters
-p.status.nGoalDirected      = 0;
-p.status.nCapture           = 0;
+p.status.nChoseHighSalience = 0;
+p.status.nChoseLowSalience  = 0;
 p.status.nFixBreak          = 0;
 p.status.nNoResponse        = 0;
 p.status.nInaccurate        = 0;
 
-% Online metrics for tachometric curve
-% Structure: onlineMetrics.conflict{deltaTIdx} and onlineMetrics.congruent{deltaTIdx}
-% Each cell contains struct with nGoalDirected, nCapture, RTs
-% NOTE: deltaTValues and onlineMetrics are reinitialized in initTrialStructure.m
-% to ensure consistency with the actual trial array. Values here are placeholders.
-p.status.deltaTValues = [-100, -50, 0, 50, 100, 150];  % ms (updated by initTrialStructure)
+% Delta-T values (reduced from 6 to 2)
+p.status.deltaTValues = [-150, 150];  % ms
 p.status.nDeltaT = length(p.status.deltaTValues);
 
+% Online metrics for new visualization design
+% Phase 1 (1:1): categorize by high salience side (left vs right)
+% Phases 2-3: categorize by conflict vs congruent
 p.status.onlineMetrics = struct();
-p.status.onlineMetrics.conflict = cell(p.status.nDeltaT, 1);
-p.status.onlineMetrics.congruent = cell(p.status.nDeltaT, 1);
+
+% Phase 1 metrics: by high salience side
+p.status.onlineMetrics.phase1 = struct();
+p.status.onlineMetrics.phase1.highSalLeft = cell(p.status.nDeltaT, 1);
+p.status.onlineMetrics.phase1.highSalRight = cell(p.status.nDeltaT, 1);
 for iDT = 1:p.status.nDeltaT
-    p.status.onlineMetrics.conflict{iDT} = struct(...
-        'nGoalDirected', 0, 'nCapture', 0, ...
-        'rtGoalDirected', [], 'rtCapture', []);
-    p.status.onlineMetrics.congruent{iDT} = struct(...
-        'nGoalDirected', 0, 'nCapture', 0, ...
-        'rtGoalDirected', [], 'rtCapture', []);
+    p.status.onlineMetrics.phase1.highSalLeft{iDT} = struct(...
+        'nChoseHighSal', 0, 'nChoseLowSal', 0, ...
+        'rtHighSal', [], 'rtLowSal', []);
+    p.status.onlineMetrics.phase1.highSalRight{iDT} = struct(...
+        'nChoseHighSal', 0, 'nChoseLowSal', 0, ...
+        'rtHighSal', [], 'rtLowSal', []);
 end
+
+% Phase 2 metrics: conflict vs congruent (1:2 ratio, high reward right)
+p.status.onlineMetrics.phase2 = struct();
+p.status.onlineMetrics.phase2.conflict = cell(p.status.nDeltaT, 1);
+p.status.onlineMetrics.phase2.congruent = cell(p.status.nDeltaT, 1);
+for iDT = 1:p.status.nDeltaT
+    p.status.onlineMetrics.phase2.conflict{iDT} = struct(...
+        'nChoseHighSal', 0, 'nChoseLowSal', 0, ...
+        'rtHighSal', [], 'rtLowSal', []);
+    p.status.onlineMetrics.phase2.congruent{iDT} = struct(...
+        'nChoseHighSal', 0, 'nChoseLowSal', 0, ...
+        'rtHighSal', [], 'rtLowSal', []);
+end
+
+% Phase 3 metrics: conflict vs congruent (2:1 ratio, high reward left)
+p.status.onlineMetrics.phase3 = struct();
+p.status.onlineMetrics.phase3.conflict = cell(p.status.nDeltaT, 1);
+p.status.onlineMetrics.phase3.congruent = cell(p.status.nDeltaT, 1);
+for iDT = 1:p.status.nDeltaT
+    p.status.onlineMetrics.phase3.conflict{iDT} = struct(...
+        'nChoseHighSal', 0, 'nChoseLowSal', 0, ...
+        'rtHighSal', [], 'rtLowSal', []);
+    p.status.onlineMetrics.phase3.congruent{iDT} = struct(...
+        'nChoseHighSal', 0, 'nChoseLowSal', 0, ...
+        'rtHighSal', [], 'rtLowSal', []);
+end
+
+% Cumulative tracking for evolution plot
+p.status.onlineMetrics.cumulative = struct();
+p.status.onlineMetrics.cumulative.trialNumbers = [];
+p.status.onlineMetrics.cumulative.choseHighSal = [];    % 1 or 0 per trial
+p.status.onlineMetrics.cumulative.phase = [];           % phase number per trial
+p.status.onlineMetrics.cumulative.highSalSide = [];     % 1=left, 2=right
+p.status.onlineMetrics.cumulative.isConflict = [];      % 1=conflict, 0=congruent (phases 2-3)
 
 %% user determines the n status values shown in gui upon init
 p.rig.guiStatVals = {...
     'iTrial'; ...
     'iGoodTrial'; ...
-    'iBlock'; ...
-    'nGoalDirected'; ...
-    'nCapture'; ...
+    'currentPhase'; ...
+    'completedTrialsInPhase'; ...
+    'nChoseHighSalience'; ...
+    'nChoseLowSalience'; ...
     'nFixBreak'; ...
     'nNoResponse'; ...
     'nInaccurate'};
 
 %% user determines the 12 variables shown in gui upon init
 p.rig.guiVars = {...
-    'locationA_x'; ...
-    'locationA_y'; ...
-    'rewardDurationHigh'; ...
-    'rewardDurationLow'; ...
+    'targetEccentricityDeg'; ...
+    'rewardDurationMs'; ...
     'passEye'; ...
     'fixWinWidthDeg'; ...
     'fixWinHeightDeg'; ...
@@ -173,7 +216,9 @@ p.rig.guiVars = {...
     'targWinHeightDeg'; ...
     'responseWindow'; ...
     'fixHoldDurationMin'; ...
-    'fixHoldDurationMax'};
+    'fixHoldDurationMax'; ...
+    'rewardRatioLeft'; ...
+    'rewardRatioRight'};
 
 %% INIT VARIABLES
 p.init.exptType = 'conflict_task';
@@ -184,7 +229,6 @@ p.trVarsInit.passJoy                = 1;
 p.trVarsInit.passEye                = 0;
 p.trVarsInit.connectPLX             = 0;
 p.trVarsInit.joyPressVoltDirection  = -1;
-p.trVarsInit.blockNumber            = 0;
 p.trVarsInit.repeat                 = 0;
 p.trVarsInit.rwdJoyPR               = 0;
 p.trVarsInit.wantEndFlicker         = true;
@@ -206,17 +250,28 @@ p.trVarsInit.setTargLocViaTrialArray    = true;
 p.trVarsInit.fixDegX             = 0;       % fixation X location in degrees
 p.trVarsInit.fixDegY             = 0;       % fixation Y location in degrees
 
-% Location A - experimenter-specified RF location (GUI-editable)
-p.trVarsInit.locationA_x         = -7;      % Location A X position (degrees)
-p.trVarsInit.locationA_y         = 5;       % Location A Y position (degrees)
+% Target location system (8 locations: 4 left, 4 right)
+% Locations defined by eccentricity and polar angles
+p.trVarsInit.targetEccentricityDeg = 8;     % degrees from fixation (same for all targets)
 
-% Location B is computed as 180-degree rotation of Location A
-% (computed in nextParams, not stored here)
+% Right visual field angles: equally spaced between +45 and -45 degrees
+% (0 degrees = rightward, positive = upward)
+p.trVarsInit.rightAngles = [45, 15, -15, -45];  % 4 locations in right hemifield
 
-% times/latencies/durations:
-p.trVarsInit.rewardDurationHigh      = 350;     % reward duration for goal-directed choice (ms)
-p.trVarsInit.rewardDurationLow       = 160;     % reward duration for capture (ms)
-p.trVarsInit.rewardDurationMs        = 350;     % current reward duration (set per trial)
+% Left visual field angles: mirror symmetric to right
+p.trVarsInit.leftAngles = [135, 165, -165, -135];  % 4 locations in left hemifield
+
+% Current trial target indices (set per trial from trial array)
+p.trVarsInit.leftLocIdx          = 1;       % index into leftAngles (1-4)
+p.trVarsInit.rightLocIdx         = 1;       % index into rightAngles (1-4)
+
+% Reward system (phase-dependent ratios)
+% Total reward "budget" C is constant; ratio determines split
+p.trVarsInit.rewardDurationMs        = 390;     % total reward budget C (ms)
+p.trVarsInit.rewardRatioLeft         = 1;       % current ratio part for left
+p.trVarsInit.rewardRatioRight        = 1;       % current ratio part for right
+p.trVarsInit.rewardDurationLeft      = 195;     % calculated: C * left/(left+right)
+p.trVarsInit.rewardDurationRight     = 195;     % calculated: C * right/(left+right)
 p.trVarsInit.rewardDelay             = 0.25;    % delay between target hold and reward
 p.trVarsInit.timeoutAfterFa          = 1.0;     % timeout duration following errors (1s per user choice)
 p.trVarsInit.joyWaitDur              = 15;      % wait for joystick press at trial start
@@ -251,24 +306,25 @@ p.trVarsInit.targWidth            = 12;     % target line width in pixels
 p.trVarsInit.targRadius           = 16;
 
 % Conflict task specific variables
-p.trVarsInit.deltaT               = 0;      % stimulus onset asynchrony (ms)
-p.trVarsInit.deltaTIdx            = 4;      % index into deltaTValues array
-p.trVarsInit.trialType            = 1;      % 1=CONFLICT, 2=CONGRUENT
-p.trVarsInit.highRewardLocation   = 1;      % 1=A, 2=B (block-determined)
-p.trVarsInit.highSalienceLocation = 1;      % 1=A, 2=B (trial-determined)
-p.trVarsInit.hueType              = 1;      % 1 or 2 (counterbalanced color scheme)
-p.trVarsInit.chosenTarget         = 0;      % which target was chosen (1=A, 2=B)
-p.trVarsInit.outcome              = '';     % GOAL_DIRECTED, CAPTURE, FIX_BREAK, etc.
+p.trVarsInit.deltaT               = -150;   % stimulus onset asynchrony (ms)
+p.trVarsInit.deltaTIdx            = 1;      % index into deltaTValues array (1 or 2)
+p.trVarsInit.phaseNumber          = 1;      % 1, 2, or 3
+p.trVarsInit.backgroundHueIdx     = 1;      % 1=Hue A (0 deg DKL), 2=Hue B (180 deg DKL)
+p.trVarsInit.highSalienceSide     = 1;      % 1=left, 2=right
+p.trVarsInit.chosenSide           = 0;      % 1=left, 2=right, 0=neither
+p.trVarsInit.choseHighSalience    = false;  % true if chose high salience target
+p.trVarsInit.outcome              = '';     % CHOSE_HIGH_SAL, CHOSE_LOW_SAL, FIX_BREAK, etc.
 
-% Location coordinates (computed in nextParams)
-p.trVarsInit.targA_degX           = -7;
-p.trVarsInit.targA_degY           = 5;
-p.trVarsInit.targB_degX           = 7;
-p.trVarsInit.targB_degY           = -5;
+% For phases 2-3: conflict vs congruent categorization
+% Phase 2: high reward = right, so conflict = high salience left
+% Phase 3: high reward = left, so conflict = high salience right
+p.trVarsInit.isConflict           = false;  % true if high sal opposes high reward
 
-% Polar coordinates for strobing (computed in nextParams, same as gSac_4factors)
-p.trVarsInit.targTheta_x10        = 0;    % target angle * 10 (0-3600)
-p.trVarsInit.targRadius_x100      = 0;    % target eccentricity * 100
+% Location coordinates (computed in nextParams from angles)
+p.trVarsInit.leftTarg_degX        = -5.66;  % default: 8 deg at 135 degrees
+p.trVarsInit.leftTarg_degY        = 5.66;
+p.trVarsInit.rightTarg_degX       = 5.66;   % default: 8 deg at 45 degrees
+p.trVarsInit.rightTarg_degY       = 5.66;
 
 % State tracking
 p.trVarsInit.currentState         = p.state.trialBegun;
@@ -327,8 +383,8 @@ p.init.trDataInitList = {...
     'p.trData.spikeClusters',           '[]'; ...
     'p.trData.trialEndState',           '-1'; ...
     'p.trData.trialRepeatFlag',         'false'; ...
-    'p.trData.chosenTarget',            '0'; ...   % 1=A, 2=B, 0=neither
-    'p.trData.outcomeCode',             '0'; ...   % 1=goal, 2=capture, 3+=error types
+    'p.trData.chosenSide',              '0'; ...   % 1=left, 2=right, 0=neither
+    'p.trData.choseHighSalience',       'false'; ...
     'p.trData.outcome',                 ''''''; ...
     'p.trData.timing.lastFrameTime',    '0'; ...
     'p.trData.timing.fixOn',            '-1'; ...
@@ -364,13 +420,10 @@ p.draw.clutIdx.expGreen_subBg            = 6;   % High reward indicator
 p.draw.clutIdx.expDkGreen_subBg          = 7;   % Low reward indicator (optional)
 
 % Indices for DKL hues for Bullseye stimuli
-% Salience is defined by hue contrast between target and background:
-%   High salience = 180 deg hue difference (maximum chromatic contrast)
-%   Low salience = 45 deg hue difference (reduced chromatic contrast)
-p.draw.clutIdx.expDkl0_subDkl0         = 8;     % 0 deg DKL hue (background when A=high sal)
-p.draw.clutIdx.expDkl45_subDkl45       = 9;     % 45 deg DKL hue (low sal target, 45 deg from 0)
-p.draw.clutIdx.expDkl180_subDkl180     = 10;    % 180 deg DKL hue (high sal target, 180 deg from 0; or bg when B=high sal)
-p.draw.clutIdx.expDkl225_subDkl225     = 11;    % 225 deg DKL hue (low sal target, 45 deg from 180)
+p.draw.clutIdx.expDkl0_subDkl0         = 8;     % Low salience (0 deg = isoluminant)
+p.draw.clutIdx.expDkl45_subDkl45       = 9;     % Background for low salience
+p.draw.clutIdx.expDkl180_subDkl180     = 10;    % High salience (180 deg = max contrast)
+p.draw.clutIdx.expDkl225_subDkl225     = 11;    % Background for high salience
 
 % Grayscale ramp (not needed for this task but kept for compatibility)
 p.draw.clutIdx.grayscale_ramp_start = 18;
@@ -417,22 +470,25 @@ p.init.strobeList = {...
     % --- Core Trial Information ---
     'trialCount',           'p.status.iTrial'; ...
     'goodTrialCount',       'p.status.iGoodTrial'; ...
-    'blockNumber',          'p.trVars.blockNumber'; ...
-    'rewardDuration',       'p.trVars.rewardDurationMs'; ...
+    'phaseNumber',          'p.trVars.phaseNumber'; ...
+    'rewardDurationLeft',   'p.trVars.rewardDurationLeft'; ...
+    'rewardDurationRight',  'p.trVars.rewardDurationRight'; ...
 
     % --- Conflict Task Variables ---
-    'trialType',            'p.trVars.trialType'; ...           % 1=CONFLICT, 2=CONGRUENT
     'deltaT',               'p.trVars.deltaT + 1000'; ...       % offset by 1000 to handle negatives
-    'highRewardLocation',   'p.trVars.highRewardLocation'; ...  % 1=A, 2=B
-    'highSalienceLocation', 'p.trVars.highSalienceLocation'; ...% 1=A, 2=B
-    'hueType',              'p.trVars.hueType'; ...             % 1 or 2 (counterbalanced color scheme)
-    'chosenTarget',         'p.trData.chosenTarget'; ...        % 1=A, 2=B, 0=neither
-    'outcomeCode',          'p.trData.outcomeCode'; ...         % 1=goal, 2=capture, 3+=error
+    'backgroundHueIdx',     'p.trVars.backgroundHueIdx'; ...    % 1=Hue A, 2=Hue B
+    'highSalienceSide',     'p.trVars.highSalienceSide'; ...    % 1=left, 2=right
+    'chosenSide',           'p.trData.chosenSide'; ...          % 1=left, 2=right, 0=neither
+    'choseHighSalience',    'p.trData.choseHighSalience'; ...   % 0 or 1
+    'outcomeCode',          'p.trData.outcomeCode'; ...         % 1=high sal, 2=low sal, 3+=error
 
-    % --- Location A in polar coordinates (same approach as gSac_4factors) ---
-    % Location B is always 180 deg opposite, so only A needs to be strobed
-    'targetTheta',          'p.trVars.targTheta_x10'; ...       % theta * 10 (0-3600)
-    'targetRadius',         'p.trVars.targRadius_x100'; ...     % radius * 100
+    % --- Location indices and coordinates (x10 for precision) ---
+    'leftLocIdx',           'p.trVars.leftLocIdx'; ...          % 1-4
+    'rightLocIdx',          'p.trVars.rightLocIdx'; ...         % 1-4
+    'leftTarg_x10',         'round(p.trVars.leftTarg_degX * 10)'; ...
+    'leftTarg_y10',         'round(p.trVars.leftTarg_degY * 10)'; ...
+    'rightTarg_x10',        'round(p.trVars.rightTarg_degX * 10)'; ...
+    'rightTarg_y10',        'round(p.trVars.rightTarg_degY * 10)'; ...
     };
 
 end
