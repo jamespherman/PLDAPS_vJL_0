@@ -7,13 +7,15 @@ function p = nextParams(p)
 % Steps:
 %   1. Choose a row from the trial array (determines condition)
 %   2. Set trial parameters from the array
-%   3. Compute target locations (A and B)
-%   4. Set timing parameters (delta-t manipulation)
+%   3. Compute target locations from angles
+%   4. Calculate reward amounts based on current phase
+%   5. Set background color based on hue and salience
+%   6. Set timing parameters (delta-t manipulation)
 
 %% 1. Choose a row from the trial array
 p = chooseRow(p);
 
-% Exit early if trial array is exhausted (shouldn't happen - loops forever)
+% Exit early if session is complete (384 trials done)
 if p.trVars.exitWhileLoop
     return;
 end
@@ -21,10 +23,16 @@ end
 %% 2. Set trial parameters from the array
 p = trialTypeInfo(p);
 
-%% 3. Compute target locations
+%% 3. Compute target locations from angles
 p = setLocations(p);
 
-%% 4. Set timing parameters (including delta-t)
+%% 4. Calculate reward amounts for this phase
+p = calculateRewards(p);
+
+%% 5. Set background color based on hue and salience conditions
+p = setBackgroundColor(p);
+
+%% 6. Set timing parameters (including delta-t)
 p = timingInfo(p);
 
 end
@@ -33,9 +41,14 @@ end
 %% ==================== SUBFUNCTIONS ====================
 
 function p = chooseRow(p)
-% Selects a trial from the trial array based on block structure.
-% Progresses through blocks sequentially; within each block, selects
+% Selects a trial from the trial array based on phase structure.
+% Progresses through phases sequentially; within each phase, selects
 % randomly from remaining trials.
+%
+% Phases:
+%   1: 1:1 reward ratio (trials 1-128)
+%   2: 1:2 reward ratio (trials 129-256)
+%   3: 2:1 reward ratio (trials 257-384)
 
 %% Get column indices
 colNames = p.init.trialArrayColumnNames;
@@ -43,43 +56,43 @@ for i = 1:length(colNames)
     cols.(colNames{i}) = i;
 end
 
-%% Get block values and available trial mask
-blockVals = p.init.trialsArray(:, cols.blockNumber);
+%% Get phase values and available trial mask
+phaseVals = p.init.trialsArray(:, cols.phaseNumber);
 rowsPossible = p.status.trialsArrayRowsPossible;
 
-%% Determine which block to draw from
-currentBlock = 0;
-for iBlock = 1:6
-    if any(blockVals == iBlock & rowsPossible)
-        currentBlock = iBlock;
+%% Determine which phase to draw from
+currentPhase = 0;
+for iPhase = 1:p.init.nPhases
+    if any(phaseVals == iPhase & rowsPossible)
+        currentPhase = iPhase;
         break;
     end
 end
 
-if currentBlock == 0
-    % All blocks complete - this shouldn't happen with trial repetition
-    % Reset for new session loop
+if currentPhase == 0
+    % All phases complete - session is done!
     fprintf('****************************************\n');
-    fprintf('** All 6 blocks complete!             **\n');
-    fprintf('** Resetting trial array.             **\n');
+    fprintf('** All %d phases complete!            **\n', p.init.nPhases);
+    fprintf('** Session finished: %d trials done.  **\n', p.init.totalTrials);
     fprintf('****************************************\n');
 
-    p.status.trialsArrayRowsPossible = true(size(p.init.trialsArray, 1), 1);
-    currentBlock = 1;
+    p.trVars.exitWhileLoop = true;
+    return;
 end
 
-%% Update block counter
-p.status.iBlock = currentBlock;
+%% Update phase tracking
+p.status.currentPhase = currentPhase;
+p.trVars.phaseNumber = currentPhase;
 
-%% Select a random trial from the current block's available trials
-pool = (blockVals == currentBlock & rowsPossible);
+%% Select a random trial from the current phase's available trials
+pool = (phaseVals == currentPhase & rowsPossible);
 choiceIndices = find(pool);
 p.trVars.currentTrialsArrayRow = ...
     choiceIndices(randi(length(choiceIndices)));
 
-% Update trial-in-block counter
-trialsCompleteInBlock = sum(blockVals == currentBlock & ~rowsPossible);
-p.status.iTrialInBlock = trialsCompleteInBlock + 1;
+% Count completed trials in current phase
+trialsCompleteInPhase = sum(phaseVals == currentPhase & ~rowsPossible);
+p.status.completedTrialsInPhase = trialsCompleteInPhase;
 
 end
 
@@ -95,64 +108,169 @@ end
 currentRow = p.init.trialsArray(p.trVars.currentTrialsArrayRow, :);
 
 %% Copy all trial parameters from array into p.trVars
-p.trVars.blockNumber        = currentRow(cols.blockNumber);
-p.trVars.trialInBlock       = currentRow(cols.trialInBlock);
-p.trVars.trialType          = currentRow(cols.trialType);
+p.trVars.phaseNumber        = currentRow(cols.phaseNumber);
+p.trVars.trialInPhase       = currentRow(cols.trialInPhase);
+p.trVars.leftLocIdx         = currentRow(cols.leftLocIdx);
+p.trVars.rightLocIdx        = currentRow(cols.rightLocIdx);
+p.trVars.backgroundHueIdx   = currentRow(cols.backgroundHueIdx);
+p.trVars.highSalienceSide   = currentRow(cols.highSalienceSide);
 p.trVars.deltaTIdx          = currentRow(cols.deltaTIdx);
 p.trVars.deltaT             = currentRow(cols.deltaT);
-p.trVars.highRewardLocation = currentRow(cols.highRewardLoc);
-p.trVars.highSalienceLocation = currentRow(cols.highSalienceLoc);
+
+%% Determine if this is a conflict trial (for phases 2-3)
+% Phase 2: high reward on RIGHT, so conflict = high salience LEFT
+% Phase 3: high reward on LEFT, so conflict = high salience RIGHT
+if p.trVars.phaseNumber == 1
+    p.trVars.isConflict = false;  % N/A for phase 1 (equal rewards)
+elseif p.trVars.phaseNumber == 2
+    % 1:2 ratio: high reward RIGHT
+    p.trVars.isConflict = (p.trVars.highSalienceSide == 1);  % conflict if sal LEFT
+elseif p.trVars.phaseNumber == 3
+    % 2:1 ratio: high reward LEFT
+    p.trVars.isConflict = (p.trVars.highSalienceSide == 2);  % conflict if sal RIGHT
+end
 
 %% Print trial info
-if p.trVars.trialType == 1
-    typeStr = 'CONFLICT';
+if p.trVars.highSalienceSide == 1
+    salSideStr = 'LEFT';
 else
-    typeStr = 'CONGRUENT';
+    salSideStr = 'RIGHT';
 end
 
-if p.trVars.highRewardLocation == 1
-    rwdLocStr = 'A';
+if p.trVars.phaseNumber == 1
+    conflictStr = '';
+    ratioStr = '1:1';
+elseif p.trVars.phaseNumber == 2
+    conflictStr = p.trVars.isConflict * 'CONFLICT' + ~p.trVars.isConflict * 'CONGRUENT';
+    if p.trVars.isConflict
+        conflictStr = 'CONFLICT';
+    else
+        conflictStr = 'CONGRUENT';
+    end
+    ratioStr = '1:2';
 else
-    rwdLocStr = 'B';
+    if p.trVars.isConflict
+        conflictStr = 'CONFLICT';
+    else
+        conflictStr = 'CONGRUENT';
+    end
+    ratioStr = '2:1';
 end
 
-fprintf('Block %d, Trial %d: %s, deltaT=%+dms, HighRwd=%s\n', ...
-    p.trVars.blockNumber, p.status.iTrialInBlock, typeStr, ...
-    p.trVars.deltaT, rwdLocStr);
+fprintf('Phase %d (%s), Trial %d/%d: HighSal=%s %s, dT=%+dms, Locs=[%d,%d]\n', ...
+    p.trVars.phaseNumber, ratioStr, ...
+    p.status.completedTrialsInPhase + 1, p.init.trialsPerPhase, ...
+    salSideStr, conflictStr, ...
+    p.trVars.deltaT, p.trVars.leftLocIdx, p.trVars.rightLocIdx);
 
 end
 
 
 function p = setLocations(p)
-% Computes target locations A and B.
-% Location A is experimenter-specified (from GUI or settings).
-% Location B is the 180-degree rotation of A.
+% Computes target locations from angles and eccentricity.
+% Uses polar coordinates: angle (from rightward = 0) and eccentricity.
 
-%% Get Location A from settings/GUI
-p.trVars.targA_degX = p.trVars.locationA_x;
-p.trVars.targA_degY = p.trVars.locationA_y;
+%% Get angle arrays
+leftAngles = p.trVars.leftAngles;    % [135, 165, -165, -135]
+rightAngles = p.trVars.rightAngles;  % [45, 15, -15, -45]
 
-%% Compute Location B as 180-degree rotation of A
-% B = -A (opposite side of fixation)
-p.trVars.targB_degX = -p.trVars.targA_degX;
-p.trVars.targB_degY = -p.trVars.targA_degY;
+%% Get current target angles
+leftAngle = leftAngles(p.trVars.leftLocIdx);
+rightAngle = rightAngles(p.trVars.rightLocIdx);
+
+%% Convert polar to Cartesian (degrees visual angle)
+ecc = p.trVars.targetEccentricityDeg;
+
+% Left target (in left visual field, so X will be negative)
+p.trVars.leftTarg_degX = ecc * cosd(leftAngle);
+p.trVars.leftTarg_degY = ecc * sind(leftAngle);
+
+% Right target (in right visual field, so X will be positive)
+p.trVars.rightTarg_degX = ecc * cosd(rightAngle);
+p.trVars.rightTarg_degY = ecc * sind(rightAngle);
 
 %% Convert fixation position from degrees to pixels
 p.draw.fixPointPix = p.draw.middleXY + ...
     [1, -1] .* pds.deg2pix([p.trVars.fixDegX, p.trVars.fixDegY], p);
 
 %% Convert target positions from degrees to pixels
-p.draw.targAPointPix = p.draw.middleXY + ...
-    [1, -1] .* pds.deg2pix([p.trVars.targA_degX, p.trVars.targA_degY], p);
+p.draw.leftTargPointPix = p.draw.middleXY + ...
+    [1, -1] .* pds.deg2pix([p.trVars.leftTarg_degX, p.trVars.leftTarg_degY], p);
 
-p.draw.targBPointPix = p.draw.middleXY + ...
-    [1, -1] .* pds.deg2pix([p.trVars.targB_degX, p.trVars.targB_degY], p);
+p.draw.rightTargPointPix = p.draw.middleXY + ...
+    [1, -1] .* pds.deg2pix([p.trVars.rightTarg_degX, p.trVars.rightTarg_degY], p);
 
 %% Convert window sizes from degrees to pixels
 p.draw.fixWinWidthPix = pds.deg2pix(p.trVars.fixWinWidthDeg, p);
 p.draw.fixWinHeightPix = pds.deg2pix(p.trVars.fixWinHeightDeg, p);
 p.draw.targWinWidthPix = pds.deg2pix(p.trVars.targWinWidthDeg, p);
 p.draw.targWinHeightPix = pds.deg2pix(p.trVars.targWinHeightDeg, p);
+
+end
+
+
+function p = calculateRewards(p)
+% Calculates reward durations based on the current phase's ratio.
+%
+% Phase 1: 1:1 -> 195ms : 195ms
+% Phase 2: 1:2 -> 130ms : 260ms
+% Phase 3: 2:1 -> 260ms : 130ms
+
+%% Get reward ratios for current phase
+ratios = p.init.phaseRewardRatios(p.trVars.phaseNumber, :);
+leftRatio = ratios(1);
+rightRatio = ratios(2);
+
+%% Store current ratios
+p.trVars.rewardRatioLeft = leftRatio;
+p.trVars.rewardRatioRight = rightRatio;
+
+%% Calculate reward durations
+C = p.trVars.rewardDurationMs;  % Total budget (390ms)
+totalRatio = leftRatio + rightRatio;
+
+p.trVars.rewardDurationLeft = round(C * leftRatio / totalRatio);
+p.trVars.rewardDurationRight = round(C * rightRatio / totalRatio);
+
+end
+
+
+function p = setBackgroundColor(p)
+% Sets the background color based on backgroundHueIdx and highSalienceSide.
+%
+% Background Hue System (DKL color space):
+%   backgroundHueIdx = 1 (Hue A): Target hue is 0 deg DKL
+%     - High salience background: 180 deg DKL (max contrast)
+%     - Low salience background: 45 deg DKL (low contrast)
+%   backgroundHueIdx = 2 (Hue B): Target hue is 180 deg DKL
+%     - High salience background: 0 deg DKL (max contrast)
+%     - Low salience background: 225 deg DKL (low contrast)
+%
+% The background is set to create high salience for one target and
+% low salience for the other. Since both targets have the same hue,
+% the background determines which appears more salient.
+
+bgHueIdx = p.trVars.backgroundHueIdx;
+highSalSide = p.trVars.highSalienceSide;
+
+% Determine which background hue creates the desired salience pattern
+% The background should be 180 deg offset from the high-salience target's hue
+
+if bgHueIdx == 1
+    % Hue A condition: target hue = 0 deg DKL
+    % High salience needs background at 180 deg (opposite)
+    % We use 180 deg background so target at 0 deg has high contrast
+    p.draw.color.background = p.draw.clutIdx.expDkl180_subDkl180;
+    p.trVars.targetHueIdx = p.draw.clutIdx.expDkl0_subDkl0;
+else
+    % Hue B condition: target hue = 180 deg DKL
+    % High salience needs background at 0 deg (opposite)
+    p.draw.color.background = p.draw.clutIdx.expDkl0_subDkl0;
+    p.trVars.targetHueIdx = p.draw.clutIdx.expDkl180_subDkl180;
+end
+
+% Store which side has high/low salience for drawing
+p.trVars.highSalienceSide = highSalSide;  % 1=left, 2=right
 
 end
 

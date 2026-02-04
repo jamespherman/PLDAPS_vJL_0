@@ -189,9 +189,9 @@ switch p.trVars.currentState
         blinkDetected = ...
             any(any(abs(p.trData.onlineGaze(sinceFixOffLogical, 1:2)) > 35));
 
-        % Check if gaze is within either target window
-        gazeInTargetA = eyeInTargetWindow(p, 'A');
-        gazeInTargetB = eyeInTargetWindow(p, 'B');
+        % Check if gaze is within either target window (left or right)
+        gazeInLeftTarget = eyeInTargetWindow(p, 'left');
+        gazeInRightTarget = eyeInTargetWindow(p, 'right');
 
         if sacInFlight
             % Saccade still in flight - continue waiting
@@ -202,33 +202,33 @@ switch p.trVars.currentState
             p.trData.timing.fixBreak = timeNow;
             p.trVars.currentState = p.state.fixBreak;
 
-        elseif gazeInTargetA || p.trVars.passEye
-            % Saccade landed in Target A window
+        elseif gazeInLeftTarget || p.trVars.passEye
+            % Saccade landed in LEFT target window
             p.init.strb.addValue(p.init.codes.saccadeOffset);
             p.trData.timing.saccadeOffset = timeNow;
-            p.trData.chosenTarget = 1;  % A
+            p.trData.chosenSide = 1;  % left
             p.trVars.currentState = p.state.holdTarg;
             p.init.strb.addValue(p.init.codes.targetAq);
             p.trData.timing.targetAq = timeNow;
             p.draw.targWinPenDraw = p.draw.targWinPenThick;
-            disp('targHold - Location A')
+            disp('targHold - LEFT target')
 
-        elseif gazeInTargetB
-            % Saccade landed in Target B window
+        elseif gazeInRightTarget
+            % Saccade landed in RIGHT target window
             p.init.strb.addValue(p.init.codes.saccadeOffset);
             p.trData.timing.saccadeOffset = timeNow;
-            p.trData.chosenTarget = 2;  % B
+            p.trData.chosenSide = 2;  % right
             p.trVars.currentState = p.state.holdTarg;
             p.init.strb.addValue(p.init.codes.targetAq);
             p.trData.timing.targetAq = timeNow;
             p.draw.targWinPenDraw = p.draw.targWinPenThick;
-            disp('targHold - Location B')
+            disp('targHold - RIGHT target')
 
         else
             % Saccade landed outside both target windows - inaccurate
             p.init.strb.addValue(p.init.codes.inaccurate);
             p.trData.timing.fixBreak = timeNow;
-            p.trData.chosenTarget = 0;
+            p.trData.chosenSide = 0;
             p.trVars.currentState = p.state.inaccurate;
             p.draw.targWinPenDraw = p.draw.targWinPenThin;
             disp('inaccurate - outside both targets')
@@ -245,10 +245,10 @@ switch p.trVars.currentState
         end
 
         % Check if gaze is still in the chosen target window
-        if p.trData.chosenTarget == 1
-            eyeInChosenTarget = eyeInTargetWindow(p, 'A');
+        if p.trData.chosenSide == 1
+            eyeInChosenTarget = eyeInTargetWindow(p, 'left');
         else
-            eyeInChosenTarget = eyeInTargetWindow(p, 'B');
+            eyeInChosenTarget = eyeInTargetWindow(p, 'right');
         end
 
         % Check if target hold duration has been met
@@ -271,28 +271,39 @@ switch p.trVars.currentState
     case p.state.sacComplete
         % Trial completed - determine outcome and deliver reward
 
-        % Classify outcome based on chosen target and reward location
-        if p.trData.chosenTarget == p.trVars.highRewardLocation
-            % Chose high-reward location = Goal-directed choice
-            p.trData.outcome = 'GOAL_DIRECTED';
+        % Classify outcome based on chosen side and high salience location
+        if p.trData.chosenSide == p.trVars.highSalienceSide
+            % Chose high-salience target
+            p.trData.choseHighSalience = true;
+            p.trData.outcome = 'CHOSE_HIGH_SAL';
             p.trData.outcomeCode = 1;
-            p.trVars.rewardDurationMs = p.trVars.rewardDurationHigh;
         else
-            % Chose low-reward location = Capture
-            p.trData.outcome = 'CAPTURE';
+            % Chose low-salience target
+            p.trData.choseHighSalience = false;
+            p.trData.outcome = 'CHOSE_LOW_SAL';
             p.trData.outcomeCode = 2;
-            p.trVars.rewardDurationMs = p.trVars.rewardDurationLow;
+        end
+
+        % Determine reward based on chosen SIDE (left or right)
+        if p.trData.chosenSide == 1
+            % Chose LEFT target
+            p.trVars.currentRewardDuration = p.trVars.rewardDurationLeft;
+        else
+            % Chose RIGHT target
+            p.trVars.currentRewardDuration = p.trVars.rewardDurationRight;
         end
 
         if p.trData.timing.reward < 0
             % Reward not yet delivered - deliver it now
+            % Temporarily set rewardDurationMs for the pds.deliverReward function
+            p.trVars.rewardDurationMs = p.trVars.currentRewardDuration;
             p = pds.deliverReward(p);
         elseif p.trData.timing.reward > 0
             % Check if post-reward delay has elapsed
             rewardEndTime = p.trData.timing.reward + ...
                 p.trVars.postRewardDuration + ...
                 p.rig.dp.dacPadDur + ...
-                p.trVars.rewardDurationMs/1000;
+                p.trVars.currentRewardDuration/1000;
             if timeNow > rewardEndTime
                 p.trVars.exitWhileLoop = true;
             end
@@ -380,17 +391,13 @@ function p = drawMachine(p)
 
 timeNow = GetSecs - p.trData.timing.trialStartPTB;
 
-%% Set background color (fixed for this task)
-% Use isoluminant grey background
-p.draw.color.background = p.draw.clutIdx.expGrey_subBg;
-
 %% Draw frame if enough time has elapsed since last frame
 frameDue = p.trData.timing.lastFrameTime + ...
     p.rig.frameDuration - p.rig.magicNumber;
 
 if timeNow > frameDue
 
-    % Fill background
+    % Fill background (color is set per-trial in nextParams based on hue condition)
     Screen('FillRect', p.draw.window, p.draw.color.background);
 
     % Draw grid overlay for experimenter
@@ -405,34 +412,51 @@ if timeNow > frameDue
         repmat(p.draw.middleXY, 1, 2);
     Screen('FillRect', p.draw.window, p.draw.color.eyePos, eyeRect);
 
-    % Draw Target A window frame
-    targAWinRect = repmat(p.draw.targAPointPix, 1, 2) + ...
+    % Draw LEFT target window frame
+    leftTargWinRect = repmat(p.draw.leftTargPointPix, 1, 2) + ...
         [-p.draw.targWinWidthPix -p.draw.targWinHeightPix ...
          p.draw.targWinWidthPix p.draw.targWinHeightPix];
     Screen('FrameRect', p.draw.window, p.draw.color.targWin, ...
-        targAWinRect, p.draw.targWinPenDraw);
+        leftTargWinRect, p.draw.targWinPenDraw);
 
-    % Draw Target B window frame
-    targBWinRect = repmat(p.draw.targBPointPix, 1, 2) + ...
+    % Draw RIGHT target window frame
+    rightTargWinRect = repmat(p.draw.rightTargPointPix, 1, 2) + ...
         [-p.draw.targWinWidthPix -p.draw.targWinHeightPix ...
          p.draw.targWinWidthPix p.draw.targWinHeightPix];
     Screen('FrameRect', p.draw.window, p.draw.color.targWin, ...
-        targBWinRect, p.draw.targWinPenDraw);
+        rightTargWinRect, p.draw.targWinPenDraw);
 
     % Draw high-reward indicator (green frame around high-reward target)
-    if p.trVars.highRewardLocation == 1
-        % Location A is high reward
-        rewardRect = repmat(p.draw.targAPointPix, 1, 2) + ...
+    % Phase 1: both equal (show both with same indicator)
+    % Phase 2: right is high reward
+    % Phase 3: left is high reward
+    if p.trVars.phaseNumber == 1
+        % Equal rewards - show small green indicator on both
+        leftRewardRect = repmat(p.draw.leftTargPointPix, 1, 2) + ...
             fix(1.1 * [-p.draw.targWinWidthPix -p.draw.targWinHeightPix ...
             p.draw.targWinWidthPix p.draw.targWinHeightPix]);
+        rightRewardRect = repmat(p.draw.rightTargPointPix, 1, 2) + ...
+            fix(1.1 * [-p.draw.targWinWidthPix -p.draw.targWinHeightPix ...
+            p.draw.targWinWidthPix p.draw.targWinHeightPix]);
+        Screen('FrameRect', p.draw.window, p.draw.clutIdx.expGreen_subBg, ...
+            leftRewardRect, p.draw.targWinPenThin);
+        Screen('FrameRect', p.draw.window, p.draw.clutIdx.expGreen_subBg, ...
+            rightRewardRect, p.draw.targWinPenThin);
+    elseif p.trVars.rewardRatioLeft > p.trVars.rewardRatioRight
+        % LEFT is high reward (phase 3)
+        rewardRect = repmat(p.draw.leftTargPointPix, 1, 2) + ...
+            fix(1.1 * [-p.draw.targWinWidthPix -p.draw.targWinHeightPix ...
+            p.draw.targWinWidthPix p.draw.targWinHeightPix]);
+        Screen('FrameRect', p.draw.window, p.draw.clutIdx.expGreen_subBg, ...
+            rewardRect, p.draw.targWinPenDraw);
     else
-        % Location B is high reward
-        rewardRect = repmat(p.draw.targBPointPix, 1, 2) + ...
+        % RIGHT is high reward (phase 2)
+        rewardRect = repmat(p.draw.rightTargPointPix, 1, 2) + ...
             fix(1.1 * [-p.draw.targWinWidthPix -p.draw.targWinHeightPix ...
             p.draw.targWinWidthPix p.draw.targWinHeightPix]);
+        Screen('FrameRect', p.draw.window, p.draw.clutIdx.expGreen_subBg, ...
+            rewardRect, p.draw.targWinPenDraw);
     end
-    Screen('FrameRect', p.draw.window, p.draw.clutIdx.expGreen_subBg, ...
-        rewardRect, p.draw.targWinPenDraw);
 
     % Draw fixation window frame
     fixWinRect = repmat(p.draw.fixPointPix, 1, 2) + ...
@@ -444,46 +468,40 @@ if timeNow > frameDue
     % Draw target stimuli if they should be visible
     if p.trVars.stimuliVisible
         % Draw both bullseyes simultaneously
+        % Both targets use the same hue (determined by backgroundHueIdx)
+        % Salience is created by background contrast, not target color difference
 
-        % Determine which location gets high salience
-        if p.trVars.highSalienceLocation == 1
-            % Location A = high salience (180 deg DKL), Location B = low salience (0 deg)
-            targetA_hue_idx = p.draw.clutIdx.expDkl180_subDkl180;
-            targetB_hue_idx = p.draw.clutIdx.expDkl0_subDkl0;
-        else
-            % Location B = high salience, Location A = low salience
-            targetA_hue_idx = p.draw.clutIdx.expDkl0_subDkl0;
-            targetB_hue_idx = p.draw.clutIdx.expDkl180_subDkl180;
-        end
+        targetHueIdx = p.trVars.targetHueIdx;
 
-        % Draw Target A bullseye (outer ring then inner ring)
+        % Compute bullseye sizes in pixels
         stimSize_pix_outer = pds.deg2pix(p.draw.bullseyeOuterDeg, p);
         stimSize_pix_inner = pds.deg2pix(p.draw.bullseyeInnerDeg, p);
 
-        targARect_outer = CenterRectOnPoint(...
+        % Draw LEFT target bullseye (outer ring then inner ring)
+        leftRect_outer = CenterRectOnPoint(...
             [0 0 stimSize_pix_outer stimSize_pix_outer], ...
-            p.draw.targAPointPix(1), p.draw.targAPointPix(2));
-        Screen('FrameRect', p.draw.window, targetA_hue_idx, ...
-            targARect_outer, p.trVarsInit.targWidth);
+            p.draw.leftTargPointPix(1), p.draw.leftTargPointPix(2));
+        Screen('FrameRect', p.draw.window, targetHueIdx, ...
+            leftRect_outer, p.trVarsInit.targWidth);
 
-        targARect_inner = CenterRectOnPoint(...
+        leftRect_inner = CenterRectOnPoint(...
             [0 0 stimSize_pix_inner stimSize_pix_inner], ...
-            p.draw.targAPointPix(1), p.draw.targAPointPix(2));
-        Screen('FrameRect', p.draw.window, targetA_hue_idx, ...
-            targARect_inner, p.trVarsInit.targWidth);
+            p.draw.leftTargPointPix(1), p.draw.leftTargPointPix(2));
+        Screen('FrameRect', p.draw.window, targetHueIdx, ...
+            leftRect_inner, p.trVarsInit.targWidth);
 
-        % Draw Target B bullseye
-        targBRect_outer = CenterRectOnPoint(...
+        % Draw RIGHT target bullseye
+        rightRect_outer = CenterRectOnPoint(...
             [0 0 stimSize_pix_outer stimSize_pix_outer], ...
-            p.draw.targBPointPix(1), p.draw.targBPointPix(2));
-        Screen('FrameRect', p.draw.window, targetB_hue_idx, ...
-            targBRect_outer, p.trVarsInit.targWidth);
+            p.draw.rightTargPointPix(1), p.draw.rightTargPointPix(2));
+        Screen('FrameRect', p.draw.window, targetHueIdx, ...
+            rightRect_outer, p.trVarsInit.targWidth);
 
-        targBRect_inner = CenterRectOnPoint(...
+        rightRect_inner = CenterRectOnPoint(...
             [0 0 stimSize_pix_inner stimSize_pix_inner], ...
-            p.draw.targBPointPix(1), p.draw.targBPointPix(2));
-        Screen('FrameRect', p.draw.window, targetB_hue_idx, ...
-            targBRect_inner, p.trVarsInit.targWidth);
+            p.draw.rightTargPointPix(1), p.draw.rightTargPointPix(2));
+        Screen('FrameRect', p.draw.window, targetHueIdx, ...
+            rightRect_inner, p.trVarsInit.targWidth);
     end
 
     % Draw fixation point (if visible)
@@ -555,14 +573,14 @@ end
 %% -------------------- EYE IN TARGET WINDOW --------------------
 function inWindow = eyeInTargetWindow(p, targetID)
 % Check if eye position is within specified target window.
-% targetID: 'A' or 'B'
+% targetID: 'left' or 'right'
 
-if strcmp(targetID, 'A')
-    targX = p.trVars.targA_degX;
-    targY = p.trVars.targA_degY;
+if strcmp(targetID, 'left')
+    targX = p.trVars.leftTarg_degX;
+    targY = p.trVars.leftTarg_degY;
 else
-    targX = p.trVars.targB_degX;
-    targY = p.trVars.targB_degY;
+    targX = p.trVars.rightTarg_degX;
+    targY = p.trVars.rightTarg_degY;
 end
 
 % Check if gaze is within target window (using half-widths)

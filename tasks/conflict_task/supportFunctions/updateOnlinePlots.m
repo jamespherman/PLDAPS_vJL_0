@@ -1,11 +1,19 @@
 function p = updateOnlinePlots(p)
 %   p = updateOnlinePlots(p)
 %
-% Updates the online visualization for the Conflict Task.
-% Primary display: Tachometric curve (P(goal-directed) vs delta-t)
+% Updates the online visualization for the Conflict Task (refactored design).
+% 5-panel display:
+%   Panel 1: Phase 1 by Hemifield
+%   Panel 2: Phase 1 Collapsed
+%   Panel 3: Phases 2-3 Conflict vs Congruent
+%   Panel 4: Cumulative Evolution
+%   Panel 5: Session Progress
 
-% Update tachometric curve plot
-p = updateTachometricCurve(p);
+% Update metrics based on current trial outcome
+p = updateMetrics(p);
+
+% Update all visualization panels
+p = updateAllPanels(p);
 
 % Update gaze/velocity plots if enabled
 if p.trVars.wantOnlinePlots
@@ -14,151 +22,301 @@ end
 
 end
 
-%% -------------------- UPDATE TACHOMETRIC CURVE --------------------
-function p = updateTachometricCurve(p)
-% Updates the tachometric curve showing P(goal-directed) vs delta-t
-% for both Conflict and Congruent trials.
+%% -------------------- UPDATE METRICS --------------------
+function p = updateMetrics(p)
+% Updates the online metrics structures based on the current trial outcome.
 
-% Check if tachometric figure exists
-if ~isfield(p.draw, 'tachFig') || ~isvalid(p.draw.tachFig)
+% Get trial parameters
+phaseNumber = p.trVars.phaseNumber;
+deltaTIdx = p.trVars.deltaTIdx;
+highSalSide = p.trVars.highSalienceSide;  % 1=left, 2=right
+choseHighSal = p.trData.choseHighSalience;
+isConflict = p.trVars.isConflict;
+rt = p.trData.SRT;
+
+%% Route metrics to appropriate phase/category structure
+if phaseNumber == 1
+    % Phase 1: categorize by high salience side
+    if highSalSide == 1
+        metricsCell = p.status.onlineMetrics.phase1.highSalLeft;
+    else
+        metricsCell = p.status.onlineMetrics.phase1.highSalRight;
+    end
+
+    % Update counts
+    if choseHighSal
+        metricsCell{deltaTIdx}.nChoseHighSal = ...
+            metricsCell{deltaTIdx}.nChoseHighSal + 1;
+        if ~isempty(rt) && ~isnan(rt)
+            metricsCell{deltaTIdx}.rtHighSal(end+1) = rt * 1000;
+        end
+    else
+        metricsCell{deltaTIdx}.nChoseLowSal = ...
+            metricsCell{deltaTIdx}.nChoseLowSal + 1;
+        if ~isempty(rt) && ~isnan(rt)
+            metricsCell{deltaTIdx}.rtLowSal(end+1) = rt * 1000;
+        end
+    end
+
+    % Store back
+    if highSalSide == 1
+        p.status.onlineMetrics.phase1.highSalLeft = metricsCell;
+    else
+        p.status.onlineMetrics.phase1.highSalRight = metricsCell;
+    end
+
+elseif phaseNumber == 2
+    % Phase 2: categorize by conflict vs congruent
+    if isConflict
+        metricsCell = p.status.onlineMetrics.phase2.conflict;
+    else
+        metricsCell = p.status.onlineMetrics.phase2.congruent;
+    end
+
+    % Update counts
+    if choseHighSal
+        metricsCell{deltaTIdx}.nChoseHighSal = ...
+            metricsCell{deltaTIdx}.nChoseHighSal + 1;
+        if ~isempty(rt) && ~isnan(rt)
+            metricsCell{deltaTIdx}.rtHighSal(end+1) = rt * 1000;
+        end
+    else
+        metricsCell{deltaTIdx}.nChoseLowSal = ...
+            metricsCell{deltaTIdx}.nChoseLowSal + 1;
+        if ~isempty(rt) && ~isnan(rt)
+            metricsCell{deltaTIdx}.rtLowSal(end+1) = rt * 1000;
+        end
+    end
+
+    % Store back
+    if isConflict
+        p.status.onlineMetrics.phase2.conflict = metricsCell;
+    else
+        p.status.onlineMetrics.phase2.congruent = metricsCell;
+    end
+
+elseif phaseNumber == 3
+    % Phase 3: categorize by conflict vs congruent
+    if isConflict
+        metricsCell = p.status.onlineMetrics.phase3.conflict;
+    else
+        metricsCell = p.status.onlineMetrics.phase3.congruent;
+    end
+
+    % Update counts
+    if choseHighSal
+        metricsCell{deltaTIdx}.nChoseHighSal = ...
+            metricsCell{deltaTIdx}.nChoseHighSal + 1;
+        if ~isempty(rt) && ~isnan(rt)
+            metricsCell{deltaTIdx}.rtHighSal(end+1) = rt * 1000;
+        end
+    else
+        metricsCell{deltaTIdx}.nChoseLowSal = ...
+            metricsCell{deltaTIdx}.nChoseLowSal + 1;
+        if ~isempty(rt) && ~isnan(rt)
+            metricsCell{deltaTIdx}.rtLowSal(end+1) = rt * 1000;
+        end
+    end
+
+    % Store back
+    if isConflict
+        p.status.onlineMetrics.phase3.conflict = metricsCell;
+    else
+        p.status.onlineMetrics.phase3.congruent = metricsCell;
+    end
+end
+
+%% Update cumulative tracking
+cum = p.status.onlineMetrics.cumulative;
+cum.trialNumbers(end+1) = p.status.iGoodTrial;
+cum.choseHighSal(end+1) = choseHighSal;
+cum.phase(end+1) = phaseNumber;
+cum.highSalSide(end+1) = highSalSide;
+cum.isConflict(end+1) = isConflict;
+p.status.onlineMetrics.cumulative = cum;
+
+%% Update global outcome counters
+if choseHighSal
+    p.status.nChoseHighSalience = p.status.nChoseHighSalience + 1;
+else
+    p.status.nChoseLowSalience = p.status.nChoseLowSalience + 1;
+end
+
+end
+
+%% -------------------- UPDATE ALL PANELS --------------------
+function p = updateAllPanels(p)
+% Updates all 5 visualization panels.
+
+% Check if visualization figure exists
+if ~isfield(p.draw, 'vizFig') || ~isvalid(p.draw.vizFig)
     return
 end
 
-% Get trial parameters
-trialType = p.trVars.trialType;  % 1=CONFLICT, 2=CONGRUENT
-deltaTIdx = p.trVars.deltaTIdx;
-outcome = p.trData.outcome;
-rt = p.trData.SRT;
-
-% Determine which metrics structure to update
-if trialType == 1
-    metricsCell = p.status.onlineMetrics.conflict;
-else
-    metricsCell = p.status.onlineMetrics.congruent;
-end
-
-% Update counts based on outcome
-if strcmp(outcome, 'GOAL_DIRECTED')
-    metricsCell{deltaTIdx}.nGoalDirected = ...
-        metricsCell{deltaTIdx}.nGoalDirected + 1;
-    if ~isnan(rt)
-        metricsCell{deltaTIdx}.rtGoalDirected(end+1) = rt * 1000;  % Convert to ms
-    end
-elseif strcmp(outcome, 'CAPTURE')
-    metricsCell{deltaTIdx}.nCapture = ...
-        metricsCell{deltaTIdx}.nCapture + 1;
-    if ~isnan(rt)
-        metricsCell{deltaTIdx}.rtCapture(end+1) = rt * 1000;
-    end
-end
-
-% Store updated metrics
-if trialType == 1
-    p.status.onlineMetrics.conflict = metricsCell;
-else
-    p.status.onlineMetrics.congruent = metricsCell;
-end
-
-% Update outcome counters
-p.status.nGoalDirected = p.status.nGoalDirected + strcmp(outcome, 'GOAL_DIRECTED');
-p.status.nCapture = p.status.nCapture + strcmp(outcome, 'CAPTURE');
-
-%% Compute P(goal-directed) for each delta-t
 deltaTValues = p.status.deltaTValues;
 nDeltaT = p.status.nDeltaT;
 
-pGoalConflict = zeros(1, nDeltaT);
-pGoalCongruent = zeros(1, nDeltaT);
-nConflict = zeros(1, nDeltaT);
-nCongruent = zeros(1, nDeltaT);
+%% Panel 1: Phase 1 by Hemifield
+pHighSal_left = zeros(1, nDeltaT);
+pHighSal_right = zeros(1, nDeltaT);
 
 for iDT = 1:nDeltaT
-    % Conflict trials
-    nG = p.status.onlineMetrics.conflict{iDT}.nGoalDirected;
-    nC = p.status.onlineMetrics.conflict{iDT}.nCapture;
-    nConflict(iDT) = nG + nC;
-    if nConflict(iDT) > 0
-        pGoalConflict(iDT) = nG / nConflict(iDT);
+    % High salience LEFT
+    nHS = p.status.onlineMetrics.phase1.highSalLeft{iDT}.nChoseHighSal;
+    nLS = p.status.onlineMetrics.phase1.highSalLeft{iDT}.nChoseLowSal;
+    if (nHS + nLS) > 0
+        pHighSal_left(iDT) = nHS / (nHS + nLS);
     else
-        pGoalConflict(iDT) = NaN;
+        pHighSal_left(iDT) = NaN;
     end
 
-    % Congruent trials
-    nG = p.status.onlineMetrics.congruent{iDT}.nGoalDirected;
-    nC = p.status.onlineMetrics.congruent{iDT}.nCapture;
-    nCongruent(iDT) = nG + nC;
-    if nCongruent(iDT) > 0
-        pGoalCongruent(iDT) = nG / nCongruent(iDT);
+    % High salience RIGHT
+    nHS = p.status.onlineMetrics.phase1.highSalRight{iDT}.nChoseHighSal;
+    nLS = p.status.onlineMetrics.phase1.highSalRight{iDT}.nChoseLowSal;
+    if (nHS + nLS) > 0
+        pHighSal_right(iDT) = nHS / (nHS + nLS);
     else
-        pGoalCongruent(iDT) = NaN;
+        pHighSal_right(iDT) = NaN;
     end
 end
 
-%% Update tachometric curve plot
-set(p.draw.plotObs.tachConflict, 'XData', deltaTValues, 'YData', pGoalConflict);
-set(p.draw.plotObs.tachCongruent, 'XData', deltaTValues, 'YData', pGoalCongruent);
+% Update Panel 1 plot
+validLeft = ~isnan(pHighSal_left);
+validRight = ~isnan(pHighSal_right);
+if any(validLeft)
+    set(p.draw.plotObs.p1_highSalLeft, ...
+        'XData', deltaTValues(validLeft), 'YData', pHighSal_left(validLeft));
+end
+if any(validRight)
+    set(p.draw.plotObs.p1_highSalRight, ...
+        'XData', deltaTValues(validRight), 'YData', pHighSal_right(validRight));
+end
 
-% Update scatter points for Conflict trials
-validConflict = ~isnan(pGoalConflict);
+%% Panel 2: Phase 1 Collapsed
+pHighSal_collapsed = zeros(1, nDeltaT);
+
+for iDT = 1:nDeltaT
+    nHS = p.status.onlineMetrics.phase1.highSalLeft{iDT}.nChoseHighSal + ...
+          p.status.onlineMetrics.phase1.highSalRight{iDT}.nChoseHighSal;
+    nLS = p.status.onlineMetrics.phase1.highSalLeft{iDT}.nChoseLowSal + ...
+          p.status.onlineMetrics.phase1.highSalRight{iDT}.nChoseLowSal;
+    if (nHS + nLS) > 0
+        pHighSal_collapsed(iDT) = nHS / (nHS + nLS);
+    else
+        pHighSal_collapsed(iDT) = NaN;
+    end
+end
+
+validCollapsed = ~isnan(pHighSal_collapsed);
+if any(validCollapsed)
+    set(p.draw.plotObs.p1_collapsed, ...
+        'XData', deltaTValues(validCollapsed), 'YData', pHighSal_collapsed(validCollapsed));
+end
+
+%% Panel 3: Phases 2-3 Conflict vs Congruent
+pHighSal_conflict = zeros(1, nDeltaT);
+pHighSal_congruent = zeros(1, nDeltaT);
+
+for iDT = 1:nDeltaT
+    % Conflict (combine phases 2 and 3)
+    nHS = p.status.onlineMetrics.phase2.conflict{iDT}.nChoseHighSal + ...
+          p.status.onlineMetrics.phase3.conflict{iDT}.nChoseHighSal;
+    nLS = p.status.onlineMetrics.phase2.conflict{iDT}.nChoseLowSal + ...
+          p.status.onlineMetrics.phase3.conflict{iDT}.nChoseLowSal;
+    if (nHS + nLS) > 0
+        pHighSal_conflict(iDT) = nHS / (nHS + nLS);
+    else
+        pHighSal_conflict(iDT) = NaN;
+    end
+
+    % Congruent (combine phases 2 and 3)
+    nHS = p.status.onlineMetrics.phase2.congruent{iDT}.nChoseHighSal + ...
+          p.status.onlineMetrics.phase3.congruent{iDT}.nChoseHighSal;
+    nLS = p.status.onlineMetrics.phase2.congruent{iDT}.nChoseLowSal + ...
+          p.status.onlineMetrics.phase3.congruent{iDT}.nChoseLowSal;
+    if (nHS + nLS) > 0
+        pHighSal_congruent(iDT) = nHS / (nHS + nLS);
+    else
+        pHighSal_congruent(iDT) = NaN;
+    end
+end
+
+validConflict = ~isnan(pHighSal_conflict);
+validCongruent = ~isnan(pHighSal_congruent);
 if any(validConflict)
-    set(p.draw.plotObs.tachConflictPts, ...
-        'XData', deltaTValues(validConflict), ...
-        'YData', pGoalConflict(validConflict));
+    set(p.draw.plotObs.p23_conflict, ...
+        'XData', deltaTValues(validConflict), 'YData', pHighSal_conflict(validConflict));
 end
-
-% Update scatter points for Congruent trials
-validCongruent = ~isnan(pGoalCongruent);
 if any(validCongruent)
-    set(p.draw.plotObs.tachCongruentPts, ...
-        'XData', deltaTValues(validCongruent), ...
-        'YData', pGoalCongruent(validCongruent));
+    set(p.draw.plotObs.p23_congruent, ...
+        'XData', deltaTValues(validCongruent), 'YData', pHighSal_congruent(validCongruent));
 end
 
-% Update title with trial counts
-totalConflict = sum(nConflict);
-totalCongruent = sum(nCongruent);
-titleStr = sprintf('Tachometric Curve (Conflict: %d, Congruent: %d trials)', ...
-    totalConflict, totalCongruent);
-title(p.draw.tachAxes, titleStr, 'FontSize', 12, 'FontWeight', 'bold');
+%% Panel 4: Cumulative Evolution
+cum = p.status.onlineMetrics.cumulative;
 
-%% Update RT plot
-% Collect all RTs for goal-directed and capture outcomes
-allRtGoal = [];
-allRtCapture = [];
+if ~isempty(cum.trialNumbers)
+    % Phase 1: cumulative by hemifield
+    p1_left_mask = (cum.phase == 1) & (cum.highSalSide == 1);
+    p1_right_mask = (cum.phase == 1) & (cum.highSalSide == 2);
 
-for iDT = 1:nDeltaT
-    allRtGoal = [allRtGoal, p.status.onlineMetrics.conflict{iDT}.rtGoalDirected, ...
-                           p.status.onlineMetrics.congruent{iDT}.rtGoalDirected];
-    allRtCapture = [allRtCapture, p.status.onlineMetrics.conflict{iDT}.rtCapture, ...
-                                 p.status.onlineMetrics.congruent{iDT}.rtCapture];
-end
-
-% Update RT histogram or summary
-if ~isempty(allRtGoal) || ~isempty(allRtCapture)
-    % Compute mean RTs
-    meanRtGoal = mean(allRtGoal, 'omitnan');
-    meanRtCapture = mean(allRtCapture, 'omitnan');
-
-    % Update bar plot
-    set(p.draw.plotObs.rtBarGoal, 'YData', meanRtGoal);
-    set(p.draw.plotObs.rtBarCapture, 'YData', meanRtCapture);
-
-    % Update axis limits
-    maxRT = max([allRtGoal, allRtCapture]);
-    if ~isempty(maxRT) && maxRT > 0
-        set(p.draw.rtAxes, 'YLim', [0, maxRT * 1.2]);
+    if any(p1_left_mask)
+        p1_left_trials = cum.trialNumbers(p1_left_mask);
+        p1_left_choices = cum.choseHighSal(p1_left_mask);
+        p1_left_cumsum = cumsum(p1_left_choices) ./ (1:length(p1_left_choices));
+        set(p.draw.plotObs.cum_p1_left, 'XData', p1_left_trials, 'YData', p1_left_cumsum);
     end
 
-    % Update title with counts and means
-    rtTitleStr = sprintf('Mean RT: Goal=%.0fms (n=%d), Capture=%.0fms (n=%d)', ...
-        meanRtGoal, length(allRtGoal), meanRtCapture, length(allRtCapture));
-    title(p.draw.rtAxes, rtTitleStr, 'FontSize', 11);
+    if any(p1_right_mask)
+        p1_right_trials = cum.trialNumbers(p1_right_mask);
+        p1_right_choices = cum.choseHighSal(p1_right_mask);
+        p1_right_cumsum = cumsum(p1_right_choices) ./ (1:length(p1_right_choices));
+        set(p.draw.plotObs.cum_p1_right, 'XData', p1_right_trials, 'YData', p1_right_cumsum);
+    end
+
+    % Phases 2-3: cumulative by conflict/congruent
+    p23_conflict_mask = ((cum.phase == 2) | (cum.phase == 3)) & (cum.isConflict == 1);
+    p23_congruent_mask = ((cum.phase == 2) | (cum.phase == 3)) & (cum.isConflict == 0);
+
+    if any(p23_conflict_mask)
+        p23_conflict_trials = cum.trialNumbers(p23_conflict_mask);
+        p23_conflict_choices = cum.choseHighSal(p23_conflict_mask);
+        p23_conflict_cumsum = cumsum(p23_conflict_choices) ./ (1:length(p23_conflict_choices));
+        set(p.draw.plotObs.cum_p23_conflict, 'XData', p23_conflict_trials, 'YData', p23_conflict_cumsum);
+    end
+
+    if any(p23_congruent_mask)
+        p23_congruent_trials = cum.trialNumbers(p23_congruent_mask);
+        p23_congruent_choices = cum.choseHighSal(p23_congruent_mask);
+        p23_congruent_cumsum = cumsum(p23_congruent_choices) ./ (1:length(p23_congruent_choices));
+        set(p.draw.plotObs.cum_p23_congruent, 'XData', p23_congruent_trials, 'YData', p23_congruent_cumsum);
+    end
 end
 
-%% Update block progress indicator
-blockStr = sprintf('Block %d/6 | Trial %d/60', ...
-    p.status.iBlock, p.status.iTrialInBlock);
-set(p.draw.blockText, 'String', blockStr);
+%% Panel 5: Session Progress
+% Get phase ratio string
+if p.status.currentPhase == 1
+    ratioStr = '1:1 Ratio';
+elseif p.status.currentPhase == 2
+    ratioStr = '1:2 Ratio';
+else
+    ratioStr = '2:1 Ratio';
+end
+
+phaseStr = sprintf('Phase %d/3 (%s)', p.status.currentPhase, ratioStr);
+set(p.draw.phaseText, 'String', phaseStr);
+
+trialStr = sprintf('Trial %d/%d in Phase', ...
+    p.status.completedTrialsInPhase, p.init.trialsPerPhase);
+set(p.draw.trialText, 'String', trialStr);
+
+totalStr = sprintf('Total: %d/%d', p.status.iGoodTrial, p.init.totalTrials);
+set(p.draw.totalText, 'String', totalStr);
+
+nErrors = p.status.nFixBreak + p.status.nNoResponse + p.status.nInaccurate;
+outcomeStr = sprintf('High Sal: %d | Low Sal: %d | Errors: %d', ...
+    p.status.nChoseHighSalience, p.status.nChoseLowSalience, nErrors);
+set(p.draw.outcomeText, 'String', outcomeStr);
 
 drawnow;
 

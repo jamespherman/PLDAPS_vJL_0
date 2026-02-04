@@ -8,9 +8,9 @@ p.status.iGoodTrial = p.status.iGoodTrial + double(~p.trData.trialRepeatFlag);
 
 %% Update outcome-specific counters
 switch p.trData.outcome
-    case 'GOAL_DIRECTED'
+    case 'CHOSE_HIGH_SAL'
         % Counter updated in updateOnlinePlots
-    case 'CAPTURE'
+    case 'CHOSE_LOW_SAL'
         % Counter updated in updateOnlinePlots
     case 'FIX_BREAK'
         p.status.nFixBreak = p.status.nFixBreak + 1;
@@ -20,16 +20,19 @@ switch p.trData.outcome
         p.status.nInaccurate = p.status.nInaccurate + 1;
 end
 
-%% Calculate trials remaining in current block
+%% Calculate trials remaining in current phase
 if p.trVars.setTargLocViaTrialArray
-    % Count remaining trials in current block
-    blockCol = strcmp(p.init.trialArrayColumnNames, 'blockNumber');
-    currentBlock = p.status.iBlock;
-    inCurrentBlock = p.init.trialsArray(:, blockCol) == currentBlock;
-    p.status.trialsLeftInBlock = ...
-        sum(inCurrentBlock & p.status.trialsArrayRowsPossible);
+    % Count remaining trials in current phase
+    phaseCol = strcmp(p.init.trialArrayColumnNames, 'phaseNumber');
+    currentPhase = p.status.currentPhase;
+    inCurrentPhase = p.init.trialsArray(:, phaseCol) == currentPhase;
+    p.status.trialsLeftInPhase = ...
+        sum(inCurrentPhase & p.status.trialsArrayRowsPossible);
+
+    % Update completed trials in phase
+    p.status.completedTrialsInPhase = p.init.trialsPerPhase - p.status.trialsLeftInPhase;
 else
-    p.status.trialsLeftInBlock = 60 - p.status.iTrialInBlock;
+    p.status.trialsLeftInPhase = p.init.trialsPerPhase - p.status.completedTrialsInPhase;
 end
 
 end

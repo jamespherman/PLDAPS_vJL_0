@@ -98,12 +98,14 @@ try
             P(4)*x + P(5) + randn(size(x)).*(x*4 + 25);
 
         % Use chosen target location for simulated endpoint
-        if p.trData.chosenTarget == 1
-            targX = p.trVars.targA_degX;
-            targY = p.trVars.targA_degY;
+        if p.trData.chosenSide == 1
+            % Chose LEFT target
+            targX = p.trVars.leftTarg_degX;
+            targY = p.trVars.leftTarg_degY;
         else
-            targX = p.trVars.targB_degX;
-            targY = p.trVars.targB_degY;
+            % Chose RIGHT target
+            targX = p.trVars.rightTarg_degX;
+            targY = p.trVars.rightTarg_degY;
         end
 
         p.trData.postSacXY = [targX, targY] + randn(1,2)/20;
