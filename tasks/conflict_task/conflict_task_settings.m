@@ -252,7 +252,7 @@ p.trVarsInit.fixDegY             = 0;       % fixation Y location in degrees
 
 % Target location system (8 locations: 4 left, 4 right)
 % Locations defined by eccentricity and polar angles
-p.trVarsInit.targetEccentricityDeg = 8;     % degrees from fixation (same for all targets)
+p.trVarsInit.targetEccentricityDeg = 10;     % degrees from fixation (same for all targets)
 
 % Right visual field angles: equally spaced between +45 and -45 degrees
 % (0 degrees = rightward, positive = upward)
@@ -298,8 +298,8 @@ p.trVarsInit.goLatencyMax            = 0.6;     % 600ms max response time
 p.trVarsInit.timeoutdur              = 0.275;
 
 % Window sizes
-p.trVarsInit.fixWinWidthDeg       = 2;
-p.trVarsInit.fixWinHeightDeg      = 2;
+p.trVarsInit.fixWinWidthDeg       = 4;
+p.trVarsInit.fixWinHeightDeg      = 4;
 p.trVarsInit.targWinWidthDeg      = 5;      % 5 degree radius per spec
 p.trVarsInit.targWinHeightDeg     = 5;
 p.trVarsInit.targWidth            = 12;     % target line width in pixels
@@ -319,6 +319,13 @@ p.trVarsInit.outcome              = '';     % CHOSE_HIGH_SAL, CHOSE_LOW_SAL, FIX
 % Phase 2: high reward = right, so conflict = high salience left
 % Phase 3: high reward = left, so conflict = high salience right
 p.trVarsInit.isConflict           = false;  % true if high sal opposes high reward
+
+% Target hue indices (set in nextParams based on backgroundHueIdx and highSalienceSide)
+% High salience target: 180° from background, Low salience target: 45° from background
+p.trVarsInit.highSalienceHueIdx   = 10;     % CLUT index for high salience hue
+p.trVarsInit.lowSalienceHueIdx    = 9;      % CLUT index for low salience hue
+p.trVarsInit.leftTargHueIdx       = 10;     % CLUT index for left target
+p.trVarsInit.rightTargHueIdx      = 9;      % CLUT index for right target
 
 % Location coordinates (computed in nextParams from angles)
 p.trVarsInit.leftTarg_degX        = -5.66;  % default: 8 deg at 135 degrees
@@ -456,10 +463,13 @@ p.draw.joyRect              = [1705 900 1735 1100];
 p.draw.cursorW              = 6;
 
 % Bullseye sizes (in degrees)
-p.draw.bullseyeOuterDeg     = 4;    % 4 degree outer ring
-p.draw.bullseyeInnerDeg     = 2;    % 2 degree inner ring
+p.draw.bullseyeOuterDeg     = 2;    % 4 degree outer ring
+p.draw.bullseyeInnerDeg     = 1;    % 2 degree inner ring
 
 %% WHAT TO STROBE:
+% NOTE: Every code name in column 1 MUST have a corresponding entry in
+% +pds/initCodes.m. The strobing mechanism (pds.strobeTrialData) looks up
+% p.init.codes.(codeName) to get the integer code to strobe.
 p.init.strobeList = {...
     %--- basic information ---
     'taskCode',             'p.init.taskCode'; ...
@@ -476,19 +486,19 @@ p.init.strobeList = {...
 
     % --- Conflict Task Variables ---
     'deltaT',               'p.trVars.deltaT + 1000'; ...       % offset by 1000 to handle negatives
-    'backgroundHueIdx',     'p.trVars.backgroundHueIdx'; ...    % 1=Hue A, 2=Hue B
-    'highSalienceSide',     'p.trVars.highSalienceSide'; ...    % 1=left, 2=right
-    'chosenSide',           'p.trData.chosenSide'; ...          % 1=left, 2=right, 0=neither
+    'hueType',              'p.trVars.backgroundHueIdx'; ...    % 1=Hue A, 2=Hue B
+    'highSalienceLocation', 'p.trVars.highSalienceSide'; ...    % 1=left, 2=right
+    'chosenTarget',         'p.trData.chosenSide'; ...          % 1=left, 2=right, 0=neither
     'choseHighSalience',    'p.trData.choseHighSalience'; ...   % 0 or 1
     'outcomeCode',          'p.trData.outcomeCode'; ...         % 1=high sal, 2=low sal, 3+=error
 
-    % --- Location indices and coordinates (x10 for precision) ---
-    'leftLocIdx',           'p.trVars.leftLocIdx'; ...          % 1-4
-    'rightLocIdx',          'p.trVars.rightLocIdx'; ...         % 1-4
-    'leftTarg_x10',         'round(p.trVars.leftTarg_degX * 10)'; ...
-    'leftTarg_y10',         'round(p.trVars.leftTarg_degY * 10)'; ...
-    'rightTarg_x10',        'round(p.trVars.rightTarg_degX * 10)'; ...
-    'rightTarg_y10',        'round(p.trVars.rightTarg_degY * 10)'; ...
+    % --- Target locations using theta/radius (avoids negative coordinate issues) ---
+    % Theta: angle in degrees * 10, with +1800 offset to handle negatives (-180 to +180 -> 0 to 3600)
+    % Radius: eccentricity in degrees * 100
+    'leftTargTheta',        'round(p.trVarsInit.leftAngles(p.trVars.leftLocIdx) * 10) + 1800'; ...
+    'leftTargRadius',       'round(p.trVarsInit.targetEccentricityDeg * 100)'; ...
+    'rightTargTheta',       'round(p.trVarsInit.rightAngles(p.trVars.rightLocIdx) * 10) + 1800'; ...
+    'rightTargRadius',      'round(p.trVarsInit.targetEccentricityDeg * 100)'; ...
     };
 
 end

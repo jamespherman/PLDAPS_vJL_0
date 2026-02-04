@@ -37,7 +37,7 @@ for ii = 1:nStrobesToSend
     
 end
 catch me
-    keyboard
+    %keyboard
 end
 
 % strobe list of values.

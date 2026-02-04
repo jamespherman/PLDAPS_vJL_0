@@ -20,7 +20,7 @@ PsychImaging('PrepareConfiguration');
 % if we're going to play a movie, don't bother trying to do fancy separate
 % colors for monkey / experimenter; otherwise enable separate colors for
 % monkey / experimenter displays.
-if ~isfield(p.draw, 'movie') && ~isfield(p.stim, 'token')
+if ~isfield(p.draw, 'movie') && (~isfield(p, 'stim') || ~isfield(p.stim, 'token'))
     PsychImaging('AddTask', 'General', 'EnableDataPixxL48Output');
 end
 

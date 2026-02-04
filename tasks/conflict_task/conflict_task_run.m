@@ -87,20 +87,28 @@ switch p.trVars.currentState
             p.trVars.postFlip.varNames{end + 1} = 'fixOn';
         end
 
-        % Check if eye entered fixation window while holding joystick
-        if pds.eyeInWindow(p) && pds.joyHeld(p) && ...
-                timeNow < (p.trData.timing.fixOn + p.trVars.fixWaitDur)
-            p.init.strb.addValue(p.init.codes.fixAq);
-            p.trData.timing.fixAq = timeNow;
-            p.trVars.currentState = p.state.dontMove;
-        elseif ~pds.joyHeld(p)
+        % Check joystick first (doesn't depend on fixOn timing)
+        if ~pds.joyHeld(p)
             p.init.strb.addValue(p.init.codes.joyRelease);
             p.trData.timing.joyRelease = timeNow;
             p.trVars.currentState = p.state.joyBreak;
-        elseif timeNow > (p.trData.timing.fixOn + p.trVars.fixWaitDur)
-            p.init.strb.addValue(p.init.codes.nonStart);
-            p.trData.timing.joyRelease = timeNow;
-            p.trVars.currentState = p.state.nonStart;
+            return
+        end
+
+        % Only check fixation timing if fixOn has been assigned (>0)
+        % Timing variables set via postFlip may still be -1 initially
+        if p.trData.timing.fixOn > 0
+            % Check if eye entered fixation window while holding joystick
+            if pds.eyeInWindow(p) && pds.joyHeld(p) && ...
+                    timeNow < (p.trData.timing.fixOn + p.trVars.fixWaitDur)
+                p.init.strb.addValue(p.init.codes.fixAq);
+                p.trData.timing.fixAq = timeNow;
+                p.trVars.currentState = p.state.dontMove;
+            elseif timeNow > (p.trData.timing.fixOn + p.trVars.fixWaitDur)
+                p.init.strb.addValue(p.init.codes.nonStart);
+                p.trData.timing.joyRelease = timeNow;
+                p.trVars.currentState = p.state.nonStart;
+            end
         end
 
     case p.state.dontMove
@@ -144,7 +152,15 @@ switch p.trVars.currentState
         end
 
         % Calculate time since go signal
-        timeSinceGo = timeNow - p.trData.timing.fixOff;
+        % IMPORTANT: Only compute if fixOff has been assigned (>0).
+        % Timing variables are initialized to -1 and set via postFlip,
+        % so they may still be -1 on the first iteration after state transition.
+        if p.trData.timing.fixOff > 0
+            timeSinceGo = timeNow - p.trData.timing.fixOff;
+        else
+            % fixOff not yet assigned - skip timing checks this iteration
+            return
+        end
 
         % Check for saccade initiation
         eyeLeftFixWin = ~pds.eyeInWindow(p);
@@ -181,9 +197,15 @@ switch p.trVars.currentState
         sacInFlight = gazeVelThreshCheck(p, timeNow);
 
         % Get gaze samples since fixation offset for blink detection
-        sinceFixOffLogical = ...
-            p.trData.onlineGaze(:,3) > p.trData.timing.fixOff & ...
-            p.trData.onlineGaze(:,3) < timeNow;
+        % Only compute if fixOff has been assigned (>0)
+        if p.trData.timing.fixOff > 0
+            sinceFixOffLogical = ...
+                p.trData.onlineGaze(:,3) > p.trData.timing.fixOff & ...
+                p.trData.onlineGaze(:,3) < timeNow;
+        else
+            % fixOff not assigned - use all samples up to now
+            sinceFixOffLogical = p.trData.onlineGaze(:,3) < timeNow;
+        end
 
         % Detect blinks
         blinkDetected = ...
@@ -468,10 +490,13 @@ if timeNow > frameDue
     % Draw target stimuli if they should be visible
     if p.trVars.stimuliVisible
         % Draw both bullseyes simultaneously
-        % Both targets use the same hue (determined by backgroundHueIdx)
-        % Salience is created by background contrast, not target color difference
+        % Each target has its own hue based on salience:
+        %   - High salience target: 180° from background (max contrast)
+        %   - Low salience target: 45° from background (low contrast)
+        % Hue assignments are set in nextParams.m based on highSalienceSide
 
-        targetHueIdx = p.trVars.targetHueIdx;
+        leftHueIdx = p.trVars.leftTargHueIdx;
+        rightHueIdx = p.trVars.rightTargHueIdx;
 
         % Compute bullseye sizes in pixels
         stimSize_pix_outer = pds.deg2pix(p.draw.bullseyeOuterDeg, p);
@@ -481,26 +506,26 @@ if timeNow > frameDue
         leftRect_outer = CenterRectOnPoint(...
             [0 0 stimSize_pix_outer stimSize_pix_outer], ...
             p.draw.leftTargPointPix(1), p.draw.leftTargPointPix(2));
-        Screen('FrameRect', p.draw.window, targetHueIdx, ...
+        Screen('FrameRect', p.draw.window, leftHueIdx, ...
             leftRect_outer, p.trVarsInit.targWidth);
 
         leftRect_inner = CenterRectOnPoint(...
             [0 0 stimSize_pix_inner stimSize_pix_inner], ...
             p.draw.leftTargPointPix(1), p.draw.leftTargPointPix(2));
-        Screen('FrameRect', p.draw.window, targetHueIdx, ...
+        Screen('FrameRect', p.draw.window, leftHueIdx, ...
             leftRect_inner, p.trVarsInit.targWidth);
 
         % Draw RIGHT target bullseye
         rightRect_outer = CenterRectOnPoint(...
             [0 0 stimSize_pix_outer stimSize_pix_outer], ...
             p.draw.rightTargPointPix(1), p.draw.rightTargPointPix(2));
-        Screen('FrameRect', p.draw.window, targetHueIdx, ...
+        Screen('FrameRect', p.draw.window, rightHueIdx, ...
             rightRect_outer, p.trVarsInit.targWidth);
 
         rightRect_inner = CenterRectOnPoint(...
             [0 0 stimSize_pix_inner stimSize_pix_inner], ...
             p.draw.rightTargPointPix(1), p.draw.rightTargPointPix(2));
-        Screen('FrameRect', p.draw.window, targetHueIdx, ...
+        Screen('FrameRect', p.draw.window, rightHueIdx, ...
             rightRect_inner, p.trVarsInit.targWidth);
     end
 

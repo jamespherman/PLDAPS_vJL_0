@@ -236,41 +236,49 @@ end
 
 
 function p = setBackgroundColor(p)
-% Sets the background color based on backgroundHueIdx and highSalienceSide.
+% Sets the background color and target hues based on backgroundHueIdx.
 %
-% Background Hue System (DKL color space):
-%   backgroundHueIdx = 1 (Hue A): Target hue is 0 deg DKL
-%     - High salience background: 180 deg DKL (max contrast)
-%     - Low salience background: 45 deg DKL (low contrast)
-%   backgroundHueIdx = 2 (Hue B): Target hue is 180 deg DKL
-%     - High salience background: 0 deg DKL (max contrast)
-%     - Low salience background: 225 deg DKL (low contrast)
+% Salience is created by hue contrast with background:
+%   - High-salience target: hue 180° away from background (max contrast)
+%   - Low-salience target: hue 45° away from background (low contrast)
 %
-% The background is set to create high salience for one target and
-% low salience for the other. Since both targets have the same hue,
-% the background determines which appears more salient.
+% DKL Color Assignments:
+%   backgroundHueIdx = 1 (Hue A):
+%     - Background: 0° DKL
+%     - High salience target: 180° DKL (180° from BG)
+%     - Low salience target: 45° DKL (45° from BG)
+%   backgroundHueIdx = 2 (Hue B):
+%     - Background: 180° DKL
+%     - High salience target: 0° DKL (180° from BG)
+%     - Low salience target: 225° DKL (45° from BG)
+%
+% Which target (left or right) gets which hue is determined by
+% p.trVars.highSalienceSide (1=left, 2=right).
 
 bgHueIdx = p.trVars.backgroundHueIdx;
-highSalSide = p.trVars.highSalienceSide;
-
-% Determine which background hue creates the desired salience pattern
-% The background should be 180 deg offset from the high-salience target's hue
 
 if bgHueIdx == 1
-    % Hue A condition: target hue = 0 deg DKL
-    % High salience needs background at 180 deg (opposite)
-    % We use 180 deg background so target at 0 deg has high contrast
-    p.draw.color.background = p.draw.clutIdx.expDkl180_subDkl180;
-    p.trVars.targetHueIdx = p.draw.clutIdx.expDkl0_subDkl0;
-else
-    % Hue B condition: target hue = 180 deg DKL
-    % High salience needs background at 0 deg (opposite)
+    % Hue A: Background at 0° DKL
     p.draw.color.background = p.draw.clutIdx.expDkl0_subDkl0;
-    p.trVars.targetHueIdx = p.draw.clutIdx.expDkl180_subDkl180;
+    p.trVars.highSalienceHueIdx = p.draw.clutIdx.expDkl180_subDkl180;  % 180° from BG
+    p.trVars.lowSalienceHueIdx = p.draw.clutIdx.expDkl45_subDkl45;      % 45° from BG
+else
+    % Hue B: Background at 180° DKL
+    p.draw.color.background = p.draw.clutIdx.expDkl180_subDkl180;
+    p.trVars.highSalienceHueIdx = p.draw.clutIdx.expDkl0_subDkl0;       % 180° from BG
+    p.trVars.lowSalienceHueIdx = p.draw.clutIdx.expDkl225_subDkl225;    % 45° from BG
 end
 
-% Store which side has high/low salience for drawing
-p.trVars.highSalienceSide = highSalSide;  % 1=left, 2=right
+% Assign hues to left/right targets based on highSalienceSide
+if p.trVars.highSalienceSide == 1
+    % Left target is high salience
+    p.trVars.leftTargHueIdx = p.trVars.highSalienceHueIdx;
+    p.trVars.rightTargHueIdx = p.trVars.lowSalienceHueIdx;
+else
+    % Right target is high salience
+    p.trVars.leftTargHueIdx = p.trVars.lowSalienceHueIdx;
+    p.trVars.rightTargHueIdx = p.trVars.highSalienceHueIdx;
+end
 
 end
 

@@ -125,7 +125,44 @@ p.init.phaseRewardRatios = [...
 % For each phase, we track which trials remain to be completed
 p.status.trialsArrayRowsPossible = true(totalTrials, 1);
 
-%% 6. Print summary
+%% 6. Verify counterbalancing
+% Get column index for highSalienceSide
+colNames = p.init.trialArrayColumnNames;
+salSideCol = find(strcmp(colNames, 'highSalienceSide'));
+phaseCol = find(strcmp(colNames, 'phaseNumber'));
+bgHueCol = find(strcmp(colNames, 'backgroundHueIdx'));
+deltaTCol = find(strcmp(colNames, 'deltaTIdx'));
+
+% Check counterbalancing within each phase
+for iPhase = 1:nPhases
+    phaseRows = p.init.trialsArray(:, phaseCol) == iPhase;
+    phaseData = p.init.trialsArray(phaseRows, :);
+
+    % Count high salience sides
+    nHighSalLeft = sum(phaseData(:, salSideCol) == 1);
+    nHighSalRight = sum(phaseData(:, salSideCol) == 2);
+
+    % Count background hues
+    nHueA = sum(phaseData(:, bgHueCol) == 1);
+    nHueB = sum(phaseData(:, bgHueCol) == 2);
+
+    % Count delta-t values
+    nDeltaTNeg = sum(phaseData(:, deltaTCol) == 1);
+    nDeltaTPos = sum(phaseData(:, deltaTCol) == 2);
+
+    % Verify exact counterbalancing
+    assert(nHighSalLeft == nHighSalRight, ...
+        'Phase %d: highSalienceSide not balanced! Left=%d, Right=%d', ...
+        iPhase, nHighSalLeft, nHighSalRight);
+    assert(nHueA == nHueB, ...
+        'Phase %d: backgroundHueIdx not balanced! A=%d, B=%d', ...
+        iPhase, nHueA, nHueB);
+    assert(nDeltaTNeg == nDeltaTPos, ...
+        'Phase %d: deltaT not balanced! -150=%d, +150=%d', ...
+        iPhase, nDeltaTNeg, nDeltaTPos);
+end
+
+%% 7. Print summary
 fprintf('----------------------------------------\n');
 fprintf('Conflict Task Trial Structure Generated (Refactored):\n');
 fprintf('  Total trials: %d\n', totalTrials);
@@ -138,9 +175,19 @@ fprintf('  High salience sides: %d (left, right)\n', nSalienceSides);
 fprintf('  Delta-t values: %s ms\n', mat2str(deltaTValues));
 fprintf('  Conditions per phase: %d × %d × %d × %d = %d\n', ...
     nLocPairs, nBackgroundHues, nSalienceSides, nDeltaT, nConditions);
-fprintf('  Phase 1 reward ratio: 1:1 (195ms : 195ms)\n');
-fprintf('  Phase 2 reward ratio: 1:2 (130ms : 260ms)\n');
-fprintf('  Phase 3 reward ratio: 2:1 (260ms : 130ms)\n');
+fprintf('----------------------------------------\n');
+fprintf('Counterbalancing verified (per phase):\n');
+fprintf('  High salience LEFT:  %d trials (50%%)\n', trialsPerPhase/2);
+fprintf('  High salience RIGHT: %d trials (50%%)\n', trialsPerPhase/2);
+fprintf('  Background Hue A:    %d trials (50%%)\n', trialsPerPhase/2);
+fprintf('  Background Hue B:    %d trials (50%%)\n', trialsPerPhase/2);
+fprintf('  Delta-t = -150ms:    %d trials (50%%)\n', trialsPerPhase/2);
+fprintf('  Delta-t = +150ms:    %d trials (50%%)\n', trialsPerPhase/2);
+fprintf('----------------------------------------\n');
+fprintf('Reward ratios:\n');
+fprintf('  Phase 1: 1:1 (195ms : 195ms)\n');
+fprintf('  Phase 2: 1:2 (130ms : 260ms)\n');
+fprintf('  Phase 3: 2:1 (260ms : 130ms)\n');
 fprintf('----------------------------------------\n');
 
 end

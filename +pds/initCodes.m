@@ -228,10 +228,18 @@ codes.targetLocIdx  = 16014;
 % conflict_task codes
 codes.deltaT                = 16020;  % stimulus onset asynchrony (value + 1000 to handle negatives)
 codes.highRewardLocation    = 16021;  % 1=A, 2=B
-codes.highSalienceLocation  = 16022;  % 1=A, 2=B
+codes.highSalienceLocation  = 16022;  % 1=A, 2=B (same as highSalienceSide)
 codes.hueType               = 16025;  % 1 or 2 (counterbalanced color scheme)
-codes.chosenTarget          = 16023;  % 1=A, 2=B, 0=neither
+codes.chosenTarget          = 16023;  % 1=A, 2=B, 0=neither (same as chosenSide)
 codes.outcomeCode           = 16024;  % 1=goal-directed, 2=capture, 3+=error types
+codes.phaseNumber           = 16026;  % experimental phase (1, 2, or 3)
+codes.rewardDurationLeft    = 16027;  % reward duration for left target (ms)
+codes.rewardDurationRight   = 16028;  % reward duration for right target (ms)
+codes.choseHighSalience     = 16029;  % 0 or 1: did subject choose high salience target?
+codes.leftTargTheta         = 16030;  % left target angle (degrees * 10, add 1800 for negatives)
+codes.leftTargRadius        = 16031;  % left target eccentricity (degrees * 100)
+codes.rightTargTheta        = 16032;  % right target angle (degrees * 10, add 1800 for negatives)
+codes.rightTargRadius       = 16033;  % right target eccentricity (degrees * 100)
 
 %% validation
 

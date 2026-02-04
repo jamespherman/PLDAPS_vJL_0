@@ -62,6 +62,44 @@ All experiment state flows through a single structure `p` containing:
 - `pds.code2str`, `pds.str2code` - Convert event codes to/from strings
 - `pds.classyStrobe` - Object for managing event strobing to ephys systems
 
+### Strobe Code System (CRITICAL)
+
+The strobe code system sends event markers to neural recording systems (Omniplex, Ripple) for synchronization. **This file is HOLY** - once recording has been done, `+pds/initCodes.m` is the only way to reconstruct when events occurred in the ephys data.
+
+**How it works:**
+
+1. **`+pds/initCodes.m`** defines all strobe codes as a struct:
+   ```matlab
+   codes.fixOn = 3001;      % integer code sent to ephys
+   codes.targetOn = 4001;
+   codes.deltaT = 16020;    % conflict_task specific
+   ```
+
+2. **`p.init.strobeList`** (in each `_settings.m`) defines what to strobe per trial:
+   ```matlab
+   p.init.strobeList = {
+       'fixOn',        'p.trData.timing.fixOn';     % code name, value expression
+       'deltaT',       'p.trVars.deltaT + 1000';    % offset handles negatives
+   };
+   ```
+
+3. **During `_init.m`**, codes are loaded: `p.init.codes = pds.initCodes;`
+
+4. **`pds.strobeTrialData(p)`** loops over `strobeList`, looks up each code name in `p.init.codes`, and strobes the (code, value) pair.
+
+**CRITICAL REQUIREMENT:** Every code name in column 1 of `p.init.strobeList` **must** have a matching field in `+pds/initCodes.m`. Missing codes will silently fail (caught by try/catch).
+
+**Handling negative values:** Strobe values must be positive integers. For variables that can be negative:
+- Add an offset (e.g., `deltaT + 1000` for values in range -1000 to +1000)
+- Use angle/radius instead of x/y coordinates for locations
+
+**Target location convention:** Use polar coordinates (theta, radius) instead of Cartesian (x, y):
+```matlab
+'targetTheta',   'p.trVars.targTheta_x10';      % angle * 10
+'targetRadius',  'p.trVars.targRadius_x100';    % eccentricity * 100
+```
+For angles that can be negative (-180 to +180), add 1800 after scaling by 10.
+
 ## Running the Framework
 
 1. Launch MATLAB and run `PLDAPS_vK2_GUI.m`
@@ -76,6 +114,8 @@ All experiment state flows through a single structure `p` containing:
 3. Create `supportFunctions/` subdirectory for helpers
 4. Implement state machine logic in `_run.m`
 5. Use `+pds` functions for all hardware access
+6. **Define `p.init.strobeList`** in `_settings.m` with task-specific variables to strobe
+7. **Add any new strobe codes** to `+pds/initCodes.m` - every code name in `strobeList` must exist in `initCodes.m`
 
 ## Dependencies
 
@@ -109,6 +149,62 @@ end
 ```matlab
 p = rigConfigFiles.rigConfig_rig1(p);
 ```
+
+### Timing Variables and the postFlip Convention (CRITICAL)
+
+Timing variables in `p.trData.timing` (e.g., `fixOn`, `fixOff`, `stimOn`) are initialized to `-1` in each task's `_settings.m` file. This allows checking whether a timing event has occurred:
+- `-1` = event has NOT occurred yet
+- `> 0` = event has occurred, value is the timestamp
+
+**The postFlip mechanism:** Visual event times (fixation onset, stimulus onset, etc.) must be recorded AFTER the screen flip that displays them. This is handled by:
+1. Adding the variable name to `p.trVars.postFlip.varNames` before the flip
+2. The `drawMachine` assigns the actual timestamp after `Screen('Flip', ...)` executes
+
+**CRITICAL BUG PATTERN:** When a state transition occurs (e.g., from `dontMove` to `makeSaccade`), timing variables set via postFlip may still be `-1` on the first iteration because the flip hasn't happened yet.
+
+**WRONG - will compute incorrect time:**
+```matlab
+case p.state.makeSaccade
+    timeSinceGo = timeNow - p.trData.timing.fixOff;  % BUG: fixOff may be -1!
+    if timeSinceGo > p.trVars.responseWindow
+        % This triggers immediately with huge timeSinceGo value
+    end
+```
+
+**CORRECT - check timing variable is valid first:**
+```matlab
+case p.state.makeSaccade
+    if p.trData.timing.fixOff > 0
+        timeSinceGo = timeNow - p.trData.timing.fixOff;
+        if timeSinceGo > p.trVars.responseWindow
+            % Safe: only checked when fixOff has real value
+        end
+    else
+        return  % Skip timing checks until fixOff is assigned
+    end
+```
+
+**Rule:** Always check `p.trData.timing.X > 0` before using timing variable `X` in calculations, especially for variables set via the postFlip mechanism.
+
+### Conflict Task: Salience via DKL Color Contrast
+
+In the conflict task, target salience is created through **hue contrast with background**, not by using the same color for both targets:
+
+- **High-salience target**: hue 180° away from background (maximum contrast)
+- **Low-salience target**: hue 45° away from background (low contrast)
+
+| backgroundHueIdx | Background | High Sal Target | Low Sal Target |
+|------------------|------------|-----------------|----------------|
+| 1 (Hue A) | 0° DKL | 180° DKL | 45° DKL |
+| 2 (Hue B) | 180° DKL | 0° DKL | 225° DKL |
+
+The `highSalienceSide` variable (1=left, 2=right) determines which physical target gets the high-salience hue. This is set per-trial in `nextParams.m`:
+```matlab
+p.trVars.leftTargHueIdx = ...;   % Assigned based on highSalienceSide
+p.trVars.rightTargHueIdx = ...;  % Each target drawn with its own hue
+```
+
+**Common mistake:** Drawing both targets with the same hue creates equal salience for both, defeating the purpose of the manipulation.
 
 ## Caveats
 
