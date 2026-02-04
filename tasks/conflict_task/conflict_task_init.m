@@ -25,9 +25,6 @@ p   = pds.initDataPixx(p);
 % Define audio waveforms (reward tones, etc.) and load to VIEWPixx
 p   = pds.initAudio(p);
 
-% Define online-plotting windows (tachometric curve, etc.)
-p   = extraWindowSetup(p);
-
 % Define grid line locations for experimenter display overlay
 p   = pds.defineGridLines(p);
 
@@ -35,7 +32,11 @@ p   = pds.defineGridLines(p);
 p.init.codes = pds.initCodes;
 
 % Build the trial structure array defining all trial types
+% (must run before extraWindowSetup so deltaTValues is available for plotting)
 p   = initTrialStructure(p);
+
+% Define online-plotting windows (tachometric curve, etc.)
+p   = extraWindowSetup(p);
 
 % Initialize connection to Ripple neural recording system
 p = pds.initRipple(p);

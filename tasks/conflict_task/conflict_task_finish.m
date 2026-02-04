@@ -136,21 +136,25 @@ try
         postSacFix = Vsd < p.trVars.eyeVelThreshOffline & ...
             T > (sacOnsetPTB + 0.01);
 
-        % Compute saccade onset and offset times
-        saccadeOnsetTime = max(T(preSacFix));
-        saccadeOffsetTime = min(T(postSacFix));
+        % Compute saccade onset and offset times (in absolute PTB time)
+        saccadeOnsetTimeAbs = max(T(preSacFix));
+        saccadeOffsetTimeAbs = min(T(postSacFix));
 
-        if ~isempty(saccadeOnsetTime) && ~isempty(saccadeOffsetTime)
+        % Convert to trial-relative time for consistency with other timing variables
+        saccadeOnsetTime = saccadeOnsetTimeAbs - p.trData.timing.trialStartPTB;
+        saccadeOffsetTime = saccadeOffsetTimeAbs - p.trData.timing.trialStartPTB;
 
-            % Find peak velocity during saccade
-            g = T > saccadeOnsetTime & T < saccadeOffsetTime;
+        if ~isempty(saccadeOnsetTimeAbs) && ~isempty(saccadeOffsetTimeAbs)
+
+            % Find peak velocity during saccade (use absolute times for comparison with T)
+            g = T > saccadeOnsetTimeAbs & T < saccadeOffsetTimeAbs;
             p.trData.peakVel = max(Vsd(g));
 
             % Compute mean gaze position 5ms before and after saccade
-            preSacTime = T < saccadeOnsetTime & ...
-                T >= (saccadeOnsetTime - 0.005);
-            postSacTime = T > saccadeOffsetTime & ...
-                T <= (saccadeOffsetTime + 0.005);
+            preSacTime = T < saccadeOnsetTimeAbs & ...
+                T >= (saccadeOnsetTimeAbs - 0.005);
+            postSacTime = T > saccadeOffsetTimeAbs & ...
+                T <= (saccadeOffsetTimeAbs + 0.005);
 
             p.trData.preSacXY = ...
                 [mean(X(preSacTime)), mean(Y(preSacTime))];
