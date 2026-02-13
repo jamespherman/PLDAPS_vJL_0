@@ -174,6 +174,19 @@ for i = 1:p.stim.nFeatures
                 p.stim.ctrstArray(:, [1 3]) = p.trVars.ctrstMask;
                 p.stim.lumVarArray(:, [1 3]) = p.trVars.lumMaskVar;
             case 'speed'
+                % Validate that speed stays within physical bounds after
+                % delta application. Clamp if necessary and warn.
+                outlierSpeed = p.stim.speedArray(p.trVars.stimChgIdx, 2);
+                if outlierSpeed < p.stim.minSpeed
+                    warning(['Speed would be %.4f (below minSpeed %.4f). ' ...
+                        'Clamping to minSpeed.'], outlierSpeed, p.stim.minSpeed);
+                    p.stim.speedArray(p.trVars.stimChgIdx, 2) = p.stim.minSpeed;
+                elseif outlierSpeed > p.stim.maxSpeed
+                    warning(['Speed would be %.4f (above maxSpeed %.4f). ' ...
+                        'Clamping to maxSpeed.'], outlierSpeed, p.stim.maxSpeed);
+                    p.stim.speedArray(p.trVars.stimChgIdx, 2) = p.stim.maxSpeed;
+                end
+
                 p.stim.speedArray(:, [1 3]) = repmat(...
                     p.stim.speedArray(:, 2), 1, 2);
                 p.stim.orientVarArray(:, [1 3]) = p.trVars.orientMaskVar;
