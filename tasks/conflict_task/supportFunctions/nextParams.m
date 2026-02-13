@@ -15,7 +15,7 @@ function p = nextParams(p)
 %% 1. Choose a row from the trial array
 p = chooseRow(p);
 
-% Exit early if session is complete (384 trials done)
+% Exit early if session is complete (448 trials done)
 if p.trVars.exitWhileLoop
     return;
 end
@@ -46,9 +46,9 @@ function p = chooseRow(p)
 % randomly from remaining trials.
 %
 % Phases:
-%   1: 1:1 reward ratio (trials 1-128)
-%   2: 1:2 reward ratio (trials 129-256)
-%   3: 2:1 reward ratio (trials 257-384)
+%   1: 1:1 reward ratio (192 trials: 128 dual + 64 single-stim)
+%   2: 1:2 reward ratio (128 trials)
+%   3: 2:1 reward ratio (128 trials)
 
 %% Get column indices
 colNames = p.init.trialArrayColumnNames;
@@ -116,18 +116,16 @@ p.trVars.backgroundHueIdx   = currentRow(cols.backgroundHueIdx);
 p.trVars.highSalienceSide   = currentRow(cols.highSalienceSide);
 p.trVars.deltaTIdx          = currentRow(cols.deltaTIdx);
 p.trVars.deltaT             = currentRow(cols.deltaT);
+p.trVars.singleStimSide     = currentRow(cols.singleStimSide);
+p.trVars.rewardBigSide      = currentRow(cols.rewardBigSide);
 
-%% Determine if this is a conflict trial (for phases 2-3)
-% Phase 2: high reward on RIGHT, so conflict = high salience LEFT
-% Phase 3: high reward on LEFT, so conflict = high salience RIGHT
-if p.trVars.phaseNumber == 1
-    p.trVars.isConflict = false;  % N/A for phase 1 (equal rewards)
-elseif p.trVars.phaseNumber == 2
-    % 1:2 ratio: high reward RIGHT
-    p.trVars.isConflict = (p.trVars.highSalienceSide == 1);  % conflict if sal LEFT
-elseif p.trVars.phaseNumber == 3
-    % 2:1 ratio: high reward LEFT
-    p.trVars.isConflict = (p.trVars.highSalienceSide == 2);  % conflict if sal RIGHT
+%% Determine if this is a conflict trial
+% Conflict = high salience side differs from high reward side
+% For single-stim: N/A (only one target)
+if p.trVars.singleStimSide > 0
+    p.trVars.isConflict = false;  % N/A for single-stim
+else
+    p.trVars.isConflict = (p.trVars.rewardBigSide ~= p.trVars.highSalienceSide);
 end
 
 %% Print trial info
@@ -137,30 +135,40 @@ else
     salSideStr = 'RIGHT';
 end
 
-if p.trVars.phaseNumber == 1
-    conflictStr = '';
-    ratioStr = '1:1';
-elseif p.trVars.phaseNumber == 2
-    conflictStr = p.trVars.isConflict * 'CONFLICT' + ~p.trVars.isConflict * 'CONGRUENT';
-    if p.trVars.isConflict
-        conflictStr = 'CONFLICT';
-    else
-        conflictStr = 'CONGRUENT';
-    end
-    ratioStr = '1:2';
+if p.trVars.rewardBigSide == 1
+    rwdSideStr = 'BigL';
 else
-    if p.trVars.isConflict
-        conflictStr = 'CONFLICT';
-    else
-        conflictStr = 'CONGRUENT';
-    end
-    ratioStr = '2:1';
+    rwdSideStr = 'BigR';
 end
 
-fprintf('Phase %d (%s), Trial %d/%d: HighSal=%s %s, dT=%+dms, Locs=[%d,%d]\n', ...
+if p.trVars.singleStimSide == 1
+    singleStr = 'SINGLE-LEFT';
+elseif p.trVars.singleStimSide == 2
+    singleStr = 'SINGLE-RIGHT';
+else
+    singleStr = '';
+end
+
+if p.trVars.singleStimSide > 0
+    conflictStr = '';
+elseif p.trVars.isConflict
+    conflictStr = 'CONFLICT';
+else
+    conflictStr = 'CONGRUENT';
+end
+
+R = p.trVars.rewardRatioBig;
+if p.trVars.rewardBigSide == 1
+    ratioStr = sprintf('%.1f:1', R);
+else
+    ratioStr = sprintf('1:%.1f', R);
+end
+
+trialsInThisPhase = p.init.trialsPerPhaseList(p.trVars.phaseNumber);
+fprintf('Phase %d (%s), Trial %d/%d: HighSal=%s %s %s %s, dT=%+dms, Locs=[%d,%d]\n', ...
     p.trVars.phaseNumber, ratioStr, ...
-    p.status.completedTrialsInPhase + 1, p.init.trialsPerPhase, ...
-    salSideStr, conflictStr, ...
+    p.status.completedTrialsInPhase + 1, trialsInThisPhase, ...
+    salSideStr, rwdSideStr, conflictStr, singleStr, ...
     p.trVars.deltaT, p.trVars.leftLocIdx, p.trVars.rightLocIdx);
 
 end
@@ -210,25 +218,28 @@ end
 
 
 function p = calculateRewards(p)
-% Calculates reward durations based on the current phase's ratio.
+% Calculates reward durations based on per-trial rewardBigSide assignment.
 %
-% Phase 1: 1:1 -> 195ms : 195ms
-% Phase 2: 1:2 -> 130ms : 260ms
-% Phase 3: 2:1 -> 260ms : 130ms
+% Uses rewardBigSide (from trial array) and rewardRatioBig (from settings)
+% to determine left/right reward durations.
+%   rewardBigSide=1: leftRatio=rewardRatioBig, rightRatio=1
+%   rewardBigSide=2: leftRatio=1, rightRatio=rewardRatioBig
 
-%% Get reward ratios for current phase
-ratios = p.init.phaseRewardRatios(p.trVars.phaseNumber, :);
-leftRatio = ratios(1);
-rightRatio = ratios(2);
+C = p.trVars.rewardDurationMs;
+R = p.trVars.rewardRatioBig;
 
-%% Store current ratios
+if p.trVars.rewardBigSide == 1
+    leftRatio = R;
+    rightRatio = 1;
+else
+    leftRatio = 1;
+    rightRatio = R;
+end
+
 p.trVars.rewardRatioLeft = leftRatio;
 p.trVars.rewardRatioRight = rightRatio;
 
-%% Calculate reward durations
-C = p.trVars.rewardDurationMs;  % Total budget (390ms)
 totalRatio = leftRatio + rightRatio;
-
 p.trVars.rewardDurationLeft = round(C * leftRatio / totalRatio);
 p.trVars.rewardDurationRight = round(C * rightRatio / totalRatio);
 

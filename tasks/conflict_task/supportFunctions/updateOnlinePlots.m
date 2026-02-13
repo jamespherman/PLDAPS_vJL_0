@@ -1,13 +1,14 @@
 function p = updateOnlinePlots(p)
 %   p = updateOnlinePlots(p)
 %
-% Updates the online visualization for the Conflict Task (refactored design).
-% 5-panel display:
-%   Panel 1: Phase 1 by Hemifield
-%   Panel 2: Phase 1 Collapsed
-%   Panel 3: Phases 2-3 Conflict vs Congruent
-%   Panel 4: Cumulative Evolution
-%   Panel 5: Session Progress
+% Updates the online visualization for the Conflict Task.
+% 6-panel display (3 rows x 3 columns):
+%   Panel 1: Phase 1 P(High Sal) by Hemifield
+%   Panel 2: Phases 2-3 P(High Sal) Conflict vs Congruent
+%   Panel 3: Phase 1 Median RT by Hemifield
+%   Panel 4: Phases 2-3 Median RT Conflict vs Congruent
+%   Panel 5: Choice Evolution Over Session
+%   Panel 6: Session Information (right column)
 
 % Update metrics based on current trial outcome
 p = updateMetrics(p);
@@ -33,36 +34,45 @@ highSalSide = p.trVars.highSalienceSide;  % 1=left, 2=right
 choseHighSal = p.trData.choseHighSalience;
 isConflict = p.trVars.isConflict;
 rt = p.trData.SRT;
+isSingleStim = (p.trVars.singleStimSide ~= 0);
 
 %% Route metrics to appropriate phase/category structure
 if phaseNumber == 1
-    % Phase 1: categorize by high salience side
-    if highSalSide == 1
-        metricsCell = p.status.onlineMetrics.phase1.highSalLeft;
-    else
-        metricsCell = p.status.onlineMetrics.phase1.highSalRight;
-    end
-
-    % Update counts
-    if choseHighSal
-        metricsCell{deltaTIdx}.nChoseHighSal = ...
-            metricsCell{deltaTIdx}.nChoseHighSal + 1;
-        if ~isempty(rt) && ~isnan(rt)
-            metricsCell{deltaTIdx}.rtHighSal(end+1) = rt * 1000;
+    if isSingleStim
+        % Track single-stim trials separately (not in tachometric curves)
+        p.status.nSingleStimTotal = p.status.nSingleStimTotal + 1;
+        if choseHighSal
+            p.status.nSingleStimCorrect = p.status.nSingleStimCorrect + 1;
         end
     else
-        metricsCell{deltaTIdx}.nChoseLowSal = ...
-            metricsCell{deltaTIdx}.nChoseLowSal + 1;
-        if ~isempty(rt) && ~isnan(rt)
-            metricsCell{deltaTIdx}.rtLowSal(end+1) = rt * 1000;
+        % Dual-stim Phase 1: categorize by high salience side
+        if highSalSide == 1
+            metricsCell = p.status.onlineMetrics.phase1.highSalLeft;
+        else
+            metricsCell = p.status.onlineMetrics.phase1.highSalRight;
         end
-    end
 
-    % Store back
-    if highSalSide == 1
-        p.status.onlineMetrics.phase1.highSalLeft = metricsCell;
-    else
-        p.status.onlineMetrics.phase1.highSalRight = metricsCell;
+        % Update counts
+        if choseHighSal
+            metricsCell{deltaTIdx}.nChoseHighSal = ...
+                metricsCell{deltaTIdx}.nChoseHighSal + 1;
+            if ~isempty(rt) && ~isnan(rt)
+                metricsCell{deltaTIdx}.rtHighSal(end+1) = rt * 1000;
+            end
+        else
+            metricsCell{deltaTIdx}.nChoseLowSal = ...
+                metricsCell{deltaTIdx}.nChoseLowSal + 1;
+            if ~isempty(rt) && ~isnan(rt)
+                metricsCell{deltaTIdx}.rtLowSal(end+1) = rt * 1000;
+            end
+        end
+
+        % Store back
+        if highSalSide == 1
+            p.status.onlineMetrics.phase1.highSalLeft = metricsCell;
+        else
+            p.status.onlineMetrics.phase1.highSalRight = metricsCell;
+        end
     end
 
 elseif phaseNumber == 2
@@ -133,20 +143,23 @@ cum.choseHighSal(end+1) = choseHighSal;
 cum.phase(end+1) = phaseNumber;
 cum.highSalSide(end+1) = highSalSide;
 cum.isConflict(end+1) = isConflict;
+cum.isSingleStim(end+1) = isSingleStim;
 p.status.onlineMetrics.cumulative = cum;
 
-%% Update global outcome counters
-if choseHighSal
-    p.status.nChoseHighSalience = p.status.nChoseHighSalience + 1;
-else
-    p.status.nChoseLowSalience = p.status.nChoseLowSalience + 1;
+%% Update global outcome counters (dual-stim only)
+if ~isSingleStim
+    if choseHighSal
+        p.status.nChoseHighSalience = p.status.nChoseHighSalience + 1;
+    else
+        p.status.nChoseLowSalience = p.status.nChoseLowSalience + 1;
+    end
 end
 
 end
 
 %% -------------------- UPDATE ALL PANELS --------------------
 function p = updateAllPanels(p)
-% Updates all 5 visualization panels.
+% Updates all 6 visualization panels.
 
 % Check if visualization figure exists
 if ~isfield(p.draw, 'vizFig') || ~isvalid(p.draw.vizFig)
@@ -156,7 +169,7 @@ end
 deltaTValues = p.status.deltaTValues;
 nDeltaT = p.status.nDeltaT;
 
-%% Panel 1: Phase 1 by Hemifield
+%% Panel 1: Phase 1 P(High Sal) by Hemifield
 pHighSal_left = zeros(1, nDeltaT);
 pHighSal_right = zeros(1, nDeltaT);
 
@@ -180,7 +193,6 @@ for iDT = 1:nDeltaT
     end
 end
 
-% Update Panel 1 plot
 validLeft = ~isnan(pHighSal_left);
 validRight = ~isnan(pHighSal_right);
 if any(validLeft)
@@ -192,28 +204,7 @@ if any(validRight)
         'XData', deltaTValues(validRight), 'YData', pHighSal_right(validRight));
 end
 
-%% Panel 2: Phase 1 Collapsed
-pHighSal_collapsed = zeros(1, nDeltaT);
-
-for iDT = 1:nDeltaT
-    nHS = p.status.onlineMetrics.phase1.highSalLeft{iDT}.nChoseHighSal + ...
-          p.status.onlineMetrics.phase1.highSalRight{iDT}.nChoseHighSal;
-    nLS = p.status.onlineMetrics.phase1.highSalLeft{iDT}.nChoseLowSal + ...
-          p.status.onlineMetrics.phase1.highSalRight{iDT}.nChoseLowSal;
-    if (nHS + nLS) > 0
-        pHighSal_collapsed(iDT) = nHS / (nHS + nLS);
-    else
-        pHighSal_collapsed(iDT) = NaN;
-    end
-end
-
-validCollapsed = ~isnan(pHighSal_collapsed);
-if any(validCollapsed)
-    set(p.draw.plotObs.p1_collapsed, ...
-        'XData', deltaTValues(validCollapsed), 'YData', pHighSal_collapsed(validCollapsed));
-end
-
-%% Panel 3: Phases 2-3 Conflict vs Congruent
+%% Panel 2: Phases 2-3 P(High Sal) Conflict vs Congruent
 pHighSal_conflict = zeros(1, nDeltaT);
 pHighSal_congruent = zeros(1, nDeltaT);
 
@@ -252,13 +243,79 @@ if any(validCongruent)
         'XData', deltaTValues(validCongruent), 'YData', pHighSal_congruent(validCongruent));
 end
 
-%% Panel 4: Cumulative Evolution
+%% Panel 3: Phase 1 Median RT by Hemifield
+medianRT_left = NaN(1, nDeltaT);
+medianRT_right = NaN(1, nDeltaT);
+
+for iDT = 1:nDeltaT
+    % High salience LEFT: combine all RTs regardless of choice
+    allRT = [p.status.onlineMetrics.phase1.highSalLeft{iDT}.rtHighSal, ...
+             p.status.onlineMetrics.phase1.highSalLeft{iDT}.rtLowSal];
+    if ~isempty(allRT)
+        medianRT_left(iDT) = median(allRT);
+    end
+
+    % High salience RIGHT
+    allRT = [p.status.onlineMetrics.phase1.highSalRight{iDT}.rtHighSal, ...
+             p.status.onlineMetrics.phase1.highSalRight{iDT}.rtLowSal];
+    if ~isempty(allRT)
+        medianRT_right(iDT) = median(allRT);
+    end
+end
+
+validLeft = ~isnan(medianRT_left);
+validRight = ~isnan(medianRT_right);
+if any(validLeft)
+    set(p.draw.plotObs.rt_p1_highSalLeft, ...
+        'XData', deltaTValues(validLeft), 'YData', medianRT_left(validLeft));
+end
+if any(validRight)
+    set(p.draw.plotObs.rt_p1_highSalRight, ...
+        'XData', deltaTValues(validRight), 'YData', medianRT_right(validRight));
+end
+
+%% Panel 4: Phases 2-3 Median RT Conflict vs Congruent
+medianRT_conflict = NaN(1, nDeltaT);
+medianRT_congruent = NaN(1, nDeltaT);
+
+for iDT = 1:nDeltaT
+    % Conflict (combine phases 2 and 3)
+    allRT = [p.status.onlineMetrics.phase2.conflict{iDT}.rtHighSal, ...
+             p.status.onlineMetrics.phase2.conflict{iDT}.rtLowSal, ...
+             p.status.onlineMetrics.phase3.conflict{iDT}.rtHighSal, ...
+             p.status.onlineMetrics.phase3.conflict{iDT}.rtLowSal];
+    if ~isempty(allRT)
+        medianRT_conflict(iDT) = median(allRT);
+    end
+
+    % Congruent (combine phases 2 and 3)
+    allRT = [p.status.onlineMetrics.phase2.congruent{iDT}.rtHighSal, ...
+             p.status.onlineMetrics.phase2.congruent{iDT}.rtLowSal, ...
+             p.status.onlineMetrics.phase3.congruent{iDT}.rtHighSal, ...
+             p.status.onlineMetrics.phase3.congruent{iDT}.rtLowSal];
+    if ~isempty(allRT)
+        medianRT_congruent(iDT) = median(allRT);
+    end
+end
+
+validConflict = ~isnan(medianRT_conflict);
+validCongruent = ~isnan(medianRT_congruent);
+if any(validConflict)
+    set(p.draw.plotObs.rt_p23_conflict, ...
+        'XData', deltaTValues(validConflict), 'YData', medianRT_conflict(validConflict));
+end
+if any(validCongruent)
+    set(p.draw.plotObs.rt_p23_congruent, ...
+        'XData', deltaTValues(validCongruent), 'YData', medianRT_congruent(validCongruent));
+end
+
+%% Panel 5: Cumulative Evolution
 cum = p.status.onlineMetrics.cumulative;
 
 if ~isempty(cum.trialNumbers)
-    % Phase 1: cumulative by hemifield
-    p1_left_mask = (cum.phase == 1) & (cum.highSalSide == 1);
-    p1_right_mask = (cum.phase == 1) & (cum.highSalSide == 2);
+    % Phase 1: cumulative by hemifield (dual-stim only)
+    p1_left_mask = (cum.phase == 1) & (cum.highSalSide == 1) & ~cum.isSingleStim;
+    p1_right_mask = (cum.phase == 1) & (cum.highSalSide == 2) & ~cum.isSingleStim;
 
     if any(p1_left_mask)
         p1_left_trials = cum.trialNumbers(p1_left_mask);
@@ -293,30 +350,54 @@ if ~isempty(cum.trialNumbers)
     end
 end
 
-%% Panel 5: Session Progress
-% Get phase ratio string
-if p.status.currentPhase == 1
-    ratioStr = '1:1 Ratio';
-elseif p.status.currentPhase == 2
-    ratioStr = '1:2 Ratio';
-else
-    ratioStr = '2:1 Ratio';
-end
-
-phaseStr = sprintf('Phase %d/3 (%s)', p.status.currentPhase, ratioStr);
+%% Panel 6: Session Information
+phaseStr = sprintf('Phase %d/3', p.status.currentPhase);
 set(p.draw.phaseText, 'String', phaseStr);
 
+trialsInThisPhase = p.init.trialsPerPhaseList(p.status.currentPhase);
 trialStr = sprintf('Trial %d/%d in Phase', ...
-    p.status.completedTrialsInPhase, p.init.trialsPerPhase);
+    p.status.completedTrialsInPhase, trialsInThisPhase);
 set(p.draw.trialText, 'String', trialStr);
 
 totalStr = sprintf('Total: %d/%d', p.status.iGoodTrial, p.init.totalTrials);
 set(p.draw.totalText, 'String', totalStr);
 
-nErrors = p.status.nFixBreak + p.status.nNoResponse + p.status.nInaccurate;
-outcomeStr = sprintf('High Sal: %d | Low Sal: %d | Errors: %d', ...
-    p.status.nChoseHighSalience, p.status.nChoseLowSalience, nErrors);
+% Current reward info
+if p.trVars.rewardBigSide == 1
+    bigSideStr = 'LEFT';
+else
+    bigSideStr = 'RIGHT';
+end
+rewardInfoStr = sprintf('BigSide: %s | L:%dms R:%dms', ...
+    bigSideStr, p.trVars.rewardDurationLeft, p.trVars.rewardDurationRight);
+set(p.draw.rewardInfoText, 'String', rewardInfoStr);
+
+% Outcome counts with breakdown
+outcomeStr = {'--- Outcomes ---', ...
+    sprintf('High Sal: %d | Low Sal: %d', p.status.nChoseHighSalience, p.status.nChoseLowSalience), ...
+    sprintf('Fix Breaks: %d', p.status.nFixBreak), ...
+    sprintf('No Response: %d', p.status.nNoResponse), ...
+    sprintf('Inaccurate: %d', p.status.nInaccurate)};
 set(p.draw.outcomeText, 'String', outcomeStr);
+
+% Single-stim counter
+if isfield(p.draw, 'singleStimText') && isvalid(p.draw.singleStimText)
+    singleStimStr = sprintf('Single-Stim: %d/%d correct', ...
+        p.status.nSingleStimCorrect, p.status.nSingleStimTotal);
+    set(p.draw.singleStimText, 'String', singleStimStr);
+end
+
+% P(HighSal) summary
+nTotal = p.status.nChoseHighSalience + p.status.nChoseLowSalience;
+if nTotal > 0
+    pHS_overall = p.status.nChoseHighSalience / nTotal;
+    summaryStr = {'--- P(HighSal) ---', sprintf('Overall: %.2f (n=%d)', pHS_overall, nTotal)};
+else
+    summaryStr = {'--- P(HighSal) ---', 'Overall: - (n=0)'};
+end
+if isfield(p.draw, 'pHighSalSummaryText') && isvalid(p.draw.pHighSalSummaryText)
+    set(p.draw.pHighSalSummaryText, 'String', summaryStr);
+end
 
 drawnow;
 

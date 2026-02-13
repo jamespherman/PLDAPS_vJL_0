@@ -404,16 +404,16 @@ if timeNow > frameDue
                 target_hue_idx = p.draw.clutIdx.expDkl180_subDkl180;
             end
 
-            % Draw outer ring at 4 degrees
-            stimSize_pix_outer = pds.deg2pix(4, p);
+            % Draw outer ring at p.trVars.outerRingDeg degrees
+            stimSize_pix_outer = pds.deg2pix(p.trVars.outerRingDeg, p);
             targRect_outer = CenterRectOnPoint(...
                 [0 0 stimSize_pix_outer stimSize_pix_outer], ...
                 p.draw.targPointPix(1), p.draw.targPointPix(2));
             Screen('FrameRect', p.draw.window, target_hue_idx, ...
                 targRect_outer, p.trVarsInit.targWidth);
 
-            % Draw inner ring at 2 degrees
-            stimSize_pix_inner = pds.deg2pix(2, p);
+            % Draw inner ring at p.trVars.innerRingDeg degrees
+            stimSize_pix_inner = pds.deg2pix(p.trVars.innerRingDeg, p);
             targRect_inner = CenterRectOnPoint(...
                 [0 0 stimSize_pix_inner stimSize_pix_inner], ...
                 p.draw.targPointPix(1), p.draw.targPointPix(2));

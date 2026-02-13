@@ -10,7 +10,7 @@ fprintf('--- Building static CLUT ---\n');
 p.init.initMonFile = ['LUT_VPIXX_rig' p.init.pcName(end-1)];
 initmon(p.init.initMonFile);
 
-dkl_hues_to_calc = [0, 45, 180, 225];
+dkl_hues_to_calc = [0, 20, 180, 200];
 p.draw.colors.bullseye_hues = zeros(length(dkl_hues_to_calc), 3);
 mean_lum = -0.495;
 satRad = 0.4;

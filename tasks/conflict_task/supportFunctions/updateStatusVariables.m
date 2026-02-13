@@ -29,10 +29,12 @@ if p.trVars.setTargLocViaTrialArray
     p.status.trialsLeftInPhase = ...
         sum(inCurrentPhase & p.status.trialsArrayRowsPossible);
 
-    % Update completed trials in phase
-    p.status.completedTrialsInPhase = p.init.trialsPerPhase - p.status.trialsLeftInPhase;
+    % Update completed trials in phase (use per-phase count)
+    trialsInThisPhase = p.init.trialsPerPhaseList(currentPhase);
+    p.status.completedTrialsInPhase = trialsInThisPhase - p.status.trialsLeftInPhase;
 else
-    p.status.trialsLeftInPhase = p.init.trialsPerPhase - p.status.completedTrialsInPhase;
+    trialsInThisPhase = p.init.trialsPerPhaseList(p.status.currentPhase);
+    p.status.trialsLeftInPhase = trialsInThisPhase - p.status.completedTrialsInPhase;
 end
 
 end

@@ -120,15 +120,17 @@ p.status.iTrial             = 0;
 p.status.iGoodTrial         = 0;
 p.status.rippleOnline       = 0;
 
-% Phase tracking (new design: 3 phases with different reward ratios)
-% Phase 1: 1:1 reward ratio (128 trials)
+% Phase tracking (3 phases with different reward ratios)
+% Phase 1: 1:1 reward ratio (128 dual-stim + 64 single-stim = 192 trials)
 % Phase 2: 1:2 reward ratio - left:right (128 trials)
 % Phase 3: 2:1 reward ratio - left:right (128 trials)
 p.status.currentPhase           = 1;
-p.status.trialsPerPhase         = 128;
+p.status.trialsPerPhase         = 128;      % base dual-stim trials per phase
+p.status.trialsPhase1           = 192;      % Phase 1: 128 dual + 64 single
+p.status.singleStimTrials       = 64;       % single-stim trials in Phase 1
 p.status.totalPhases            = 3;
 p.status.completedTrialsInPhase = 0;
-p.status.totalTrialsTarget      = 384;  % 128 * 3
+p.status.totalTrialsTarget      = 448;      % 192 + 128 + 128
 
 % Outcome counters
 p.status.nChoseHighSalience = 0;
@@ -136,6 +138,8 @@ p.status.nChoseLowSalience  = 0;
 p.status.nFixBreak          = 0;
 p.status.nNoResponse        = 0;
 p.status.nInaccurate        = 0;
+p.status.nSingleStimCorrect = 0;
+p.status.nSingleStimTotal   = 0;
 
 % Delta-T values (reduced from 6 to 2)
 p.status.deltaTValues = [-150, 150];  % ms
@@ -192,6 +196,7 @@ p.status.onlineMetrics.cumulative.choseHighSal = [];    % 1 or 0 per trial
 p.status.onlineMetrics.cumulative.phase = [];           % phase number per trial
 p.status.onlineMetrics.cumulative.highSalSide = [];     % 1=left, 2=right
 p.status.onlineMetrics.cumulative.isConflict = [];      % 1=conflict, 0=congruent (phases 2-3)
+p.status.onlineMetrics.cumulative.isSingleStim = [];   % true if single-stimulus trial
 
 %% user determines the n status values shown in gui upon init
 p.rig.guiStatVals = {...
@@ -267,13 +272,17 @@ p.trVarsInit.rightLocIdx         = 1;       % index into rightAngles (1-4)
 
 % Reward system (phase-dependent ratios)
 % Total reward "budget" C is constant; ratio determines split
-p.trVarsInit.rewardDurationMs        = 390;     % total reward budget C (ms)
+p.trVarsInit.rewardDurationMs        = 400;     % total reward budget C (ms)
+p.trVarsInit.rewardRatioBig          = 2;       % asymmetric reward ratio (big:small = this:1)
+p.trVarsInit.rewardProbHigh          = 0.9;     % P(canonical reward side) in Phases 2-3
+p.trVarsInit.rewardBigSide           = 0;       % 1=big-left, 2=big-right (set per trial from array)
 p.trVarsInit.rewardRatioLeft         = 1;       % current ratio part for left
 p.trVarsInit.rewardRatioRight        = 1;       % current ratio part for right
-p.trVarsInit.rewardDurationLeft      = 195;     % calculated: C * left/(left+right)
-p.trVarsInit.rewardDurationRight     = 195;     % calculated: C * right/(left+right)
+p.trVarsInit.rewardDurationLeft      = 200;     % calculated: C * left/(left+right)
+p.trVarsInit.rewardDurationRight     = 200;     % calculated: C * right/(left+right)
 p.trVarsInit.rewardDelay             = 0.25;    % delay between target hold and reward
 p.trVarsInit.timeoutAfterFa          = 1.0;     % timeout duration following errors (1s per user choice)
+p.trVarsInit.timeoutSacErr           = 2.0;     % timeout for inaccurate saccades (outside both targets)
 p.trVarsInit.joyWaitDur              = 15;      % wait for joystick press at trial start
 p.trVarsInit.fixWaitDur              = 3;       % wait for fixation acquisition
 p.trVarsInit.freeDur                 = 0;
@@ -319,6 +328,10 @@ p.trVarsInit.outcome              = '';     % CHOSE_HIGH_SAL, CHOSE_LOW_SAL, FIX
 % Phase 2: high reward = right, so conflict = high salience left
 % Phase 3: high reward = left, so conflict = high salience right
 p.trVarsInit.isConflict           = false;  % true if high sal opposes high reward
+
+% Single-stimulus trial flag (Phase 1 bias correction)
+% 0 = dual-stimulus (both targets), 1 = single-left, 2 = single-right
+p.trVarsInit.singleStimSide      = 0;
 
 % Target hue indices (set in nextParams based on backgroundHueIdx and highSalienceSide)
 % High salience target: 180° from background, Low salience target: 45° from background
@@ -491,6 +504,10 @@ p.init.strobeList = {...
     'chosenTarget',         'p.trData.chosenSide'; ...          % 1=left, 2=right, 0=neither
     'choseHighSalience',    'p.trData.choseHighSalience'; ...   % 0 or 1
     'outcomeCode',          'p.trData.outcomeCode'; ...         % 1=high sal, 2=low sal, 3+=error
+    'singleStimSide',       'p.trVars.singleStimSide'; ...      % 0=dual, 1=single-left, 2=single-right
+    'highRewardLocation',   'p.trVars.rewardBigSide'; ...          % 1=left, 2=right (per-trial)
+    'rewardRatioBig_x100',  'round(p.trVars.rewardRatioBig * 100)'; ...  % ratio * 100
+    'rewardProbHigh_x1000', 'round(p.trVars.rewardProbHigh * 1000)'; ... % probability * 1000
 
     % --- Target locations using theta/radius (avoids negative coordinate issues) ---
     % Theta: angle in degrees * 10, with +1800 offset to handle negatives (-180 to +180 -> 0 to 3600)

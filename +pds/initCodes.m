@@ -240,6 +240,9 @@ codes.leftTargTheta         = 16030;  % left target angle (degrees * 10, add 180
 codes.leftTargRadius        = 16031;  % left target eccentricity (degrees * 100)
 codes.rightTargTheta        = 16032;  % right target angle (degrees * 10, add 1800 for negatives)
 codes.rightTargRadius       = 16033;  % right target eccentricity (degrees * 100)
+codes.singleStimSide        = 16034;  % 0=dual, 1=single-left, 2=single-right
+codes.rewardRatioBig_x100   = 16035;  % reward ratio * 100 (e.g., 2.0 -> 200)
+codes.rewardProbHigh_x1000  = 16036;  % P(canonical reward) * 1000 (e.g., 0.9 -> 900)
 
 %% validation
 

@@ -20,7 +20,7 @@ phaseComplete = ~any(inCurrentPhase & p.status.trialsArrayRowsPossible);
 
 if phaseComplete
     fprintf('========================================\n');
-    fprintf('  Phase %d complete! (%d trials)\n', currentPhase, p.init.trialsPerPhase);
+    fprintf('  Phase %d complete! (%d trials)\n', currentPhase, p.init.trialsPerPhaseList(currentPhase));
     fprintf('========================================\n');
 
     % Check if all phases are complete (session finished)
@@ -31,15 +31,19 @@ if phaseComplete
         fprintf('****************************************\n');
 
         % Signal session completion - do NOT reset for this task design
-        % The session should end after 384 trials
+        % The session should end after all trials complete
         % nextParams will set exitWhileLoop=true when no trials remain
     else
-        % Phase transition message
+        % Phase transition message with dynamic reward values
         nextPhase = currentPhase + 1;
+        C = p.trVarsInit.rewardDurationMs;
+        R = p.trVarsInit.rewardRatioBig;
+        smallR = round(C * 1 / (1 + R));
+        bigR = round(C * R / (1 + R));
         if nextPhase == 2
-            ratioStr = '1:2 (Left=130ms, Right=260ms)';
+            ratioStr = sprintf('1:%.1f (Left=%dms, Right=%dms)', R, smallR, bigR);
         else
-            ratioStr = '2:1 (Left=260ms, Right=130ms)';
+            ratioStr = sprintf('%.1f:1 (Left=%dms, Right=%dms)', R, bigR, smallR);
         end
         fprintf('  Transitioning to Phase %d: %s\n', nextPhase, ratioStr);
         fprintf('========================================\n');

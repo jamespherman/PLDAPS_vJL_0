@@ -6,9 +6,10 @@ function postTrialTimeOut(p)
 
 % Define timeout duration based on trial end state
 switch p.trData.trialEndState
-    case {p.state.fixBreak, p.state.joyBreak, p.state.nonStart, ...
-          p.state.noResponse, p.state.inaccurate}
+    case {p.state.fixBreak, p.state.joyBreak, p.state.nonStart, p.state.noResponse}
         timeOutDur = p.trVars.timeoutAfterFa;
+    case p.state.inaccurate
+        timeOutDur = p.trVars.timeoutSacErr;
     otherwise
         timeOutDur = 0;
 end

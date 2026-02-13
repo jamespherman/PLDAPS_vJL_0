@@ -297,8 +297,10 @@ p.trVarsInit.fixWinWidthDeg       = 2;        % fixation window width in degrees
 p.trVarsInit.fixWinHeightDeg      = 2;        % fixation window height in degrees
 p.trVarsInit.targWinWidthDeg      = 8;        % target window width in degrees
 p.trVarsInit.targWinHeightDeg     = 8;        % target window height in degrees
-p.trVarsInit.targWidth            = 12;       % fixation point indicator line width in pixels
-p.trVarsInit.targRadius           = 16;       % fixation point "radius" in pixels
+p.trVarsInit.targWidth            = 12;       % target point indicator line width in pixels
+p.trVarsInit.targRadius           = 16;       % target point "radius" in pixels
+p.trVarsInit.outerRingDeg         = 4;
+p.trVarsInit.innerRingDeg         = 2;
 
 p.trVarsInit.stimConfigIdx        = 0;      % integer indicating which target / background color configuration is used on the current trial
 
