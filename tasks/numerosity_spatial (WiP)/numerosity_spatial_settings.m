@@ -1,7 +1,7 @@
-function p = seansFirstTask_settings
-%  p = seansFirstTask_settings
+function p = numerosity_spatial_settings
+%  p = numerosity_spatial_settings
 %
-%   seansFirstTask task
+%   numerosity_spatial task
 % =============
 % gSac - guided saccades. 
 % This is your stock visually- or memory-guided saccade task.
@@ -243,14 +243,14 @@ p.trVarsInit.targDegY		 = [p.trVarsInit.targOneDegY p.trVarsInit.targTwoDegY];
 p.trVarsInit.numDots             = 0; % how many dots does the target stimulus have on this trial?
 p.trVarsInit.twoTargSepDeg       = 1; % how far apart should the two target dots be? (in dva?)
 p.trVarsInit.twoStimSepDegMin    = 0.05; % how far apart should the two stim dots be? (in dva?)
-p.trVarsInit.twoStimSepDegMax    = 1.5;
+p.trVarsInit.twoStimSepDegMax    = 0.5;
 p.trVarsInit.stimRangeRadius	 = 13.0; % create stimuli randomly within radius of __? (in pixels?)
 p.trVarsInit.stimRangeXmin	 = -28.0; % Alternate method of randomly positioning stimuli, between Xmin and Xmax
 p.trVarsInit.stimRangeXmax	 = 28.0;
 p.trVarsInit.stimRangeYmin	 = -17.5; % Together with previous lines, randomly position stimuli between Ymin and Ymax
 p.trVarsInit.stimRangeYmax	 = 17.5;
 p.trVarsInit.stimSizeMin	 = 0.1; % create stimuli of what size? (randomly chosen between min and max, in dva)
-p.trVarsInit.stimSizeMax	 = 0.3;
+p.trVarsInit.stimSizeMax	 = 1.0;
 p.trVarsInit.oneStimRotationRange= 360; % Range within which individual stimuli are rotated
 p.trVarsInit.twoStimRotationRange= 360; % Range within which stimuli are rotated relative to each other
 
@@ -293,7 +293,7 @@ p.trVarsInit.goTimePostTargMin       = 0.25; % min duration from targ onset to t
 p.trVarsInit.goTimePostTargMax       = 0.4; % max duration from targ onset to the 'go' signal to saccade (which is fixation offset)
 
 p.trVarsInit.interStimIntervalMin    = 0.03; % For temporal task; time between stims
-p.trVarsInit.interStimIntervalMax    = 0.12; 
+p.trVarsInit.interStimIntervalMax    = 0.36; 
 
 % For transition version of temporal task; How much should the two stim overlap?
 % 0 = no overlap; i.e. full temporal task. 1 = complete overlap; i.e. full spatial task

@@ -1,5 +1,5 @@
-function p = seansFirstTask_run(p)
-%   p = seansFirstTask_run(p)
+function p = numerosity_temporal_run(p)
+%   p = numerosity_temporal_run(p)
 %
 % Part of the quintet of pldpas functions:
 %   settings function
