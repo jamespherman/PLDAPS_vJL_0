@@ -26,7 +26,8 @@ Datapixx('RegWrRd');
 DINstatus           = Datapixx('GetDinStatus');
 
 % Read Data
-[p.trData.dInValues, p.trData.dInTimes] = Datapixx('ReadDinLog', DINstatus.newLogFrames);
+[p.trData.dInValues, p.trData.dInTimes] = ...
+    Datapixx('ReadDinLog', DINstatus.newLogFrames);
 
 % Stop DIN schedule.
 Datapixx('StopDinLog');

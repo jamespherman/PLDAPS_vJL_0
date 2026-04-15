@@ -1,5 +1,5 @@
-function p = fixate_chen_finish(p)
-%   p = fixate_chen_finish(p)
+function p = LGN_RF_mapping_finish(p)
+%   p = LGN_RF_mapping_finish(p)
 %
 % Part of the quintet of pldpas functions:
 %   settings function

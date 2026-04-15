@@ -24,6 +24,8 @@ p.status.fixDurReq = p.trVars.fixDurReq;
 % cue-ring.
 p = locationInfo(p);
 
+p = chooseStimulus(p);
+
 % Timing info:
 % - cue / foil change times, reward timing, dot duration
 % p = timingInfo(p);
@@ -224,12 +226,84 @@ p.draw.fixPointPix      =  p.draw.middleXY + [1, -1] .* ...
 
 % define fixation point radius from trVars, fixation point line weight
 % from trVars, and fixation point rectangle.
-p.draw.fixPointRadius = p.trVars.fixPointRadPix;
-p.draw.fixPointWidth = p.trVars.fixPointLinePix;
+% p.draw.fixPointRadius = p.trVars.fixPointRadPix;
+% p.draw.fixPointWidth = p.trVars.fixPointLinePix;
 p.draw.fixPointRect = repmat(p.draw.fixPointPix, 1, 2) + ...
     p.draw.fixPointRadius*[-1 -1 1 1];
 
 end
+
+
+%%
+
+function p = chooseStimulus(p)
+
+    switch p.trVars.stimulusType
+        case 'barSweep'
+
+        case 'sparseNoise'
+
+            % Create grid of possible positions to present stimuli at
+            xGrid = linspace (p.trVars.sparseNoiseXMin, p.trVars.sparseNoiseXMax, ...
+                p.trVars.sparseNoiseGridSizeX);
+            yGrid = linspace (p.trVars.sparseNoiseYMin, p.trVars.sparseNoiseYMax, ...
+                p.trVars.sparseNoiseGridSizeY);
+                
+            XYCoords = [];
+            for i = 1:numel(xGrid)
+            	for j = 1:numel(yGrid)
+            		XYCoords = [XYCoords; xGrid(i) yGrid(j)];	
+            	end
+            end
+            p.trVars.sparseNoiseXYCoords = p.draw.middleXY + [1, -1] .* ...
+            				   pds.deg2pix(XYCoords, p);    
+
+	
+            % Randomly select a subset of the possible positions to present at 
+            p.trVars.sparseNoisePresentationSites = randsample (1:length(p.trVars.sparseNoiseXYCoords), ...
+                p.trVars.sparseNoiseNumPresentations*p.trVars.sparseNoiseNumSquares);
+
+            % Define square size in pixels
+            p.trVars.sparseNoiseSquareSizePix = pds.deg2pix(p.trVars.sparseNoiseSquareSize, p);
+
+            % Create the list of rectangles
+            for i = 1:length(p.trVars.sparseNoisePresentationSites)
+                
+                ithRect = repmat(p.trVars.sparseNoiseXYCoords(p.trVars.sparseNoisePresentationSites(i), :), 1, 2) + ...
+                    [-p.trVars.sparseNoiseSquareSizePix/2 -p.trVars.sparseNoiseSquareSizePix/2 ...
+                    p.trVars.sparseNoiseSquareSizePix/2 p.trVars.sparseNoiseSquareSizePix/2];
+
+                p.trVars.sparseNoiseRectList (:, i) = ithRect;
+
+
+            end
+
+            % Timing values
+            presentationDuration = p.trVars.sparseNoisePresentationDur + p.trVars.sparseNoiseDelayDur;
+
+            for i = 1:p.trVars.sparseNoiseNumPresentations
+                p.trVars.timeStimOnset(i) = p.trVars.preStimDur + (i-1)*presentationDuration;
+                p.trVars.timeStimOffset(i) = p.trVars.timeStimOnset(i) + p.trVars.sparseNoisePresentationDur;
+
+            end
+
+            % Initialize presentationCounter to 1 (used in run)
+            p.trVars.presentationCounter = 1;
+
+            % Time when trial is over and reward should be delivered
+            p.trVars.timeReward = p.trVars.preStimDur + ...
+                (p.trVars.sparseNoisePresentationDur+ p.trVars.sparseNoiseDelayDur)...
+                *p.trVars.sparseNoiseNumPresentations;
+
+
+        case 'blank'
+    end
+
+
+end
+
+
+
 
 %%
 function p = timingInfo(p)

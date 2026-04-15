@@ -28,6 +28,9 @@ p   = initClut(p);
 % initialize VIEWPixx/DATAPixx
 p   = pds.initDataPixx(p);
 
+% enable 'DinLoopBack':
+Datapixx('EnableDoutDinLoopback');
+
 % define audio waveforms and load to VIEWPixx
 p   = pds.initAudio(p);
 

@@ -1,5 +1,5 @@
-function p = fixate_chen_run(p)
-%   p = fixate_chen_run(p)
+function p = LGN_RF_mapping_run(p)
+%   p = LGN_RF_mapping_run(p)
 %
 % Part of the quintet of pldpas functions:
 %   settings function
@@ -47,6 +47,9 @@ while ~p.trVars.exitWhileLoop
     % STATE DEPENDENT section
     p = stateMachine(p);
     
+    % TIME-DEPENDENT section
+    p = timingMachine(p);
+    
     % DRAW:
     p = drawMachine(p);
      
@@ -68,7 +71,7 @@ function p = stateMachine(p)
 % whether a meaningful event has occured (eg fixation acquired,
 % stimulus appeared, etc), or whether a certain amount of time has
 % elapsed.
-%
+%timingm
 % Each state can do a myriad of things, sure, but let it be clear:
 % THE CRITICAL COMPONENTS OF EACH STATE ARE:
 %   (a) strobing to ehpys reocrding system
@@ -90,7 +93,7 @@ switch p.trVars.currentState
         p.init.strb.addValue(p.init.codes.trialBegin);
         p.trData.timing.trialBegin      = timeNow;
         p.trVars.currentState           = p.state.showFix;
-
+        
     case p.state.showFix
         %% STATE 3:
         %   SHOW FIXATION POINT AND WAIT FOR
@@ -134,6 +137,8 @@ switch p.trVars.currentState
             p.trVars.currentState      = p.state.nonStart;
         end
         
+        
+        
     case p.state.dontMove
         %% STATE 4:
         %   "DON'T MOVE" - SUBJECT HOLDS FIXATION.
@@ -145,8 +150,9 @@ switch p.trVars.currentState
         % "hit" code to recording system, log the time that the joystick
         % hold duration requirement was met, advance to the "hit" state,
         % and play a tone indicating successful trial completion.
+
         if p.trData.timing.fixAq > 0 && ...
-                timeFromFixAq > p.trVars.fixDurReq
+                timeFromFixAq > p.trVars.timeReward
             p.init.strb.addValue(p.init.codes.hit);
             p.trData.timing.fixHoldReqMet = timeNow;
             p.trVars.currentState      = p.state.hit;
@@ -166,6 +172,8 @@ switch p.trVars.currentState
         %% HIT!
         % STATE 21 = reward delivery
         p = pds.deliverReward(p);
+        
+        disp('reward');
 
         p.trVars.exitWhileLoop = true;
         
@@ -208,6 +216,56 @@ end
 % Done with state-dependent section
 
 end
+
+
+
+function p = timingMachine(p)
+
+% timeNow is relative to trial Start
+timeNow = GetSecs - p.trData.timing.trialStartPTB;
+
+% Also calculate a time in "frames" relative to trial-start
+p.trData.timing.frameNow    = fix(timeNow * p.rig.refreshRate);
+
+
+% function of time (and may span multiple states)
+if p.trData.timing.fixAq > 0
+    
+    % time elapsed from fixation acquisition:
+    timeFromFixAq = timeNow - p.trData.timing.fixAq;
+
+    if p.trVars.presentationCounter > p.trVars.sparseNoiseNumPresentations
+
+	    p.trVars.stimIsOn = false;
+
+    elseif (p.trData.timing.stimOn(p.trVars.presentationCounter) == -1 && ...
+            timeFromFixAq >= p.trVars.timeStimOnset(p.trVars.presentationCounter) && ...
+            timeFromFixAq < p.trVars.timeStimOffset(p.trVars.presentationCounter))
+
+            p.trVars.stimIsOn    = true;
+            p.trData.timing.stimOn(p.trVars.presentationCounter)   = timeNow;
+            
+    elseif (p.trData.timing.stimOn(p.trVars.presentationCounter) ~= -1 && ...
+            p.trData.timing.stimOff(p.trVars.presentationCounter) == -1 && ...
+            timeFromFixAq >= p.trVars.timeStimOffset (p.trVars.presentationCounter))
+
+            p.trVars.stimIsOn   = false;
+            p.trVars.timing.stimOff(p.trVars.presentationCounter)  = timeNow;
+
+            p.trVars.presentationCounter = p.trVars.presentationCounter + 1;
+
+    end
+    
+
+end
+
+
+end
+
+
+
+
+
 
 function p = drawMachine(p)
 
@@ -275,6 +333,27 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
         % end
     % end
     
+
+% If stimulus should be on, present it (specifics depend on stimulus type)
+if p.trVars.stimIsOn
+    switch p.trVars.stimulusType
+        case 'barSweep'
+
+        case 'sparseNoise'
+
+            rectIndex1 = p.trVars.sparseNoiseNumSquares*(p.trVars.presentationCounter - 1) + 1;
+            rectIndex2 = p.trVars.sparseNoiseNumSquares*p.trVars.presentationCounter;
+            
+            Screen('FillRect', p.draw.window, 15, ...
+                p.trVars.sparseNoiseRectList(:, rectIndex1:rectIndex2));
+
+        case 'blank'
+    end
+end
+
+    
+    
+    
     % draw fixation spot
     Screen('FrameRect',p.draw.window, p.draw.color.fix, repmat(p.draw.fixPointPix, 1, 2) + ...
         p.draw.fixPointRadius*[-1 -1 1 1], p.draw.fixPointWidth);
@@ -285,8 +364,8 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
         p.draw.fixWinWidthPix p.draw.fixWinHeightPix], p.draw.fixWinPenDraw)
     
     % Draw the joystick-bar graphic.
-    Screen('FrameRect', p.draw.window, p.draw.color.joyInd, p.draw.joyRect);
-    Screen('FillRect',  p.draw.window, p.draw.color.joyInd, joyRectNow);
+    % Screen('FrameRect', p.draw.window, p.draw.color.joyInd, p.draw.joyRect);
+    % Screen('FillRect',  p.draw.window, p.draw.color.joyInd, joyRectNow);
 
     % flip and store time of flip.
     [p.trData.timing.flipTime(p.trVars.flipIdx), ~, ~, frMs] = Screen('Flip', p.draw.window);

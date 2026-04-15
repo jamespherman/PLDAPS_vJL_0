@@ -42,6 +42,10 @@ codes.uniqueTaskCode_seansFirstTask 	= 32013;
 codes.uniqueTaskCode_tokens         	= 32014;
 codes.uniqueTaskCode_gSac_4factors  	= 32015;
 codes.uniqueTaskCode_conflict_task  	= 32016;
+codes.uniqueTaskCode_numerosity_spatial = 32017;
+codes.uniqueTaskCode_numerosity_temporal= 32018;
+codes.uniqueTaskCode_sacc_to_phosph     = 32019;
+codes.uniqueTaskCode_LGN_RF_mapping     = 32020;
 
 %% unique codes that are internal to the 'classyStrobe' function class
 % (see pds.classyStrobe.m for more details)

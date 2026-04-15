@@ -1,0 +1,406 @@
+function p = nextParams(p)
+%
+% p = nextParams(p)
+%
+% Define parameters for upcoming trial.
+
+
+
+% if we're using p.init.trialsArray to determine target locations, do the
+% book keeping for that here:
+if p.trVars.setTargLocViaTrialArray
+    p = chooseRow(p);
+end
+
+
+trialTypeCol = strcmp(p.init.trialArrayColumnNames, 'trialType');
+p.trVars.trialType = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
+   trialTypeCol);
+
+if p.trVars.trialType == 1 % Visual stimulus
+    p = createVisualStimulusTexture(p);
+elseif p.trVars.trialType == 2 % Electrode stimulation
+    p = createElectricalStimulus(p);
+elseif p.trVars.trialType == 3 % No stimulus
+    
+end
+
+
+% Timing info:
+% target onset/offset time
+p = timingInfo(p);
+
+
+end
+
+
+%
+function p = timingInfo(p)
+
+% time of stim one onset and offset wrt fixAcq:
+p.trVars.timeStimOnset		= unifrnd (p.trVars.stimOnsetMin, p.trVars.stimOnsetMax);
+p.trVars.stimDur             = unifrnd (p.trVars.stimDurMin, p.trVars.stimDurMax);
+p.trVars.timeStimOffset		= p.trVars.timeStimOnset + p.trVars.stimDur;
+
+
+% time of target onset wrt fixAcq:
+p.trVars.timeTargOnset          = p.trVars.timeStimOffset + unifrnd(p.trVars.targOnsetMin, p.trVars.targOnsetMax);
+
+% time of target offset wrt fixAcq:
+p.trVars.timeTargOffset     = Inf;
+
+
+% time of fix offset wrt fix acquired:
+p.trVars.timeFixOffset          = p.trVars.timeTargOnset + unifrnd(p.trVars.goTimePostTargMin, p.trVars.goTimePostTargMax);
+
+%         p.trVars.postFlashFixDur       = unifrnd(p.trVars.postFlashFixMin, p.trVars.postFlashFixMax);
+p.trVars.targHoldDuration         = unifrnd(p.trVars.targHoldDurationMin, p.trVars.targHoldDurationMax);
+
+
+end
+
+
+
+
+function p = createVisualStimulusTexture(p)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Set locations of stimulus and target %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% fixation location in pixels relative to the center of the screen!
+% (Y is flipped because positive is down in psychophysics toolbox).
+p.draw.fixPointPix      =  p.draw.middleXY + [1, -1] .* ...
+    pds.deg2pix([p.trVars.fixDegX, p.trVars.fixDegY], p);
+
+% fixation window width and height in pixels.
+p.draw.fixWinWidthPix       = pds.deg2pix(p.trVars.fixWinWidthDeg, p);
+p.draw.fixWinHeightPix      = pds.deg2pix(p.trVars.fixWinHeightDeg, p);
+
+
+
+% visual stimulus location in pixels relative to the center of the screen
+% randomly choose x and y coordinates within given ranges (stimRangeX and stimRangeY)
+p.trVars.stimDegX = unifrnd(p.trVars.stimRangeXmin, p.trVars.stimRangeXmax);
+p.trVars.stimDegY = unifrnd(p.trVars.stimRangeYmin, p.trVars.stimRangeYmax);
+
+p.draw.stimPointPix	=  p.draw.middleXY + [1, -1] .* ...
+    pds.deg2pix([p.trVars.stimDegX, p.trVars.stimDegY], p);
+
+
+
+% Set target location to same as stim location
+p.trVars.targDegX	= [p.trVars.stimDegX, 0];
+p.trVars.targDegY	= [p.trVars.stimDegY, 0];
+p.draw.targPointPix     =  p.draw.stimPointPix;
+
+% target window width and height in pixels.
+p.draw.targWinWidthPix      = pds.deg2pix(p.trVars.targWinWidthDeg, p);
+p.draw.targWinHeightPix     = pds.deg2pix(p.trVars.targWinHeightDeg, p);
+
+
+
+% Convert target X & Y into radius and theta so that we can strobe:
+% (can't strobe negative values, so r/th solves that)
+
+[tmpTheta, tmpRadius]   = cart2pol(p.trVars.targDegX, p.trVars.targDegY);
+
+% In order to strobe I need round positive numbers. 
+% For theta, I multiply by 10 ('_x10') and round. That gives 1 decimlal 
+% point precision, good enough!
+p.trVars.targTheta_x10  = round(mod(tmpTheta * 180 / pi, 360) * 10); 
+
+% For radius, I multiply by 100 ('_x100') and round. That gives 2 decimlal
+% point precision, goo enough!
+p.trVars.targRadius_x100 = round(tmpRadius * 100);
+
+
+
+%%%%%%%%%%%%%%%%%
+% Texture stuff %
+%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Define texture window and create shapes in center %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Texture window should be large enough to accomadatemax-size stim plus 
+% some extra empty space to allow blurring with convolution.
+% Forced to be even as odd values caused weird issues
+p.draw.textureWindowDimensions = 2*round(pds.deg2pix (p.trVars.stimSizeMax*1.5, p)/2);
+
+% define center of texture window to shift things into appropriate frame
+textureWindowCenter = [p.draw.textureWindowDimensions/2; p.draw.textureWindowDimensions/2];
+
+
+visStimShapeCol = strcmp(p.init.trialArrayColumnNames, 'visStimShape');
+p.trVars.visStimShape = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
+   visStimShapeCol);
+
+% randomly choose size of stimulus between min and max
+p.draw.stimWidth = pds.deg2pix (unifrnd(p.trVars.stimSizeMin, p.trVars.stimSizeMax), p);
+p.draw.stimHeight = pds.deg2pix (unifrnd(p.trVars.stimSizeMin, p.trVars.stimSizeMax), p);
+
+% randomly rotate the individual stims by some amount
+p.trVars.stimRotation = deg2rad(unifrnd(-p.trVars.oneStimRotationRange/2, p.trVars.oneStimRotationRange/2));
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+if p.trVars.visStimShape == 1 % oval %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% Create coordinate grids
+[x, y] = meshgrid (1:p.draw.textureWindowDimensions, 1:p.draw.textureWindowDimensions);
+
+% Shift coordinates to center the ellipse
+x_shifted = x - textureWindowCenter(1);
+y_shifted = y - textureWindowCenter(2);
+
+% Rotate coordinates
+x_rotated = x_shifted*cos(p.trVars.stimRotation) + y_shifted*sin(p.trVars.stimRotation);
+y_rotated = -x_shifted*sin(p.trVars.stimRotation) + y_shifted*cos(p.trVars.stimRotation);
+
+% Apply ellipse equation
+stim_mask = (x_rotated.^2 / (p.draw.stimWidth/2)^2) + (y_rotated.^2 / (p.draw.stimHeight/2)^2) <= 1;
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+elseif p.trVars.visStimShape == 2 % rect % 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% Define positions of rectangle corners (before rotation)
+cornersUnrotated = [-p.draw.stimWidth/2, -p.draw.stimHeight/2;
+		   p.draw.stimWidth/2, -p.draw.stimHeight/2;
+		   p.draw.stimWidth/2, p.draw.stimHeight/2;
+		   -p.draw.stimWidth/2, p.draw.stimHeight/2];
+
+% Rotation matrix
+R = [cos(p.trVars.stimRotation), -sin(p.trVars.stimRotation);
+     sin(p.trVars.stimRotation), cos(p.trVars.stimRotation)];
+
+% Rotate
+cornersRotated = (R*cornersUnrotated')';
+
+% Separate into X's and Y's to be passed into poly2mask, and shift to center
+cornersX = cornersRotated(:, 1) + textureWindowCenter(1);
+cornersY = cornersRotated(:, 2) + textureWindowCenter(2);
+
+stim_mask = poly2mask(cornersX, cornersY, p.draw.textureWindowDimensions, p.draw.textureWindowDimensions);
+
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Apply blur effect to the stim %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+if rand > 0.5 % in 50% of cases, apply gradient to stim1
+
+p.trData.stimFuzzy = 1;
+
+% Decide on gaussian parameters dependent on size of stim (can adjust these if it doesn't look right)
+kernelSize = 0.15*(p.draw.stimWidth + p.draw.stimHeight);
+sigma = 5;
+
+% Round kernelSize to nearest odd number, as this value must be odd
+kernelSize = 2*floor(kernelSize/2)+1;
+
+gaussianKernel = fspecial('gaussian', kernelSize, sigma);
+
+stim_mask_conv = conv2(stim_mask, gaussianKernel, 'same');
+
+% set anything that is imperceptable to 0 to get a better boundary for the edge of the shape
+stim_mask_conv (stim_mask_conv < 0.1) = 0;
+
+else
+
+p.trData.stimFuzzy = 0;
+
+stim_mask_conv = stim_mask;
+
+end
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Add color to the stims %
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+p.trVars.stimColor = rand (1, 3);
+
+% On 2% of trials, make stim color white instead
+if rand > 0.98
+    p.trVars.stimColor = [1, 1, 1];
+end
+
+
+% Check if color is too close to background grey (i.e. all 3 RGB values are between 0.4 and 0.5)
+isGrey = 1;
+while isGrey
+    isGrey = 0;
+    if ((p.trVars.stimColor (1) > 0.4 && p.trVars.stimColor (1) < 0.5) && ...
+	(p.trVars.stimColor (2) > 0.4 && p.trVars.stimColor (1) < 0.5) && ...
+	(p.trVars.stimColor (3) > 0.4 && p.trVars.stimColor (1) < 0.5))
+		p.trVars.stimColor = rand (1, 3);
+		isGrey = 1;
+    end
+end
+
+
+% Create color gradients between the stim color and background grey across 100 values.
+% linspace is done over Lab colorspace instead of RGB as it produces a smoother gradient
+
+labGrey = rgb2lab([0.45 0.45 0.45]);
+labStimColor = rgb2lab(p.trVars.stimColor);
+
+for i = 1:3
+	labClut (:, i) = linspace (labGrey(i), labStimColor(i));
+end
+
+stimClut = lab2rgb (labClut);
+
+stimClut(stimClut > 1) = 1;
+stimClut(stimClut < 0) = 0;
+
+
+% Alternatively, perform linspace over RGB space:
+%{
+stimClut1 = zeros (100, 3);
+stimClut2 = zeros (100, 3);
+
+for i = 1:3
+	stimClut1 (:, i) = linspace (0.45, p.trVars.stimColor1(i));
+	stimClut2 (:, i) = linspace (0.45, p.trVars.stimColor2(i));
+end
+%}
+
+
+% Put the color gradients into the CLUTS to be pushed to ViewPIXX
+p.draw.clut.expCLUT (51:150, :) = stimClut;
+p.draw.clut.subCLUT (51:150, :) = stimClut;
+
+
+% Push new CLUTs to ViewPIXX
+Datapixx('SetVideoClut', [p.draw.clut.subCLUT; p.draw.clut.expCLUT]);
+
+% Apply color by setting values to the appropriate indices
+stim_color = round (stim_mask_conv*99 + 50); % 50-149 in CLUT are the color gradient for stim
+
+% Anything out of bounds for the color gradient gets set to either grey or
+% fully saturated color, as appropriate (for weird edge cases or rounding errors)
+stim_color(stim_color <= 50) = 50;
+stim_color(stim_color >= 149) = 149;
+
+
+%%%%%%%%%%%%%%%%%%%
+% Create texture %
+%%%%%%%%%%%%%%%%%%%
+
+p.draw.stimTexture = Screen ('MakeTexture', p.draw.window, stim_color);
+
+end
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% Electrode Stim stuff %
+%%%%%%%%%%%%%%%%%%%%%%%%
+function p = createElectricalStimulus(p)
+
+% Determine current based on where we are in the staircase procedure
+
+
+
+% Convert current amplitude to steps and send appropriate xippmex command
+% to change 
+p.trVars.stimAmplitude = 0;
+
+if p.trVars.stimAmplitude <= 100
+
+    % send command to change step size to 1
+    xippmex();
+
+    % # steps = stim amplitude
+    p.trVars.stimCurrentSteps = p.trVars.stimAmplitude;
+
+
+elseif p.trVars.stimAmplitude > 100 && p.trVars.stimAmplitude <= 200
+
+    % send command to change step size to 2
+    xippmex();
+
+    % # steps = stim amplitude / 2. Steps must be whole number, so
+    % stimAmplitude must be an even number. We must overwrite stimAmplitude
+    % with steps*2 so it is recorded properly
+    p.trVars.stimCurrentSteps = round (p.trVars.stimAmplitude/2);
+    p.trVars.stimAmplitude = p.trVars.stimCurrentSteps*2;
+
+    
+elseif p.trVars.stimAmplitude > 200 && p.trVars.stimAmplitude <= 500
+
+    % send command to change step size to 5
+    xippmex();
+
+    % # steps = stim amplitude / 5. Steps must be whole number, so
+    % stimAmplitude must be divisible by 5. We must overwrite stimAmplitude
+    % with steps*5 so it is recorded properly
+    p.trVars.stimCurrentSteps = round (p.trVars.stimAmplitude/5);
+    p.trVars.stimAmplitude = p.trVars.stimCurrentSteps*5;
+
+
+else 
+
+    error ('Stimulation amplitude is greater than 500 uA');
+
+end
+
+
+% Make stimulation train
+p.trVars.cmd = struct ('elec', p.trVars.stimulatedElectrode, ...
+    'period', p.trVars.cmdPeriod, 'repeats', p.trVars.cmdRepeats);
+
+% cmd.seq(1) describes the first phase of the biphasic pulse
+p.trVars.cmd.seq(1) = struct('length', p.trVars.cmdSeqLength, 'ampl', p.trVars.stimCurrentSteps, ...
+    'pol', 0, 'fs', 1, 'enable', 1, 'delay', 0, 'amdSelect', 1);
+
+% cmd.seq(2) describes the interphase interval of the biphasic pulse
+p.trVars.cmd.seq(2) = struct('length', p.trVars.cmdSeqIPI, 'ampl', 0, ...
+    'pol', 0, 'fs', 1, 'enable', 1, 'delay', 0, 'amdSelect', 1);
+% cmd.seq(3) describes the second phase of the biphasic pulse
+p.trVars.cmd.seq(3) = struct('length', p.trVars.cmdSeqLength, 'ampl', p.trVars.stimCurrentSteps, ...
+    'pol', 1, 'fs', 1, 'enable', 1, 'delay', 0, 'amdSelect', 1);
+
+end
+
+
+
+
+
+function p = chooseRow(p)
+
+% if p.status.trialsArrayRowsPossible is empty, we're at the beginning of
+% the experiment and we need to define it.
+if ~isfield(p.status, 'trialsArrayRowsPossible') || ...
+        isempty(p.status.trialsArrayRowsPossible)
+    p.status.trialsArrayRowsPossible =  true(p.init.blockLength, 1);
+end
+
+% otherwise, choose an available row with no constraints: all stimulus
+% locations are intermixed.
+g = p.status.trialsArrayRowsPossible;
+
+% shuffle the list of possible rows of trialsArray
+tempList = shuff(find(g));
+
+% choose the first row number in the shuffled list.
+p.trVars.currentTrialsArrayRow = tempList(1);
+
+end
+
+%
+function y = shuff(x)
+    y = x(randperm(length(x)));
+end

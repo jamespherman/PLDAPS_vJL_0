@@ -1,5 +1,5 @@
-function p = fixate_chen_settings
-%  p = fixate_chen_settings
+function p = LGN_RF_mapping_settings
+%  p = LGN_RF_mapping_settings
 %
 %  "scd" - stimulus change detection; stimuli have multiple feature
 %  dimensions, each of which can change.
@@ -59,7 +59,7 @@ p.init.useDataPixxBool = true;
 
 %% define task name and related files:
 
-p.init.taskName         = 'fixate_chen';
+p.init.taskName         = 'LGN_RF_mapping';
 p.init.taskType         = 1;                            % poorly defined numerical index for the task "type"
 p.init.pldapsFolder     = pwd;                          % pldaps gui takes us to taks folder automatically once we choose a settings file
 p.init.protocol_title   = [p.init.taskName '_task'];    % Define Banner text to identify the experimental protocol
@@ -211,7 +211,7 @@ p.init.exptType         = 'joystickPress';  % Which experiment are we running? T
 
 % general vars:
 p.trVarsInit.passJoy             = 1;       % pass = 1; simulate correct trials (for debugging)
-p.trVarsInit.passEye             = 0;       % pass = 1; simulate correct trials (for debugging)
+p.trVarsInit.passEye             = 1;       % pass = 1; simulate correct trials (for debugging)
 p.trVarsInit.blockNumber         = 0;       % block number
 p.trVarsInit.repeat              = 0;       % repeat trial if true
 p.trVarsInit.rwdJoyPR            = 0;       % 0 = Give reward if Joy is pressed; 1 = Give reward if Joystick released
@@ -243,8 +243,11 @@ p.trVarsInit.motionDir           = 30;          % Motion direction in degrees
 p.trVarsInit.fixDegX             = 0;           % fixation X location in degrees
 p.trVarsInit.fixDegY             = 0;           % fixation Y location in degrees
 
+p.trVarsInit.stimIsOn		 = false;
+
+
 % times/latencies/durations:
-p.trVarsInit.rewardDurationMs        = 300;     % reward duration
+p.trVarsInit.rewardDurationMs        = 150;     % reward duration
 p.trVarsInit.fixDurReqMin            = 0.2;      % minimum possible duration of joystick press required
 p.trVarsInit.fixDurReqMax            = 0.4;      % maximum possible duration of joystick press required
 p.trVarsInit.fix2CueIntvl            = 0.25;     % Time delay between acquiring fixation and cue ring onset.
@@ -279,8 +282,8 @@ p.trVarsInit.foilStimIsOn     = false;  % is the foil stimulus (eg motion dots) 
 
 p.trVarsInit.fixWinWidthDeg       = 6;        % fixation window width in degrees
 p.trVarsInit.fixWinHeightDeg      = 6;        % fixation window height in degrees
-p.trVarsInit.fixPointRadPix       = 20;       % fixation point "radius" in pixels
-p.trVarsInit.fixPointLinePix      = 12;       % fixation point line weight in pixels
+% p.trVarsInit.fixPointRadPix       = 20;       % fixation point "radius" in pixels
+% p.trVarsInit.fixPointLinePix      = 12;       % fixation point line weight in pixels
 
 % variables related to how the experiment is run / what is shown, etc.
 p.trVarsInit.useCellsForDraw        = false;
@@ -310,6 +313,40 @@ p.trVarsInit.satVar                   = 0.05;     % variability in saturation
 p.trVarsInit.postFlip.logical         = false;
 p.trVarsInit.postFlip.varNames        = cell(0);
 
+
+% RF-mapping stimulus variables
+
+p.trVarsInit.stimulusType = 'sparseNoise';
+
+p.trVarsInit.preStimDur = 0.250; % ms after fixAcq before presenting stim
+p.trVarsInit.postStimDur = 0.250; % ms after stim off before trial end
+
+% for barSweep
+
+
+
+% for sparseNoise
+p.trVarsInit.sparseNoiseNumPresentations = 2;
+p.trVarsInit.sparseNoiseNumSquares = 8;
+p.trVarsInit.sparseNoiseSquareSize = 1; % in dva
+
+p.trVarsInit.sparseNoiseXMin = -28; % where on the screen can squares appear, in dva
+p.trVarsInit.sparseNoiseXMax = 28; % in dva
+p.trVarsInit.sparseNoiseYMin = -18; % in dva
+p.trVarsInit.sparseNoiseYMax = 18; % in dva
+
+p.trVarsInit.sparseNoiseGridSizeX = 28; % number of grid positions
+p.trVarsInit.sparseNoiseGridSizeY = 18; % total = x*y
+
+p.trVarsInit.sparseNoisePresentationDur = 0.200; % in s
+p.trVarsInit.sparseNoiseDelayDur = 0.020; % in s
+
+
+
+% for blank
+
+
+
 %% end of trVarsInit
 % once all trial variables have been initialized in trVarsInit, we copy 
 % them to 'trVarsGuiComm' in order to inform the gui. 
@@ -338,8 +375,8 @@ p.init.trDataInitList = {...
     'p.trData.timing.lastFrameTime',    '0'; ...    % time at which last video frame was displayed
     'p.trData.timing.fixOn',            '-1'; ...   % time of fixation onset
     'p.trData.timing.fixAq',            '-1'; ...   % time of fixation acquisition
-    'p.trData.timing.stimOn',           '-1'; ...   % time of stimulus onset
-    'p.trData.timing.stimOff',          '-1'; ...   % time of stimulus offset
+    'p.trData.timing.stimOn',           'repelem (-1, p.trVarsInit.sparseNoiseNumPresentations)'; ...   % time of stimulus onset
+    'p.trData.timing.stimOff',          'repelem (-1, p.trVarsInit.sparseNoiseNumPresentations)'; ...   % time of stimulus offset
     'p.trData.timing.cueOn',            '-1'; ...   % time of cur ring onset
     'p.trData.timing.cueOff',           '-1'; ...   % time of cue ring offset
     'p.trData.timing.cueChg',           '-1'; ...   % time of cue change

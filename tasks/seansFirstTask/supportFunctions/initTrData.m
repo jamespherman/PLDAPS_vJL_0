@@ -37,4 +37,5 @@ p.trData.timing.reward          = -1;   % time of reward delivery
 p.trData.timing.tone            = -1;   % time of audio feedback delivery
 p.trData.timing.joyPress        = -1;   % time of initial joystick press
 
+
 end

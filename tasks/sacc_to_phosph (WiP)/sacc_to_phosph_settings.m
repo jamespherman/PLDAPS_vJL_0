@@ -1,7 +1,7 @@
-function p = saccade_to_phosphene_settings
-%  p = saccade_to_phosphene_settings
+function p = sacc_to_phosph_settings
+%  p = seansFirstTask_settings
 %
-%   gSac task
+%   seansFirstTask task
 % =============
 % gSac - guided saccades. 
 % This is your stock visually- or memory-guided saccade task.
@@ -50,15 +50,24 @@ p = struct;
 % task-specific (JPH - 05/25/2023).
 p.init.useDataPixxBool = true;
 
-% rigConfigFile has information per a particular rig/monkey setup. Info you
-% might expect to find inlcudes screen dimensions, screen refresh rate, 
-% joystick voltages, datapixx schedules, and many more...
-p.init.rigConfigFile     = which('rigConfigFiles.rigB_2019016_porter'); % rig config file has subject/rig-specific details (eg distance from screen)
+% determine which PC we're on so we can select the appropriate reward
+% magnitude:
+if ~ispc
+    [~, p.init.pcName] = unix('hostname');
+else
+    % if this IS running on a (windows) PC that means we've neglected to
+    % account for something - figure it out now! JPH - 5/16/2023
+    keyboard
+end
 
+% rig config file has subject/rig-specific details (eg distance from
+% screen). Select rig config file depending on PC name (assuming the 2nd to
+% last characteer in the pcName string is 1 or 2):
+p.init.rigConfigFile     = which(['rigConfigFiles.rigConfig_rig' ...
+    p.init.pcName(end-1)]);
 
 % define task name and related files:
-
-p.init.taskName     = 'gSac';
+p.init.taskName     = 'sacc_to_phosph';
 p                   = pds.initTaskMetadata(p); % ye ye I know, shouldn't this be in init? well it's here. For now...
 
 
@@ -91,6 +100,7 @@ p.state.holdTarg            = 7;
 
 % end states - success:
 p.state.sacComplete         = 21;
+p.state.wrongTarget	    = 22;
 
 % end states - aborted:
 p.state.fixBreak            = 31;
@@ -109,16 +119,53 @@ p.status.pGoodMem                   = 0; % proportion good (ie successfuly compl
 p.status.iTarget                    = 1; % iterator into the list of target locations (defined in _init). Used when multiple locations are predeteremined (e.g. a grid of targets).  
 p.status.trialsLeftInBlock          = 0; % how many trials remain in the current block?
 
+p.status.iGoodOneTargetOneDot		    = 0;
+p.status.iGoodOneTargetTwoDots		    = 0;
 
-p.rig.guiStatVals = {...
-    'iTrial'; ...   
+p.status.iGoodTwoTargetOneDot		    = 0;
+p.status.iGoodTwoTargetTwoDots		    = 0;
+
+p.status.iWrongOneTargetOneDot		    = 0;
+p.status.iWrongOneTargetTwoDots		    = 0;
+
+p.status.iWrongTwoTargetOneDot		    = 0;
+p.status.iWrongTwoTargetTwoDots		    = 0;
+
+p.status.iGoodUpTargsSameColor		    = 0;
+p.status.iGoodUpTargsDiffColor		    = 0;
+p.status.iGoodDownTargsSameColor	    = 0;
+p.status.iGoodDownTargsDiffColor	    = 0;
+
+p.status.iWrongUpTargsSameColor		    = 0;
+p.status.iWrongUpTargsDiffColor		    = 0;
+p.status.iWrongDownTargsSameColor	    = 0;
+p.status.iWrongDownTargsDiffColor	    = 0;
+
+p.status.iGoodUpOval			    = 0;
+p.status.iGoodUpRect			    = 0;
+p.status.iGoodDownOval			    = 0;
+p.status.iGoodDownRect			    = 0;
+p.status.iGoodDownBoth			    = 0;
+
+p.status.iWrongUpOval			    = 0;
+p.status.iWrongUpRect			    = 0;
+p.status.iWrongDownOval			    = 0;
+p.status.iWrongDownRect			    = 0;
+p.status.iWrongDownBoth			    = 0;
+
+p.rig.guiStatVals = {...   
     'iGoodTrial'; ...
-    'iGoodVis'; ...
-    'iGoodMem'; ...
-    'pGoodVis'; ...
-    'pGoodMem'; ...
-    'iTarget'; ...
-    'trialsLeftInBlock'; ...       
+    'iGoodUpOval'; ...
+    'iWrongUpOval'; ...
+    'iGoodDownOval'; ...
+    'iWrongDownOval'; ...
+    'iGoodUpRect'; ...
+    'iWrongUpRect'; ...
+    'iGoodDownRect'; ...
+    'iWrongDownRect'; ...
+    'iGoodDownBoth'; ...
+    'iWrongDownBoth'; ...
+    'trialsLeftInBlock'; ...   
 };              
 
 %% user determines the 12 variables are shown in gui upon init
@@ -131,12 +178,12 @@ p.rig.guiVars = {...
     'passJoy'; ...          
     'passEye'; ...
     'rewardDurationMs'; ...       
-    'propVis'; ...
-    'fixWinHeightDeg'; ...
-    'fixWinWidthDeg'; ...
-    'targWinHeightDeg'; ...
-    'targWinWidthDeg'; ...
-    'rewardDelay'; ...        % 6
+    'stimRangeXmin'; ...
+    'stimRangeXmax'; ...
+    'stimRangeYmin'; ...
+    'stimRangeYmax'; ...
+    'stimDurMin'; ...
+    'stimDurMax'; ...        % 6
     'fixDegX'; ...
     'fixDegY'};              % 12
 
@@ -145,8 +192,9 @@ p.rig.guiVars = {...
 %% INIT VARIABLES 
 % vars that are only set once
 
-p.init.exptType         = 'gSac4_v1';  % Which experiment are we running? The full version with all trial types? The single-stimulus-only version? Something else?
-% p.init.exptType         = 'two_locs';  % Which experiment are we running? The full version with all trial types? The single-stimulus-only version? Something else?
+% Which experiment are we running? The full version with all trial types? 
+% The single-stimulus-only version? Something else?
+p.init.exptType         = 'step1';
 
 %% TRIAL VARIABLES
 % vars that may change throughout an experimental session and are therefore
@@ -172,7 +220,8 @@ p.trVarsInit.eyeDegX                = 0;
 p.trVarsInit.eyeDegY                = 0;
 p.trVarsInit.eyePixX                = 0;
 p.trVarsInit.eyePixY                = 0;
-p.trVarsInit.mouseEyeSim            = 0;
+p.trVarsInit.wantOnlinePlots	    = true;
+p.trVarsInit.mouseEyeSim            = 1;
 
 % how to set the next target location (via mouse, gui, or neither). If
 % neither, then they get set at random from the predefined grid.
@@ -180,15 +229,36 @@ p.trVarsInit.setTargLocViaMouse         = false;
 p.trVarsInit.setTargLocViaGui           = false;
 p.trVarsInit.setTargLocViaTrialArray    = false;
 
+
 % geometry/stimulus vars:
-p.trVarsInit.propVis             = 0.5;  % proportion of visually-guided saccades out of the total (i.e. propMem would equal 1 - pVis )
-p.trVarsInit.fixDegX             = 0;    % fixation X location in degrees
+p.trVarsInit.propVis             = 1;  % proportion of visually-guided saccades out of the total (i.e. propMem would equal 1 - pVis )
+p.trVarsInit.fixDegX             = 0;    % fixation X location in degrees 
 p.trVarsInit.fixDegY             = 0;    % fixation Y location in degrees
-p.trVarsInit.targDegX            = 0;
-p.trVarsInit.targDegY            = 0;
+p.trVarsInit.targOneDegX         = 0;
+p.trVarsInit.targOneDegY         = 10.0;
+p.trVarsInit.targTwoDegX         = 0;
+p.trVarsInit.targTwoDegY         = -10.0;
+p.trVarsInit.targDegX		 = [p.trVarsInit.targOneDegX p.trVarsInit.targTwoDegX];
+p.trVarsInit.targDegY		 = [p.trVarsInit.targOneDegY p.trVarsInit.targTwoDegY];
+p.trVarsInit.numDots             = 0; % how many dots does the target stimulus have on this trial?
+p.trVarsInit.twoTargSepDeg       = 1; % how far apart should the two target dots be? (in dva?)
+p.trVarsInit.twoStimSepDegMin    = 0.05; % how far apart should the two stim dots be? (in dva?)
+p.trVarsInit.twoStimSepDegMax    = 1.5;
+p.trVarsInit.stimRangeRadius	 = 13.0; % create stimuli randomly within radius of __? (in pixels?)
+p.trVarsInit.stimRangeXmin	 = -28.0; % Alternate method of randomly positioning stimuli, between Xmin and Xmax
+p.trVarsInit.stimRangeXmax	 = 28.0;
+p.trVarsInit.stimRangeYmin	 = -17.5; % Together with previous lines, randomly position stimuli between Ymin and Ymax
+p.trVarsInit.stimRangeYmax	 = 17.5;
+p.trVarsInit.stimSizeMin	 = 0.1; % create stimuli of what size? (randomly chosen between min and max, in dva)
+p.trVarsInit.stimSizeMax	 = 0.3;
+p.trVarsInit.oneStimRotationRange= 360; % Range within which individual stimuli are rotated
+p.trVarsInit.twoStimRotationRange= 360; % Range within which stimuli are rotated relative to each other
+
+p.trVarsInit.stimShape		 = 0;
+p.trVarsInit.targsSameColor	 = false;
 
 % times/latencies/durations:
-p.trVarsInit.rewardDurationMs        = 150; % reward duration
+p.trVarsInit.rewardDurationMs        = 180; % reward duration
 p.trVarsInit.rewardDelay             = 0;        % delay between cued change and reward delivery for hits.
 p.trVarsInit.timeoutAfterFa          = 2;        % timeout duration following false alarm.
 p.trVarsInit.joyWaitDur              = 5;        % how long to wait for the subject to press the joystick at the beginning of a trial?
@@ -204,18 +274,31 @@ p.trVarsInit.postRewardDuration      = 0.25;     % how long should the trial las
 p.trVarsInit.targetFlashDuration     = 0.2;      % Duration target stays on for the memory-guided trials.
 % p.trVarsInit.postFlashFixMin       = 1;    % minimum post-flash fixation-duration
 % p.trVarsInit.postFlashFixMax       = 1.5;  % maximum post-flash fixation-duration
-p.trVarsInit.targHoldDurationMin     = 0.5;  % minimum duration to maintain fixation on the target post-saccade 
-p.trVarsInit.targHoldDurationMax     = 0.7;      % maximum duration to maintain fixation on the target post-saccade 
+p.trVarsInit.targHoldDurationMin     = 0.3;  % minimum duration to maintain fixation on the target post-saccade 
+p.trVarsInit.targHoldDurationMax     = 0.5;      % maximum duration to maintain fixation on the target post-saccade 
 p.trVarsInit.maxSacDurationToAccept  = 0.1; % this is the max duration of a saccades that we're willing to wait for. 
 p.trVarsInit.targetReillumDelay      = 0.15; % the delay (s) between saccadeOffset (ie entry into target window) and target reillumination
 p.trVarsInit.goLatencyMin            = 0.1;  % minimum saccade-latency criterion
 p.trVarsInit.goLatencyMax            = 0.5;  % maximum saccade-latency criterion
 % p.trVarsInit.preTargMin            = 0.75; % minimum fixation-only time before target onset
 % p.trVarsInit.preTargMax            = 1;    % maximum fixation-only time before target onset
-p.trVarsInit.targOnsetMin            = 0.4; % minimum fixation-only time before target onset
-p.trVarsInit.targOnsetMax            = 0.7;
-p.trVarsInit.goTimePostTargMin       = 1; % min duration from targ onset to the 'go' signal to saccade (which is fixation offset)
-p.trVarsInit.goTimePostTargMax       = 2; % max duration from targ onset to the 'go' signal to saccade (which is fixation offset)
+
+p.trVarsInit.stimOnsetMin	     = 0.25; % Time after fixation before stim comes on
+p.trVarsInit.stimOnsetMax	     = 0.4;
+p.trVarsInit.stimDurMin		     = 0.12; % Time stim stays on
+p.trVarsInit.stimDurMax		     = 0.20;
+p.trVarsInit.targOnsetMin            = 0.15; % Time after stim goes off before target onset
+p.trVarsInit.targOnsetMax            = 0.2;
+p.trVarsInit.goTimePostTargMin       = 0.25; % min duration from targ onset to the 'go' signal to saccade (which is fixation offset)
+p.trVarsInit.goTimePostTargMax       = 0.4; % max duration from targ onset to the 'go' signal to saccade (which is fixation offset)
+
+p.trVarsInit.interStimIntervalMin    = 0.03; % For temporal task; time between stims
+p.trVarsInit.interStimIntervalMax    = 0.12; 
+
+% For transition version of temporal task; How much should the two stim overlap?
+% 0 = no overlap; i.e. full temporal task. 1 = complete overlap; i.e. full spatial task
+% between 0 and 1 = transition temporal task where the stim partially overlap
+p.trVarsInit.temporalOverlap         = 0;
 
 p.trVarsInit.maxFixWait              = 5;    % maximum time to wait for fixation-acquisition
 p.trVarsInit.targOnSacOnly           = 1;    % condition target reappearance on saccade?
@@ -232,8 +315,8 @@ p.trVarsInit.staticTargAmp           = 12;  % fixed target amplitude
 
 p.trVarsInit.fixWinWidthDeg       = 2;        % fixation window width in degrees
 p.trVarsInit.fixWinHeightDeg      = 2;        % fixation window height in degrees
-p.trVarsInit.targWinWidthDeg      = 3;        % target window width in degrees
-p.trVarsInit.targWinHeightDeg     = 3;        % target window height in degrees
+p.trVarsInit.targWinWidthDeg      = 4;        % target window width in degrees
+p.trVarsInit.targWinHeightDeg     = 4;        % target window height in degrees
 
 
 % I don't think I need to carry these around in 'p'....
@@ -241,6 +324,9 @@ p.trVarsInit.targWinHeightDeg     = 3;        % target window height in degrees
 p.trVarsInit.currentState     = p.state.trialBegun;  % initialize "state" variable.
 p.trVarsInit.exitWhileLoop    = false;  % do we want to exit the "run" while loop?
 
+p.trVarsInit.stimIsOn 	= false;
+p.trVarsInit.stimOneIsOn = false;
+p.trVarsInit.stimTwoIsOn = false;
 p.trVarsInit.targetIsOn = false;
 
 p.trVarsInit.postMemSacTargOn = false;  % do we want the target on because a memory guided saccade has been successfully completed?
@@ -421,7 +507,7 @@ p.draw.fixWinPenDraw        = [];       % gets assigned either the pre or the po
 
 % target and target win:
 p.draw.targWidth            = 4;        % fixation point indicator line width in pixels
-p.draw.targRadius           = 6;        % fixation point "radius" in pixels
+p.draw.targRadius           = 10;        % fixation point "radius" in pixels
 p.draw.targWinPenThin       = 4;        % fixation window width (prior to 'go' signal).
 p.draw.targWinPenThick      = 8;        % fixation window width (post 'go' signal).
 p.draw.targWinPenDraw       = [];       % gets assigned either the pre or the post during the run function

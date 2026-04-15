@@ -1,5 +1,5 @@
-function p = saccade_to_phosphene_init(p)
-%   p = saccade_to_phosphene_init(p)
+function p = sacc_to_phosph_init(p)
+%   p = seansFirstTask_init(p)
 %
 % Part of the quintet of pldpas functions:
 %   settings function
@@ -28,11 +28,14 @@ p   = initClut(p);
 % initialize VIEWPixx/DATAPixx
 p   = pds.initDataPixx(p);
 
+% enable 'DinLoopBack':
+Datapixx('EnableDoutDinLoopback');
+
 % define audio waveforms and load to VIEWPixx
 p   = pds.initAudio(p);
 
 % define online-plotting windows (and reposition others).
-p   = pds.plotWindowSetup(p);
+p   = plotWindowSetup(p);
 
 % define grid line locations:
 p   = pds.defineGridLines(p);

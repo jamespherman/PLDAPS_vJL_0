@@ -9,13 +9,14 @@ function p = initTrialStructure(p)
 %
 
 % column descriptions
-% p.init.trialColumnNames = {'stim location index', 'change trial', 'stim elevation angle', 'no of trials', 'stimcode'};
-p.init.trialArrayColumnNames = {'stimX', 'stimY', 'isVisSac', 'no of trials', 'trialCode'};
+% p.init.trialColumnNames = {'number of target stimuli', 'no of trials' 'trialcode'};
+p.init.trialArrayColumnNames = {'trialType', 'visStimShape', ...
+                                'no of trials', 'trialcode'};
 
 % table definition
 switch p.init.exptType
-    case 'gSac4_v1'
-        table = gSac4_v1(p);
+    case 'step1'
+        table = step1;
 end          
 
 % Make "n" copies of each row in the table, where n is in the "no of trials" column.
@@ -53,17 +54,22 @@ p.init.blockLength = size(p.init.trialsArray, 1);
 
 end
 
-function table = gSac4_v1(p)
-table =           [     p.stim.xy{1}(1)     p.stim.xy{1}(2)     1       4       20101;   % target at location 1, visSac                        
-                        p.stim.xy{1}(1)     p.stim.xy{1}(2)     0       4       20100;   % target at location 1, visSac
-                        p.stim.xy{2}(1)     p.stim.xy{2}(2)     1       2       20201;   % target at location 1, visSac
-                        p.stim.xy{2}(1)     p.stim.xy{2}(2)     0       2       20200;   % target at location 1, visSac
-                        p.stim.xy{3}(1)     p.stim.xy{3}(2)     1       4       20301;   % target at location 1, visSac
-                        p.stim.xy{3}(1)     p.stim.xy{3}(2)     0       4       20300;   % target at location 1, visSac
-                        p.stim.xy{4}(1)     p.stim.xy{4}(2)     1       2       20401;   % target at location 1, visSac
-                        p.stim.xy{4}(1)     p.stim.xy{4}(2)     0       2       20400;   % target at location 1, visSac
-                 ];
+
+function table = step1
+table = [
+    1 1 1 24001; ... % visual stimulus, oval shape, 0 reps, 24001 trial code
+    1 2 1 24002; ... % visual stimulus, rect shape, 0 reps, 24002 trial code
+
+    2 0 0 24001; ... % electrode stimulation, 0 reps, 24003 trial code
+
+    3 0 0 24001; ... % no stimulus, 0 reps, 24004 trial code
+
+    ];
 end
+
+
+
+
 
 
 

@@ -609,16 +609,10 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     Screen('FrameRect',p.draw.window, p.draw.color.fixWin, repmat(p.draw.fixPointPix, 1, 2) +  [-p.draw.fixWinWidthPix -p.draw.fixWinHeightPix p.draw.fixWinWidthPix p.draw.fixWinHeightPix], p.draw.fixWinPenDraw)
     
     
-    % pick colors for stim/target
-    
-    if p.trVars.targsSameColor
-    	targColor1 = 17;
-    	targColor2 = 17;
-    else
-    	targColor1 = 0;
-    	targColor2 = 0;
-    end
-    
+
+
+
+
     % draw the stimulus (if it is time)
     
     %{
@@ -663,101 +657,27 @@ end
     end
 
 
-%{
-    if p.trVars.stimIsOn
-    
-        % Texture stuff
+    % pick colors for target(s)
+    targColor1 = 0;
+    targColor2 = 0;
 
-	Screen('DrawTexture', p.draw.window, p.draw.combinedStimTexture, [], repmat(p.draw.stimPointPix, 1, 2) + ...
-        [-p.draw.textureWindowDimensions/2 -p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2]);
-
-%{
-    	switch p.trVars.numDots
-    	    case 1
-    	    	Screen(stimShape, p.draw.window, p.trVars.stimColor1, ...
-                    repmat(p.draw.stimPointPix, 1, 2) + ...
-                    [-p.draw.stimWidth1/2 -p.draw.stimHeight1/2 p.draw.stimWidth1/2 p.draw.stimHeight1/2]); 
-    	    case 2
-                rotationMatrix = [cos(p.trVars.twoStimRotation), -sin(p.trVars.twoStimRotation);
-                		  sin(p.trVars.twoStimRotation), cos(p.trVars.twoStimRotation)];
-                rotatedTwoStimSepPix = rotationMatrix * [p.draw.twoStimSepPix/2; 0];
-                
-                if p.trVars.stimShape == 3
-                    
-                    Screen('FillOval', p.draw.window, p.trVars.stimColor1, ...
-                    	repmat(p.draw.stimPointPix - ...
-                    	rotatedTwoStimSepPix', 1, 2) + ...
-                    	[-p.draw.stimWidth1/2 -p.draw.stimHeight1/2 p.draw.stimWidth1/2 p.draw.stimHeight1/2]);
-                    Screen('FillRect', p.draw.window, p.trVars.stimColor2, ...
-                    	repmat(p.draw.stimPointPix + ...
-                    	rotatedTwoStimSepPix', 1, 2) + ...
-                    	[-p.draw.stimWidth2/2 -p.draw.stimHeight2/2 p.draw.stimWidth2/2 p.draw.stimHeight2/2]);
-                else
-                    Screen(stimShape, p.draw.window, p.trVars.stimColor1, ...
-                    	repmat(p.draw.stimPointPix - ...
-                    	rotatedTwoStimSepPix', 1, 2) + ...
-                    	[-p.draw.stimWidth1/2 -p.draw.stimHeight1/2 p.draw.stimWidth1/2 p.draw.stimHeight1/2]);
-                    Screen(stimShape, p.draw.window, p.trVars.stimColor2, ...
-                    	repmat(p.draw.stimPointPix + ...
-                    	rotatedTwoStimSepPix', 1, 2) + ...
-                    	[-p.draw.stimWidth2/2 -p.draw.stimHeight2/2 p.draw.stimWidth2/2 p.draw.stimHeight2/2]);    
-                    
-                end
-    	end
-
-
-% Add %} here to comment out "old way"
-%}
-    	
-    end
-%}
-    	
     % draw the target (if it is time)
     if p.trVars.targetIsOn
              
-        % Old method
-        %{   
-
-        % draw target:
-        switch p.trVars.numDots
-            case 1
-                Screen('FillOval', p.draw.window, 11, ...
-                    repmat(p.draw.targPointPix, 1, 2) + ...
-                    p.draw.targRadius*[-1 -1 1 1]);
-            case 2
-                Screen('FillOval', p.draw.window, 5, ...
-                    repmat(p.draw.targPointPix - ...
-                    [p.draw.twoTargSepPix/2 0], 1, 2) + ...
-                    p.draw.targRadius*[-1 -1 1 1]);
-                Screen('FillOval', p.draw.window, 5, ...
-                    repmat(p.draw.targPointPix + ...
-                    [p.draw.twoTargSepPix/2 0], 1, 2) + ...
-                    p.draw.targRadius*[-1 -1 1 1]);
-        end
-        %}
-
-        % New method
-
-        if p.trVars.numTargets == 2 || p.trVars.numDots == 1
-            % Target for one
-            Screen('FillOval', p.draw.window, targColor1, ...
-       		    repmat(p.draw.targOnePointPix, 1, 2) + ...
-                    p.draw.targRadius*[-1 -1 1 1]);
-        end
+        % Target for one
+        Screen('FillOval', p.draw.window, targColor1, ...
+       		repmat(p.draw.targOnePointPix, 1, 2) + ...
+                p.draw.targRadius*[-1 -1 1 1]);
                              
-        if p.trVars.numTargets == 2 || p.trVars.numDots == 2     
-            % Target for two        
-            Screen('FillOval', p.draw.window, targColor2, ...
-                    repmat(p.draw.targTwoPointPix - ...
-                    [p.draw.twoTargSepPix/2 0], 1, 2) + ...
-                    p.draw.targRadius*[-1 -1 1 1]);
-            Screen('FillOval', p.draw.window, targColor2, ...
-                    repmat(p.draw.targTwoPointPix + ...
-                    [p.draw.twoTargSepPix/2 0], 1, 2) + ...
-                    p.draw.targRadius*[-1 -1 1 1]);
-        end
-        
-                
+        % Target for two        
+        Screen('FillOval', p.draw.window, targColor2, ...
+            repmat(p.draw.targTwoPointPix - ...
+                [p.draw.twoTargSepPix/2 0], 1, 2) + ...
+                p.draw.targRadius*[-1 -1 1 1]);
+        Screen('FillOval', p.draw.window, targColor2, ...
+                repmat(p.draw.targTwoPointPix + ...
+                [p.draw.twoTargSepPix/2 0], 1, 2) + ...
+                p.draw.targRadius*[-1 -1 1 1]);            
     end
     
     % draw fixation spot

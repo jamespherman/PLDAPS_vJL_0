@@ -1,5 +1,5 @@
-function p = fixate_chen_init(p)
-%   p = fixate_chen_init(p)
+function p = LGN_RF_mapping_init(p)
+%   p = LGN_RF_mapping_init(p)
 %
 % Part of the quintet of pldpas functions:
 %   settings function

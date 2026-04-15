@@ -1,5 +1,5 @@
-function p = saccade_to_phosphene_run(p)
-%   p = saccade_to_phosphene_run(p)
+function p = sacc_to_phosph_run(p)
+%   p = seansFirstTask_run(p)
 %
 % Part of the quintet of pldpas functions:
 %   settings function
@@ -253,15 +253,16 @@ switch p.trVars.currentState
         
           
         % if joystick is broken then to hell with all this
+        
         if ~pds.joyHeld(p)
             p.init.strb.addValue(p.init.codes.joyRelease);
             p.trData.timing.joyRelease  = timeNow;
             p.trVars.currentState       = p.state.joyBreak;
         end
              
-        % check if eyes are in target window:
+        % check if eyes are in target windows
         eyeInTargetWin = pds.eyeInWindow(p, 'target');
-       
+      
         if ~eyeInTargetWin && (timeNow < p.trData.timing.saccadeOnset + p.trVars.maxSacDurationToAccept)
             % do nothing. Wait for monkey to get into targWin, but no
             % longer than the maxSacDurationToAccept.
@@ -269,20 +270,24 @@ switch p.trVars.currentState
 %             p.init.strb.addValue(p.init.codes.fixBreak);
 %             p.trData.timing.fixBreak    = timeNow;
 %             p.trVars.currentState       = p.state.fixBreak;
-%             
-        elseif (eyeInTargetWin && (timeNow < p.trData.timing.saccadeOnset + p.trVars.maxSacDurationToAccept)) || p.trVars.passEye
-            % if the eyes entered the target window we consdier that
-            % the real-time estiamte of saccade offset:
+%       
+	elseif (eyeInTargetWin && (timeNow < p.trData.timing.saccadeOnset + p.trVars.maxSacDurationToAccept)) || p.trVars.passEye
+	    % if the eyes entered target window 1 we onsider that the real-time estimate of saccade offset
             p.init.strb.addValue(p.init.codes.saccadeOffset);
             p.trData.timing.saccadeOffset    = timeNow;
-            p.trVars.currentState           = p.state.holdTarg;
             % and 'target acquired':
             p.init.strb.addValue(p.init.codes.targetAq);
             p.trData.timing.targetAq        = timeNow;
-            
-            % and thicken up that targWin:
-            p.draw.targWinPenDraw = p.draw.targWinPenThick;
-        
+
+	    % strobe to indicate we looked at target 1
+	    p.init.strb.addValue(p.init.codes.saccToTargetOne);
+		
+	    % Switch state to holdTarg
+                p.trVars.currentState           = p.state.holdTarg;
+                % and thicken up that targWin:
+            	p.draw.targWinPenDraw = p.draw.targWinPenThick;
+
+	    
         else %if (eyeInTargetWin && (timeNow > p.trData.timing.saccadeOnset + p.trVars.maxSacDurationToAccept)) %|| ~p.trVars.passEye
             % this means subject got into the target win too late. Likely
             % performed an intermediate saccade. This is unacceptable. 
@@ -347,31 +352,35 @@ switch p.trVars.currentState
     case p.state.sacComplete
         %% SACCADE COMPLETE!
         % STATE 21 = get reward delivery
-        
+
         % if the delay for reward delivery has elapsed and reward delivery
         % hasn't yet been triggered, deliver the reward.
         if p.trData.timing.reward < 0
             p = pds.deliverReward(p);
                 
+disp ('reward');
+
         % if reward delivery has been triggered and the interval to wait
         % after reward delivery has elapsed, it's time to exit the
         % while-loop.
         elseif p.trData.timing.reward > 0 && (timeNow - p.trData.timing.reward) > (p.trVars.postRewardDuration + p.rig.dp.dacPadDur + p.trVars.rewardDurationMs/1000)
-            p.trVars.exitWhileLoop = true;
+            p.trVars.exitWhileLoop = true;            
         end
         
-              
+
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% end states: trial ABORTED %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     case p.state.fixBreak
         %% FIXATION BREAK
+
         p = playTone(p, 'low');
         p.trVars.exitWhileLoop = true;
         
     case p.state.joyBreak
         %% JOYSTICK BREAK
+
         p = playTone(p, 'low');
         p.trVars.exitWhileLoop = true;
         
@@ -379,8 +388,18 @@ switch p.trVars.currentState
         %% NON-START
         % subject did not hold the joystick within the alloted time and
         % trila is considered a non-start.
+
         p = playTone(p, 'low');
         p.trVars.exitWhileLoop = true;
+
+    case p.state.wrongTarget   
+        %% WRONG TARGET
+        % subject looked at the incorrect target
+        
+	p = playTone(p, 'low');
+	p.trVars.exitWhileLoop = true;        
+               
+        
 end
 
 if p.trVars.exitWhileLoop
@@ -433,6 +452,41 @@ if p.trData.timing.fixAq > 0
     % time elapsed from fixation acquisition:
     timeFromFixAq = timeNow - p.trData.timing.fixAq;
     
+    %% Determine if stim should be on/off:
+    
+    if (p.trData.timing.stimOn == -1 && ...
+        timeFromFixAq >= p.trVars.timeStimOnset && timeFromFixAq < p.trVars.timeStimOffset)
+            p.trVars.stimIsOn    = true;
+            p.trData.timing.stimOn   = timeNow;
+
+    elseif (p.trData.timing.stimOn ~= -1 && p.trData.timing.stimOff == -1 && ...
+        timeFromFixAq >= p.trVars.timeStimOffset)
+            p.trVars.stimIsOn   = false;
+            p.trVars.timing.stimOff  = timeNow;
+    end
+    
+    
+
+    % Old method
+    %{
+    % if stim is off but time is now after timeStimOnset, then turn it on
+    if (p.trData.timing.stimOn == -1 && ...
+    	timeFromFixAq >= p.trVars.timeStimOnset && timeFromFixAq < p.trVars.timeStimOffset)
+    	p.trVars.stimIsOn 	 = true;
+    	p.trData.timing.stimOn   = timeNow;
+    	% No strobe for now; need to figure out how to set that up
+    	
+    % if stim is on but it's time to turn it off, then turn it off
+    elseif (p.trData.timing.stimOn~=-1 && p.trData.timing.stimOff==-1 && ...
+    	timeFromFixAq >= p.trVars.timeStimOffset)
+	p.trVars.stimIsOn	 = false;
+	p.trData.timing.stimOff  = timeNow;
+    	% No strobe for now; need to figure out how to set that up
+    else
+%    	p.trVars.stimIsOn 	 = false;
+    end
+    %}
+
     %% Determine if target should be on/off and send appropriate strobes:
     
     % if target is off, but time now is after timeTargOnset, turn it on:
@@ -474,6 +528,7 @@ timeNow = GetSecs - p.trData.timing.trialStartPTB;
 
 %% set Joystick indicator
 % Given joystick state, determine color for joystick indicator:
+%{
 [~, joyState] = pds.joyHeld(p);
 if isnan(joyState)
     p.draw.color.joyInd = p.draw.clutIdx.expGrey25_subBg;   % neither press nor released
@@ -487,6 +542,7 @@ end
 
 % now calculate size of joystick-fill rectangle
 joyRectNow = pds.joyRectFillCalc(p);
+%}
 
 %% if we're close enough to next screen flip, start drawing:
 
@@ -508,27 +564,175 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     Screen('FillRect', p.draw.window, p.draw.color.eyePos, [p.trVars.eyePixX p.trVars.eyePixY p.trVars.eyePixX p.trVars.eyePixY] + [-1 -1 1 1]*p.draw.eyePosWidth + repmat(p.draw.middleXY, 1, 2));
     
     % draw targWin:
-    Screen('FrameRect',p.draw.window, p.draw.color.targWin, repmat(p.draw.targPointPix, 1, 2) +  [-p.draw.targWinWidthPix -p.draw.targWinHeightPix p.draw.targWinWidthPix p.draw.targWinHeightPix], p.draw.targWinPenDraw)   
     
+    Screen('FrameRect',p.draw.window, p.draw.color.targWin, ...
+                repmat(p.draw.targPointPix, 1, 2) +  [-p.draw.targWinWidthPix -p.draw.targWinHeightPix p.draw.targWinWidthPix p.draw.targWinHeightPix], p.draw.targWinPenDraw)   
+    	
+
+%{
+    switch p.trVars.numDots
+    	case 1
+    		Screen('FrameRect',p.draw.window, p.draw.color.targWin, ...
+                repmat(p.draw.targOnePointPix, 1, 2) +  [-p.draw.targWinWidthPix -p.draw.targWinHeightPix p.draw.targWinWidthPix p.draw.targWinHeightPix], p.draw.targWinPenDraw)   
+    	case 2
+    		Screen('FrameRect',p.draw.window, p.draw.color.targWin, ...
+                repmat(p.draw.targTwoPointPix, 1, 2) +  [-p.draw.targWinWidthPix -p.draw.targWinHeightPix p.draw.targWinWidthPix p.draw.targWinHeightPix], p.draw.targWinPenDraw)   
+    end
+%}
+
     % draw fixation window
     Screen('FrameRect',p.draw.window, p.draw.color.fixWin, repmat(p.draw.fixPointPix, 1, 2) +  [-p.draw.fixWinWidthPix -p.draw.fixWinHeightPix p.draw.fixWinWidthPix p.draw.fixWinHeightPix], p.draw.fixWinPenDraw)
     
+    
+    % pick colors for stim/target
+    %{
+    if p.trVars.targsSameColor
+    	targColor1 = 17;
+    	targColor2 = 17;
+    else
+    	targColor1 = 0;
+    	targColor2 = 0;
+    end
+    %}
+    % draw the stimulus (if it is time)
+    
+    %{
+    
+    If we want to make blocks of 30 "pink trials", then 30 "blue trials", etc.:
+    
+    if iGoodTrial > 30
+    	stimColor = 17;
+    	
+    	elseif >60
+    	stimColor = 18;
+    	...
+    	
+    	
+    	Screen (...stimColor)
+    	
+    	%}
+   %{
+if p.trVars.stimShape == 1
+	stimShape = 'FillOval';
+elseif p.trVars.stimShape == 2
+	stimShape = 'FillRect';
+else
+	stimShape = 'FillOval';
+end    	
+   %}
 
+    if p.trVars.stimIsOn
+        Screen('DrawTexture', p.draw.window, p.draw.stimTexture, [], repmat(p.draw.stimPointPix, 1, 2) + ...
+        [-p.draw.textureWindowDimensions/2 -p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2]);
+    end
+
+
+
+%{
+    if p.trVars.stimIsOn
+    
+        % Texture stuff
+
+	Screen('DrawTexture', p.draw.window, p.draw.combinedStimTexture, [], repmat(p.draw.stimPointPix, 1, 2) + ...
+        [-p.draw.textureWindowDimensions/2 -p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2]);
+
+%{
+    	switch p.trVars.numDots
+    	    case 1
+    	    	Screen(stimShape, p.draw.window, p.trVars.stimColor1, ...
+                    repmat(p.draw.stimPointPix, 1, 2) + ...
+                    [-p.draw.stimWidth1/2 -p.draw.stimHeight1/2 p.draw.stimWidth1/2 p.draw.stimHeight1/2]); 
+    	    case 2
+                rotationMatrix = [cos(p.trVars.twoStimRotation), -sin(p.trVars.twoStimRotation);
+                		  sin(p.trVars.twoStimRotation), cos(p.trVars.twoStimRotation)];
+                rotatedTwoStimSepPix = rotationMatrix * [p.draw.twoStimSepPix/2; 0];
+                
+                if p.trVars.stimShape == 3
+                    
+                    Screen('FillOval', p.draw.window, p.trVars.stimColor1, ...
+                    	repmat(p.draw.stimPointPix - ...
+                    	rotatedTwoStimSepPix', 1, 2) + ...
+                    	[-p.draw.stimWidth1/2 -p.draw.stimHeight1/2 p.draw.stimWidth1/2 p.draw.stimHeight1/2]);
+                    Screen('FillRect', p.draw.window, p.trVars.stimColor2, ...
+                    	repmat(p.draw.stimPointPix + ...
+                    	rotatedTwoStimSepPix', 1, 2) + ...
+                    	[-p.draw.stimWidth2/2 -p.draw.stimHeight2/2 p.draw.stimWidth2/2 p.draw.stimHeight2/2]);
+                else
+                    Screen(stimShape, p.draw.window, p.trVars.stimColor1, ...
+                    	repmat(p.draw.stimPointPix - ...
+                    	rotatedTwoStimSepPix', 1, 2) + ...
+                    	[-p.draw.stimWidth1/2 -p.draw.stimHeight1/2 p.draw.stimWidth1/2 p.draw.stimHeight1/2]);
+                    Screen(stimShape, p.draw.window, p.trVars.stimColor2, ...
+                    	repmat(p.draw.stimPointPix + ...
+                    	rotatedTwoStimSepPix', 1, 2) + ...
+                    	[-p.draw.stimWidth2/2 -p.draw.stimHeight2/2 p.draw.stimWidth2/2 p.draw.stimHeight2/2]);    
+                    
+                end
+    	end
+
+
+% Add %} here to comment out "old way"
+%}
+    	
+    end
+%}
+    	%{
     % draw the target (if it is time)
     if p.trVars.targetIsOn
-        
+             
+        % Old method
+        %{   
+
         % draw target:
-        Screen('FrameRect', p.draw.window, p.draw.color.targ, repmat(p.draw.targPointPix, 1, 2) + p.draw.targRadius*[-1 -1 1 1], p.draw.targWidth);
+        switch p.trVars.numDots
+            case 1
+                Screen('FillOval', p.draw.window, 11, ...
+                    repmat(p.draw.targPointPix, 1, 2) + ...
+                    p.draw.targRadius*[-1 -1 1 1]);
+            case 2
+                Screen('FillOval', p.draw.window, 5, ...
+                    repmat(p.draw.targPointPix - ...
+                    [p.draw.twoTargSepPix/2 0], 1, 2) + ...
+                    p.draw.targRadius*[-1 -1 1 1]);
+                Screen('FillOval', p.draw.window, 5, ...
+                    repmat(p.draw.targPointPix + ...
+                    [p.draw.twoTargSepPix/2 0], 1, 2) + ...
+                    p.draw.targRadius*[-1 -1 1 1]);
+        end
+        %}
+
+        % New method
+
+        if p.trVars.numTargets == 2 || p.trVars.numDots == 1
+            % Target for one
+            Screen('FillOval', p.draw.window, targColor1, ...
+       		    repmat(p.draw.targOnePointPix, 1, 2) + ...
+                    p.draw.targRadius*[-1 -1 1 1]);
+        end
+                             
+        if p.trVars.numTargets == 2 || p.trVars.numDots == 2     
+            % Target for two        
+            Screen('FillOval', p.draw.window, targColor2, ...
+                    repmat(p.draw.targTwoPointPix - ...
+                    [p.draw.twoTargSepPix/2 0], 1, 2) + ...
+                    p.draw.targRadius*[-1 -1 1 1]);
+            Screen('FillOval', p.draw.window, targColor2, ...
+                    repmat(p.draw.targTwoPointPix + ...
+                    [p.draw.twoTargSepPix/2 0], 1, 2) + ...
+                    p.draw.targRadius*[-1 -1 1 1]);
+        end
         
+                
     end
-    
+    %}
+
     % draw fixation spot
     Screen('FrameRect',p.draw.window, p.draw.color.fix, repmat(p.draw.fixPointPix, 1, 2) + p.draw.fixPointRadius*[-1 -1 1 1], p.draw.fixPointWidth);
     
     
         % Draw the joystick-bar graphic.
-    Screen('FrameRect', p.draw.window, p.draw.color.joyInd, p.draw.joyRect);
-    Screen('FillRect',  p.draw.window, p.draw.color.joyInd, joyRectNow);
+   % Screen('FrameRect', p.draw.window, p.draw.color.joyInd, p.draw.joyRect);
+   % Screen('FillRect',  p.draw.window, p.draw.color.joyInd, joyRectNow);
     
     % flip and record time of flip.
     p.trData.timing.flipTime(p.trVars.flipIdx) = ...

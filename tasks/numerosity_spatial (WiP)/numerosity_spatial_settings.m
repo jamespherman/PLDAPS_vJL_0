@@ -67,7 +67,7 @@ p.init.rigConfigFile     = which(['rigConfigFiles.rigConfig_rig' ...
     p.init.pcName(end-1)]);
 
 % define task name and related files:
-p.init.taskName     = 'seansFirstTask';
+p.init.taskName     = 'numerosity_spatial';
 p                   = pds.initTaskMetadata(p); % ye ye I know, shouldn't this be in init? well it's here. For now...
 
 
@@ -243,7 +243,7 @@ p.trVarsInit.targDegY		 = [p.trVarsInit.targOneDegY p.trVarsInit.targTwoDegY];
 p.trVarsInit.numDots             = 0; % how many dots does the target stimulus have on this trial?
 p.trVarsInit.twoTargSepDeg       = 1; % how far apart should the two target dots be? (in dva?)
 p.trVarsInit.twoStimSepDegMin    = 0.05; % how far apart should the two stim dots be? (in dva?)
-p.trVarsInit.twoStimSepDegMax    = 0.5;
+p.trVarsInit.twoStimSepDegMax    = 1.5;
 p.trVarsInit.stimRangeRadius	 = 13.0; % create stimuli randomly within radius of __? (in pixels?)
 p.trVarsInit.stimRangeXmin	 = -28.0; % Alternate method of randomly positioning stimuli, between Xmin and Xmax
 p.trVarsInit.stimRangeXmax	 = 28.0;
@@ -294,11 +294,6 @@ p.trVarsInit.goTimePostTargMax       = 0.4; % max duration from targ onset to th
 
 p.trVarsInit.interStimIntervalMin    = 0.03; % For temporal task; time between stims
 p.trVarsInit.interStimIntervalMax    = 0.36; 
-
-% For transition version of temporal task; How much should the two stim overlap?
-% 0 = no overlap; i.e. full temporal task. 1 = complete overlap; i.e. full spatial task
-% between 0 and 1 = transition temporal task where the stim partially overlap
-p.trVarsInit.temporalOverlap         = 0;
 
 p.trVarsInit.maxFixWait              = 5;    % maximum time to wait for fixation-acquisition
 p.trVarsInit.targOnSacOnly           = 1;    % condition target reappearance on saccade?
@@ -451,6 +446,57 @@ p.stim.dotWidth              = 6;        % dot width
 % (in the 'next' function) updates the trVars!
 
 p.trVarsGuiComm = p.trVarsInit;
+
+
+%% trData - These are variables that acquire their values during the trial.
+% These variables need to be initialized to specific values prior to each
+% trial. Define a cell-array of variable names and values to loop over and
+% initialize prior to each trial.
+p.init.trDataInitList = {...
+    'p.trData.eyeX',                    '[]'; ...
+    'p.trData.eyeY',                    '[]'; ...
+    'p.trData.eyeP',                    '[]'; ...
+    'p.trData.eyeT',                    '[]'; ...
+    'p.trData.joyV',                    '[]'; ...
+    'p.trData.dInValues',               '[]'; ...
+    'p.trData.dInTimes',                '[]'; ...
+    'p.trData.onlineGaze',              '[]'; ...
+    'p.trData.strobed',                 '[]'; ...
+    'p.trData.spikeTimes',              '[]'; ...
+    'p.trData.eventTimes',              '[]'; ...
+    'p.trData.eventValues',             '[]'; ...
+    'p.trData.preSacXY',                '[]'; ...
+    'p.trData.postSacXY',               '[]'; ...
+    'p.trData.peakVel',                 '[]'; ...
+    'p.trData.SRT',                     '[]'; ...
+    'p.trData.spikeClusters',           '[]'; ...
+    'p.trData.trialEndState',           '-1'; ...   % final state in trial
+    'p.trData.trialRepeatFlag',         'false'; ...
+    'p.trData.timing.lastFrameTime',    '0'; ...    % time at which last video frame was displayed
+    'p.trData.timing.fixOn',            '-1'; ...   % time of fixation onset
+    'p.trData.timing.fixAq',            '-1'; ...   % time of fixation acquisition
+    'p.trData.timing.fixOff',           '-1'; ...   % time of fixation offset
+    'p.trData.timing.targetOn'          '-1'; ...   % time of target onset
+    'p.trData.timing.targetOff',        '-1'; ...   % time of target offset
+    'p.trData.timing.targetReillum',    '-1'; ...   % time of target reillumination (memsac)
+    'p.trData.timing.targetAq',         '-1'; ...   % time of target acquisition
+    'p.trData.timing.saccadeOnset',     '-1'; ...   % time of saccade start
+    'p.trData.timing.saccadeOffset',    '-1'; ...   % time of saccade end
+    'p.trData.timing.brokeFix',         '-1'; ...   % time of fixation break
+    'p.trData.timing.reward',           '-1'; ...   % time of reward delivery
+    'p.trData.timing.tone',             '-1'; ...   % time of audio feedback delivery
+    'p.trData.timing.trialBegin',       '-1'; ...   % time of trial begin
+    'p.trData.timing.trialStartPTB'     '-1'; ...   % time of joystick release relative to dimming
+    'p.trData.timing.trialStartDP',     '-1'; ...   % time that fixation hold duration was met (also time of fixation dimming)
+    'p.trData.timing.frameNow',         '-1'; ...   % current frame number
+    };
+
+% since the list above is 50fixed, count its rows now for looping over later.
+p.init.nTrDataListRows                  = size(p.init.trDataInitList, 1);
+
+
+
+
 
 %% CLUT - Color Look Up Table
 % the CLUT gets initialized in the _init file, but here I set verbal

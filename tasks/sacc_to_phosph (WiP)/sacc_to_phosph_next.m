@@ -1,5 +1,5 @@
-function p = saccade_to_phosphene_next(p)
-%   function p = saccade_to_phosphene_next(p)
+function p = sacc_to_phosph_next(p)
+%   function p = seansFirstTask_next(p)
 % Part of the quintet of pldpas functions:
 %
 %   settings function

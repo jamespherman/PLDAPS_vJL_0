@@ -67,7 +67,7 @@ p.init.rigConfigFile     = which(['rigConfigFiles.rigConfig_rig' ...
     p.init.pcName(end-1)]);
 
 % define task name and related files:
-p.init.taskName     = 'seansFirstTask';
+p.init.taskName     = 'numerosity_temporal';
 p                   = pds.initTaskMetadata(p); % ye ye I know, shouldn't this be in init? well it's here. For now...
 
 

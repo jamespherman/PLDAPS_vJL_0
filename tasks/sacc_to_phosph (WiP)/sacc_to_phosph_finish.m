@@ -1,5 +1,5 @@
-function p = saccade_to_phosphene_finish(p)
-%   p = saccade_to_phosphene_finish(p)
+function p = sacc_to_phosph_finish(p)
+%   p = seansFirstTask_finish(p)
 %
 % Part of the quintet of pldpas functions:
 %   settings function
@@ -17,13 +17,13 @@ function p = saccade_to_phosphene_finish(p)
 % fill screen with background color
 Screen('FillRect', p.draw.window, p.draw.color.background);
 Screen('Flip', p.draw.window);
-
+Screen('Close'); % close any open textures
 % read buffered ADC and DIN data from DATAPixx
 p           = pds.readDatapixxBuffers(p);
 
 % Was the previous trial aborted?
 p.trData.trialRepeatFlag = ismember(p.trData.trialEndState, ...
-    [p.state.fixBreak, p.state.joyBreak, p.state.nonStart]);
+    [p.state.fixBreak, p.state.joyBreak, p.state.nonStart, p.state.wrongTarget]);
 
 % update status variables
 p           = updateStatusVariables(p);
@@ -47,6 +47,9 @@ p.trData.strobed = p.init.strb.strobedList;
 % flush strobe "veto" & "strobed" list
 p.init.strb.flushVetoList;
 p.init.strb.flushStrobedList;
+
+% copy p.draw variables into p.trVars.draw so they get saved
+p.trVars.draw = p.draw;
 
 %%
 
@@ -76,7 +79,7 @@ pds.saveP(p);
 
 % (7) update trials list IF we're using the trials array.
 if p.trVars.setTargLocViaTrialArray
-    p           = updateTrialsList(p);
+    p           = updateTrialsList(p); % Comment out this to remove drumming
 end
 
 % keyboard
