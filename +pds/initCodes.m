@@ -45,7 +45,7 @@ codes.uniqueTaskCode_conflict_task  	= 32016;
 codes.uniqueTaskCode_numerosity_spatial = 32017;
 codes.uniqueTaskCode_numerosity_temporal= 32018;
 codes.uniqueTaskCode_sacc_to_phosph     = 32019;
-codes.uniqueTaskCode_LGN_RF_mapping     = 32020;
+codes.uniqueTaskCode_rfMap              = 32020;
 
 %% unique codes that are internal to the 'classyStrobe' function class
 % (see pds.classyStrobe.m for more details)
@@ -247,6 +247,20 @@ codes.rightTargRadius       = 16033;  % right target eccentricity (degrees * 100
 codes.singleStimSide        = 16034;  % 0=dual, 1=single-left, 2=single-right
 codes.rewardRatioBig_x100   = 16035;  % reward ratio * 100 (e.g., 2.0 -> 200)
 codes.rewardProbHigh_x1000  = 16036;  % P(canonical reward) * 1000 (e.g., 0.9 -> 900)
+
+% rfMap task codes (dense noise RF mapping)
+codes.noiseOn               = 16101;  % first noise frame onset
+codes.noiseOff              = 16102;  % noise presentation complete
+codes.noiseCheckSize_x100   = 16103;  % check size in degrees * 100
+codes.noiseFrameHold        = 16104;  % display frames per noise update
+codes.noiseColorMode        = 16105;  % 1 = luminance, 2 = rgb
+codes.noiseRngSeed          = 16106;  % RNG seed (lower 16 bits)
+codes.noiseRngSeedHigh      = 16107;  % RNG seed (upper 16 bits)
+codes.noiseTrialFrameStart  = 16108;  % starting frame index in movie (this trial)
+codes.noiseTrialFrameEnd    = 16109;  % ending frame index in movie (this trial)
+codes.noiseTotalFrames      = 16110;  % total frames in movie (clamped to 32767)
+codes.noiseGridW            = 16111;  % noise grid width (number of checks)
+codes.noiseGridH            = 16112;  % noise grid height (number of checks)
 
 %% validation
 
