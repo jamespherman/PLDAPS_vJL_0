@@ -13,6 +13,12 @@ function p = rfMap_run(p)
 %   Fixation break during noise -> fixBreak (11)
 %   Fixation never acquired -> nonStart (13)
 
+% If movie is exhausted, exit immediately (nextParams already flagged this)
+if p.trVars.movieExhausted
+    p.trVars.exitWhileLoop = true;
+    return;
+end
+
 % (1) mark start time in PTB and DP time:
 [p.trData.timing.trialStartPTB, p.trData.timing.trialStartDP] = ...
     pds.getTimes;

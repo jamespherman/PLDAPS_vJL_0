@@ -64,6 +64,20 @@ end
 function p = generateNoiseMovieForTask(p)
 % Generate the full noise movie and store in p.init
 
+% Guard: only binary luminance mode is currently supported for textures
+% and STA. RGB and continuous-noise modes require updates to
+% generateNoiseTextures.m and updateSTA.m before use.
+if p.trVarsInit.colorMode ~= 1
+    warning('rfMap:unsupportedMode', ...
+        'Only luminance mode (colorMode=1) is currently supported. Forcing luminance.');
+    p.trVarsInit.colorMode = 1;
+end
+if ~p.trVarsInit.contrastBinary
+    warning('rfMap:unsupportedMode', ...
+        'Only binary noise (contrastBinary=1) is currently supported. Forcing binary.');
+    p.trVarsInit.contrastBinary = 1;
+end
+
 % Compute grid size from rig geometry.
 % Use deg2pix to get check size in pixels, then divide screen by that.
 checkSizePix = pds.deg2pix(p.trVarsInit.checkSizeDeg, p);

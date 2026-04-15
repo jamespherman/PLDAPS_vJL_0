@@ -20,6 +20,11 @@ p.trVars = p.trVarsGuiComm;
 % (3) define next trial parameters (frame range, fixation, etc.)
 p = nextParams(p);
 
+% Check if movie is exhausted -- skip remaining setup
+if isfield(p.trVars, 'movieExhausted') && p.trVars.movieExhausted
+    return;
+end
+
 % (4) init trial data (timing, eye traces, spike data)
 p = initTrData(p);
 

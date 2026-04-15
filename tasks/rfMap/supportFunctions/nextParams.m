@@ -4,6 +4,14 @@ function p = nextParams(p)
 % Set per-trial parameters for rfMap. Determines which slice of the
 % pre-generated noise movie to present on this trial.
 
+%% Check if movie is exhausted (must be FIRST, before computing frame range)
+if p.init.noiseFrameIdx > p.init.nNoiseFrames
+    fprintf('*** rfMap: noise movie exhausted. Ending session. ***\n');
+    p.trVars.movieExhausted = true;
+    p.trVars.nFramesThisTrial = 0;
+    return;
+end
+
 %% Noise frame range for this trial
 frameDurS = p.trVars.noiseFrameHold * p.rig.frameDuration;
 framesPerTrial = round(p.trVars.trialDurationS / frameDurS);
@@ -14,13 +22,6 @@ p.trVars.trialEndFrame    = min(p.trVars.trialStartFrame + framesPerTrial - 1, .
                                 p.init.nNoiseFrames);
 p.trVars.nFramesThisTrial = p.trVars.trialEndFrame - p.trVars.trialStartFrame + 1;
 p.trVars.noiseFrameDurS   = frameDurS;
-
-%% Check if movie is exhausted
-if p.trVars.trialStartFrame > p.init.nNoiseFrames
-    fprintf('*** rfMap: noise movie exhausted. Ending session. ***\n');
-    p.trVars.exitWhileLoop = true;
-    return;
-end
 
 %% Fixation point position in pixels
 p.draw.fixPointPix = [p.draw.middleXY(1) + pds.deg2pix(p.trVars.fixDegX, p), ...
