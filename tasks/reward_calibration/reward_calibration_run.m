@@ -86,7 +86,7 @@ switch p.trVars.currentState
         %% STATE 1:
 
         % deliver reward and exit loop
-        p.init.strb.addValue(p.init.codes.trialBegin);
+        p.init.strb.strobeNow(p.init.codes.trialBegin);
         p.trData.timing.trialBegin      = timeNow;
         p = pds.deliverReward(p);
         p.trVars.exitWhileLoop = true;
@@ -104,7 +104,7 @@ if p.trVars.exitWhileLoop
     p.trData.trialEndState = p.trVars.currentState;
     
     % and strobe end of trial once:
-    p.init.strb.addValueOnce(p.init.codes.trialEnd);
+    p.init.strb.strobeNow(p.init.codes.trialEnd);
     p.trData.timing.trialEnd   = timeNow;
 end
 % Done with state-dependent section

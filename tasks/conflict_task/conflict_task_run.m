@@ -58,14 +58,14 @@ switch p.trVars.currentState
 
     case p.state.trialBegun
         % Trial has just started - strobe trial begin code
-        p.init.strb.addValue(p.init.codes.trialBegin);
+        p.init.strb.strobeNow(p.init.codes.trialBegin);
         p.trData.timing.trialBegin = timeNow;
         p.trVars.currentState = p.state.waitForJoy;
 
     case p.state.waitForJoy
         % Waiting for subject to press joystick to initiate trial
         if pds.joyHeld(p)
-            p.init.strb.addValue(p.init.codes.joyPress);
+            p.init.strb.strobeNow(p.init.codes.joyPress);
             p.trData.timing.joyPress = timeNow;
             p.trVars.currentState = p.state.showFix;
         elseif ~pds.joyHeld(p) && (timeNow > p.trVars.joyWaitDur)
@@ -89,7 +89,7 @@ switch p.trVars.currentState
 
         % Check joystick first (doesn't depend on fixOn timing)
         if ~pds.joyHeld(p)
-            p.init.strb.addValue(p.init.codes.joyRelease);
+            p.init.strb.strobeNow(p.init.codes.joyRelease);
             p.trData.timing.joyRelease = timeNow;
             p.trVars.currentState = p.state.joyBreak;
             return
@@ -101,11 +101,11 @@ switch p.trVars.currentState
             % Check if eye entered fixation window while holding joystick
             if pds.eyeInWindow(p) && pds.joyHeld(p) && ...
                     timeNow < (p.trData.timing.fixOn + p.trVars.fixWaitDur)
-                p.init.strb.addValue(p.init.codes.fixAq);
+                p.init.strb.strobeNow(p.init.codes.fixAq);
                 p.trData.timing.fixAq = timeNow;
                 p.trVars.currentState = p.state.dontMove;
             elseif timeNow > (p.trData.timing.fixOn + p.trVars.fixWaitDur)
-                p.init.strb.addValue(p.init.codes.nonStart);
+                p.init.strb.strobeNow(p.init.codes.nonStart);
                 p.trData.timing.joyRelease = timeNow;
                 p.trVars.currentState = p.state.nonStart;
             end
@@ -130,11 +130,11 @@ switch p.trVars.currentState
             p.trVars.currentState = p.state.makeSaccade;
         elseif ~pds.eyeInWindow(p)
             % Eye left fixation window during delay
-            p.init.strb.addValue(p.init.codes.fixBreak);
+            p.init.strb.strobeNow(p.init.codes.fixBreak);
             p.trData.timing.fixBreak = timeNow;
             p.trVars.currentState = p.state.fixBreak;
         elseif ~pds.joyHeld(p)
-            p.init.strb.addValue(p.init.codes.joyRelease);
+            p.init.strb.strobeNow(p.init.codes.joyRelease);
             p.trData.timing.joyRelease = timeNow;
             p.trVars.currentState = p.state.joyBreak;
         end
@@ -145,7 +145,7 @@ switch p.trVars.currentState
         p.draw.color.fix = p.draw.color.background;
 
         if ~pds.joyHeld(p)
-            p.init.strb.addValue(p.init.codes.joyRelease);
+            p.init.strb.strobeNow(p.init.codes.joyRelease);
             p.trData.timing.joyRelease = timeNow;
             p.trVars.currentState = p.state.joyBreak;
             return
@@ -169,7 +169,7 @@ switch p.trVars.currentState
         if eyeLeftFixWin && velocityExceedsThresh && ...
                 timeSinceGo < p.trVars.responseWindow
             % Valid saccade initiation
-            p.init.strb.addValue(p.init.codes.saccadeOnset);
+            p.init.strb.strobeNow(p.init.codes.saccadeOnset);
             p.trData.timing.saccadeOnset = timeNow;
             p.trVars.currentState = p.state.checkLanding;
             p.draw.fixWinPenDraw = p.draw.fixWinPenThin;
@@ -177,7 +177,7 @@ switch p.trVars.currentState
 
         elseif timeSinceGo > p.trVars.responseWindow
             % No saccade within response window
-            p.init.strb.addValue(p.init.codes.noResponse);
+            p.init.strb.strobeNow(p.init.codes.noResponse);
             p.trData.timing.fixBreak = timeNow;
             p.trVars.currentState = p.state.noResponse;
             disp(['no response after ' num2str(timeSinceGo * 1000) ' ms'])
@@ -187,7 +187,7 @@ switch p.trVars.currentState
         % Saccade initiated - checking where it lands
 
         if ~pds.joyHeld(p)
-            p.init.strb.addValue(p.init.codes.joyRelease);
+            p.init.strb.strobeNow(p.init.codes.joyRelease);
             p.trData.timing.joyRelease = timeNow;
             p.trVars.currentState = p.state.joyBreak;
             return
@@ -228,35 +228,35 @@ switch p.trVars.currentState
 
         elseif blinkDetected
             disp('blink detected');
-            p.init.strb.addValue(p.init.codes.blinkDuringSac);
+            p.init.strb.strobeNow(p.init.codes.blinkDuringSac);
             p.trData.timing.fixBreak = timeNow;
             p.trVars.currentState = p.state.fixBreak;
 
         elseif gazeInLeftTarget || p.trVars.passEye
             % Saccade landed in LEFT target window
-            p.init.strb.addValue(p.init.codes.saccadeOffset);
+            p.init.strb.strobeNow(p.init.codes.saccadeOffset);
             p.trData.timing.saccadeOffset = timeNow;
             p.trData.chosenSide = 1;  % left
             p.trVars.currentState = p.state.holdTarg;
-            p.init.strb.addValue(p.init.codes.targetAq);
+            p.init.strb.strobeNow(p.init.codes.targetAq);
             p.trData.timing.targetAq = timeNow;
             p.draw.targWinPenDraw = p.draw.targWinPenThick;
             disp('targHold - LEFT target')
 
         elseif gazeInRightTarget
             % Saccade landed in RIGHT target window
-            p.init.strb.addValue(p.init.codes.saccadeOffset);
+            p.init.strb.strobeNow(p.init.codes.saccadeOffset);
             p.trData.timing.saccadeOffset = timeNow;
             p.trData.chosenSide = 2;  % right
             p.trVars.currentState = p.state.holdTarg;
-            p.init.strb.addValue(p.init.codes.targetAq);
+            p.init.strb.strobeNow(p.init.codes.targetAq);
             p.trData.timing.targetAq = timeNow;
             p.draw.targWinPenDraw = p.draw.targWinPenThick;
             disp('targHold - RIGHT target')
 
         else
             % Saccade landed outside both target windows - inaccurate
-            p.init.strb.addValue(p.init.codes.inaccurate);
+            p.init.strb.strobeNow(p.init.codes.inaccurate);
             p.trData.timing.fixBreak = timeNow;
             p.trData.chosenSide = 0;
             p.trVars.currentState = p.state.inaccurate;
@@ -268,7 +268,7 @@ switch p.trVars.currentState
         % Gaze in chosen target window - must hold fixation for reward
 
         if ~pds.joyHeld(p)
-            p.init.strb.addValue(p.init.codes.joyRelease);
+            p.init.strb.strobeNow(p.init.codes.joyRelease);
             p.trData.timing.joyRelease = timeNow;
             p.trVars.currentState = p.state.joyBreak;
             return
@@ -291,7 +291,7 @@ switch p.trVars.currentState
             p.draw.targWinPenDraw = p.draw.targWinPenThick;
         elseif ~eyeInChosenTarget
             % Gaze left target window before hold complete
-            p.init.strb.addValue(p.init.codes.fixBreak);
+            p.init.strb.strobeNow(p.init.codes.fixBreak);
             p.trData.timing.fixBreak = timeNow;
             p.trVars.currentState = p.state.fixBreak;
             p.draw.targWinPenDraw = p.draw.targWinPenThin;

@@ -88,7 +88,7 @@ switch p.trVars.currentState
         %   TRIAL HAS BEGUN!
         
         % strobing trial start time and onward to state 0.1.
-        p.init.strb.addValue(p.init.codes.trialBegin);
+        p.init.strb.strobeNow(p.init.codes.trialBegin);
         p.trData.timing.trialBegin      = timeNow;
         p.trVars.currentState           = p.state.waitForJoy;
         
@@ -99,7 +99,7 @@ switch p.trVars.currentState
         % If joystick is held down, onwards to state 0.25
         % If not, onward to state 3.3 (non-start)
         if pds.joyHeld(p)
-            p.init.strb.addValue(p.init.codes.joyPress);
+            p.init.strb.strobeNow(p.init.codes.joyPress);
             p.trData.timing.joyPress    = timeNow;
             p.trVars.currentState       = p.state.showFix;
             
@@ -149,19 +149,19 @@ switch p.trVars.currentState
         if pds.eyeInWindow(p) && pds.joyHeld(p) && ...
                 timeNow < (p.trData.timing.fixOn + p.trVars.fixWaitDur)
                 
-            p.init.strb.addValue(p.init.codes.fixAq);
+            p.init.strb.strobeNow(p.init.codes.fixAq);
             p.trData.timing.fixAq      = timeNow;
             p.trVars.currentState      = p.state.dontMove;
             
         elseif ~pds.joyHeld(p)
             % joystick released when it wasn't supposed to:
-            p.init.strb.addValue(p.init.codes.joyRelease);
+            p.init.strb.strobeNow(p.init.codes.joyRelease);
             p.trData.timing.joyRelease = timeNow;
             p.trVars.currentState      = p.state.joyBreak;
             
         elseif p.trData.timing.fixOn > 0 && timeNow > (p.trData.timing.fixOn + p.trVars.fixWaitDur) 
             % fixation was never acquired
-            p.init.strb.addValue(p.init.codes.nonStart);
+            p.init.strb.strobeNow(p.init.codes.nonStart);
             p.trData.timing.joyRelease = timeNow;
             p.trVars.currentState      = p.state.nonStart;
         end
@@ -246,12 +246,12 @@ switch p.trVars.currentState
             p.init.strb.addValue(p.init.codes.noChange);
             
         elseif ~pds.eyeInWindow(p)
-            p.init.strb.addValue(p.init.codes.fixBreak);
+            p.init.strb.strobeNow(p.init.codes.fixBreak);
             p.trData.timing.fixBreak   = timeNow;
             p.trVars.currentState      = p.state.fixBreak;
             
         elseif ~pds.joyHeld(p)
-            p.init.strb.addValue(p.init.codes.joyRelease);
+            p.init.strb.strobeNow(p.init.codes.joyRelease);
             p.trData.timing.joyRelease    = timeNow;
             
             
@@ -298,13 +298,13 @@ switch p.trVars.currentState
         
         % if fixation is broken then to hell with all this
         if ~pds.eyeInWindow(p)
-            p.init.strb.addValue(p.init.codes.fixBreak);
+            p.init.strb.strobeNow(p.init.codes.fixBreak);
             p.trData.timing.fixBreak   = timeNow;
             p.trVars.currentState      = p.state.fixBreak;
             
             % if joystick is released, evaluate trial type & time:
         elseif ~pds.joyHeld(p)
-            p.init.strb.addValue(p.init.codes.joyRelease);
+            p.init.strb.strobeNow(p.init.codes.joyRelease);
             p.trData.timing.joyRelease     = timeNow;
             
             % If joystick is released after a change but before the
@@ -475,7 +475,7 @@ if p.trVars.exitWhileLoop
     p.trData.trialEndState = p.trVars.currentState;
     
     % and strobe end of trial once:
-    p.init.strb.addValueOnce(p.init.codes.trialEnd);
+    p.init.strb.strobeNow(p.init.codes.trialEnd);
     p.trData.timing.trialEnd   = timeNow;
 end
 % Done with state-dependent section

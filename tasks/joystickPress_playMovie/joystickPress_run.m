@@ -88,7 +88,7 @@ switch p.trVars.currentState
         %   TRIAL HAS BEGUN!
         
         % strobing trial start time and onward to state 0.1.
-        p.init.strb.addValue(p.init.codes.trialBegin);
+        p.init.strb.strobeNow(p.init.codes.trialBegin);
         p.trData.timing.trialBegin      = timeNow;
         p.trVars.currentState           = p.state.waitForJoy;
         
@@ -100,7 +100,7 @@ switch p.trVars.currentState
         % If not, onward to state 3.3 (non-start)
         if pds.joyHeld(p)
             disp('Joystick is held down!')
-            p.init.strb.addValue(p.init.codes.joyPress);
+            p.init.strb.strobeNow(p.init.codes.joyPress);
             p.trData.timing.joyPress    = timeNow;
             p.trVars.currentState       = p.state.holdJoy;
             
@@ -121,15 +121,15 @@ switch p.trVars.currentState
         if p.trData.timing.joyPress > 0 && ...
                 timeNow > (p.trData.timing.joyPress + ...
                 p.trVars.joyPressReq)
-            p.init.strb.addValue(p.init.codes.hit);
+            p.init.strb.strobeNow(p.init.codes.hit);
             p.trData.timing.joyHoldReqMet = timeNow;
             p.trVars.currentState      = p.state.hit;
             p = playTone(p, 'high');
             
         elseif ~pds.joyHeld(p)
             % joystick released when it wasn't supposed to:
-            p.init.strb.addValue(p.init.codes.joyRelease);
-            p.init.strb.addValue(p.init.codes.miss);
+            p.init.strb.strobeNow(p.init.codes.joyRelease);
+            p.init.strb.strobeNow(p.init.codes.miss);
             p.trData.timing.joyRelease = timeNow;
             p.trVars.currentState      = p.state.miss;
         end
@@ -206,7 +206,7 @@ if p.trVars.exitWhileLoop
     p.trData.trialEndState = p.trVars.currentState;
     
     % and strobe end of trial once:
-    p.init.strb.addValueOnce(p.init.codes.trialEnd);
+    p.init.strb.strobeNow(p.init.codes.trialEnd);
     p.trData.timing.trialEnd   = timeNow;
 end
 % Done with state-dependent section

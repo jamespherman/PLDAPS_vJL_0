@@ -69,7 +69,7 @@ switch p.trVars.currentState
         % This state runs only once to set up the ITI timer correctly.
         
         % Strobe the trial start code
-        p.init.strb.addValue(p.init.codes.trialBegin);
+        p.init.strb.strobeNow(p.init.codes.trialBegin);
         
         % Determine the start time for the ITI calculation.
         if p.status.lastTrialEndTime ~= 0
@@ -124,14 +124,14 @@ switch p.trVars.currentState
         if pds.eyeInWindow(p)
             % If yes, log the time, strobe, and transition
             p.trData.timing.fixAq = timeNow;
-            p.init.strb.addValue(p.init.codes.fixAq);
+            p.init.strb.strobeNow(p.init.codes.fixAq);
             p.trVars.currentState = p.state.holdFix;
             
         % Check for a timeout if fixation is not acquired
         elseif timeNow > (p.trData.timing.cueOn + p.trVars.fixAqDur)
             % If time is up, abort the trial
             p.status.trialRepeatFlag = true;
-            p.init.strb.addValue(p.init.codes.nonStart);
+            p.init.strb.strobeNow(p.init.codes.nonStart);
             p.trVars.currentState = p.state.nonStart;
         end
         
@@ -150,7 +150,7 @@ switch p.trVars.currentState
             % If fixation is broken, abort the trial
             p.trData.timing.fixBreak = timeNow;
             p.status.trialRepeatFlag = true;
-            p.init.strb.addValue(p.init.codes.fixBreak);
+            p.init.strb.strobeNow(p.init.codes.fixBreak);
             p.trVars.currentState = p.state.fixBreak;
         end
         
@@ -255,7 +255,7 @@ if p.trVars.exitWhileLoop
     p.trData.trialEndState = p.trVars.currentState;
     
     % Strobe the generic 'trial end' code
-    p.init.strb.addValueOnce(p.init.codes.trialEnd);
+    p.init.strb.strobeNow(p.init.codes.trialEnd);
     p.trData.timing.trialEnd = timeNow;
 end
 

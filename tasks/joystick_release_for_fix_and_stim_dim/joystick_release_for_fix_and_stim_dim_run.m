@@ -96,7 +96,7 @@ switch p.trVars.currentState
         %   TRIAL HAS BEGUN!
         
         % strobing trial start time and onward to state 0.1.
-        p.init.strb.addValue(p.init.codes.trialBegin);
+        p.init.strb.strobeNow(p.init.codes.trialBegin);
         p.trData.timing.trialBegin      = timeNow;
         p.trVars.currentState           = p.state.waitForJoy;
         
@@ -107,7 +107,7 @@ switch p.trVars.currentState
         % If joystick is held down, onwards to state "showFix"
         % If not, onward to state 3.3 (non-start)
         if pds.joyHeld(p)
-            p.init.strb.addValue(p.init.codes.joyPress);
+            p.init.strb.strobeNow(p.init.codes.joyPress);
             p.trData.timing.joyPress    = timeNow;
             p.trVars.currentState       = p.state.showFix;
             
@@ -142,7 +142,7 @@ switch p.trVars.currentState
         if pds.eyeInWindow(p) && pds.joyHeld(p) && ...
                 timeNow < (p.trData.timing.fixOn + p.trVars.fixWaitDur)
                 
-            p.init.strb.addValue(p.init.codes.fixAq);
+            p.init.strb.strobeNow(p.init.codes.fixAq);
             p.trData.timing.fixAq      = timeNow;
             p.trVars.currentState      = p.state.dontMove;
             
@@ -152,7 +152,7 @@ switch p.trVars.currentState
             % "joyBreak" since he hasn't yet acquired fixation. As soon as
             % the subject acquires fixation, joystick release becomes a
             % false alarm:
-            p.init.strb.addValue(p.init.codes.joyRelease);
+            p.init.strb.strobeNow(p.init.codes.joyRelease);
             p.trData.timing.joyRelease = timeNow;
             p.trVars.currentState      = p.state.joyBreak;
             
@@ -162,7 +162,7 @@ switch p.trVars.currentState
         elseif p.trData.timing.fixOn > 0 && timeNow > ...
                 (p.trData.timing.fixOn + p.trVars.fixWaitDur) 
             % fixation was never acquired
-            p.init.strb.addValue(p.init.codes.nonStart);
+            p.init.strb.strobeNow(p.init.codes.nonStart);
             p.trData.timing.joyRelease = timeNow;
             p.trVars.currentState      = p.state.nonStart;
         end
@@ -216,7 +216,7 @@ switch p.trVars.currentState
 
                 % this is a correct reject:
                 p.trData.timing.fixHoldReqMet   = timeNow;
-                p.init.strb.addValue(p.init.codes.cr);
+                p.init.strb.strobeNow(p.init.codes.cr);
                 p.trVars.currentState      = p.state.cr;
                 p = playTone(p, 'high');
             end
@@ -226,14 +226,14 @@ switch p.trVars.currentState
             % this is a fixation break; hide fixation; strobe fix break,
             % note time of fix break, and go to next state (fixBreak).
             p.draw.color.fix                = p.draw.clutIdx.expBg_subBg;
-            p.init.strb.addValue(p.init.codes.fixBreak);
+            p.init.strb.strobeNow(p.init.codes.fixBreak);
             p.trData.timing.fixBreak   = timeNow;
             p.trVars.currentState      = p.state.fixBreak;
 
         elseif ~pds.joyHeld(p)
 
             % this is a false alarm; strobe 
-            p.init.strb.addValue(p.init.codes.fa);
+            p.init.strb.strobeNow(p.init.codes.fa);
             p.trData.timing.joyRelease      = timeNow;
             p.trVars.currentState           = p.state.fa;
         end
@@ -259,7 +259,7 @@ switch p.trVars.currentState
             % allowed hasn't passed yet, but joystick has been released,
             % this is a false alarm; strobe false alarm, note time of
             % joystick release, and go to next state (false alarm).
-            p.init.strb.addValue(p.init.codes.fa);
+            p.init.strb.strobeNow(p.init.codes.fa);
             p.trData.timing.joyRelease  = timeNow;
             p.trVars.currentState       = p.state.fa;
 
@@ -267,7 +267,7 @@ switch p.trVars.currentState
                 timeFromFixHoldMet > p.trVars.joyMinLatency)
 
             % if joystick has been released 
-            p.init.strb.addValue(p.init.codes.hit);
+            p.init.strb.strobeNow(p.init.codes.hit);
             p.trVars.currentState           = p.state.hit;
             p.trData.timing.joyRelease      = timeNow;
             p.trData.timing.reactionTime    = timeFromFixHoldMet;
@@ -368,7 +368,7 @@ if p.trVars.exitWhileLoop
     p.trData.trialEndState = p.trVars.currentState;
     
     % and strobe end of trial once:
-    p.init.strb.addValueOnce(p.init.codes.trialEnd);
+    p.init.strb.strobeNow(p.init.codes.trialEnd);
     p.trData.timing.trialEnd   = timeNow;
 end
 % Done with state-dependent section

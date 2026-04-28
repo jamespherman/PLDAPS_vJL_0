@@ -64,7 +64,7 @@ switch p.trVars.currentState
         %% STATE 1: TRIAL HAS BEGUN
         % Strobe trial start and advance to showFix.
 
-        p.init.strb.addValue(p.init.codes.trialBegin);
+        p.init.strb.strobeNow(p.init.codes.trialBegin);
         p.trData.timing.trialBegin = timeNow;
         p.trVars.currentState      = p.state.showFix;
 
@@ -89,14 +89,14 @@ switch p.trVars.currentState
         if pds.eyeInWindow(p) && p.trData.timing.fixOn > 0 && ...
                 timeNow < (p.trData.timing.fixOn + p.trVars.fixWaitDur)
 
-            p.init.strb.addValue(p.init.codes.fixAq);
+            p.init.strb.strobeNow(p.init.codes.fixAq);
             p.trData.timing.fixAq = timeNow;
             p.trVars.currentState = p.state.holdFixAndPlay;
 
         elseif p.trData.timing.fixOn > 0 && ...
                 timeNow > (p.trData.timing.fixOn + p.trVars.fixWaitDur)
             % fixation was never acquired
-            p.init.strb.addValue(p.init.codes.nonStart);
+            p.init.strb.strobeNow(p.init.codes.nonStart);
             p.trVars.currentState = p.state.nonStart;
         end
 
@@ -139,7 +139,7 @@ switch p.trVars.currentState
 
         elseif ~pds.eyeInWindow(p) && p.trData.timing.noiseOn > 0
             % Fixation broken during noise
-            p.init.strb.addValue(p.init.codes.fixBreak);
+            p.init.strb.strobeNow(p.init.codes.fixBreak);
             p.trData.timing.fixBreak = timeNow;
             p.trVars.noiseIsOn = false;
             p.trVars.currentState = p.state.fixBreak;
@@ -179,7 +179,7 @@ if p.trVars.exitWhileLoop
     p.draw.color.fixWin = p.draw.color.background;
 
     p.trData.trialEndState = p.trVars.currentState;
-    p.init.strb.addValueOnce(p.init.codes.trialEnd);
+    p.init.strb.strobeNow(p.init.codes.trialEnd);
     p.trData.timing.trialEnd = timeNow;
 end
 
