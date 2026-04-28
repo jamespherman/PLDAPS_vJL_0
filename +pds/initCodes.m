@@ -47,6 +47,7 @@ codes.uniqueTaskCode_numerosity_temporal= 32018;
 codes.uniqueTaskCode_sacc_to_phosph     = 32019;
 codes.uniqueTaskCode_rfMap              = 32020;
 codes.uniqueTaskCode_fix_present_squares= 32021;
+codes.uniqueTaskCode_barsweep           = 32022;
 
 %% unique codes that are internal to the 'classyStrobe' function class
 % (see pds.classyStrobe.m for more details)
@@ -58,8 +59,9 @@ codes.cellLength    = ss.internalStrobeCodes.cellLength;
 %% currently using fst codse...
 
 % trial codes
-codes.trialBegin        = 30001; % The very beginning of a trial 
-codes.trialEnd          = 30009; % The very end of a trial 
+codes.trialBegin        = 30001; % The very beginning of a trial
+codes.trialRunDone      = 30008; % End of trial loop in _run.m: behavioral execution complete (eye/joy polling stopped, state machine done). Distinct from trialEnd, which closes the trial record in _finish.m after parameter strobes.
+codes.trialEnd          = 30009; % End of trial record in _finish.m: emitted after pds.strobeTrialData, before any post-trial waits. Inter-strobe gap trialEnd[N] -> fixOn[N+1] contains iti/timeout/postRewardDuration only.
 codes.connectPLX        = 11001; % ???
 codes.trialCount        = 11002; 
 codes.blockNumber       = 11003; 
@@ -264,6 +266,25 @@ codes.noiseTrialFrameEnd    = 16109;  % ending frame index in movie (this trial)
 codes.noiseTotalFrames      = 16110;  % total frames in movie (clamped to 32767)
 codes.noiseGridW            = 16111;  % noise grid width (number of checks)
 codes.noiseGridH            = 16112;  % noise grid height (number of checks)
+
+% barsweep task codes (translating bar sweep, passive fixation)
+codes.barsweepAngle_x10           = 16115;  % path angle * 10 (0..3600)
+codes.barsweepCenterTheta_x10     = 16116;  % path center polar angle * 10 + 1800
+codes.barsweepCenterRadius_x100   = 16117;  % path center eccentricity * 100
+codes.barsweepPathLength_x100     = 16118;  % path length (dva) * 100
+codes.barsweepSpeed_x100          = 16119;  % speed (dva/s) * 100
+codes.barsweepWidth_x100          = 16120;  % bar thickness (dva) * 100
+codes.barsweepLength_x100         = 16121;  % bar end-to-end length (dva) * 100
+codes.barsweepFixTheta_x10        = 16122;  % fix point polar angle * 10 + 1800
+codes.barsweepFixRadius_x100      = 16123;  % fix point eccentricity * 100
+codes.barsweepFixWinWidth_x100    = 16124;  % fix window width (dva) * 100
+codes.barsweepFixWinHeight_x100   = 16125;  % fix window height (dva) * 100
+codes.barsweepStimMode            = 16126;  % 1 = noise, 2 = solid
+codes.barsweepBgLumIdx            = 16127;  % background luminance palette index
+codes.barsweepBarLumIdx           = 16128;  % bar luminance palette index (solid mode)
+codes.barsweepNoiseLumLowIdx      = 16129;  % low-luminance palette index (noise mode)
+codes.barsweepNoiseLumHighIdx     = 16130;  % high-luminance palette index (noise mode)
+codes.barsweepNoiseGrain_x100     = 16131;  % noise check size (dva) * 100
 
 %% validation
 
