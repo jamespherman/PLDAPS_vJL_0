@@ -46,6 +46,7 @@ codes.uniqueTaskCode_numerosity_spatial = 32017;
 codes.uniqueTaskCode_numerosity_temporal= 32018;
 codes.uniqueTaskCode_sacc_to_phosph     = 32019;
 codes.uniqueTaskCode_rfMap              = 32020;
+codes.uniqueTaskCode_fix_present_squares= 32021;
 
 %% unique codes that are internal to the 'classyStrobe' function class
 % (see pds.classyStrobe.m for more details)
