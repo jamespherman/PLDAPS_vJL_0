@@ -90,7 +90,7 @@ switch p.trVars.currentState
         %   TRIAL HAS BEGUN!
         
         % strobing trial start time and onward to state 0.1.
-        p.init.strb.addValue(p.init.codes.trialBegin);
+        p.init.strb.strobeNow(p.init.codes.trialBegin);
         p.trData.timing.trialBegin      = timeNow;
         p.trVars.currentState           = p.state.showFix;
         
@@ -125,14 +125,14 @@ switch p.trVars.currentState
         if pds.eyeInWindow(p) && ...
                 timeNow < (p.trData.timing.fixOn + p.trVars.fixWaitDur)
             
-            p.init.strb.addValue(p.init.codes.fixAq);
+            p.init.strb.strobeNow(p.init.codes.fixAq);
             p.trData.timing.fixAq      = timeNow;
             p.trVars.currentState      = p.state.dontMove;
             
         elseif p.trData.timing.fixOn > 0 && timeNow > ...
                 (p.trData.timing.fixOn + p.trVars.fixWaitDur)
             % fixation was never acquired
-            p.init.strb.addValue(p.init.codes.nonStart);
+            p.init.strb.strobeNow(p.init.codes.nonStart);
             p.trData.timing.joyRelease = timeNow;
             p.trVars.currentState      = p.state.nonStart;
         end
@@ -153,13 +153,13 @@ switch p.trVars.currentState
 
         if p.trData.timing.fixAq > 0 && ...
                 timeFromFixAq > p.trVars.timeReward
-            p.init.strb.addValue(p.init.codes.hit);
+            p.init.strb.strobeNow(p.init.codes.hit);
             p.trData.timing.fixHoldReqMet = timeNow;
             p.trVars.currentState      = p.state.hit;
             p = playTone(p, 'high');
             
         elseif ~pds.eyeInWindow(p)
-            p.init.strb.addValue(p.init.codes.fixBreak);
+            p.init.strb.strobeNow(p.init.codes.fixBreak);
             p.trData.timing.fixBreak   = timeNow;
             p.trVars.currentState      = p.state.fixBreak;
             
@@ -210,7 +210,7 @@ if p.trVars.exitWhileLoop
     p.trData.trialEndState = p.trVars.currentState;
     
     % and strobe end of trial once:
-    p.init.strb.addValueOnce(p.init.codes.trialEnd);
+    p.init.strb.strobeNow(p.init.codes.trialEnd);
     p.trData.timing.trialEnd   = timeNow;
 end
 % Done with state-dependent section

@@ -55,14 +55,14 @@ switch p.trVars.currentState
 
     case p.state.trialBegun
         % Trial has just started - strobe trial begin code
-        p.init.strb.addValue(p.init.codes.trialBegin);
+        p.init.strb.strobeNow(p.init.codes.trialBegin);
         p.trData.timing.trialBegin      = timeNow;
         p.trVars.currentState        = p.state.waitForJoy;
 
     case p.state.waitForJoy
         % Waiting for subject to press joystick to initiate trial
         if pds.joyHeld(p)
-            p.init.strb.addValue(p.init.codes.joyPress);
+            p.init.strb.strobeNow(p.init.codes.joyPress);
             p.trData.timing.joyPress    = timeNow;
             p.trVars.currentState    = p.state.showFix;
         elseif ~pds.joyHeld(p) && (timeNow > p.trVars.joyWaitDur)
@@ -87,17 +87,17 @@ switch p.trVars.currentState
         % Check if eye entered fixation window while holding joystick
         if pds.eyeInWindow(p) && pds.joyHeld(p) && ...
                 timeNow < (p.trData.timing.fixOn + p.trVars.fixWaitDur)
-            p.init.strb.addValue(p.init.codes.fixAq);
+            p.init.strb.strobeNow(p.init.codes.fixAq);
             p.trData.timing.fixAq      = timeNow;
             p.trVars.currentState      = p.state.dontMove;
         elseif ~pds.joyHeld(p)
             % Joystick released before fixation acquired
-            p.init.strb.addValue(p.init.codes.joyRelease);
+            p.init.strb.strobeNow(p.init.codes.joyRelease);
             p.trData.timing.joyRelease = timeNow;
             p.trVars.currentState      = p.state.joyBreak;
         elseif timeNow > (p.trData.timing.fixOn + p.trVars.fixWaitDur)
             % Fixation not acquired within allowed time
-            p.init.strb.addValue(p.init.codes.nonStart);
+            p.init.strb.strobeNow(p.init.codes.nonStart);
             p.trData.timing.joyRelease = timeNow;
             p.trVars.currentState      = p.state.nonStart;
         end
@@ -122,12 +122,12 @@ switch p.trVars.currentState
             p.trVars.currentState     = p.state.makeSaccade;
         elseif ~pds.eyeInWindow(p)
             % Eye left fixation window during delay
-            p.init.strb.addValue(p.init.codes.fixBreak);
+            p.init.strb.strobeNow(p.init.codes.fixBreak);
             p.trData.timing.fixBreak    = timeNow;
             p.trVars.currentState       = p.state.fixBreak;
         elseif ~pds.joyHeld(p)
             % Joystick released during delay
-            p.init.strb.addValue(p.init.codes.joyRelease);
+            p.init.strb.strobeNow(p.init.codes.joyRelease);
             p.trData.timing.joyRelease  = timeNow;
             p.trVars.currentState       = p.state.joyBreak;
         end
@@ -140,7 +140,7 @@ switch p.trVars.currentState
 
         % Check for joystick release (failure condition)
         if ~pds.joyHeld(p)
-            p.init.strb.addValue(p.init.codes.joyRelease);
+            p.init.strb.strobeNow(p.init.codes.joyRelease);
             p.trData.timing.joyRelease  = timeNow;
             p.trVars.currentState       = p.state.joyBreak;
         end
@@ -150,7 +150,7 @@ switch p.trVars.currentState
 
         % Check for premature saccade (before minimum latency)
         if ~pds.eyeInWindow(p) && timeSinceGo < p.trVars.goLatencyMin
-            p.init.strb.addValue(p.init.codes.fixBreak);
+            p.init.strb.strobeNow(p.init.codes.fixBreak);
             p.trData.timing.fixBreak    = timeNow;
             p.trVars.currentState       = p.state.fixBreak;
 
@@ -159,7 +159,7 @@ switch p.trVars.currentState
                 timeSinceGo > p.trVars.goLatencyMin && ...
                 timeSinceGo < p.trVars.goLatencyMax && ...
                 (gazeVelThreshCheck(p, timeNow) || p.trVars.passEye)
-            p.init.strb.addValue(p.init.codes.saccadeOnset);
+            p.init.strb.strobeNow(p.init.codes.saccadeOnset);
             p.trData.timing.saccadeOnset    = timeNow;
             p.trVars.currentState           = p.state.checkLanding;
             p.draw.fixWinPenDraw = p.draw.fixWinPenThin;
@@ -168,7 +168,7 @@ switch p.trVars.currentState
         % Check for failure to initiate saccade in time
         elseif p.trData.timing.fixOff > 0 && ...
                 timeSinceGo > p.trVars.goLatencyMax
-            p.init.strb.addValue(p.init.codes.fixBreak);
+            p.init.strb.strobeNow(p.init.codes.fixBreak);
             p.trData.timing.fixBreak    = timeNow;
             p.trVars.currentState       = p.state.fixBreak;
             disp(['late saccade at ' num2str(timeSinceGo) ...
@@ -182,7 +182,7 @@ switch p.trVars.currentState
 
         % Check for joystick release during saccade
         if ~pds.joyHeld(p)
-            p.init.strb.addValue(p.init.codes.joyRelease);
+            p.init.strb.strobeNow(p.init.codes.joyRelease);
             p.trData.timing.joyRelease  = timeNow;
             p.trVars.currentState = p.state.joyBreak;
         end
@@ -209,23 +209,23 @@ switch p.trVars.currentState
         elseif blinkDetected
             % Blink detected during saccade - abort trial
             disp('blink detected');
-            p.init.strb.addValue(p.init.codes.blinkDuringSac);
+            p.init.strb.strobeNow(p.init.codes.blinkDuringSac);
             p.trData.timing.fixBreak = timeNow;
             p.trVars.currentState = p.state.fixBreak;
 
         elseif gazeInTargetWin || p.trVars.passEye
             % Saccade landed in target window - success so far
-            p.init.strb.addValue(p.init.codes.saccadeOffset);
+            p.init.strb.strobeNow(p.init.codes.saccadeOffset);
             p.trData.timing.saccadeOffset = timeNow;
             p.trVars.currentState = p.state.holdTarg;
-            p.init.strb.addValue(p.init.codes.targetAq);
+            p.init.strb.strobeNow(p.init.codes.targetAq);
             p.trData.timing.targetAq = timeNow;
             p.draw.targWinPenDraw = p.draw.targWinPenThick;
             disp('targHold')
 
         elseif ~gazeInTargetWin || ~p.trVars.passEye
             % Saccade landed outside target window - failure
-            p.init.strb.addValue(p.init.codes.fixBreak);
+            p.init.strb.strobeNow(p.init.codes.fixBreak);
             p.trData.timing.fixBreak = timeNow;
             p.trVars.currentState = p.state.fixBreak;
             p.draw.targWinPenDraw = p.draw.targWinPenThin;
@@ -237,7 +237,7 @@ switch p.trVars.currentState
 
         % Check for joystick release
         if ~pds.joyHeld(p)
-            p.init.strb.addValue(p.init.codes.joyRelease);
+            p.init.strb.strobeNow(p.init.codes.joyRelease);
             p.trData.timing.joyRelease  = timeNow;
             p.trVars.currentState = p.state.joyBreak;
         end
@@ -255,7 +255,7 @@ switch p.trVars.currentState
             p.draw.targWinPenDraw = p.draw.targWinPenThick;
         elseif ~eyeInTargetWin
             % Gaze left target window before hold complete
-            p.init.strb.addValue(p.init.codes.fixBreak);
+            p.init.strb.strobeNow(p.init.codes.fixBreak);
             p.trData.timing.fixBreak = timeNow;
             p.trVars.currentState = p.state.fixBreak;
             p.draw.targWinPenDraw = p.draw.targWinPenThin;
