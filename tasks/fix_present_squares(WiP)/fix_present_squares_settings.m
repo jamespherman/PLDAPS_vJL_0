@@ -1,5 +1,5 @@
-function p = LGN_RF_mapping_settings
-%  p = LGN_RF_mapping_settings
+function p = fix_present_squares_settings
+%  p = fix_present_squares_settings
 %
 %  "scd" - stimulus change detection; stimuli have multiple feature
 %  dimensions, each of which can change.
@@ -59,7 +59,7 @@ p.init.useDataPixxBool = true;
 
 %% define task name and related files:
 
-p.init.taskName         = 'LGN_RF_mapping';
+p.init.taskName         = 'fix_present_squares';
 p.init.taskType         = 1;                            % poorly defined numerical index for the task "type"
 p.init.pldapsFolder     = pwd;                          % pldaps gui takes us to taks folder automatically once we choose a settings file
 p.init.protocol_title   = [p.init.taskName '_task'];    % Define Banner text to identify the experimental protocol
@@ -316,19 +316,20 @@ p.trVarsInit.postFlip.varNames        = cell(0);
 
 % RF-mapping stimulus variables
 
-p.trVarsInit.stimulusType = 'sparseNoise';
-
 p.trVarsInit.preStimDur = 0.250; % ms after fixAcq before presenting stim
 p.trVarsInit.postStimDur = 0.250; % ms after stim off before trial end
 
-% for barSweep
+p.trVarsInit.numPresentations = 2;
+p.trVarsInit.presentationDur = 0.2; % in s
+p.trVarsInit.pauseDur = 0.02; % in s
+p.trVarsInit.squareSize = 1; % in dva
 
-
+p.trVarsInit.jitterMin = 0.2; % in dva
+p.trVarsInit.jitterMax = 0.5;
 
 % for sparseNoise
-p.trVarsInit.sparseNoiseNumPresentations = 2;
+
 p.trVarsInit.sparseNoiseNumSquares = 8;
-p.trVarsInit.sparseNoiseSquareSize = 1; % in dva
 
 p.trVarsInit.sparseNoiseXMin = -28; % where on the screen can squares appear, in dva
 p.trVarsInit.sparseNoiseXMax = 28; % in dva
@@ -338,14 +339,14 @@ p.trVarsInit.sparseNoiseYMax = 18; % in dva
 p.trVarsInit.sparseNoiseGridSizeX = 28; % number of grid positions
 p.trVarsInit.sparseNoiseGridSizeY = 18; % total = x*y
 
-p.trVarsInit.sparseNoisePresentationDur = 0.200; % in s
-p.trVarsInit.sparseNoiseDelayDur = 0.020; % in s
 
+% for denseNoise
 
+p.trVarsInit.denseNoiseCLUTIndices = [20, 21, 22, 23, 24, 25, 26, 27];
 
-% for blank
+% for checkerboard
 
-
+p.trVarsInit.checkerboardCLUTIndices = [28, 29];
 
 %% end of trVarsInit
 % once all trial variables have been initialized in trVarsInit, we copy 
@@ -375,8 +376,8 @@ p.init.trDataInitList = {...
     'p.trData.timing.lastFrameTime',    '0'; ...    % time at which last video frame was displayed
     'p.trData.timing.fixOn',            '-1'; ...   % time of fixation onset
     'p.trData.timing.fixAq',            '-1'; ...   % time of fixation acquisition
-    'p.trData.timing.stimOn',           'repelem (-1, p.trVarsInit.sparseNoiseNumPresentations)'; ...   % time of stimulus onset
-    'p.trData.timing.stimOff',          'repelem (-1, p.trVarsInit.sparseNoiseNumPresentations)'; ...   % time of stimulus offset
+    'p.trData.timing.stimOn',           'repelem (-1, p.trVars.numPresentations)'; ...   % time of stimulus onset
+    'p.trData.timing.stimOff',          'repelem (-1, p.trVars.numPresentations)'; ...   % time of stimulus offset
     'p.trData.timing.cueOn',            '-1'; ...   % time of cur ring onset
     'p.trData.timing.cueOff',           '-1'; ...   % time of cue ring offset
     'p.trData.timing.cueChg',           '-1'; ...   % time of cue change
@@ -393,7 +394,7 @@ p.init.trDataInitList = {...
 p.init.nTrDataListRows                  = size(p.init.trDataInitList, 1);
 
 %% draw - these are paramters used for drawing
-% the boring stuff, like width and height of stuff that gets drawn - NOTE,
+% the boring stuff, like width and height of stuff that gets drawn - NOdenseNoiseTextureTE,
 % variables defined here are retained for the duration of the experiment,
 % they can't be changed from trial-to-trial in the GUI.
 
@@ -485,9 +486,10 @@ p.draw.color.joyInd     = p.draw.clutIdx.expGrey90_subBg;               % joy po
 % identifies the variable, immidiately followed by its value.
 % eg
 
-p.init.strobeList = fliplr({...                 
-    'p.init.date_1yyyy',                                                                                        'date_1yyyy';         
-    'p.init.date_1mmdd',                                                                                        'date_1mmdd';  ...      
-    'p.init.time_1hhmm',                                                                                        'time_1hhmm';
-    });
+p.init.strobeList = {...
+    'taskCode',         'p.init.codes.uniqueTaskCode_fix_present_squares'; ...
+    'trialCode',        'p.init.trialsArray(p.trVars.currentTrialsArrayRow, strcmp(p.init.trialArrayColumnNames, ''trialCode''))'; ...
+    'microStimChannel', 'p.trVars.stimulatedElectrode'; ...
+    'microStimCurrAmp', 'p.trVars.stimAmplitude'; ...
+    };
 end

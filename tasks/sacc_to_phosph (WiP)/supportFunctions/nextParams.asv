@@ -4,21 +4,6 @@ function p = nextParams(p)
 %
 % Define parameters for upcoming trial.
 
-% Before anything, check if the "stimulatedElectrode" has been changed, and
-% reset staircase values if it has been
-if ~(p.status.previousElectrode == p.trVars.stimulatedElectrode)
-    p.status.staircaseCurrentIndex = p.trVars.staircaseStartingIndex;
-    p.status.staircaseHits = 0;
-    p.status.staircaseMisses = 0;
-    p.status.previousElectrode = p.trVars.stimulatedElectrode;
-end
-
-% and check for whether the stimulated electrode is chosen appropriately
-if p.trVars.stimulatedElectrode == -1
-    error ('Need to set stimulated electrode')
-elseif ~any(p.trVars.stimulatedElectrode == p.electrodeInfo.goodElectrodes)
-    error ('Chosen electrode is not on good electrodes list')
-end
 
 
 % if we're using p.init.trialsArray to determine target locations, do the
@@ -204,8 +189,8 @@ if rand > 0.5 % in 50% of cases, apply gradient to stim1
 p.trData.stimFuzzy = 1;
 
 % Decide on gaussian parameters dependent on size of stim (can adjust these if it doesn't look right)
-kernelSize = 0.1*(p.draw.stimWidth + p.draw.stimHeight); % Larger means more spread
-sigma = 5; % Larger means more blur
+kernelSize = 0.15*(p.draw.stimWidth + p.draw.stimHeight);
+sigma = 5;
 
 % Round kernelSize to nearest odd number, as this value must be odd
 kernelSize = 2*floor(kernelSize/2)+1;
@@ -312,10 +297,12 @@ end
 %%%%%%%%%%%%%%%%%%%
 function p = createMicrostimTrain(p)
 
-%**************
-% Reset values for staircasing when "stimulatedElectrode" changes
-%**************
-
+% Checks for whether the stimulated electrode is chosen appropriately
+if p.trVars.stimulatedElectrode == -1
+    error ('Need to set stimulated electrode')
+elseif ~any(p.trVars.stimulatedElectrode == p.electrodeInfo.goodElectrodes)
+    error ('Chosen electrode is not on good electrodes list')
+end
 
 
 % Timing Info:
@@ -376,6 +363,8 @@ p.trVars.targTheta_x10  = round(mod(tmpTheta * 180 / pi, 360) * 10);
 % point precision, goo enough!
 p.trVars.targRadius_x100 = round(tmpRadius * 100);
 
+%%%%%%%%%%%%%%%%
+
 
 
 
@@ -383,19 +372,22 @@ p.trVars.targRadius_x100 = round(tmpRadius * 100);
 % ***********
 % Determine current based on where we are in the staircase procedure
 
-if p.status.staircaseHits >= 2 && p.status.staircaseCurrentIndex > 1 
-    p.status.staircaseCurrentIndex = p.status.staircaseCurrentIndex - 1;
-    p.status.staircaseHits = 0;
-    p.status.staircaseMisses = 0;
+if p.trVars.staircaseHits >= 2
+    p.trVars.staircaseCurrentIndex = p.trVars.staircaseCurrentIndex - 1;
+    p.trVars.staircaseHits = 0;
+    p.trVars.staircaseMisses = 0;
 
-elseif p.status.staircaseMisses >= 2 && p.status.staircaseCurrentIndex < numel(p.trVars.ampVals)
-    p.status.staircaseCurrentIndex = p.status.staircaseCurrentIndex + 1;
-    p.status.staircaseHits = 0;
-    p.status.staircaseMisses = 0;
+
+elseif p.trVars.stairecaseMisses >= 2
+    p.trVars.staircaseCurrentIndex = p.trVars.staircaseCurrentIndex + 1;
+    p.trVars.staircaseHits = 0;
+    p.trVars.staircaseMisses = 0;
 
 end
 
-p.trVars.stimAmplitude = p.trVars.ampVals (p.status.staircaseCurrentIndex);
+
+
+p.trVars.stimAmplitude = 20; % placeholder
 % ***********
 
 
@@ -416,12 +408,7 @@ p.trVars.stimAmplitude = p.trVars.stimCurrentSteps*2;
 
 
 % If adjusting step size depending on current being delivered:
-if p.trVars.stimAmplitude > 210
-    % We've set a limit on not going above 210 uA, so this error will catch
-    % it if/when that happens
-    error ('Stimulation amplitude is greater than 210 uA');
-
-elseif p.trVars.stimAmplitude <= 100
+if p.trVars.stimAmplitude <= 100
 
     % send command to change step size to 1
     %xippmex('stim', 'res', p.trVars.stimulatedElectrode, 1);

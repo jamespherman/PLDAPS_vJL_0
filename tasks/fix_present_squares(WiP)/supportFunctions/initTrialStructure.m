@@ -9,12 +9,12 @@ function p = initTrialStructure(p)
 %
 
 % column descriptions
-% p.init.trialColumnNames = {'number of target stimuli', 'no of trials' 'trialCode'};
-p.init.trialArrayColumnNames = {'trialType', 'no of trials', 'trialCode'};
+% p.init.trialColumnNames = {'number of target stimuli', 'no of trials' 'trialcode'};
+p.init.trialArrayColumnNames = {'stimulusType','no of trials', 'trialCode'};
 
 % table definition
 table = step1;
-         
+    
 
 % Make "n" copies of each row in the table, where n is in the "no of trials" column.
 % Add a column to indicate which rows of the array have been completed in a
@@ -54,12 +54,9 @@ end
 
 function table = step1
 table = [
-    1 1 24001; ... % visual stimulus, 0 reps, 24001 trial code
-
-    2 1 24002; ... % microstimulation, 0 reps, 24002 trial code
-
-    3 1 24003; ... % no stimulus, 0 reps, 24003 trial code
-
+    1 1 24001; ... % sparse noise, 0 reps, 24001 trial code
+    2 1 24002; ... % dense noise, 0 reps, 24002 trial code
+    3 1 24003; ... % checkerboard, 0 reps, 24003 trial code
     ];
 end
 

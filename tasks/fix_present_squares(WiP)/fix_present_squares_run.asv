@@ -1,5 +1,5 @@
-function p = LGN_RF_mapping_run(p)
-%   p = LGN_RF_mapping_run(p)
+function p = fix_present_squares_run(p)
+%   p = fix_present_squares_run(p)
 %
 % Part of the quintet of pldpas functions:
 %   settings function
@@ -234,7 +234,7 @@ if p.trData.timing.fixAq > 0
     % time elapsed from fixation acquisition:
     timeFromFixAq = timeNow - p.trData.timing.fixAq;
 
-    if p.trVars.presentationCounter > p.trVars.sparseNoiseNumPresentations
+    if p.trVars.presentationCounter > p.trVars.umPresentations
 
 	    p.trVars.stimIsOn = false;
 
@@ -337,7 +337,6 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
 % If stimulus should be on, present it (specifics depend on stimulus type)
 if p.trVars.stimIsOn
     switch p.trVars.stimulusType
-        case 'barSweep'
 
         case 'sparseNoise'
 
@@ -347,7 +346,14 @@ if p.trVars.stimIsOn
             Screen('FillRect', p.draw.window, 15, ...
                 p.trVars.sparseNoiseRectList(:, rectIndex1:rectIndex2));
 
-        case 'blank'
+        case 'denseNoise'
+            
+            Screen('DrawTexture', p.draw.window, p.draw.denseNoiseTexture(p.trVars.presentationCounter), ...
+                [0 0 p.draw.middleXY*2 p.draw.middleXY*2]);
+
+        case 'checkerboard'
+
+
     end
 end
 

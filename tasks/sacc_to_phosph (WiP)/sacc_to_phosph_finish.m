@@ -21,9 +21,10 @@ Screen('Close'); % close any open textures
 % read buffered ADC and DIN data from DATAPixx
 p           = pds.readDatapixxBuffers(p);
 
+% **Turning off trial repeats for this task
 % Was the previous trial aborted?
 p.trData.trialRepeatFlag = ismember(p.trData.trialEndState, ...
-    [p.state.fixBreak, p.state.joyBreak, p.state.nonStart, p.state.wrongTarget]);
+    [p.state.fixBreak, p.state.joyBreak, p.state.nonStart]);
 
 % update status variables
 p           = updateStatusVariables(p);

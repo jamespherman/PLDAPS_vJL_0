@@ -13,7 +13,7 @@ p.trVars.fixDurReq = p.trVars.fixDurReqMin + ...
 p.status.fixDurReq = p.trVars.fixDurReq;
 
 % Choose a row of "p.init.trialsArray" for the upcoming trial.
-% p = chooseRow(p);
+p = chooseRow(p);
 
 % Trial type information:
 % - cue elevation / eccentricity / motion direction / change?
@@ -35,50 +35,24 @@ end
 %%
 function p = chooseRow(p)
 
-% If p.status.trialsArrayRowsPossible is empty, we're at the beginning of
-% the experiment and we need to define it. This also means we're starting
-% block 1 and we should set "p.status.blockNumber" accordingly.
-if isempty(p.status.trialsArrayRowsPossible)
+% if p.status.trialsArrayRowsPossible is empty, we're at the beginning of
+% the experiment and we need to define it.
+if ~isfield(p.status, 'trialsArrayRowsPossible') || ...
+        isempty(p.status.trialsArrayRowsPossible)
     p.status.trialsArrayRowsPossible =  true(p.init.blockLength, 1);
-    p.status.blockNumber = 1;
 end
 
-% choose a row of "p.init.trialsArray"
+% otherwise, choose an available row with no constraints: all stimulus
+% locations are intermixed.
 g = p.status.trialsArrayRowsPossible;
 
-    
-% 1st: cue side 1, single patch trials
-if any(p.init.trialsArray(:, 1) == 1 & p.init.trialsArray(:, 2) == 1 & ...
-        p.status.trialsArrayRowsPossible)
-    g = p.init.trialsArray(:, 1) == 1 & p.init.trialsArray(:, 2) == 1 & ...
-        p.status.trialsArrayRowsPossible;
-    
-    % 2nd: cue side 1, two patch trials
-elseif any(p.init.trialsArray(:, 1) == 1 & p.init.trialsArray(:, 2) > 1 & ...
-        p.status.trialsArrayRowsPossible)
-    g = p.init.trialsArray(:, 1) == 1 & p.init.trialsArray(:, 2) > 1 & ...
-        p.status.trialsArrayRowsPossible;
-    
-    % 3rd: cue side 2, single patch trials
-elseif any(p.init.trialsArray(:, 1) == 2 & p.init.trialsArray(:, 2) == 1 & ...
-        p.status.trialsArrayRowsPossible)
-    g = p.init.trialsArray(:, 1) == 2 & p.init.trialsArray(:, 2) == 1 & ...
-        p.status.trialsArrayRowsPossible;
-    
-    
-    % 4th: cue side 2, two patch trials
-elseif any(p.init.trialsArray(:, 1) == 2 & p.init.trialsArray(:, 2) > 1 & ...
-        p.status.trialsArrayRowsPossible)
-    g = p.init.trialsArray(:, 1) == 2 & p.init.trialsArray(:, 2) > 1 & ...
-        p.status.trialsArrayRowsPossible;
-end
-
-% choose 1st available row after shuffling list of available rows.
+% shuffle the list of possible rows of trialsArray
 tempList = shuff(find(g));
+
+% choose the first row number in the shuffled list.
 p.trVars.currentTrialsArrayRow = tempList(1);
 
 end
-
 %%
 function p = trialTypeInfo(p)
 
@@ -238,10 +212,29 @@ end
 
 function p = chooseStimulus(p)
 
-    switch p.trVars.stimulusType
-        case 'barSweep'
+% Timing stuff
+totalDurationperPresentation = p.trVars.presentationDur + p.trVars.pauseDur;
 
-        case 'sparseNoise'
+for i = 1:p.trVars.numPresentations
+    p.trVars.timeStimOnset(i) = p.trVars.preStimDur + (i-1)*totalDurationperPresentation;
+    p.trVars.timeStimOffset(i) = p.trVars.timeStimOnset(i) + p.trVars.presentationDur;
+end
+
+% Initialize presentationCounter to 1 (used in run)
+p.trVars.presentationCounter = 1;
+
+% Time when trial is over and reward should be delivered
+p.trVars.timeReward = p.trVars.preStimDur + ...
+    (p.trVars.presentationDur+ p.trVars.pauseDur)...
+    *p.trVars.numPresentations;
+
+
+stimulusTypeCol = strcmp(p.init.trialArrayColumnNames, 'stimulusType');
+p.trVars.stimulusType   = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
+    stimulusTypeCol);
+
+    switch p.trVars.stimulusType
+        case 1 % sparseNoise
 
             % Create grid of possible positions to present stimuli at
             xGrid = linspace (p.trVars.sparseNoiseXMin, p.trVars.sparseNoiseXMax, ...
@@ -261,10 +254,10 @@ function p = chooseStimulus(p)
 	
             % Randomly select a subset of the possible positions to present at 
             p.trVars.sparseNoisePresentationSites = randsample (1:length(p.trVars.sparseNoiseXYCoords), ...
-                p.trVars.sparseNoiseNumPresentations*p.trVars.sparseNoiseNumSquares);
+                p.trVars.numPresentations*p.trVars.sparseNoiseNumSquares);
 
             % Define square size in pixels
-            p.trVars.sparseNoiseSquareSizePix = pds.deg2pix(p.trVars.sparseNoiseSquareSize, p);
+            p.trVars.sparseNoiseSquareSizePix = pds.deg2pix(p.trVars.squareSize, p);
 
             % Create the list of rectangles
             for i = 1:length(p.trVars.sparseNoisePresentationSites)
@@ -278,25 +271,66 @@ function p = chooseStimulus(p)
 
             end
 
-            % Timing values
-            presentationDuration = p.trVars.sparseNoisePresentationDur + p.trVars.sparseNoiseDelayDur;
 
-            for i = 1:p.trVars.sparseNoiseNumPresentations
-                p.trVars.timeStimOnset(i) = p.trVars.preStimDur + (i-1)*presentationDuration;
-                p.trVars.timeStimOffset(i) = p.trVars.timeStimOnset(i) + p.trVars.sparseNoisePresentationDur;
 
+        case 2 % denseNoise
+
+            % Determine total number of squares to fill screen
+
+            p.trVars.squareSizePix = pds.deg2pix(p.trVars.squareSize, p);
+
+            p.trVars.numSquaresX = ceil((p.draw.middleXY(1)*2)/p.trVars.squareSizePix);
+            p.trVars.numSquaresY = ceil((p.draw.middleXY(2)*2)/p.trVars.squareSizePix);
+            p.trVars.numSquares = p.trVars.numSquaresX*p.trVars.numSquaresY;
+
+
+            % Randomly generate frames
+            % Note: only need to make a matrix of random values per frame,
+            % it will be stretched when calling DrawTexture
+            p.trVars.denseNoiseFrames = reshape (randsample(p.trVars.denseNoiseCLUTIndices, ...
+                p.trVars.numSquares*p.trVars.numPresentations, true), ...
+                p.trVars.numSquaresX, p.trVars.numSquaresY, p.trVars.numPresentations);
+
+
+            % Make textures for each frame
+            for i = 1:p.trVars.numPresentations
+                p.draw.denseNoiseTexture (i) = Screen ('MakeTexture', p.draw.window, p.trVars.denseNoiseFrames(:, :, i)');
             end
 
-            % Initialize presentationCounter to 1 (used in run)
-            p.trVars.presentationCounter = 1;
 
-            % Time when trial is over and reward should be delivered
-            p.trVars.timeReward = p.trVars.preStimDur + ...
-                (p.trVars.sparseNoisePresentationDur+ p.trVars.sparseNoiseDelayDur)...
-                *p.trVars.sparseNoiseNumPresentations;
+        case 3 % checkerboard
+
+            % Determine total number of squares to fill screen
+
+            p.trVars.squareSizePix = pds.deg2pix(p.trVars.squareSize, p);
+
+            p.trVars.numSquaresX = ceil((p.draw.middleXY(1)*2)/p.trVars.squareSizePix);
+            p.trVars.numSquaresY = ceil((p.draw.middleXY(2)*2)/p.trVars.squareSizePix);
+            
+            
+            checkI0 = p.trVars.checkerboardCLUTIndices(1);
+            checkI1 = p.trVars.checkerboardCLUTIndices(2);
+
+	        baseCheckerboard1 = repmat ([checkI1 checkI0; checkI0 checkI1], ...
+                ceil(p.trVars.numSquaresX/2), ceil(p.trVars.numSquaresY/2));
+	        baseCheckerboard0 = repmat ([checkI0 checkI1; checkI1 checkI0], ...
+                ceil(p.trVars.numSquaresX/2), ceil(p.trVars.numSquaresY/2));
 
 
-        case 'blank'
+            swapCounter = round(rand);
+
+            for i = 1:p.trVars.numPresentations
+                if swapCounter == 0
+                    p.trVars.checkerboardFrames(:, :, i) = baseCheckerboard0;
+                    swapCounter = swapCounter + 1;
+                elseif swapCounter == 1
+                    p.trVars.checkerboardFrames(:, :, i) = baseCheckerboard1;
+                    swapCounter = swapCounter - 1;
+                end
+	    
+                p.draw.checkerboardTexture (i) = Screen ('MakeTexture', p.draw.window, p.trVars.checkerboardFrames (:, :, i)');
+            end
+
     end
 
 
@@ -307,6 +341,11 @@ end
 
 %%
 function p = timingInfo(p)
+
+
+
+
+
 
 % Time between acquiring fixation and stim onset in seconds.
 p.trVars.fix2StimOnIntvl = p.trVars.fix2CueIntvl + p.trVars.cueDur + p.trVars.cue2StimItvl;

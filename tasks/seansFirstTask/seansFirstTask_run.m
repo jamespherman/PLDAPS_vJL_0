@@ -483,22 +483,26 @@ if p.trData.timing.fixAq > 0
         timeFromFixAq >= p.trVars.timeStimOneOnset && timeFromFixAq < p.trVars.timeStimOneOffset)
             p.trVars.stimOneIsOn    = true;
             p.trData.timing.stimOneOn   = timeNow;
+            p.init.strb.addValue(p.init.codes.stimOn);
 
     elseif (p.trData.timing.stimOneOn ~= -1 && p.trData.timing.stimOneOff == -1 && ...
         timeFromFixAq >= p.trVars.timeStimOneOffset)
             p.trVars.stimOneIsOn   = false;
-            p.trVars.timing.stimOneOff  = timeNow;
+            p.trData.timing.stimOneOff  = timeNow;
+            p.init.strb.addValue(p.init.codes.stimOff);
     end
 
     if (p.trData.timing.stimTwoOn == -1 && ...
         timeFromFixAq >= p.trVars.timeStimTwoOnset && timeFromFixAq < p.trVars.timeStimTwoOffset)
             p.trVars.stimTwoIsOn    = true;
             p.trData.timing.stimTwoOn   = timeNow;
+            p.init.strb.addValue(p.init.codes.stimOn);
 
     elseif (p.trData.timing.stimTwoOn ~= -1 && p.trData.timing.stimTwoOff == -1 && ...
         timeFromFixAq >= p.trVars.timeStimTwoOffset)
             p.trVars.stimTwoIsOn   = false;
-            p.trVars.timing.stimTwoOff  = timeNow;
+            p.trData.timing.stimTwoOff  = timeNow;
+            p.init.strb.addValue(p.init.codes.stimOff);
     end
 
     % Old method
@@ -585,7 +589,7 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     
     % Draw the grid
     Screen('DrawLines', p.draw.window, p.draw.gridXY, [], p.draw.color.gridMajor);
-    
+
     % draw mouse cursor:
     % Screen('FillRect', p.draw.window, p.draw.color.mouseCursor, [p.trVars.mouseCursorX p.trVars.mouseCursorY p.trVars.mouseCursorX p.trVars.mouseCursorY] + [-1 -1 1 1] * p.draw.cursorW)
         

@@ -33,9 +33,9 @@ p.status.propMstimHitsCurrent = p.status.mstimHitsCurrent/p.status.mstimMissCurr
 
 
 % For staircase procedure
-p.status.staircaseHits = p.status.staircaseHits + ...
+p.trVars.staircaseHits = p.trVars.staircaseHits + ...
     (p.trVars.trialType == 2 && p.trData.trialEndState == p.state.sacComplete);
-p.status.staircaseMisses = p.status.staircaseMisses + ...
+p.trVars.staircaseMisses = p.trVars.staircaseMisses + ...
     (p.trVars.trialType == 2 && p.trData.trialEndState == p.state.heldFix);
 
 
@@ -48,7 +48,7 @@ p.status.correctRejects = p.status.correctRejects + (p.trVars.trialType == 3 && 
 p.status.falseAlarms = p.status.falseAlarms + (p.trVars.trialType == 3 && ...
                                                p.trData.trialEndState == p.state.sacComplete);
 
-p.status.propNoStimRejects = p.status.correctRejects/p.status.falseAlarms;
+p.status.propNostimRejects = p.status.correctRejects/p.status.falseAlarms;
 
 
 

@@ -96,7 +96,7 @@ switch p.trVars.currentState
         %   TRIAL HAS BEGUN!
         
         % strobing trial start time and onward to state 0.1.
-        p.init.strb.addValue(p.init.codes.trialBegin);
+        p.init.strb.strobeNow(p.init.codes.trialBegin);
         p.trData.timing.trialBegin      = timeNow;
         p.trVars.currentState           = p.state.waitForJoy;
         
@@ -170,11 +170,9 @@ switch p.trVars.currentState
         %   respond or not, and the outcome of the trial is determiend.
         
         % show target window to experimenter
-        if p.trVars.isVisSac
-            p.draw.color.targWin                = p.draw.clutIdx.expVisGreen_subBg;
-        else
-            p.draw.color.targWin                = p.draw.clutIdx.expMemMagenta_subBg;
-        end
+
+        p.draw.color.targWin                = p.draw.clutIdx.expVisGreen_subBg;
+
         
         % increase the thickness of the fixation window to inform
         % the experimenter that the subject has acquired fixation.
@@ -182,7 +180,7 @@ switch p.trVars.currentState
         
         timeFromFixation = timeNow - p.trData.timing.fixAq;
         
-      if timeFromFixation > p.trVars.timeFixOffset
+        if timeFromFixation > p.trVars.timeFixOffset
             p.init.strb.addValue(p.init.codes.fixOff);
             p.trData.timing.fixOff    = timeNow;
             p.trVars.currentState     = p.state.makeSaccade;
@@ -237,11 +235,9 @@ switch p.trVars.currentState
             p.draw.fixWinPenDraw = p.draw.fixWinPenThin;
             
         % and if neither has happened and the goLatencyMax is elapsed, move
-        % to breakFix
+        % to heldFix
         elseif timeNow > (p.trData.timing.fixOff + p.trVars.goLatencyMax)  
-            p.init.strb.addValue(p.init.codes.fixBreak);
-            p.trData.timing.fixBreak    = timeNow;
-            p.trVars.currentState       = p.state.fixBreak;
+            p.trVars.currentState       = p.state.heldFix;
         end
         
       case p.state.checkLanding
@@ -353,20 +349,59 @@ switch p.trVars.currentState
         %% SACCADE COMPLETE!
         % STATE 21 = get reward delivery
 
+        % If this was visual or microstim, this means he did it correctly
+        if p.trVars.trialType == 1 || p.trVars.trialType == 2
+
         % if the delay for reward delivery has elapsed and reward delivery
         % hasn't yet been triggered, deliver the reward.
-        if p.trData.timing.reward < 0
-            p = pds.deliverReward(p);
+            if p.trData.timing.reward < 0
+                p = pds.deliverReward(p);
                 
-disp ('reward');
+            disp ('reward');
 
         % if reward delivery has been triggered and the interval to wait
         % after reward delivery has elapsed, it's time to exit the
         % while-loop.
-        elseif p.trData.timing.reward > 0 && (timeNow - p.trData.timing.reward) > (p.trVars.postRewardDuration + p.rig.dp.dacPadDur + p.trVars.rewardDurationMs/1000)
-            p.trVars.exitWhileLoop = true;            
-        end
+            elseif p.trData.timing.reward > 0 && (timeNow - p.trData.timing.reward) > (p.trVars.postRewardDuration + p.rig.dp.dacPadDur + p.trVars.rewardDurationMs/1000)
+                p.trVars.exitWhileLoop = true;            
+            end
         
+        % If this was nostim, this means he did it incorrectly
+        elseif p.trVars.trialType == 3
+            p = playTone(p, 'low');
+            p.trVars.exitWhileLoop = true;
+        end
+
+
+
+    case p.state.heldFix
+        %% Held fixation (indicating he did not see anything to saccade to)
+        % STATE 22 
+
+        % If this was visual or microstim, this means he did it incorrectly
+        if p.trVars.trialType == 1 || p.trVars.trialType == 2
+            p = playTone(p, 'low');
+            p.trVars.exitWhileLoop = true;
+
+
+        % If this was nostim, this means he did it incorrectly
+        elseif p.trVars.trialType == 3
+        
+        % if the delay for reward delivery has elapsed and reward delivery
+        % hasn't yet been triggered, deliver the reward.
+            if p.trData.timing.reward < 0
+                p = pds.deliverReward(p);
+                
+            disp ('reward');
+
+        % if reward delivery has been triggered and the interval to wait
+        % after reward delivery has elapsed, it's time to exit the
+        % while-loop.
+            elseif p.trData.timing.reward > 0 && (timeNow - p.trData.timing.reward) > (p.trVars.postRewardDuration + p.rig.dp.dacPadDur + p.trVars.rewardDurationMs/1000)
+                p.trVars.exitWhileLoop = true;            
+            end
+        end
+
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -390,14 +425,7 @@ disp ('reward');
         % trila is considered a non-start.
 
         p = playTone(p, 'low');
-        p.trVars.exitWhileLoop = true;
-
-    case p.state.wrongTarget   
-        %% WRONG TARGET
-        % subject looked at the incorrect target
-        
-	p = playTone(p, 'low');
-	p.trVars.exitWhileLoop = true;        
+        p.trVars.exitWhileLoop = true;   
                
         
 end
@@ -458,34 +486,22 @@ if p.trData.timing.fixAq > 0
         timeFromFixAq >= p.trVars.timeStimOnset && timeFromFixAq < p.trVars.timeStimOffset)
             p.trVars.stimIsOn    = true;
             p.trData.timing.stimOn   = timeNow;
+            
+            if p.trVars.trialType == 1 % if visual trial, send strobe
+                p.init.strb.addValueOnce(p.init.codes.stimOn);
+            end
 
     elseif (p.trData.timing.stimOn ~= -1 && p.trData.timing.stimOff == -1 && ...
         timeFromFixAq >= p.trVars.timeStimOffset)
             p.trVars.stimIsOn   = false;
             p.trVars.timing.stimOff  = timeNow;
-    end
-    
-    
 
-    % Old method
-    %{
-    % if stim is off but time is now after timeStimOnset, then turn it on
-    if (p.trData.timing.stimOn == -1 && ...
-    	timeFromFixAq >= p.trVars.timeStimOnset && timeFromFixAq < p.trVars.timeStimOffset)
-    	p.trVars.stimIsOn 	 = true;
-    	p.trData.timing.stimOn   = timeNow;
-    	% No strobe for now; need to figure out how to set that up
-    	
-    % if stim is on but it's time to turn it off, then turn it off
-    elseif (p.trData.timing.stimOn~=-1 && p.trData.timing.stimOff==-1 && ...
-    	timeFromFixAq >= p.trVars.timeStimOffset)
-	p.trVars.stimIsOn	 = false;
-	p.trData.timing.stimOff  = timeNow;
-    	% No strobe for now; need to figure out how to set that up
-    else
-%    	p.trVars.stimIsOn 	 = false;
+            if p.trVars.trialType == 1 % if visual trial, send strobe
+                p.init.strb.addValueOnce(p.init.codes.stimOff);
+            end
     end
-    %}
+    
+    
 
     %% Determine if target should be on/off and send appropriate strobes:
     
@@ -494,24 +510,14 @@ if p.trData.timing.fixAq > 0
         timeFromFixAq >= p.trVars.timeTargOnset && timeFromFixAq < p.trVars.timeTargOffset)
         p.trVars.targetIsOn       = true;
         p.trData.timing.targetOn  = timeNow;
-        p.init.strb.addValueOnce(p.init.codes.targetOn);
+        % p.init.strb.addValueOnce(p.init.codes.targetOn);
     
     % if this is memSac, and target is on but it's time to turn it off, then turn it off:
-    elseif (~p.trVars.isVisSac && p.trData.timing.targetOn~=-1 && p.trData.timing.targetOff==-1 && ...
+    elseif (p.trData.timing.targetOn~=-1 && p.trData.timing.targetOff==-1 && ...
             timeFromFixAq >= p.trVars.timeTargOffset)
             p.trVars.targetIsOn       = false;
             p.trData.timing.targetOff = timeNow;
-            p.init.strb.addValueOnce(p.init.codes.targetOff);
-
-    % if this is memSac, and target is off, but state now is holdTarg, turn it on:
-    elseif (~p.trVars.isVisSac && p.trData.timing.targetReillum==-1 && p.trVars.currentState == p.state.holdTarg && timeNow > (p.trData.timing.saccadeOffset + p.trVars.targetReillumDelay))
-        p.trVars.targetIsOn             = true;
-        p.trData.timing.targetReillum   = timeNow;
-        p.init.strb.addValueOnce(p.init.codes.targetReillum);
-    
-    % all other cases, keep target off:
-    else
-%         p.trVars.targetIsOn       = false;
+            % p.init.strb.addValueOnce(p.init.codes.targetOff);
     end
     
 end
@@ -569,162 +575,27 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
                 repmat(p.draw.targPointPix, 1, 2) +  [-p.draw.targWinWidthPix -p.draw.targWinHeightPix p.draw.targWinWidthPix p.draw.targWinHeightPix], p.draw.targWinPenDraw)   
     	
 
-%{
-    switch p.trVars.numDots
-    	case 1
-    		Screen('FrameRect',p.draw.window, p.draw.color.targWin, ...
-                repmat(p.draw.targOnePointPix, 1, 2) +  [-p.draw.targWinWidthPix -p.draw.targWinHeightPix p.draw.targWinWidthPix p.draw.targWinHeightPix], p.draw.targWinPenDraw)   
-    	case 2
-    		Screen('FrameRect',p.draw.window, p.draw.color.targWin, ...
-                repmat(p.draw.targTwoPointPix, 1, 2) +  [-p.draw.targWinWidthPix -p.draw.targWinHeightPix p.draw.targWinWidthPix p.draw.targWinHeightPix], p.draw.targWinPenDraw)   
-    end
-%}
-
     % draw fixation window
     Screen('FrameRect',p.draw.window, p.draw.color.fixWin, repmat(p.draw.fixPointPix, 1, 2) +  [-p.draw.fixWinWidthPix -p.draw.fixWinHeightPix p.draw.fixWinWidthPix p.draw.fixWinHeightPix], p.draw.fixWinPenDraw)
     
-    
-    % pick colors for stim/target
-    %{
-    if p.trVars.targsSameColor
-    	targColor1 = 17;
-    	targColor2 = 17;
-    else
-    	targColor1 = 0;
-    	targColor2 = 0;
-    end
-    %}
-    % draw the stimulus (if it is time)
-    
-    %{
-    
-    If we want to make blocks of 30 "pink trials", then 30 "blue trials", etc.:
-    
-    if iGoodTrial > 30
-    	stimColor = 17;
-    	
-    	elseif >60
-    	stimColor = 18;
-    	...
-    	
-    	
-    	Screen (...stimColor)
-    	
-    	%}
-   %{
-if p.trVars.stimShape == 1
-	stimShape = 'FillOval';
-elseif p.trVars.stimShape == 2
-	stimShape = 'FillRect';
-else
-	stimShape = 'FillOval';
-end    	
-   %}
 
+    % depending on trialType, drawstimulus or send microstim command
     if p.trVars.stimIsOn
-        Screen('DrawTexture', p.draw.window, p.draw.stimTexture, [], repmat(p.draw.stimPointPix, 1, 2) + ...
-        [-p.draw.textureWindowDimensions/2 -p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2]);
+        if p.trVars.trialType == 1 % Visual stimulus
+            Screen('DrawTexture', p.draw.window, p.draw.stimTexture, [], repmat(p.draw.stimPointPix, 1, 2) + ...
+            [-p.draw.textureWindowDimensions/2 -p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2]);
+
+        elseif p.trVars.trialType == 2 && p.trData.timing.microstimSent == -1 % Electrode microstimulation
+            %xippmex ('stimseq', p.trVars.cmd); % Send microstim command
+            disp (append ('microstim @ ', num2str(p.trVars.stimAmplitude), 'uA / ', num2str(p.trVars.stimCurrentSteps), ' steps on channel #', num2str(p.trVars.stimulatedElectrode)));
+            p.trData.timing.microstimSent = timeNow;
+            p.init.strb.strobeNow(p.init.codes.microStimOn);
+
+        elseif p.trVars.trialType == 3 % No stimulus
+            % do nothing
+        end
     end
 
-
-
-%{
-    if p.trVars.stimIsOn
-    
-        % Texture stuff
-
-	Screen('DrawTexture', p.draw.window, p.draw.combinedStimTexture, [], repmat(p.draw.stimPointPix, 1, 2) + ...
-        [-p.draw.textureWindowDimensions/2 -p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2]);
-
-%{
-    	switch p.trVars.numDots
-    	    case 1
-    	    	Screen(stimShape, p.draw.window, p.trVars.stimColor1, ...
-                    repmat(p.draw.stimPointPix, 1, 2) + ...
-                    [-p.draw.stimWidth1/2 -p.draw.stimHeight1/2 p.draw.stimWidth1/2 p.draw.stimHeight1/2]); 
-    	    case 2
-                rotationMatrix = [cos(p.trVars.twoStimRotation), -sin(p.trVars.twoStimRotation);
-                		  sin(p.trVars.twoStimRotation), cos(p.trVars.twoStimRotation)];
-                rotatedTwoStimSepPix = rotationMatrix * [p.draw.twoStimSepPix/2; 0];
-                
-                if p.trVars.stimShape == 3
-                    
-                    Screen('FillOval', p.draw.window, p.trVars.stimColor1, ...
-                    	repmat(p.draw.stimPointPix - ...
-                    	rotatedTwoStimSepPix', 1, 2) + ...
-                    	[-p.draw.stimWidth1/2 -p.draw.stimHeight1/2 p.draw.stimWidth1/2 p.draw.stimHeight1/2]);
-                    Screen('FillRect', p.draw.window, p.trVars.stimColor2, ...
-                    	repmat(p.draw.stimPointPix + ...
-                    	rotatedTwoStimSepPix', 1, 2) + ...
-                    	[-p.draw.stimWidth2/2 -p.draw.stimHeight2/2 p.draw.stimWidth2/2 p.draw.stimHeight2/2]);
-                else
-                    Screen(stimShape, p.draw.window, p.trVars.stimColor1, ...
-                    	repmat(p.draw.stimPointPix - ...
-                    	rotatedTwoStimSepPix', 1, 2) + ...
-                    	[-p.draw.stimWidth1/2 -p.draw.stimHeight1/2 p.draw.stimWidth1/2 p.draw.stimHeight1/2]);
-                    Screen(stimShape, p.draw.window, p.trVars.stimColor2, ...
-                    	repmat(p.draw.stimPointPix + ...
-                    	rotatedTwoStimSepPix', 1, 2) + ...
-                    	[-p.draw.stimWidth2/2 -p.draw.stimHeight2/2 p.draw.stimWidth2/2 p.draw.stimHeight2/2]);    
-                    
-                end
-    	end
-
-
-% Add %} here to comment out "old way"
-%}
-    	
-    end
-%}
-    	%{
-    % draw the target (if it is time)
-    if p.trVars.targetIsOn
-             
-        % Old method
-        %{   
-
-        % draw target:
-        switch p.trVars.numDots
-            case 1
-                Screen('FillOval', p.draw.window, 11, ...
-                    repmat(p.draw.targPointPix, 1, 2) + ...
-                    p.draw.targRadius*[-1 -1 1 1]);
-            case 2
-                Screen('FillOval', p.draw.window, 5, ...
-                    repmat(p.draw.targPointPix - ...
-                    [p.draw.twoTargSepPix/2 0], 1, 2) + ...
-                    p.draw.targRadius*[-1 -1 1 1]);
-                Screen('FillOval', p.draw.window, 5, ...
-                    repmat(p.draw.targPointPix + ...
-                    [p.draw.twoTargSepPix/2 0], 1, 2) + ...
-                    p.draw.targRadius*[-1 -1 1 1]);
-        end
-        %}
-
-        % New method
-
-        if p.trVars.numTargets == 2 || p.trVars.numDots == 1
-            % Target for one
-            Screen('FillOval', p.draw.window, targColor1, ...
-       		    repmat(p.draw.targOnePointPix, 1, 2) + ...
-                    p.draw.targRadius*[-1 -1 1 1]);
-        end
-                             
-        if p.trVars.numTargets == 2 || p.trVars.numDots == 2     
-            % Target for two        
-            Screen('FillOval', p.draw.window, targColor2, ...
-                    repmat(p.draw.targTwoPointPix - ...
-                    [p.draw.twoTargSepPix/2 0], 1, 2) + ...
-                    p.draw.targRadius*[-1 -1 1 1]);
-            Screen('FillOval', p.draw.window, targColor2, ...
-                    repmat(p.draw.targTwoPointPix + ...
-                    [p.draw.twoTargSepPix/2 0], 1, 2) + ...
-                    p.draw.targRadius*[-1 -1 1 1]);
-        end
-        
-                
-    end
-    %}
 
     % draw fixation spot
     Screen('FrameRect',p.draw.window, p.draw.color.fix, repmat(p.draw.fixPointPix, 1, 2) + p.draw.fixPointRadius*[-1 -1 1 1], p.draw.fixPointWidth);

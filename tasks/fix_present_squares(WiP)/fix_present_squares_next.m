@@ -1,5 +1,5 @@
-function p = LGN_RF_mapping_next(p)
-%   function p = LGN_RF_mapping_next(p)
+function p = fix_present_squares_next(p)
+%   function p = fix_present_squares_next(p)
 % Part of the quintet of pldpas functions:
 %
 %   settings function

@@ -1,5 +1,5 @@
-function p = LGN_RF_mapping_finish(p)
-%   p = LGN_RF_mapping_finish(p)
+function p = fix_present_squares_finish(p)
+%   p = fix_present_squares_finish(p)
 %
 % Part of the quintet of pldpas functions:
 %   settings function
@@ -29,6 +29,8 @@ if ~isfield(p.draw, 'movie')
     Screen('FillRect', p.draw.window, p.draw.color.background);
     Screen('Flip', p.draw.window);
 end
+
+Screen('Close'); % close any open textures
 
 % read buffered ADC and DIN data from DATAPixx
 p           = pds.readDatapixxBuffers(p);

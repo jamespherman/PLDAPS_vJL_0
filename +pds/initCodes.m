@@ -45,7 +45,7 @@ codes.uniqueTaskCode_conflict_task  	= 32016;
 codes.uniqueTaskCode_numerosity_spatial = 32017;
 codes.uniqueTaskCode_numerosity_temporal= 32018;
 codes.uniqueTaskCode_sacc_to_phosph     = 32019;
-codes.uniqueTaskCode_LGN_RF_mapping     = 32020;
+codes.uniqueTaskCode_fix_present_squares= 32020;
 
 %% unique codes that are internal to the 'classyStrobe' function class
 % (see pds.classyStrobe.m for more details)
@@ -201,6 +201,8 @@ codes.rewardDuration    = 18000;
 
 % micro stim codes
 codes.microStimOn       = 7001;
+codes.microStimChannel  = 17101;
+codes.microStimCurrAmp  = 17102;
 
 % audio codes
 codes.audioFBKon        = 9000;

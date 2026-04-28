@@ -17,12 +17,12 @@ for i = 1:p.init.nTrDataListRows
 
 
     % Depending on stimulus type, adjust stimOn and stimOff
-
+%{
     if p.trVars.stimulusType == 'sparseNoise'
-        p.trData.stimOn = repelem (-1, p.trVars.sparseNoiseNumPresentations);
-        p.trData.stimOff = repelem (-1, p.trVars.sparseNoiseNumPresentations);
+        p.trData.stimOn = repelem (-1, p.trVars.numPresentations);
+        p.trData.stimOff = repelem (-1, p.trVars.numPresentations);
     end
-
+%}
 end
 
 

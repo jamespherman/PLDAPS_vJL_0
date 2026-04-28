@@ -24,6 +24,19 @@ oldGreen    = [0.45, 0.63, 0.45];
 barSweepBarColor = [1, 1, 1];
 sparseNoiseSquareColor = [1, 1, 1];
 
+denseNoiseSquareColors = [0, 0, 0;
+			              1, 0, 0;
+			              0, 1, 0;
+			              0, 0, 1;
+			              1, 1, 0;
+			              1, 0, 1;
+			              0, 1, 1;
+			              1, 1, 1];
+
+checkerboardColors = [0, 0, 0;
+                      1, 1, 1];
+
+
 % colors for exp's display
 % black                     0
 % grey-1 (grid-lines)       1
@@ -54,7 +67,8 @@ p.draw.clut.expColors = ...
     barSweepBarColor              % 14
     sparseNoiseSquareColor];      % 15
 
-
+p.draw.clut.expColors(21:28, :) = denseNoiseSquareColors;
+p.draw.clut.expColors(29:30, :) = checkerboardColors;
 
 % colors for subject's display
 % black                     0
@@ -85,6 +99,9 @@ p.draw.clut.subColors = ...
     oldGreen      % 13
     barSweepBarColor              % 14
     sparseNoiseSquareColor];      % 15
+    
+p.draw.clut.subColors(21:28, :) = denseNoiseSquareColors;
+p.draw.clut.subColors(29:30, :) = checkerboardColors;
 
 assert(size(p.draw.clut.subColors,1)==size(p.draw.clut.expColors,1), 'ERROR-- exp & sub Colors must have equal length')
 

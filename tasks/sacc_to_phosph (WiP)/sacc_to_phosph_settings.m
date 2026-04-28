@@ -100,7 +100,7 @@ p.state.holdTarg            = 7;
 
 % end states - success:
 p.state.sacComplete         = 21;
-p.state.wrongTarget	    = 22;
+p.state.heldFix             = 22;
 
 % end states - aborted:
 p.state.fixBreak            = 31;
@@ -112,60 +112,28 @@ p.state.failedToHoldTarg    = 34;
 
 p.status.iTrial                     = 0; % ITERATOR for current trial count
 p.status.iGoodTrial                 = 0; % 
-p.status.iGoodVis                 = 0; % 
-p.status.iGoodMem                 = 0; % 
+p.status.iGoodVis                   = 0; % 
+p.status.iGoodMem                   = 0; % 
 p.status.pGoodVis                   = 0; % proportion good (ie successfuly completed) visually guided
 p.status.pGoodMem                   = 0; % proportion good (ie successfuly completed) memory guided
 p.status.iTarget                    = 1; % iterator into the list of target locations (defined in _init). Used when multiple locations are predeteremined (e.g. a grid of targets).  
 p.status.trialsLeftInBlock          = 0; % how many trials remain in the current block?
 
-p.status.iGoodOneTargetOneDot		    = 0;
-p.status.iGoodOneTargetTwoDots		    = 0;
 
-p.status.iGoodTwoTargetOneDot		    = 0;
-p.status.iGoodTwoTargetTwoDots		    = 0;
-
-p.status.iWrongOneTargetOneDot		    = 0;
-p.status.iWrongOneTargetTwoDots		    = 0;
-
-p.status.iWrongTwoTargetOneDot		    = 0;
-p.status.iWrongTwoTargetTwoDots		    = 0;
-
-p.status.iGoodUpTargsSameColor		    = 0;
-p.status.iGoodUpTargsDiffColor		    = 0;
-p.status.iGoodDownTargsSameColor	    = 0;
-p.status.iGoodDownTargsDiffColor	    = 0;
-
-p.status.iWrongUpTargsSameColor		    = 0;
-p.status.iWrongUpTargsDiffColor		    = 0;
-p.status.iWrongDownTargsSameColor	    = 0;
-p.status.iWrongDownTargsDiffColor	    = 0;
-
-p.status.iGoodUpOval			    = 0;
-p.status.iGoodUpRect			    = 0;
-p.status.iGoodDownOval			    = 0;
-p.status.iGoodDownRect			    = 0;
-p.status.iGoodDownBoth			    = 0;
-
-p.status.iWrongUpOval			    = 0;
-p.status.iWrongUpRect			    = 0;
-p.status.iWrongDownOval			    = 0;
-p.status.iWrongDownRect			    = 0;
-p.status.iWrongDownBoth			    = 0;
 
 p.rig.guiStatVals = {...   
-    'iGoodTrial'; ...
-    'iGoodUpOval'; ...
-    'iWrongUpOval'; ...
-    'iGoodDownOval'; ...
-    'iWrongDownOval'; ...
-    'iGoodUpRect'; ...
-    'iWrongUpRect'; ...
-    'iGoodDownRect'; ...
-    'iWrongDownRect'; ...
-    'iGoodDownBoth'; ...
-    'iWrongDownBoth'; ...
-    'trialsLeftInBlock'; ...   
+    'staircaseCurrentIndex'; ...
+    'staircaseHits'; ...
+    'staircaseMisses'; ...
+    'visTrials'; ...
+    'visNumHits'; ...
+    'visNumMisses'; ...
+    'microstimTrials'; ...
+    'mstimHitsCurrent'; ...
+    'mstimMissCurrent'; ...
+    'noStimTrials'; ...
+    'correctRejects'; ...
+    'falseAlarms'; ...
 };              
 
 %% user determines the 12 variables are shown in gui upon init
@@ -175,7 +143,7 @@ p.rig.guiStatVals = {...
 
 p.rig.guiVars = {...
     'mouseEyeSim';...
-    'passJoy'; ...          
+    'stimulatedElectrode'; ...          
     'passEye'; ...
     'rewardDurationMs'; ...       
     'stimRangeXmin'; ...
@@ -191,10 +159,6 @@ p.rig.guiVars = {...
 
 %% INIT VARIABLES 
 % vars that are only set once
-
-% Which experiment are we running? The full version with all trial types? 
-% The single-stimulus-only version? Something else?
-p.init.exptType         = 'step1';
 
 %% TRIAL VARIABLES
 % vars that may change throughout an experimental session and are therefore
@@ -234,23 +198,19 @@ p.trVarsInit.setTargLocViaTrialArray    = false;
 p.trVarsInit.propVis             = 1;  % proportion of visually-guided saccades out of the total (i.e. propMem would equal 1 - pVis )
 p.trVarsInit.fixDegX             = 0;    % fixation X location in degrees 
 p.trVarsInit.fixDegY             = 0;    % fixation Y location in degrees
-p.trVarsInit.targOneDegX         = 0;
-p.trVarsInit.targOneDegY         = 10.0;
-p.trVarsInit.targTwoDegX         = 0;
-p.trVarsInit.targTwoDegY         = -10.0;
-p.trVarsInit.targDegX		 = [p.trVarsInit.targOneDegX p.trVarsInit.targTwoDegX];
-p.trVarsInit.targDegY		 = [p.trVarsInit.targOneDegY p.trVarsInit.targTwoDegY];
+p.trVarsInit.targDegX		     = 0;
+p.trVarsInit.targDegY		     = 0;
 p.trVarsInit.numDots             = 0; % how many dots does the target stimulus have on this trial?
 p.trVarsInit.twoTargSepDeg       = 1; % how far apart should the two target dots be? (in dva?)
 p.trVarsInit.twoStimSepDegMin    = 0.05; % how far apart should the two stim dots be? (in dva?)
 p.trVarsInit.twoStimSepDegMax    = 1.5;
-p.trVarsInit.stimRangeRadius	 = 13.0; % create stimuli randomly within radius of __? (in pixels?)
+%p.trVarsInit.stimRangeRadius	 = 13.0; % create stimuli randomly within radius of __? (in pixels?)
 p.trVarsInit.stimRangeXmin	 = -28.0; % Alternate method of randomly positioning stimuli, between Xmin and Xmax
 p.trVarsInit.stimRangeXmax	 = 28.0;
 p.trVarsInit.stimRangeYmin	 = -17.5; % Together with previous lines, randomly position stimuli between Ymin and Ymax
 p.trVarsInit.stimRangeYmax	 = 17.5;
-p.trVarsInit.stimSizeMin	 = 0.1; % create stimuli of what size? (randomly chosen between min and max, in dva)
-p.trVarsInit.stimSizeMax	 = 0.3;
+p.trVarsInit.stimSizeMin	 = 0.3; % create stimuli of what size? (randomly chosen between min and max, in dva)
+p.trVarsInit.stimSizeMax	 = 0.5;
 p.trVarsInit.oneStimRotationRange= 360; % Range within which individual stimuli are rotated
 p.trVarsInit.twoStimRotationRange= 360; % Range within which stimuli are rotated relative to each other
 
@@ -274,15 +234,17 @@ p.trVarsInit.postRewardDuration      = 0.25;     % how long should the trial las
 p.trVarsInit.targetFlashDuration     = 0.2;      % Duration target stays on for the memory-guided trials.
 % p.trVarsInit.postFlashFixMin       = 1;    % minimum post-flash fixation-duration
 % p.trVarsInit.postFlashFixMax       = 1.5;  % maximum post-flash fixation-duration
-p.trVarsInit.targHoldDurationMin     = 0.3;  % minimum duration to maintain fixation on the target post-saccade 
-p.trVarsInit.targHoldDurationMax     = 0.5;      % maximum duration to maintain fixation on the target post-saccade 
+p.trVarsInit.targHoldDurationMin     = 0.2;  % minimum duration to maintain fixation on the target post-saccade 
+p.trVarsInit.targHoldDurationMax     = 0.2;      % maximum duration to maintain fixation on the target post-saccade 
 p.trVarsInit.maxSacDurationToAccept  = 0.1; % this is the max duration of a saccades that we're willing to wait for. 
 p.trVarsInit.targetReillumDelay      = 0.15; % the delay (s) between saccadeOffset (ie entry into target window) and target reillumination
 p.trVarsInit.goLatencyMin            = 0.1;  % minimum saccade-latency criterion
-p.trVarsInit.goLatencyMax            = 0.5;  % maximum saccade-latency criterion
+p.trVarsInit.goLatencyMax            = 0.3;  % maximum saccade-latency criterion
 % p.trVarsInit.preTargMin            = 0.75; % minimum fixation-only time before target onset
 % p.trVarsInit.preTargMax            = 1;    % maximum fixation-only time before target onset
 
+
+% Visual stimulus variables
 p.trVarsInit.stimOnsetMin	     = 0.25; % Time after fixation before stim comes on
 p.trVarsInit.stimOnsetMax	     = 0.4;
 p.trVarsInit.stimDurMin		     = 0.12; % Time stim stays on
@@ -292,13 +254,51 @@ p.trVarsInit.targOnsetMax            = 0.2;
 p.trVarsInit.goTimePostTargMin       = 0.25; % min duration from targ onset to the 'go' signal to saccade (which is fixation offset)
 p.trVarsInit.goTimePostTargMax       = 0.4; % max duration from targ onset to the 'go' signal to saccade (which is fixation offset)
 
-p.trVarsInit.interStimIntervalMin    = 0.03; % For temporal task; time between stims
-p.trVarsInit.interStimIntervalMax    = 0.12; 
 
-% For transition version of temporal task; How much should the two stim overlap?
-% 0 = no overlap; i.e. full temporal task. 1 = complete overlap; i.e. full spatial task
-% between 0 and 1 = transition temporal task where the stim partially overlap
-p.trVarsInit.temporalOverlap         = 0;
+% Microstim variables
+
+% Load in data about the electrode (RFs, SNR, etc.)
+% p.electrodeInfo = load ('electrodeInfo.mat'); % Load in data about the electrodes from RF mapping
+% For testing:
+p.electrodeInfo = load ('fakeElectrodeInfo.mat');
+
+p.trVarsInit.stimulatedElectrode = -1; % initialized to -1 to force user to set it when starting
+p.status.previousElectrode = p.trVarsInit.stimulatedElectrode; % Used to check when the stimulated electrode has been switched
+p.trVarsInit.cmdPeriod = 100; % In 33.333 us clock cycles, calculated as 30,000/stimFrequency
+p.trVarsInit.cmdRepeats = 50; % Number of pulses
+p.trVarsInit.cmdSeqLength = 5; % Duration of single phase of pulse, in 33.333 us clock cycles
+p.trVarsInit.cmdSeqIPI = 2; % Duration of interphase interval, in 33.333 us clock cycles
+
+% For staircase procedure
+p.trVarsInit.ampVals = [1, 2, 3, 4, 5, 6, 7, 9, 12, 14, 18, ...
+                            23, 28, 35, 44, 55, 69, 86, 108, 134, 168, 210];
+p.trVarsInit.staircaseStartingIndex = 11;
+
+
+% Status variables for this task. Normally should be above but certain 
+% variables aren't initialized yet so it's down here instead.
+p.status.visTrials = 0;
+p.status.visNumHits = 0;
+p.status.visNumMisses = 0;
+p.status.propVisHits = 0;
+
+p.status.microstimTrials = 0;
+p.status.microstimNumHits = zeros (64, numel(p.trVarsInit.ampVals));
+p.status.microstimNumMisses = zeros (64, numel(p.trVarsInit.ampVals));
+
+p.status.mstimHitsCurrent = 0;
+p.status.mstimMissCurrent = 0;
+p.status.propMstimHitsCurrent = 0;
+
+p.status.staircaseCurrentIndex = p.trVarsInit.staircaseStartingIndex;
+p.status.staircaseHits = 0;
+p.status.staircaseMisses = 0;
+
+p.status.noStimTrials = 0;
+p.status.correctRejects = 0;
+p.status.falseAlarms = 0;
+p.status.propNoStimRejects = 0;
+
 
 p.trVarsInit.maxFixWait              = 5;    % maximum time to wait for fixation-acquisition
 p.trVarsInit.targOnSacOnly           = 1;    % condition target reappearance on saccade?
@@ -315,8 +315,13 @@ p.trVarsInit.staticTargAmp           = 12;  % fixed target amplitude
 
 p.trVarsInit.fixWinWidthDeg       = 2;        % fixation window width in degrees
 p.trVarsInit.fixWinHeightDeg      = 2;        % fixation window height in degrees
-p.trVarsInit.targWinWidthDeg      = 4;        % target window width in degrees
-p.trVarsInit.targWinHeightDeg     = 4;        % target window height in degrees
+p.trVarsInit.visTargWinWidthDeg      = 4;        % target window width in degrees, for visual stimuli
+p.trVarsInit.visTargWinHeightDeg     = 4;        % target window height in degrees, for visual stimuli
+p.trVarsInit.microstimTargWinWidthDeg      = 8;        % target window width in degrees, for microstim
+p.trVarsInit.microstimTargWinHeightDeg     = 8;        % target window height in degrees, for microstim
+
+p.trVarsInit.targWinWidthDeg         = 0;       % These are the variables that are actually used in eyeInWindow
+p.trVarsInit.targWinHeightDeg        = 0;       % They are changed to the above depending on trial type
 
 
 % I don't think I need to carry these around in 'p'....
@@ -542,20 +547,10 @@ p.draw.cursorW              = 6;        % cursor width in pixels
 %   pds.str2code.m, pds.code2str.m
 
 p.init.strobeList = {...
-    'taskCode',         'p.init.taskCode'; ...
-    'date_1yyyy',       'p.init.date_1yyyy'; ...
-    'date_1mmdd',       'p.init.date_1mmdd'; ...
-    'time_1hhmm',       'p.init.time_1hhmm'; ...
-    'connectPLX',       'p.trVars.connectPLX'; ...
-    'vissac',           'p.trVars.isVisSac'; ...
-    'targetTheta',      'p.trVars.targTheta_x10'; ...
-    'targetRadius',     'p.trVars.targRadius_x100'; ...
-    'rewardDuration',   'p.trVars.rewardDurationMs'; ...
-    'trialCount',       'p.status.iTrial'; ...
-    'goodTrialCount',   'p.status.iGoodTrial'; ...
-    'passJoy',          'p.trVarsInit.passJoy'; ...
-    'joyPressVoltDir',  'p.trVarsInit.joyPressVoltDir'; ...
-    'trialCode',        'p.init.trialsArray(p.trVars.currentTrialsArrayRow, strcmp(p.init.trialArrayColumnNames, ''trialCode''))';
+    'taskCode',         'p.init.codes.uniqueTaskCode_sacc_to_phosph'; ...
+    'trialCode',        'p.init.trialsArray(p.trVars.currentTrialsArrayRow, strcmp(p.init.trialArrayColumnNames, ''trialCode''))'; ...
+    'microStimChannel', 'p.trVars.stimulatedElectrode'; ...
+    'microStimCurrAmp', 'p.trVars.stimAmplitude'; ...
     };
 
 

@@ -1,5 +1,5 @@
-function p = LGN_RF_mapping_init(p)
-%   p = LGN_RF_mapping_init(p)
+function p = fix_present_squares_init(p)
+%   p = fix_present_squares_init(p)
 %
 % Part of the quintet of pldpas functions:
 %   settings function
@@ -46,7 +46,7 @@ p   = pds.initDataPixx(p);
 p   = pds.initAudio(p);
 
 % (6) define trial structure
-% p   = initTrialStructure(p);
+p   = initTrialStructure(p);
 
 % (7) define online-plotting windows (and reposition others).
 p   = plotWindowSetup(p);
