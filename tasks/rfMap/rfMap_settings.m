@@ -152,18 +152,20 @@ p.trVarsInit.eyePixY             = 0;
 p.trVarsInit.flipIdx             = 1;
 
 % --- noise stimulus parameters ---
-p.trVarsInit.checkSizeDeg        = 0.5;     % check size in degrees of visual angle
-p.trVarsInit.noiseFrameHold      = 3;       % display frames per noise frame (3 = 30ms at 100Hz)
+p.trVarsInit.checkSizeDeg        = 2;     % check size in degrees of visual angle
+p.trVarsInit.noiseFrameHold      = 6;       % display frames per noise frame (3 = 30ms at 100Hz)
 p.trVarsInit.colorMode           = 1;       % 1 = luminance, 2 = rgb
 p.trVarsInit.contrastBinary      = 1;       % 1 = binary (0/1), 0 = continuous uniform
+p.trVarsInit.stimMode            = 2;       % 1 = dense (whole-field), 2 = sparse (isolated spots)
+p.trVarsInit.nSparseSpots        = 5;       % spots per frame in sparse mode
 p.trVarsInit.clearPatchDeg       = 1.0;     % diameter of clearing patch around fixation (0 = none)
 p.trVarsInit.clearPatchShape     = 1;       % 1 = disk, 2 = square
 p.trVarsInit.movieDurationMin    = 10;      % total noise movie duration (minutes)
 
 % --- trial timing ---
-p.trVarsInit.trialDurationS      = 3.0;     % noise presentation duration per trial (seconds)
+p.trVarsInit.trialDurationS      = 1.5;     % noise presentation duration per trial (seconds)
 p.trVarsInit.fixWaitDur          = 5.0;     % max wait for fixation acquisition (seconds)
-p.trVarsInit.rewardDurationMs    = 200;     % reward duration on successful trial (ms)
+p.trVarsInit.rewardDurationMs    = 280;     % reward duration on successful trial (ms)
 p.trVarsInit.timeoutAfterFixBreak = 0.1;    % timeout after fixation break (seconds)
 p.trVarsInit.postRewardDuration  = 0.1;     % post-reward period before trial end (seconds)
 
@@ -180,7 +182,7 @@ p.trVarsInit.connectRipple       = 1;       % attempt to connect to Ripple NIP?
 p.trVarsInit.useOnlineSort       = 0;       % use online spike sorting from Ripple?
 p.trVarsInit.useRippleSTA        = 1;       % compute online STA from Ripple data?
 p.trVarsInit.nSTALags            = 8;       % number of temporal lags for STA
-p.trVarsInit.nChannels           = 1;       % number of Ripple channels for STA
+p.trVarsInit.nChannels           = 32;       % number of Ripple channels for STA
 
 % --- state machine ---
 p.trVarsInit.currentState        = p.state.trialBegun;
@@ -303,6 +305,8 @@ p.init.strobeList = { ...
     'noiseTotalFrames',         'min(p.init.nNoiseFrames, 32767)'; ...
     'noiseGridW',               'p.init.noiseGridSize(2)'; ...
     'noiseGridH',               'p.init.noiseGridSize(1)'; ...
+    'noiseStimMode',            'p.trVars.stimMode'; ...
+    'noiseNSparseSpots',        'p.trVars.nSparseSpots'; ...
     };
 
 end

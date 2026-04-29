@@ -409,11 +409,14 @@ flatten = @(x)x(:);
 dims = size(x);
 switch numel(dims)
     case {1,2}
-        y = reshape(repmat(flatten(repmat(x,scale,1)),1,scale)',scale*dims);
+        y = reshape(repmat(flatten(repmat(x,scale,1)),1,scale)',...
+            scale*dims);
     case 3
-        y = reshape(repmat(flatten(repmat(x,scale,1)),1, scale)',scale*dims(1),scale*dims(2),dims(3));
+        y = reshape(repmat(flatten(repmat(x,scale,1)),1, scale)',...
+            scale*dims(1),scale*dims(2),dims(3));
     case 4
-        y = reshape(repmat(flatten(repmat(x,scale,1)),1, scale)',scale*dims(1),scale*dims(2),dims(3),dims(4));
+        y = reshape(repmat(flatten(repmat(x,scale,1)),1, scale)',...
+            scale*dims(1),scale*dims(2),dims(3),dims(4));
 end
 end
 

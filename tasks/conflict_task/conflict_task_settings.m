@@ -142,7 +142,7 @@ p.status.nSingleStimCorrect = 0;
 p.status.nSingleStimTotal   = 0;
 
 % Delta-T values (reduced from 6 to 2)
-p.status.deltaTValues = [-150, 150];  % ms
+p.status.deltaTValues = [0, 125];  % ms
 p.status.nDeltaT = length(p.status.deltaTValues);
 
 % Online metrics for new visualization design
@@ -273,8 +273,8 @@ p.trVarsInit.rightLocIdx         = 1;       % index into rightAngles (1-4)
 % Reward system (phase-dependent ratios)
 % Total reward "budget" C is constant; ratio determines split
 p.trVarsInit.rewardDurationMs        = 400;     % total reward budget C (ms)
-p.trVarsInit.rewardRatioBig          = 2;       % asymmetric reward ratio (big:small = this:1)
-p.trVarsInit.rewardProbHigh          = 0.9;     % P(canonical reward side) in Phases 2-3
+p.trVarsInit.rewardRatioBig          = 1.5;     % asymmetric reward ratio (big:small = this:1); changed to 1.25 from 1.5 by ACT 2/18
+p.trVarsInit.rewardProbHigh          = 0.85;    % P(canonical reward side) in Phases 2-3
 p.trVarsInit.rewardBigSide           = 0;       % 1=big-left, 2=big-right (set per trial from array)
 p.trVarsInit.rewardRatioLeft         = 1;       % current ratio part for left
 p.trVarsInit.rewardRatioRight        = 1;       % current ratio part for right
@@ -295,14 +295,14 @@ p.trVarsInit.joyPressVoltDir         = 1;
 
 % Conflict task specific timing
 p.trVarsInit.fixHoldDurationMin      = 1.0;     % min fixation hold before go signal (s)
-p.trVarsInit.fixHoldDurationMax      = 1.4;     % max fixation hold before go signal (s)
-p.trVarsInit.responseWindow          = 0.6;     % 600ms response window from go signal
+p.trVarsInit.fixHoldDurationMax      = 1.2;     % max fixation hold before go signal (s)
+p.trVarsInit.responseWindow          = 0.45;     % 600ms response window from go signal
 
 p.trVarsInit.targHoldDurationMin     = 0.2;
 p.trVarsInit.targHoldDurationMax     = 0.3;
 p.trVarsInit.maxSacDurationToAccept  = 0.1;
 p.trVarsInit.goLatencyMin            = 0.0;     % minimum allowed RT (0 for this task)
-p.trVarsInit.goLatencyMax            = 0.6;     % 600ms max response time
+p.trVarsInit.goLatencyMax            = 0.45;     % 600ms max response time
 
 p.trVarsInit.timeoutdur              = 0.275;
 
@@ -315,7 +315,7 @@ p.trVarsInit.targWidth            = 12;     % target line width in pixels
 p.trVarsInit.targRadius           = 16;
 
 % Conflict task specific variables
-p.trVarsInit.deltaT               = -150;   % stimulus onset asynchrony (ms)
+p.trVarsInit.deltaT               = 0;      % stimulus onset asynchrony (ms)
 p.trVarsInit.deltaTIdx            = 1;      % index into deltaTValues array (1 or 2)
 p.trVarsInit.phaseNumber          = 1;      % 1, 2, or 3
 p.trVarsInit.backgroundHueIdx     = 1;      % 1=Hue A (0 deg DKL), 2=Hue B (180 deg DKL)

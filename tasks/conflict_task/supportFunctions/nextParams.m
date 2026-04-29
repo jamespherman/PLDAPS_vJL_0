@@ -86,6 +86,16 @@ p.trVars.phaseNumber = currentPhase;
 
 %% Select a random trial from the current phase's available trials
 pool = (phaseVals == currentPhase & rowsPossible);
+
+% In Phase 1, force single-stim trials to be completed first
+if currentPhase == 1
+    singleStimCol = cols.singleStimSide;
+    singlePool = pool & (p.init.trialsArray(:, singleStimCol) > 0);
+    if any(singlePool)
+        pool = singlePool;  % restrict to single-stim only
+    end
+end
+
 choiceIndices = find(pool);
 p.trVars.currentTrialsArrayRow = ...
     choiceIndices(randi(length(choiceIndices)));
@@ -226,7 +236,14 @@ function p = calculateRewards(p)
 %   rewardBigSide=2: leftRatio=1, rightRatio=rewardRatioBig
 
 C = p.trVars.rewardDurationMs;
-R = p.trVars.rewardRatioBig;
+
+% Phase 1: equal reward (R=1.0) — pure salience baseline
+% Phases 2-3: asymmetric reward per rewardRatioBig setting
+if p.trVars.phaseNumber == 1
+    R = 1.0;
+else
+    R = p.trVars.rewardRatioBig;
+end
 
 if p.trVars.rewardBigSide == 1
     leftRatio = R;

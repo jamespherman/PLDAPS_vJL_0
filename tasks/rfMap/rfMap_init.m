@@ -98,18 +98,27 @@ else
     colorModeStr = 'rgb';
 end
 
+% Stimulus mode (1 = dense, 2 = sparse)
+if p.trVarsInit.stimMode == 2
+    stimModeStr = 'sparse';
+else
+    stimModeStr = 'dense';
+end
+
 % Generate movie
 [p.init.noiseMovie, p.init.noiseRngSeed] = generateNoiseMovie( ...
     nChecksY, nChecksX, nNoiseFrames, ...
-    colorModeStr, logical(p.trVarsInit.contrastBinary), []);
+    colorModeStr, logical(p.trVarsInit.contrastBinary), [], ...
+    stimModeStr, p.trVarsInit.nSparseSpots);
 
 % Store metadata
 p.init.noiseGridSize  = [nChecksY, nChecksX];
 p.init.nNoiseFrames   = nNoiseFrames;
 p.init.noiseFrameIdx  = 1;  % playback position (advances on successful trials)
+p.init.isSparse       = strcmp(stimModeStr, 'sparse');
 
-fprintf('Noise grid: %d x %d checks, %d total frames\n', ...
-    nChecksY, nChecksX, nNoiseFrames);
+fprintf('Noise grid: %d x %d checks, %d total frames (%s)\n', ...
+    nChecksY, nChecksX, nNoiseFrames, stimModeStr);
 
 end
 
