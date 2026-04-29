@@ -11,3 +11,9 @@ Thumbs.db
 # Output directory #
 ####################
 output/
+
+# Coding-agent local files #
+############################
+.claude/
+.codex
+AGENTS.md
