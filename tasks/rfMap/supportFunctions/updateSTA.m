@@ -1,6 +1,6 @@
 function [staAccum, staSpikeCount] = updateSTA(staAccum, staSpikeCount, ...
     spikeTimesPerChan, noiseOnTime, frameDurS, noiseMovie, ...
-    trialStartFrame, nFramesTrial, nLags)
+    trialStartFrame, nFramesTrial, nLags, isSparse)
 % updateSTA  Accumulate spike-triggered average from one trial's data.
 %
 %   [staAccum, staSpikeCount] = updateSTA(staAccum, staSpikeCount, ...
@@ -32,9 +32,20 @@ function [staAccum, staSpikeCount] = updateSTA(staAccum, staSpikeCount, ...
 %     lagIdx 2 -> stimulus 1 frame before spike (frameDurS delay)
 %     lagIdx k -> stimulus (k-1) frames before spike
 %
-%   The stimulus is mean-subtracted before accumulation: binary 0/1 values
-%   become -0.5/+0.5. This is essential for unbiased STA estimation with
-%   white noise stimuli (Chichilnisky, 2001).
+%   Dense mode: stimulus is mean-subtracted before accumulation (binary
+%   0/1 -> -0.5/+0.5). Essential for unbiased STA with white noise
+%   (Chichilnisky, 2001).
+%
+%   Sparse mode: stimulus is already zero-mean ({-1, 0, +1} with spots
+%   placed randomly and symmetrically), so values are used directly.
+%
+%   The isSparse flag (optional; defaults to auto-detect via data type)
+%   selects between these two treatments. Pass isSparse = true for sparse
+%   noise, false for dense.
+
+if nargin < 10 || isempty(isSparse)
+    isSparse = isa(noiseMovie, 'int8');
+end
 
 nChannels = length(spikeTimesPerChan);
 nTotalFrames = size(noiseMovie, 3);
@@ -67,8 +78,13 @@ for ch = 1:nChannels
         for lagIdx = 1:nLags
             stimIdx = globalIdx - lagIdx + 1;
             if stimIdx >= 1 && stimIdx <= nTotalFrames
-                % Mean-subtract: convert uint8 0/1 to double -0.5/+0.5
-                stimFrame = double(noiseMovie(:, :, stimIdx)) - 0.5;
+                if isSparse
+                    % Sparse movie is int8 {-1, 0, +1}; already zero-mean.
+                    stimFrame = double(noiseMovie(:, :, stimIdx));
+                else
+                    % Dense: convert uint8 0/1 to double -0.5/+0.5.
+                    stimFrame = double(noiseMovie(:, :, stimIdx)) - 0.5;
+                end
                 staAccum{ch}(:, :, lagIdx) = ...
                     staAccum{ch}(:, :, lagIdx) + stimFrame;
             end

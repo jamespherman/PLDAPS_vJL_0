@@ -266,6 +266,8 @@ codes.noiseTrialFrameEnd    = 16109;  % ending frame index in movie (this trial)
 codes.noiseTotalFrames      = 16110;  % total frames in movie (clamped to 32767)
 codes.noiseGridW            = 16111;  % noise grid width (number of checks)
 codes.noiseGridH            = 16112;  % noise grid height (number of checks)
+codes.noiseStimMode         = 16113;  % 1 = dense, 2 = sparse
+codes.noiseNSparseSpots     = 16114;  % spots per frame in sparse mode
 
 % barsweep task codes (translating bar sweep, passive fixation)
 codes.barsweepAngle_x10           = 16115;  % path angle * 10 (0..3600)
