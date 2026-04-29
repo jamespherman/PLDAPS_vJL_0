@@ -39,7 +39,7 @@ p.init.trialArrayColumnNames = {...
     'backgroundHueIdx', ... % 1=Hue A (0 deg DKL target), 2=Hue B (180 deg DKL target)
     'highSalienceSide', ... % 1=left, 2=right
     'deltaTIdx', ...        % Index into deltaTValues (1 or 2)
-    'deltaT', ...           % Delta-t value in ms (-150 or +150)
+    'deltaT', ...           % Delta-t value in ms (0 or +125)
     'singleStimSide', ...   % 0=dual, 1=single-left, 2=single-right
     'rewardBigSide', ...    % 1=big-left, 2=big-right (per-trial reward assignment)
     'completed'};           % 0=not done, 1=completed
@@ -69,7 +69,7 @@ nBackgroundHues = 2;  % Hue A (0 deg) and Hue B (180 deg)
 nSalienceSides = 2;  % Left or Right
 
 % Delta-t values
-deltaTValues = [-150, 150];  % ms
+deltaTValues = [0, 125];  % ms
 nDeltaT = length(deltaTValues);
 
 % Reward parameters from settings
@@ -278,7 +278,7 @@ for iPhase = 1:nPhases
         'Phase %d dual: backgroundHueIdx not balanced! A=%d, B=%d', ...
         iPhase, nHueA, nHueB);
     assert(nDeltaTNeg == nDeltaTPos, ...
-        'Phase %d dual: deltaT not balanced! -150=%d, +150=%d', ...
+        'Phase %d dual: deltaT not balanced! dT1=%d, dT2=%d', ...
         iPhase, nDeltaTNeg, nDeltaTPos);
 
     % Verify rewardBigSide assignment
@@ -330,7 +330,7 @@ for iPhase = 1:nPhases
             'Phase 1 single-stim: hue not balanced! A=%d, B=%d', ...
             nSingleHueA, nSingleHueB);
         assert(nSingleDTNeg == nSingleDTPos, ...
-            'Phase 1 single-stim: deltaT not balanced! -150=%d, +150=%d', ...
+            'Phase 1 single-stim: deltaT not balanced! dT1=%d, dT2=%d', ...
             nSingleDTNeg, nSingleDTPos);
 
         % Verify single-stim trials come first
