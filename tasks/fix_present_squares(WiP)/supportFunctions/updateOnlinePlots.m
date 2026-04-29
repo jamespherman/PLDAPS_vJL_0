@@ -8,7 +8,7 @@ newY = p.status.iTrial;
 % state the last trial ended in, define the new "X" value and an index for
 % updating the appropriate plot object:
 switch p.trData.trialEndState
-    case p.state.hit
+    case p.state.heldFix
         
         % what's the new "X" data value? Since the last trial was a hit, we
         % use the difference between the time when the joystick hold
@@ -20,7 +20,7 @@ switch p.trData.trialEndState
         newX = p.trData.timing.fixHoldReqMet - p.trData.timing.fixAq;
         plotInd = 1;
         
-    case {p.state.miss, p.state.fixBreak}
+    case p.state.fixBreak
         
         % what's the new "X" data value? Since the last trial was a miss,
         % we use the time that the joystick was released:

@@ -109,15 +109,12 @@ p.state.holdJoy         = 3;
 p.state.dontMove        = 4;
 p.state.makeDecision    = 5;
 % end states - aborted:
-p.state.fixBreak        = 11;
-p.state.joyBreak        = 12;
-p.state.nonStart        = 13;
+p.state.fixBreak        = 31;
+% p.state.joyBreak        = 32;
+p.state.nonStart        = 33;
 % end states - success:
-p.state.hit             = 21;
-p.state.cr              = 22;
-p.state.miss            = 23;
-p.state.foilFa          = 24;
-p.state.fa              = 25;
+p.state.heldFix         = 21;
+
 
 %% STATUS VALUES
 
@@ -170,7 +167,7 @@ p.rig.guiStatVals = {...
     'hr2Loc2'; ...
     'cr1Loc1'; ...
     'cr2Loc1'; ...
-    'cr1Loc2'; ...
+    'cr1Loc2'; ...expt
     'cr2Loc2'; ...
 %     'missedFrames'; ...
     };    
@@ -198,7 +195,7 @@ p.rig.guiVars = {...
 %% INIT VARIABLES 
 % vars that are only set once
 
-p.init.exptType         = 'joystickPress';  % Which experiment are we running? The full version with all trial types? The single-stimulus-only version? Something else?
+p.init.exptType         = 'sparseNoise';  % Which experiment are we running? The full version with all trial types? The single-stimulus-only version? Something else?
 
 
 %% TRIAL VARIABLES
@@ -324,20 +321,22 @@ p.trVarsInit.presentationDur = 0.2; % in s
 p.trVarsInit.pauseDur = 0.02; % in s
 p.trVarsInit.squareSize = 1; % in dva
 
+% Jitter is not yet used for anything
 p.trVarsInit.jitterMin = 0.2; % in dva
 p.trVarsInit.jitterMax = 0.5;
+
 
 % for sparseNoise
 
 p.trVarsInit.sparseNoiseNumSquares = 8;
 
-p.trVarsInit.sparseNoiseXMin = -28; % where on the screen can squares appear, in dva
-p.trVarsInit.sparseNoiseXMax = 28; % in dva
-p.trVarsInit.sparseNoiseYMin = -18; % in dva
-p.trVarsInit.sparseNoiseYMax = 18; % in dva
+p.trVarsInit.sparseNoiseXMin = -29; % where on the screen can squares appear, in dva
+p.trVarsInit.sparseNoiseXMax = 29; % in dva
+p.trVarsInit.sparseNoiseYMin = -19; % in dva
+p.trVarsInit.sparseNoiseYMax = 19; % in dva
 
-p.trVarsInit.sparseNoiseGridSizeX = 28; % number of grid positions
-p.trVarsInit.sparseNoiseGridSizeY = 18; % total = x*y
+p.trVarsInit.sparseNoiseGridSizeX = 29; % number of grid positions
+p.trVarsInit.sparseNoiseGridSizeY = 19; % total = x*y
 
 
 % for denseNoise
@@ -489,7 +488,6 @@ p.draw.color.joyInd     = p.draw.clutIdx.expGrey90_subBg;               % joy po
 p.init.strobeList = {...
     'taskCode',         'p.init.codes.uniqueTaskCode_fix_present_squares'; ...
     'trialCode',        'p.init.trialsArray(p.trVars.currentTrialsArrayRow, strcmp(p.init.trialArrayColumnNames, ''trialCode''))'; ...
-    'microStimChannel', 'p.trVars.stimulatedElectrode'; ...
-    'microStimCurrAmp', 'p.trVars.stimAmplitude'; ...
+    'trialEndState'     'p.trData.trialEndState'; ...
     };
 end

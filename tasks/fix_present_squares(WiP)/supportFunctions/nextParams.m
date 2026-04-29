@@ -226,15 +226,17 @@ p.trVars.presentationCounter = 1;
 % Time when trial is over and reward should be delivered
 p.trVars.timeReward = p.trVars.preStimDur + ...
     (p.trVars.presentationDur+ p.trVars.pauseDur)...
-    *p.trVars.numPresentations;
+    *p.trVars.numPresentations + ...
+    p.trVars.postStimDur;
 
 
-stimulusTypeCol = strcmp(p.init.trialArrayColumnNames, 'stimulusType');
-p.trVars.stimulusType   = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
-    stimulusTypeCol);
+%stimulusTypeCol = strcmp(p.init.trialArrayColumnNames, 'stimulusType');
+%p.trVars.stimulusType   = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
+%    stimulusTypeCol);
+%switch p.trVars.stimulusType
 
-    switch p.trVars.stimulusType
-        case 1 % sparseNoise
+    switch p.init.exptType
+        case 'sparseNoise' % sparseNoise
 
             % Create grid of possible positions to present stimuli at
             xGrid = linspace (p.trVars.sparseNoiseXMin, p.trVars.sparseNoiseXMax, ...
@@ -273,7 +275,7 @@ p.trVars.stimulusType   = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
 
 
 
-        case 2 % denseNoise
+        case 'denseNoise' % denseNoise
 
             % Determine total number of squares to fill screen
 
@@ -298,7 +300,7 @@ p.trVars.stimulusType   = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
             end
 
 
-        case 3 % checkerboard
+        case 'checkerboard' % checkerboard
 
             % Determine total number of squares to fill screen
 

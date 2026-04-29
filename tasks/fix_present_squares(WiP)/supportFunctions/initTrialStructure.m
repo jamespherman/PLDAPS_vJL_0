@@ -10,10 +10,17 @@ function p = initTrialStructure(p)
 
 % column descriptions
 % p.init.trialColumnNames = {'number of target stimuli', 'no of trials' 'trialcode'};
-p.init.trialArrayColumnNames = {'stimulusType','no of trials', 'trialCode'};
+p.init.trialArrayColumnNames = {'no of trials', 'trialCode'};
 
 % table definition
-table = step1;
+switch p.init.exptType
+    case 'sparseNoise'
+	table = sparseNoiseTable;
+    case 'denseNoise'
+    	table = denseNoiseTable;
+    case 'checkerboard'
+    	table = checkerboardTable;
+    end
     
 
 % Make "n" copies of each row in the table, where n is in the "no of trials" column.
@@ -52,17 +59,23 @@ p.init.blockLength = size(p.init.trialsArray, 1);
 end
 
 
-function table = step1
+function table = sparseNoiseTable
 table = [
-    1 1 24001; ... % sparse noise, 0 reps, 24001 trial code
-    2 1 24002; ... % dense noise, 0 reps, 24002 trial code
-    3 1 24003; ... % checkerboard, 0 reps, 24003 trial code
+    1 24101; ... % sparse noise, 1 reps, 24101 trial code
     ];
 end
 
+function table = denseNoiseTable
+table = [
+    1 24201; ... % dense noise, 1 reps, 24201 trial code
+    ];
+end
 
-
-
+function table = checkerboardTable
+table = [
+    1 24301; ... % checkerboard, 1 reps, 24301 trial code
+    ];
+end
 
 
 

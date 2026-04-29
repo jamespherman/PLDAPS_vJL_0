@@ -73,7 +73,9 @@ codes.trialType         = 11010;
 codes.fileSufix         = 11011; 
 codes.taskType          = 11099;
 codes.goodTrialCount    = 11100;
-codes.goodtrialornot    = 21101; % Gongchen Added on 2019/12/30 I think it is better than goodTrialCount
+codes.goodtrialornot    = 21101;
+codes.trialEndState 	= 11101;
+% Gongchen Added on 2019/12/30 I think it is better than goodTrialCount
                                  % Also I think these codes are better
                                  % start from '2~9' rather than 1, because
                                  % the code.time_1hhmm can sometimes contaminate the code  
@@ -94,7 +96,7 @@ codes.useMotionStim     = 11094; % use motion stim for mapping
 
 
 %% end of trial codes:
-% code to represent a trial non strat 
+% code to represent a trial non strat
 codes.nonStart              = 22004;
 codes.joyBreak              = 2005;
 codes.fixBreak          = 3005;
@@ -104,6 +106,7 @@ codes.saccToTargetOne	= 3007; % Used to identify which target monkey made a sacc
 codes.saccToTargetTwo	= 3008;
 codes.noResponse        = 3009; % no saccade within response window (conflict_task)
 codes.inaccurate        = 3010; % saccade landed outside target window(s)
+
 
 %% optical stimulation codes
 codes.optoStimOn        = 17001;

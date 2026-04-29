@@ -24,7 +24,7 @@ p           = pds.readDatapixxBuffers(p);
 % **Turning off trial repeats for this task
 % Was the previous trial aborted?
 p.trData.trialRepeatFlag = ismember(p.trData.trialEndState, ...
-    [p.state.fixBreak, p.state.joyBreak, p.state.nonStart]);
+    [p.state.fixBreak, p.state.nonStart]);
 
 % update status variables
 p           = updateStatusVariables(p);

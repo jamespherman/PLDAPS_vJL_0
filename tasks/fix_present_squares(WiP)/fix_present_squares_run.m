@@ -12,9 +12,8 @@ function p = fix_present_squares_run(p)
 % It is part of the loop controlled by the 'Run' action from the GUI;
 %   it is preceded by 'next_trial' and followed by 'finish_trial'
 %
-% The whole function runs as WHILE loop, checking for changes in eye and
-% joystick position. When certain positions are met, the state variable is
-% updated
+% The whole function runs as WHILE loop, checking for changes in eye position. 
+% When certain positions are met, the state variable is updated
 
 % % %% In this fuction, you may expect:
 % % % (1)   Mark start time.
@@ -54,6 +53,12 @@ while ~p.trVars.exitWhileLoop
     p = drawMachine(p);
      
 end % while loop
+
+% Strobe trialRunDone once, after the run loop exits, regardless of
+% outcome. Distinct from trialEnd (which fires in _finish.m). Trial-
+% relative timestamp consistent with other timing variables in this file.
+p.trData.timing.trialRunDone = GetSecs - p.trData.timing.trialStartPTB;
+p.init.strb.strobeNow(p.init.codes.trialRunDone);
 
 end
 
@@ -133,7 +138,6 @@ switch p.trVars.currentState
                 (p.trData.timing.fixOn + p.trVars.fixWaitDur)
             % fixation was never acquired
             p.init.strb.addValue(p.init.codes.nonStart);
-            p.trData.timing.joyRelease = timeNow;
             p.trVars.currentState      = p.state.nonStart;
         end
         
@@ -148,15 +152,13 @@ switch p.trVars.currentState
         
         % If fixation has been held for the requisite duration: strobe
         % "hit" code to recording system, log the time that the joystick
-        % hold duration requirement was met, advance to the "hit" state,
-        % and play a tone indicating successful trial completion.
+        % hold duration requirement was met, advance to the "hit" state
 
         if p.trData.timing.fixAq > 0 && ...
                 timeFromFixAq > p.trVars.timeReward
-            p.init.strb.addValue(p.init.codes.hit);
             p.trData.timing.fixHoldReqMet = timeNow;
-            p.trVars.currentState      = p.state.hit;
-            % p = playTone(p, 'high');
+            p.trVars.currentState      = p.state.heldFix;
+            
             
         elseif ~pds.eyeInWindow(p)
             p.init.strb.addValue(p.init.codes.fixBreak);
@@ -168,9 +170,11 @@ switch p.trVars.currentState
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%% end states: trial COMPLETED %%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    case p.state.hit
-        %% HIT!
-        % STATE 21 = reward delivery
+    case p.state.heldFix
+        %% Held Fixation for the whole trial!
+        % STATE 21 = reward delivery and play tone indicating successful trial completion
+        
+        % p = playTone(p, 'high');
         p = pds.deliverReward(p);
         
         disp('reward');
@@ -182,19 +186,15 @@ switch p.trVars.currentState
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     case p.state.fixBreak
         %% FIXATION BREAK
-        p = playTone(p, 'low');
+        %p = playTone(p, 'low');
         p.trVars.exitWhileLoop = true;
         
-    case p.state.miss
-        %% JOYSTICK BREAK (MISS)
-        p = playTone(p, 'low');
-        p.trVars.exitWhileLoop = true;
         
     case p.state.nonStart
         %% NON-START
         % subject did not hold the joystick within the alloted time and
         % trila is considered a non-start.
-%         p = playTone(p, 'low');
+        % p = playTone(p, 'low');
         p.trVars.exitWhileLoop = true;
 end
 
@@ -208,10 +208,7 @@ if p.trVars.exitWhileLoop
 
     % note trial end state
     p.trData.trialEndState = p.trVars.currentState;
-    
-    % and strobe end of trial once:
-    p.init.strb.addValueOnce(p.init.codes.trialEnd);
-    p.trData.timing.trialEnd   = timeNow;
+
 end
 % Done with state-dependent section
 
@@ -279,21 +276,6 @@ function p = drawMachine(p)
 % timeNow is relative to trial Start
 timeNow = GetSecs - p.trData.timing.trialStartPTB;
 
-% Given joystick state, determine color for joystick indicator:
-[~, joyState] = pds.joyHeld(p);
-if isnan(joyState)
-    p.draw.color.joyInd = p.draw.clutIdx.expGrey25_subBg;   % neither press nor released
-elseif joyState == 0
-    p.draw.color.joyInd = p.draw.clutIdx.expGrey70_subBg;   % released
-elseif joyState == -1
-    p.draw.color.joyInd = p.draw.clutIdx.expBlue_subBg;   % pressed in low voltage
-elseif joyState == 1
-    p.draw.color.joyInd = p.draw.clutIdx.expOrange_subBg;   % pressed in high voltage
-end
-
-% now calculate size of joystick-fill rectangle
-joyRectNow = pds.joyRectFillCalc(p);
-
 % if we're close enouframegh in time to the next screen flip, start drawing.
 if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNumber
 
@@ -343,9 +325,9 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
 
 % If stimulus should be on, present it (specifics depend on stimulus type)
 if p.trVars.stimIsOn
-    switch p.trVars.stimulusType
+    switch p.init.exptType
 
-        case 1
+        case 'sparseNoise' % sparseNoise
 
             rectIndex1 = p.trVars.sparseNoiseNumSquares*(p.trVars.presentationCounter - 1) + 1;
             rectIndex2 = p.trVars.sparseNoiseNumSquares*p.trVars.presentationCounter;
@@ -353,12 +335,12 @@ if p.trVars.stimIsOn
             Screen('FillRect', p.draw.window, 15, ...
                 p.trVars.sparseNoiseRectList(:, rectIndex1:rectIndex2));
 
-        case 2
+        case 'denseNoise' % denseNoise
             
             Screen('DrawTexture', p.draw.window, p.draw.denseNoiseTexture(p.trVars.presentationCounter), ...
                 [], [0 0 p.draw.middleXY(1)*2 p.draw.middleXY(2)*2], [], 0);
 
-        case 3
+        case 'checkerboard' % checkerboard
 
             Screen('DrawTexture', p.draw.window, p.draw.checkerboardTexture(p.trVars.presentationCounter), ...
                 [], [0 0 p.draw.middleXY(1)*2 p.draw.middleXY(2)*2], [], 0);
@@ -377,10 +359,7 @@ end
     Screen('FrameRect',p.draw.window, p.draw.color.fixWin, repmat(p.draw.fixPointPix, 1, 2) +  ...
         [-p.draw.fixWinWidthPix -p.draw.fixWinHeightPix ...
         p.draw.fixWinWidthPix p.draw.fixWinHeightPix], p.draw.fixWinPenDraw)
-    
-    % Draw the joystick-bar graphic.
-    % Screen('FrameRect', p.draw.window, p.draw.color.joyInd, p.draw.joyRect);
-    % Screen('FillRect',  p.draw.window, p.draw.color.joyInd, joyRectNow);
+
 
     % flip and store time of flip.
     [p.trData.timing.flipTime(p.trVars.flipIdx), ~, ~, frMs] = Screen('Flip', p.draw.window);

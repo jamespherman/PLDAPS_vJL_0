@@ -104,7 +104,7 @@ p.state.heldFix             = 22;
 
 % end states - aborted:
 p.state.fixBreak            = 31;
-p.state.joyBreak            = 32;
+% p.state.joyBreak            = 32;
 p.state.nonStart            = 33;
 p.state.failedToHoldTarg    = 34;
 
@@ -268,6 +268,7 @@ p.trVarsInit.cmdPeriod = 100; % In 33.333 us clock cycles, calculated as 30,000/
 p.trVarsInit.cmdRepeats = 50; % Number of pulses
 p.trVarsInit.cmdSeqLength = 5; % Duration of single phase of pulse, in 33.333 us clock cycles
 p.trVarsInit.cmdSeqIPI = 2; % Duration of interphase interval, in 33.333 us clock cycles
+p.trVarsInit.stimAmplitude = 0; % Initialized to 0; on non-microstim trials it should strobe 0
 
 % For staircase procedure
 p.trVarsInit.ampVals = [1, 2, 3, 4, 5, 6, 7, 9, 12, 14, 18, ...
@@ -549,6 +550,7 @@ p.draw.cursorW              = 6;        % cursor width in pixels
 p.init.strobeList = {...
     'taskCode',         'p.init.codes.uniqueTaskCode_sacc_to_phosph'; ...
     'trialCode',        'p.init.trialsArray(p.trVars.currentTrialsArrayRow, strcmp(p.init.trialArrayColumnNames, ''trialCode''))'; ...
+    'trialEndState'     'p.trData.trialEndState'; ...
     'microStimChannel', 'p.trVars.stimulatedElectrode'; ...
     'microStimCurrAmp', 'p.trVars.stimAmplitude'; ...
     };

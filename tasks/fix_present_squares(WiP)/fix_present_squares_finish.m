@@ -70,7 +70,7 @@ p           = pds.waitForJoystickRelease(p);
 % monkey has held the joystick down for a "long time" since the end of the
 % last trial, the "time-out" window has passed and there won't be an
 % ADDITIONAL time out.
-postTrialTimeOut(p);
+%postTrialTimeOut(p);
 
 % retreive data from omniplex PC if desired.
 if p.rig.connectToOmniplex

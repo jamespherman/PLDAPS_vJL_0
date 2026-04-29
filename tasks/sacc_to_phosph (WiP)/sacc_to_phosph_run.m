@@ -58,7 +58,12 @@ while ~p.trVars.exitWhileLoop
      
 end % while loop
     
-   
+% Strobe trialRunDone once, after the run loop exits, regardless of
+% outcome. Distinct from trialEnd (which fires in _finish.m). Trial-
+% relative timestamp consistent with other timing variables in this file.
+p.trData.timing.trialRunDone = GetSecs - p.trData.timing.trialStartPTB;
+p.init.strb.strobeNow(p.init.codes.trialRunDone);
+
 end
 
 %% ---------------------
@@ -98,28 +103,11 @@ switch p.trVars.currentState
         % strobing trial start time and onward to state 0.1.
         p.init.strb.strobeNow(p.init.codes.trialBegin);
         p.trData.timing.trialBegin      = timeNow;
-        p.trVars.currentState           = p.state.waitForJoy;
+        p.trVars.currentState           = p.state.showFix;
         
-        
-    case p.state.waitForJoy
-        %% STATE 2:
-        %   WAITING FOR SUBJECT TO HOLD JOYSTICK DOWN
-        
-        % If joystick is held down, onwards to state 0.25
-        % If not, onward to state 3.3 (non-start)
-        if pds.joyHeld(p)
-            p.init.strb.strobeNow(p.init.codes.joyPress);
-            p.trData.timing.joyPress    = timeNow;
-            p.trVars.currentState       = p.state.showFix;
-            
-        elseif ~pds.joyHeld(p) && (timeNow > p.trVars.joyWaitDur)
-            p.trVars.currentState       = p.state.nonStart;
-        end
-        
-%         disp(num2str(double(timeNow > p.trVars.joyWaitDur)))
     case p.state.showFix
         %% STATE 3:
-        %   JOYSTICK IS HELD, SO SHOW FIXATION POINT AND WAIT FOR
+        %   TRIAL HAS BEGUN, SO SHOW FIXATION POINT AND WAIT FOR
         %   SUBJECT TO ACQUIRE FIXATION.
         
         % show fixatoin point & fixation window on exp-display
@@ -136,31 +124,23 @@ switch p.trVars.currentState
             p.trData.timing.fixOn          = timeNow;
         end
         
-        % If fixation is aquired within alotted time, and joystick is
-        % still held, onwards to p.state.dontMove:
-        if pds.eyeInWindow(p) && pds.joyHeld(p) && ...
+        % If fixation is aquired within alotted time, onwards to p.state.dontMove:
+        if pds.eyeInWindow(p) && ...
                 timeNow < (p.trData.timing.fixOn + p.trVars.fixWaitDur)
                 
             p.init.strb.strobeNow(p.init.codes.fixAq);
             p.trData.timing.fixAq      = timeNow;
             p.trVars.currentState      = p.state.dontMove;
             
-        elseif ~pds.joyHeld(p)
-            % joystick released when it wasn't supposed to:
-            p.init.strb.strobeNow(p.init.codes.joyRelease);
-            p.trData.timing.joyRelease = timeNow;
-            p.trVars.currentState      = p.state.joyBreak;
             
         elseif timeNow > (p.trData.timing.fixOn + p.trVars.fixWaitDur)
             % fixation was never acquired
-            p.init.strb.strobeNow(p.init.codes.nonStart);
-            p.trData.timing.joyRelease = timeNow;
             p.trVars.currentState      = p.state.nonStart;
         end
         
     case p.state.dontMove
         %% STATE 4:
-        %   "DON'T MOVE" - SUBJECT HOLDS FIXATION AND JOYSTICK.
+        %   "DON'T MOVE" - SUBJECT HOLDS FIXATION
         %   STUFF HAPPENS ON SCREEN (eg cue flashes, target appears,
         %   but these are determined in the time-dependant section,
         %   below). HERE, THE KEY THING IS THAT THE SUSBJECT SHOULD NOT
@@ -190,10 +170,6 @@ switch p.trVars.currentState
             p.trData.timing.fixBreak    = timeNow;
             p.trVars.currentState       = p.state.fixBreak;
             
-        elseif ~pds.joyHeld(p)
-            p.init.strb.strobeNow(p.init.codes.joyRelease);
-            p.trData.timing.joyRelease  = timeNow;
-            p.trVars.currentState       = p.state.joyBreak;
         end
         
     case p.state.makeSaccade
@@ -202,17 +178,10 @@ switch p.trVars.currentState
         % Fixation point has disappeared. This is the 'go' signal. 
         % Subject is required to saccade within a specified time window and
         % land in the target window.
-        % joystick should be held throughout.
         
         % turn off fixation point "go signal"
         p.draw.color.fix = p.draw.clutIdx.expBg_subBg;
-        
-        % if joystick is broken then to hell with all this
-        if ~pds.joyHeld(p)
-            p.init.strb.strobeNow(p.init.codes.joyRelease);
-            p.trData.timing.joyRelease  = timeNow;
-            p.trVars.currentState       = p.state.joyBreak;
-        end
+
         
         % if sub left window before goTime + minLatency, that's a breakFix:
         if ~pds.eyeInWindow(p) && timeNow < (p.trData.timing.fixOff + p.trVars.goLatencyMin)
@@ -245,17 +214,7 @@ switch p.trVars.currentState
         %   CHECK LANDING POINT
         % Subject has saccaded, sure, but we have yet to check where! This
         % state checks whether he has landed in the target window or not. 
-        % joystick should be held throughout. 
-        
-          
-        % if joystick is broken then to hell with all this
-        
-        if ~pds.joyHeld(p)
-            p.init.strb.strobeNow(p.init.codes.joyRelease);
-            p.trData.timing.joyRelease  = timeNow;
-            p.trVars.currentState       = p.state.joyBreak;
-        end
-             
+
         % check if eyes are in target windows
         eyeInTargetWin = pds.eyeInWindow(p, 'target');
       
@@ -305,14 +264,7 @@ switch p.trVars.currentState
         % state checks whether he has landed in the target window and
         % whether he maintains it for long enough in order to move to the
         % final state- saccadeCompleted.
-        % joystick should be held throughout. 
-        
-        % if joystick is broken then to hell with all this
-        if ~pds.joyHeld(p)
-            p.init.strb.strobeNow(p.init.codes.joyRelease);
-            p.trData.timing.joyRelease  = timeNow;
-            p.trVars.currentState       = p.state.joyBreak;
-        end
+
              
         % we reached this state because the eyes have entered the target
         % window. If they exit the window before the holdTargDuration has
@@ -332,7 +284,7 @@ switch p.trVars.currentState
         elseif ~eyeInTargetWin
             p.init.strb.strobeNow(p.init.codes.fixBreak);
             p.trData.timing.fixBreak    = timeNow;
-            p.trVars.currentState       = p.state.fixBreak;
+            p.trVars.currentState       = p.state.failedToHoldTarg;
             
             % and thin up that targWin:
             p.draw.targWinPenDraw = p.draw.targWinPenThin;
@@ -347,7 +299,7 @@ switch p.trVars.currentState
 
     case p.state.sacComplete
         %% SACCADE COMPLETE!
-        % STATE 21 = get reward delivery
+        % STATE 21 = get reward delivery if not nostim trial
 
         % If this was visual or microstim, this means he did it correctly
         if p.trVars.trialType == 1 || p.trVars.trialType == 2
@@ -368,7 +320,7 @@ switch p.trVars.currentState
         
         % If this was nostim, this means he did it incorrectly
         elseif p.trVars.trialType == 3
-            p = playTone(p, 'low');
+            % p = playTone(p, 'low');
             p.trVars.exitWhileLoop = true;
         end
 
@@ -380,7 +332,7 @@ switch p.trVars.currentState
 
         % If this was visual or microstim, this means he did it incorrectly
         if p.trVars.trialType == 1 || p.trVars.trialType == 2
-            p = playTone(p, 'low');
+            % p = playTone(p, 'low');
             p.trVars.exitWhileLoop = true;
 
 
@@ -410,24 +362,27 @@ switch p.trVars.currentState
     case p.state.fixBreak
         %% FIXATION BREAK
 
-        p = playTone(p, 'low');
+        % p = playTone(p, 'low');
         p.trVars.exitWhileLoop = true;
-        
-    case p.state.joyBreak
-        %% JOYSTICK BREAK
 
-        p = playTone(p, 'low');
+        % p = playTone(p, 'low');
         p.trVars.exitWhileLoop = true;
         
     case p.state.nonStart
         %% NON-START
-        % subject did not hold the joystick within the alloted time and
-        % trila is considered a non-start.
+        % subject did not look at fix within the alloted time and
+        % trial is considered a non-start.
 
-        p = playTone(p, 'low');
+        % p = playTone(p, 'low');
         p.trVars.exitWhileLoop = true;   
                
-        
+    case p.state.failedToHoldTarg
+        %% FAILED TO HOLD TARGET
+        % Subject looked away after looking at target location
+
+        % p = playTone(p, 'low');
+        p.trVars.exitWhileLoop = true;
+
 end
 
 if p.trVars.exitWhileLoop
@@ -532,24 +487,6 @@ function p = drawMachine(p)
 % timeNow is relative to trial Start
 timeNow = GetSecs - p.trData.timing.trialStartPTB;
 
-%% set Joystick indicator
-% Given joystick state, determine color for joystick indicator:
-%{
-[~, joyState] = pds.joyHeld(p);
-if isnan(joyState)
-    p.draw.color.joyInd = p.draw.clutIdx.expGrey25_subBg;   % neither press nor released
-elseif joyState == 0
-    p.draw.color.joyInd = p.draw.clutIdx.expGrey70_subBg;   % released
-elseif joyState == -1
-    p.draw.color.joyInd = p.draw.clutIdx.expBlue_subBg;   % pressed in low voltage
-elseif joyState == 1
-    p.draw.color.joyInd = p.draw.clutIdx.expOrange_subBg;   % pressed in high voltage
-end
-
-% now calculate size of joystick-fill rectangle
-joyRectNow = pds.joyRectFillCalc(p);
-%}
-
 %% if we're close enough to next screen flip, start drawing:
 
 if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNumber
@@ -600,10 +537,6 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     % draw fixation spot
     Screen('FrameRect',p.draw.window, p.draw.color.fix, repmat(p.draw.fixPointPix, 1, 2) + p.draw.fixPointRadius*[-1 -1 1 1], p.draw.fixPointWidth);
     
-    
-        % Draw the joystick-bar graphic.
-   % Screen('FrameRect', p.draw.window, p.draw.color.joyInd, p.draw.joyRect);
-   % Screen('FillRect',  p.draw.window, p.draw.color.joyInd, joyRectNow);
     
     % flip and record time of flip.
     p.trData.timing.flipTime(p.trVars.flipIdx) = ...
