@@ -56,11 +56,6 @@ p.trVars.noiseStartFlipIdx   = 0;
 
 %% Strobe-related derived values
 p.trVars.checkSizeDeg_x100   = round(p.trVars.checkSizeDeg * 100);
-if p.trVars.colorMode == 1
-    p.trVars.noiseColorModeCode = 1;
-else
-    p.trVars.noiseColorModeCode = 2;
-end
 
 fprintf('Trial %d: frames %d-%d of %d (%.1f%% complete)\n', ...
     p.status.iTrial, p.trVars.trialStartFrame, p.trVars.trialEndFrame, ...

@@ -261,7 +261,7 @@ codes.noiseOn               = 16101;  % first noise frame onset
 codes.noiseOff              = 16102;  % noise presentation complete
 codes.noiseCheckSize_x100   = 16103;  % check size in degrees * 100
 codes.noiseFrameHold        = 16104;  % display frames per noise update
-codes.noiseColorMode        = 16105;  % 1 = luminance, 2 = rgb
+codes.noiseColorMode        = 16105;  % DEPRECATED post-rfMap unified merge: superseded by rfMapStimType (16140). Number reserved, do not reuse.
 codes.noiseRngSeed          = 16106;  % RNG seed (lower 16 bits)
 codes.noiseRngSeedHigh      = 16107;  % RNG seed (upper 16 bits)
 codes.noiseTrialFrameStart  = 16108;  % starting frame index in movie (this trial)
@@ -269,7 +269,7 @@ codes.noiseTrialFrameEnd    = 16109;  % ending frame index in movie (this trial)
 codes.noiseTotalFrames      = 16110;  % total frames in movie (clamped to 32767)
 codes.noiseGridW            = 16111;  % noise grid width (number of checks)
 codes.noiseGridH            = 16112;  % noise grid height (number of checks)
-codes.noiseStimMode         = 16113;  % 1 = dense, 2 = sparse
+codes.noiseStimMode         = 16113;  % DEPRECATED post-rfMap unified merge: superseded by rfMapStimType (16140). Old session meaning was 1=dense, 2=sparse; new stimType enum is 1=denseAchro, 2=denseChroma, 3=sparse, 4=checker. Number reserved, do not reuse.
 codes.noiseNSparseSpots     = 16114;  % spots per frame in sparse mode
 
 % barsweep task codes (translating bar sweep, passive fixation)
@@ -290,6 +290,39 @@ codes.barsweepBarLumIdx           = 16128;  % bar luminance palette index (solid
 codes.barsweepNoiseLumLowIdx      = 16129;  % low-luminance palette index (noise mode)
 codes.barsweepNoiseLumHighIdx     = 16130;  % high-luminance palette index (noise mode)
 codes.barsweepNoiseGrain_x100     = 16131;  % noise check size (dva) * 100
+
+% Online RF-mapping additions (cardinal4 + rfmap12 regimes)
+codes.barsweepExptType            = 16132;  % 1 = cardinal4, 2 = rfmap12
+codes.barsweepRfLatency           = 16133;  % response latency (ms, 1 ms resolution)
+codes.barsweepRfPosBin_x100       = 16134;  % position-bin width (dva) * 100
+codes.barsweepRfRampCutoff_x100   = 16135;  % iradon cutoff * 100 (rfmap12 only)
+codes.barsweepRfRampFilter        = 16136;  % 1=Ram-Lak, 2=Hann, 3=Shepp-Logan, 4=Cosine (rfmap12 only)
+
+% rfMap unified merge codes (post-Phase-1 of rfMap_unified_merge_plan.md)
+% Reserved range: 16140-16175 (36 codes total). 16137-16139 left as a gap
+% between the barsweep block and rfMap block for visual separation.
+codes.rfMapStimType                  = 16140;  % 1=denseAchro, 2=denseChroma, 3=sparse, 4=checker
+codes.rfMapSessionFormatVersion      = 16141;  % schema version (integer)
+codes.rfMapDklAxisIdx                = 16142;  % DKL axis index (1=L-M, 2=S, 3=achromatic, 4=mixed) -- Phase 2
+codes.rfMapDklContrast_x100          = 16143;  % DKL contrast * 100                                  -- Phase 2
+codes.rfMapDklHue_x10                = 16144;  % DKL hue (deg) * 10 (0..3600)                        -- Phase 2
+codes.rfMapDklCalibSource            = 16145;  % 1=measured_primaries, 2=vendor_primaries            -- Phase 2
+codes.rfMapCheckSizeIdx              = 16146;  % index into checkSizesDva                            -- Phase 3
+codes.rfMapCheckContrastIdx          = 16147;  % index into checkContrasts                           -- Phase 3
+codes.rfMapCheckReversalHz_x10       = 16148;  % reversal rate (Hz) * 10                             -- Phase 3
+codes.rfMapCheckPolaritySign         = 16149;  % 1 = +1 polarity, 2 = -1 polarity                    -- Phase 3
+codes.rfMapCheckReversalEvent        = 16150;  % strobed at each reversal flip (value = polarity)    -- Phase 3
+codes.rfMapJitterX_x10               = 16151;  % per-trial jitter X (dva) * 10 + 1800                -- Phase 4
+codes.rfMapJitterY_x10               = 16152;  % per-trial jitter Y (dva) * 10 + 1800                -- Phase 4
+codes.rfMapJitterMode                = 16153;  % 1=none, 2=perTrial                                  -- Phase 4
+codes.rfMapApertureMode              = 16154;  % 1=fullField, 2=rect, 3=circle                       -- Phase 4
+codes.rfMapApertureCenterTheta_x10   = 16155;  % aperture center polar angle * 10 + 1800             -- Phase 4
+codes.rfMapApertureCenterRadius_x100 = 16156;  % aperture center eccentricity * 100                  -- Phase 4
+codes.rfMapApertureSize_x100         = 16157;  % aperture size (dva) * 100                           -- Phase 4
+codes.rfMapSparseBalancedFlag        = 16158;  % 1 = uniform-random (legacy), 2 = balanced TwinDeck
+codes.rfMapRngSeedHigh               = 16159;  % RNG seed upper 16 bits (lower 16 in noiseRngSeed 16106)
+% 16160-16169 reserved for future per-stim-type params
+% 16170-16175 reserved as headroom
 
 %% validation
 

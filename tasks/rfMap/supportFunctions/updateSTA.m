@@ -1,95 +1,62 @@
-function [staAccum, staSpikeCount] = updateSTA(staAccum, staSpikeCount, ...
-    spikeTimesPerChan, noiseOnTime, frameDurS, noiseMovie, ...
-    trialStartFrame, nFramesTrial, nLags, isSparse)
-% updateSTA  Accumulate spike-triggered average from one trial's data.
+function [staAccum, staSpikeCount] = updateSTA(stimType, ...
+    staAccum, staSpikeCount, spikeTimesPerChan, noiseOnTime, frameDurS, ...
+    noiseMovie, trialStartFrame, nFramesTrial, nLags, jitterX, jitterY)
+% updateSTA  Stim-type dispatcher for online STA accumulation.
 %
-%   [staAccum, staSpikeCount] = updateSTA(staAccum, staSpikeCount, ...
-%       spikeTimesPerChan, noiseOnTime, frameDurS, noiseMovie, ...
-%       trialStartFrame, nFramesTrial, nLags)
+%   [staAccum, staSpikeCount] = updateSTA(stimType, ...
+%       staAccum, staSpikeCount, spikeTimesPerChan, noiseOnTime, ...
+%       frameDurS, noiseMovie, trialStartFrame, nFramesTrial, nLags, ...
+%       jitterX, jitterY)
 %
-%   For each spike, identifies which noise frame was on screen, then
-%   accumulates the mean-subtracted stimulus at each temporal lag into
-%   the running STA accumulators.
+%   Routes to the per-stim-type estimator. stimType is the string from
+%   p.init.stimType; the dispatcher does not consult any settings file.
 %
-%   Inputs:
-%     staAccum          - cell array {nChannels}, each [nY, nX, nLags] double
-%     staSpikeCount     - [nChannels, 1] cumulative spike counts
-%     spikeTimesPerChan - cell array {nChannels}, each a vector of spike
-%                         times in seconds (same clock as noiseOnTime)
-%     noiseOnTime       - noise onset time for this trial (seconds)
-%     frameDurS         - duration of one noise frame (seconds)
-%     noiseMovie        - full noise movie [nY, nX, nTotalFrames] uint8
-%     trialStartFrame   - first global frame index for this trial
-%     nFramesTrial      - number of noise frames in this trial
-%     nLags             - number of STA temporal lags to compute
+%   Phase 1 active paths: 'denseAchromatic', 'sparse'.
+%   Phase 2 stub:         'denseChromatic'.
+%   Phase 3 stub:         'checkerboard'.
 %
-%   Outputs:
-%     staAccum          - updated accumulators (modified in place via copy)
-%     staSpikeCount     - updated spike counts
-%
-%   Lag convention:
-%     lagIdx 1 -> stimulus at spike time (0 ms delay)
-%     lagIdx 2 -> stimulus 1 frame before spike (frameDurS delay)
-%     lagIdx k -> stimulus (k-1) frames before spike
-%
-%   Dense mode: stimulus is mean-subtracted before accumulation (binary
-%   0/1 -> -0.5/+0.5). Essential for unbiased STA with white noise
-%   (Chichilnisky, 2001).
-%
-%   Sparse mode: stimulus is already zero-mean ({-1, 0, +1} with spots
-%   placed randomly and symmetrically), so values are used directly.
-%
-%   The isSparse flag (optional; defaults to auto-detect via data type)
-%   selects between these two treatments. Pass isSparse = true for sparse
-%   noise, false for dense.
+%   Jitter offsets default to (0, 0); pass nonzero values only after
+%   Phase 4 activates the offset-aware accumulator path.
 
-if nargin < 10 || isempty(isSparse)
-    isSparse = isa(noiseMovie, 'int8');
-end
+if nargin < 11 || isempty(jitterX), jitterX = 0; end
+if nargin < 12 || isempty(jitterY), jitterY = 0; end
 
-nChannels = length(spikeTimesPerChan);
-nTotalFrames = size(noiseMovie, 3);
+switch stimType
+    case 'denseAchromatic'
+        [staAccum, staSpikeCount] = updateSTA_denseAchromatic( ...
+            staAccum, staSpikeCount, spikeTimesPerChan, noiseOnTime, ...
+            frameDurS, noiseMovie, trialStartFrame, nFramesTrial, ...
+            nLags, jitterX, jitterY);
 
-for ch = 1:nChannels
-    theseSpikes = spikeTimesPerChan{ch};
-    if isempty(theseSpikes)
-        continue;
-    end
+    case 'sparse'
+        [staAccum, staSpikeCount] = updateSTA_sparse( ...
+            staAccum, staSpikeCount, spikeTimesPerChan, noiseOnTime, ...
+            frameDurS, noiseMovie, trialStartFrame, nFramesTrial, ...
+            nLags, jitterX, jitterY);
 
-    for s = 1:length(theseSpikes)
-        % Time of this spike relative to noise onset
-        tRel = theseSpikes(s) - noiseOnTime;
+    case 'denseChromatic'
+        % Phase-2 stub. The dispatcher passes noiseMovie where Phase 2
+        % will need a dklDriveTensor; the Phase-2 estimator implementation
+        % will adapt the call site (in rfMap_finish.m) accordingly.
+        [staAccum, staSpikeCount] = updateSTA_denseChromatic( ...
+            staAccum, staSpikeCount, spikeTimesPerChan, noiseOnTime, ...
+            frameDurS, noiseMovie, trialStartFrame, nFramesTrial, ...
+            nLags, jitterX, jitterY);
 
-        % Which noise frame was on screen at this spike time?
-        noiseFrameIdx = floor(tRel / frameDurS) + 1;
+    case 'checkerboard'
+        % Phase-3 stub. Phase 3 will replace noiseMovie /
+        % trialStartFrame with polaritySequence / conditionPerFrame at
+        % the call site.
+        [staAccum, staSpikeCount] = updateSTA_checkerboard( ...
+            staAccum, staSpikeCount, spikeTimesPerChan, noiseOnTime, ...
+            frameDurS, noiseMovie, trialStartFrame, nLags, ...
+            jitterX, jitterY);
 
-        % Skip if spike is outside the stimulus period
-        if noiseFrameIdx < 1 || noiseFrameIdx > nFramesTrial
-            continue;
-        end
-
-        % Global frame index in the movie matrix
-        globalIdx = trialStartFrame + noiseFrameIdx - 1;
-
-        % Count this spike once (not per-lag)
-        staSpikeCount(ch) = staSpikeCount(ch) + 1;
-
-        % Accumulate STA at each lag
-        for lagIdx = 1:nLags
-            stimIdx = globalIdx - lagIdx + 1;
-            if stimIdx >= 1 && stimIdx <= nTotalFrames
-                if isSparse
-                    % Sparse movie is int8 {-1, 0, +1}; already zero-mean.
-                    stimFrame = double(noiseMovie(:, :, stimIdx));
-                else
-                    % Dense: convert uint8 0/1 to double -0.5/+0.5.
-                    stimFrame = double(noiseMovie(:, :, stimIdx)) - 0.5;
-                end
-                staAccum{ch}(:, :, lagIdx) = ...
-                    staAccum{ch}(:, :, lagIdx) + stimFrame;
-            end
-        end
-    end
+    otherwise
+        error('updateSTA:badStimType', ...
+            ['Unrecognized stimType ''%s''. Expected one of: ' ...
+             'denseAchromatic, denseChromatic, sparse, checkerboard.'], ...
+            stimType);
 end
 
 end

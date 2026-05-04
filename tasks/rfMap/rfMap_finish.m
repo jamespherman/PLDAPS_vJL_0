@@ -154,18 +154,22 @@ else
     spikeTimesPerChan{1} = p.trData.spikeTimes;
 end
 
-% Call the core STA accumulation function
-isSparse = isfield(p.init, 'isSparse') && p.init.isSparse;
+% Call the core STA accumulation function via dispatcher.
+% Jitter offsets default to (0, 0) in Phase 1; Phase 4 will activate.
 [p.init.staAccum, p.init.staSpikeCount] = updateSTA( ...
-    p.init.staAccum, p.init.staSpikeCount, ...
+    p.init.stimType, p.init.staAccum, p.init.staSpikeCount, ...
     spikeTimesPerChan, noiseOnTimeRipple, ...
     p.trVars.noiseFrameDurS, p.init.noiseMovie, ...
     p.trVars.trialStartFrame, p.trVars.nFramesThisTrial, ...
-    p.trVars.nSTALags, isSparse);
+    p.trVars.nSTALags);
 
-% Update online STA display
-if isfield(p.init, 'staFigData')
-    plotSTA(p.init.staFigData, p.init.staAccum, p.init.staSpikeCount, 1);
+% Update online STA display via dispatcher, throttled per
+% staPlotEveryNTrials. Accumulators update every successful trial;
+% the plot only re-renders on schedule.
+if isfield(p.init, 'staFigData') && ...
+        mod(p.status.iGoodTrial, p.trVars.staPlotEveryNTrials) == 0
+    plotSTA(p.init.stimType, p.init.staFigData, ...
+        p.init.staAccum, p.init.staSpikeCount, 1);
 end
 
 fprintf('  STA: %d total spikes accumulated\n', p.init.staSpikeCount(1));

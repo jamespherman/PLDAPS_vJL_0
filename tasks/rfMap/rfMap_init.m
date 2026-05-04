@@ -9,6 +9,8 @@ function p = rfMap_init(p)
 %   finish function (after each trial)
 %
 % Initialization function for rfMap task. Executed once after settings.
+% Dispatches stim-type-specific generators by reading p.init.stimType
+% (set by which rfMap_<stimType>_settings.m was loaded).
 
 %% (1) define rig-specific information
 p = pds.initRigConfigFile(p);
@@ -28,8 +30,8 @@ p = initTrialStructure(p);
 %% (6) initialize connection to Ripple
 p = pds.initRipple(p);
 
-%% (7) pre-generate full noise movie
-p = generateNoiseMovieForTask(p);
+%% (7) pre-generate the stimulus by stim type (dispatcher)
+p = generateStimForTask(p);
 
 %% (8) initialize STA accumulators
 p = initSTAAccumulators(p);
@@ -54,81 +56,94 @@ p.init.taskCode = 32020;  % unique task code for rfMap (= LGN_RF_mapping)
 %% (13) define classyStrobe
 p.init.strb = pds.classyStrobe;
 
-%% (14) initialize random seed
+%% (14) initialize global random stream (post-stimulus-generation)
+% Rationale: per-trial randomness (e.g., next-trial selection in
+% nextParams.m) lives on the global stream. Stimulus generation runs
+% earlier and pins its own seed via p.init.noiseRngSeed; resetting the
+% global stream here does not affect the saved movie.
 RandStream.setGlobalStream(RandStream('mt19937ar', 'Seed', 0));
 
 end
 
 %% ---- Local functions ----
 
-function p = generateNoiseMovieForTask(p)
-% Generate the full noise movie and store in p.init
-
-% Guard: only binary luminance mode is currently supported for textures
-% and STA. RGB and continuous-noise modes require updates to
-% generateNoiseTextures.m and updateSTA.m before use.
-if p.trVarsInit.colorMode ~= 1
-    warning('rfMap:unsupportedMode', ...
-        'Only luminance mode (colorMode=1) is currently supported. Forcing luminance.');
-    p.trVarsInit.colorMode = 1;
-end
-if ~p.trVarsInit.contrastBinary
-    warning('rfMap:unsupportedMode', ...
-        'Only binary noise (contrastBinary=1) is currently supported. Forcing binary.');
-    p.trVarsInit.contrastBinary = 1;
-end
+function p = generateStimForTask(p)
+% Dispatch to per-stim-type generator. p.init.stimType is set by
+% rfMap_<stimType>_settings.m and validated in rfMap_commonSettings.m.
 
 % Compute grid size from rig geometry.
-% Use deg2pix to get check size in pixels, then divide screen by that.
-checkSizePix = pds.deg2pix(p.trVarsInit.checkSizeDeg, p);
+checkSizePix    = pds.deg2pix(p.trVarsInit.checkSizeDeg, p);
 if checkSizePix < 1, checkSizePix = 1; end
 screenWidthPix  = p.draw.screenRect(3);
 screenHeightPix = p.draw.screenRect(4);
-nChecksX = ceil(screenWidthPix  / checkSizePix);
-nChecksY = ceil(screenHeightPix / checkSizePix);
+nChecksX        = ceil(screenWidthPix  / checkSizePix);
+nChecksY        = ceil(screenHeightPix / checkSizePix);
 
 % Compute total noise frames
-frameDurS = p.trVarsInit.noiseFrameHold * p.rig.frameDuration;
+frameDurS    = p.trVarsInit.noiseFrameHold * p.rig.frameDuration;
 nNoiseFrames = ceil(p.trVarsInit.movieDurationMin * 60 / frameDurS);
 
-% Color mode string
-if p.trVarsInit.colorMode == 1
-    colorModeStr = 'luminance';
-else
-    colorModeStr = 'rgb';
-end
+% Pin the seed used for the movie. The post-merge contract is that
+% p.init.noiseRngSeed is set by rfMap_commonSettings.m (or overridden
+% by a per-stim-type settings file) BEFORE generation, and the same
+% value is what generators consume and what is strobed/saved.
+p.init.noiseRngSeed = p.trVarsInit.noiseRngSeed;
 
-% Stimulus mode (1 = dense, 2 = sparse)
-if p.trVarsInit.stimMode == 2
-    stimModeStr = 'sparse';
-else
-    stimModeStr = 'dense';
-end
+switch p.init.stimType
+    case 'denseAchromatic'
+        p.init.noiseMovie = generateStim_denseAchromatic( ...
+            nChecksY, nChecksX, nNoiseFrames, ...
+            logical(p.trVarsInit.contrastBinary), ...
+            p.init.noiseRngSeed);
 
-% Generate movie
-[p.init.noiseMovie, p.init.noiseRngSeed] = generateNoiseMovie( ...
-    nChecksY, nChecksX, nNoiseFrames, ...
-    colorModeStr, logical(p.trVarsInit.contrastBinary), [], ...
-    stimModeStr, p.trVarsInit.nSparseSpots);
+    case 'sparse'
+        p.init.noiseMovie = generateStim_sparseBalanced( ...
+            nChecksY, nChecksX, nNoiseFrames, ...
+            p.trVarsInit.nSparseSpots, ...
+            p.init.noiseRngSeed);
+
+    case 'denseChromatic'
+        % Phase-2 stub. Function errors clearly.
+        p.init.noiseMovie = generateStim_denseChromatic( ...
+            nChecksY, nChecksX, nNoiseFrames, ...
+            p.trVarsInit.dklAxes, p.trVarsInit.dklContrasts, ...
+            p.init.noiseRngSeed);
+
+    case 'checkerboard'
+        % Phase-3 stub. Function errors clearly.
+        p.init.checkerboardTextures = prepareStim_checkerboard( ...
+            p.trVarsInit.checkSizesDva, p.trVarsInit.checkContrasts, ...
+            screenWidthPix, screenHeightPix, ...
+            p.rig.PixPerDeg, p.init.noiseRngSeed);
+        p.init.noiseMovie = [];
+
+    otherwise
+        error('rfMap_init:badStimType', ...
+            ['Unrecognized p.init.stimType = ''%s''. Expected one of: ' ...
+             'denseAchromatic, denseChromatic, sparse, checkerboard.'], ...
+            p.init.stimType);
+end
 
 % Store metadata
 p.init.noiseGridSize  = [nChecksY, nChecksX];
 p.init.nNoiseFrames   = nNoiseFrames;
-p.init.noiseFrameIdx  = 1;  % playback position (advances on successful trials)
-p.init.isSparse       = strcmp(stimModeStr, 'sparse');
+p.init.noiseFrameIdx  = 1;
 
-fprintf('Noise grid: %d x %d checks, %d total frames (%s)\n', ...
-    nChecksY, nChecksX, nNoiseFrames, stimModeStr);
+fprintf('rfMap stimType=%s: %d x %d checks, %d total frames\n', ...
+    p.init.stimType, nChecksY, nChecksX, nNoiseFrames);
 
 end
 
 function p = initSTAAccumulators(p)
-% Allocate STA accumulator arrays
+% Allocate STA accumulator arrays. Phase-1 layout is
+% [nY, nX, nLags] per channel for the spatial-map estimators
+% (denseAchromatic, sparse). Chromatic and checkerboard estimators
+% will allocate their own structures in Phase 2 / Phase 3.
 
-nCh = p.trVarsInit.nChannels;
+nCh   = p.trVarsInit.nChannels;
 nLags = p.trVarsInit.nSTALags;
-nY = p.init.noiseGridSize(1);
-nX = p.init.noiseGridSize(2);
+nY    = p.init.noiseGridSize(1);
+nX    = p.init.noiseGridSize(2);
 
 p.init.staAccum = cell(nCh, 1);
 for ch = 1:nCh
