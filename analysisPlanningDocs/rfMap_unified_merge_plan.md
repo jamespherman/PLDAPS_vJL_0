@@ -494,6 +494,225 @@ in parallel.
   including the explicit "checkerboard does not give a spatial RF
   online" caveat.
 
+### Phase 6 — Pre-recording validation gate (no animal, no new core code)
+
+**Goal**: close the gap between "synthetic per-phase tests pass" and
+"the task will produce a trustworthy, fully-analyzable dataset on the
+rig with an animal and an electrode in LGN." Runs once after Phase 5
+ships, then partial subsets re-run on each recording day.
+
+**Scope rule (locked)**: Phase 6 adds *protocol* and *lightweight
+bench tools* only. **No new core-code architecture, no rewrites of
+the quintet files.** Allowed changes to quintet files are limited to
+(a) a single `p.trVars.useSyntheticSpikes` flag (default `false`)
+that, when set, makes `_finish.m` skip `pds.getRippleData` and call
+`injectSyntheticSpikes(p)` instead — < 10 LoC of dispatcher code,
+no logic change to STA accumulation; and (b) optional inclusion of
+the audit tool's diagnostics in `_finish.m`'s end-of-trial console
+print. Anything beyond that is out of scope and goes to Phase 7+.
+
+**Why these gaps exist** (recorded so the test surface is honest):
+- Phase 0a baselines have no spikes (no probe), so the only
+  end-to-end loop closure to date is via offline harnesses called
+  outside the PLDAPS lifecycle. The frame-timing path
+  (`Screen('Flip')` → postFlip assignment of `noiseOn` →
+  `flipTime(:)` consumed by the STA accumulator) has never been
+  exercised against a non-trivial spike train.
+- The classyStrobe queue, Ripple digital-in ingestion, and
+  `pds.getRippleData` round-trip have never been verified end-to-end
+  for the post-merge codebase. Phase 3's "queue depth audit" covers
+  the queue but not the ingestion side.
+- None of the existing harnesses test cross-stim-type consistency
+  (the most powerful behavioral integration test available without
+  a separate ground-truth instrument).
+
+#### Phase 6a — End-to-end loop-closure (post-hoc spike injection)
+
+`tasks/rfMap/_validation/test_loopClosure.m` runs each of the four
+stim types as a *real* PLDAPS session (live Screen flips, real
+trVars/trData lifecycle, real `_finish` accumulation), with the new
+`useSyntheticSpikes` flag set so spikes are generated from a planted
+LNP RF model instead of pulled from xippmex. Pass criteria, per
+stim type:
+- Movie/drive tensor regenerated from saved `p.init.noiseRngSeed` is
+  byte-identical to what `_init.m` constructed in-session (the
+  RNG-seed round-trip the user's prompt called out).
+- Recovered STA peak is at the planted RF center within 1 check
+  (dense/sparse) or assigns peak energy to the planted DKL axis
+  within the locked tolerance (chromatic, reuses Phase 2's > 3×
+  selectivity criterion).
+- Checkerboard: F1/F2 amplitudes computed by `computeF1F2` on the
+  injected response match the planted modulation depth within 10 %.
+- `p.trData.timing.flipTime` consumed by the STA accumulator
+  matches `noiseFrameHold * p.rig.frameDuration` per step within
+  ± 1 frame on > 99 % of frames; missed-frame fraction logged.
+- All `p.init.strobeList` codes appear in `p.trData.strobed` exactly
+  once per trial with values matching the strobeList expression.
+
+`injectSyntheticSpikes.m` is the new file (lives in
+`supportFunctions/`) that builds a Poisson spike train from
+the LNP simulator already in `testSTA.m` and the saved frame
+timing. **It reuses `testSTA.m`'s LNP machinery** rather than
+forking a parallel simulator — that's the whole point of having
+the offline simulator co-located with the task.
+
+This subsumes the prior plan's per-phase "On-rig smoke test on
+real Ripple hardware before shipping." Those were never formally
+defined and would have shipped Phase 1–4 individually before any
+end-to-end gate; Phase 6a is the integrated gate they implied.
+
+#### Phase 6b — Cross-stim-type RF consistency probe
+
+`tasks/rfMap/_validation/test_crossStimType.m`: with one planted
+RF kernel (same `rfCenterDeg`, same temporal lag profile), run
+short synthetic-spike sessions in dense achromatic, sparse, and
+dense chromatic (achromatic axis only), back-to-back. Pass
+criterion: the recovered RF center estimate (centroid of |STA|
+at peak lag) agrees across all three stim types within
+**1.5 checks** at the configured grid resolution. Greater
+disagreement is a red flag that one of the three estimator paths
+has a coordinate-frame bug (e.g., row/column transpose, or an
+off-by-one between movie indexing and accumulator indexing) that
+no single-stim-type test would catch.
+
+Checkerboard is excluded from this probe (it does not produce a
+spatial RF) but is exercised separately by 6a.
+
+#### Phase 6c — Day-of-recording readiness check (on-rig, partial subset re-runnable)
+
+`tasks/rfMap/_validation/preRecordingChecklist.m`: an automated,
+< 5-minute battery the user runs on the recording PC (not the dev
+laptop) before each session. Each check returns pass/fail and a
+diagnostic string. Suggested checks (validate the list with the
+user before implementing):
+1. Hostname → rig config: confirm `getenv('COMPUTERNAME')` matches
+   what the active `rigConfigFiles/` selection expects.
+2. Active LUT files (`LUT_VPIXX_rig{N}.{r,g,b,xyY}`) exist and have
+   modification dates older than the last calibration date noted in
+   the data dictionary; warn (not fail) if newer than the last
+   committed calibration.
+3. DataPixx + Psychtoolbox handshake: open and close a window, no
+   missed frames over a 1-second flip burst at native refresh.
+4. Eyelink connection (if `connectEyelink == 1`): handshake and one
+   calibration-data read.
+5. Ripple connection (if `connectRipple == 1`): `xippmex` opens,
+   the configured `recChans` are alive, digital-in is responsive
+   (loopback test below).
+6. Strobe loopback: send a short known sequence via
+   `pds.classyStrobe.flushQueue` and read it back from
+   `xippmex('digin')`; assert byte-for-byte match including timing
+   within ± 1 ms.
+7. Each of the four `_settings.m` files loads cleanly (call each in
+   a try/catch block, no errors).
+8. `gamutMaxContrasts` for the chromatic settings file does not
+   clip — refuse to start a chromatic session if it would.
+9. Disk write check: a 10 MB scratch write to the configured
+   `outputFolder` completes within tolerance (catches full-disk and
+   network-mount failures before they corrupt a session).
+10. Current git HEAD commit hash and `sessionFormatVersion` are
+    logged to a daily readiness log file alongside pass/fail
+    results, so a session whose readiness was never run is
+    distinguishable from one where it was run and passed.
+
+The checklist is **not a hook**; the user runs it from the MATLAB
+prompt. A failed check prints a remediation hint and does not
+proceed. The user retains the option to override in true emergency
+recording situations, which is logged.
+
+#### Phase 6d — Post-session audit tool
+
+`tasks/rfMap/_validation/auditSession.m <sessionFolder>`:
+loads a saved session and verifies:
+- All required `p.init` fields per the data dictionary are present
+  and well-typed; `sessionFormatVersion` is one of the supported
+  versions.
+- `noiseRngSeed` round-trips: re-generate movie/drive tensor from
+  the saved seed and confirm a byte-match against a recomputed
+  reference (or, for chromatic, a hash of the first 100 frames).
+- Strobe coverage: every code in `p.init.strobeList` appears in
+  `p.trData.strobed` for every successfully completed trial. Flag
+  any missing.
+- Frame timing: per trial, distribution of `diff(timing.flipTime)`
+  with mean within 0.5 % of `frameDuration` and < 0.5 % of frames
+  marked "missed" (configurable thresholds).
+- Phase 4 only: jitter offsets across trials pass a
+  Kolmogorov-Smirnov uniformity test at p > 0.05 (the test
+  already specified in the Phase 4 validation block, now
+  formalized into the audit tool).
+- Phase 3 only: reversal-event timestamps match the configured
+  `checkReversalHz`; F1/F2 frequency stays below Nyquist.
+
+Designed to run on the day's first real session (the
+"ground-truth establishing" session below), but cheap enough to
+run on every session. Output is a one-page report.
+
+#### Phase 6e — First-real-session ground-truth protocol
+
+The first session with a real probe in real LGN is documented
+explicitly so future re-validations have something to point back
+to. Capture all four stim-type modes back-to-back on the same
+cell (or small population), each as a full ~10-minute session.
+Store the resulting four session folders in
+`tasks/rfMap/_groundTruthBaselines/<YYYYMMDD>/`, kept under
+git-LFS or out-of-tree per the user's space policy.
+
+Specifically required for the first session, beyond standard
+production output:
+- Run `auditSession.m` on each of the four sessions; commit the
+  audit reports.
+- Compute the cross-stim-type RF location agreement across the
+  three spatial-RF stim types. Document the achieved disagreement
+  in checks. **This number becomes the rig's empirical
+  consistency bound** — future sessions whose three-way
+  disagreement exceeds it by 2× should be flagged for
+  investigation.
+- Compute checkerboard F1/F2 modulation index for the same cell
+  and confirm it lands in a biologically plausible range
+  (magno-like cells: F1/(F1+F2) > 0.7 at high contrast; parvo-like:
+  < 0.5). This is an external sanity check against the literature,
+  not a pass/fail of the code.
+- Photodiode trace (if available on the rig) of the first trial of
+  the achromatic dense session, time-aligned to
+  `timing.flipTime`. Used to retire the "frame timing under
+  representative load" question once and for all. If no
+  photodiode is available, document the absence and rely on the
+  flipTime statistics from `auditSession.m`.
+
+#### Acceptance criteria for shipping Phase 6 (and unblocking real recordings)
+
+The merged task may go in front of an animal once and only once
+all of the following hold:
+- 6a passes for all four stim types.
+- 6b passes (cross-stim-type RF agreement within 1.5 checks).
+- 6c passes on the recording PC, with results logged to the
+  daily readiness log.
+- 6d's audit runs cleanly on at least one Phase-6a output session
+  per stim type.
+- 6e's protocol is documented and the storage location for the
+  first real session's ground-truth folder is agreed.
+
+Phases 6a, 6b, 6d are repo-side and can be developed and run on
+the dev laptop. 6c must run on the recording PC. 6e is the gate
+between Phase 6 acceptance and routine production use.
+
+#### Phase 6 — out of scope (explicit)
+
+- No changes to existing strobe codes, no new strobe-code
+  numbers. The 16140–16175 reserved block is final.
+- No new estimator code, no new generator code, no new
+  `_settings.m` files. If a Phase 6 test uncovers a bug in
+  generator/estimator code, the fix is a back-patch to the
+  responsible Phase (1–4), not a new file in Phase 6.
+- No expansion of `+pds/` (the synthetic-spike injector lives in
+  `tasks/rfMap/supportFunctions/`, not `+pds/`). Promotion is a
+  later concern.
+- No GUI changes. `useSyntheticSpikes` is a `trVarsInit` field
+  flipped manually for validation; production sessions leave it
+  `false`.
+- No data-dictionary rewrite. A short Phase 6 appendix to the
+  dictionary is added when 6a/6b ship; structural fields stay as
+  Phase 4 left them.
+
 ## Files touched (cumulative)
 
 ### Modified
@@ -511,7 +730,10 @@ in parallel.
 - `tasks/rfMap/rfMap_run.m` — branch draw call by `stimType`; handle
   checkerboard reversal scheduling and queued polarity strobe.
 - `tasks/rfMap/rfMap_finish.m` — branch STA accumulation by stim type;
-  handle exclusion of large per-type buffers from saved `p`.
+  handle exclusion of large per-type buffers from saved `p`. **Phase 6
+  adds a single dispatcher line**: when `p.trVars.useSyntheticSpikes`
+  is true, call `injectSyntheticSpikes(p)` instead of
+  `pds.getRippleData(p)`. Default behavior unchanged.
 - `tasks/rfMap/supportFunctions/updateSTA.m` — thin dispatcher; passes
   `(jitterX, jitterY)` to per-type estimators.
 - `tasks/rfMap/supportFunctions/plotSTA.m` — thin dispatcher.
@@ -561,8 +783,24 @@ in parallel.
   STA equivalence test old `updateSTA` vs new
   `updateSTA_denseAchromatic`. Run during Phase 1 development; not
   part of the shipped task.)
+- `tasks/rfMap/_validation/test_chromatic_generators.m` (Phase 2
+  developer-side harness: DKL ↔ RGB round-trip, seed reproducibility,
+  DKL-axis recovery from synthetic spikes.)
+- Phase 6 validation files (added once, not modified later):
+  - `tasks/rfMap/_validation/test_loopClosure.m` (6a: end-to-end run
+    of the quintet for each stim type with synthetic spike injection).
+  - `tasks/rfMap/_validation/test_crossStimType.m` (6b: planted-RF
+    consistency probe across achromatic / sparse / chromatic-achro).
+  - `tasks/rfMap/_validation/preRecordingChecklist.m` (6c: on-rig
+    daily readiness battery).
+  - `tasks/rfMap/_validation/auditSession.m` (6d: post-session
+    saved-file validator).
+  - `tasks/rfMap/supportFunctions/injectSyntheticSpikes.m` (6a
+    helper, reuses the LNP machinery in `testSTA.m`).
 - `data_dictionaries/rfMap_data_dictionary.md` — created in Phase 2,
-  extended through Phase 4.
+  extended through Phase 4; short Phase 6 appendix added when 6a/6b
+  ship (documents `useSyntheticSpikes` flag and the audit-tool
+  output schema).
 
 ### Removed (Phase 5)
 - `tasks/rfMap/supportFunctions/generateNoiseMovie.m` (logic absorbed into
@@ -713,10 +951,19 @@ Tighter, less hand-wavy than the prior draft.
   - On-rig smoke test on real Ripple hardware before shipping.
 - **Phase 4**:
   - Per-trial jitter offsets distribute uniformly over the configured range
-    (Kolmogorov-Smirnov check on a session of trials).
+    (Kolmogorov-Smirnov check on a session of trials — formalized into
+    `auditSession.m` in Phase 6d).
   - Aperture mask covers exactly the configured pixels (image diff on a
     test frame).
   - On-rig smoke test on real Ripple hardware before shipping.
+- **Phase 6** (the integrated gate before any animal session):
+  acceptance criteria are listed under §"Phase 6 — Pre-recording
+  validation gate." The per-phase "on-rig smoke test" lines above are
+  superseded by Phase 6a's full end-to-end loop closure plus Phase 6c's
+  on-rig readiness battery; Phases 1–4 ship after their *synthetic*
+  checks pass, with the *integrated* on-rig validation gated to Phase 6.
+  This deliberately avoids running four separate ad-hoc on-rig
+  smoke tests of overlapping scope.
 - Each phase ships only after passing its checks, before the next phase
   begins.
 
