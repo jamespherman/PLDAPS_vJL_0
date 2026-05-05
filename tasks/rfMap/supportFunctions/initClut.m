@@ -82,6 +82,70 @@ p.draw.clut.subColors = ...
 
 assert(size(p.draw.clut.subColors,1)==size(p.draw.clut.expColors,1), 'ERROR-- exp & sub Colors must have equal length')
 
+%% append per-stim-type CLUT slots (chromatic tri-noise palette)
+% denseChromatic mode needs 8 reserved CLUT slots holding the 8
+% sign-combo colors of binary tri-noise on (L-M, S, Achro). The
+% generator emits state-index textures (uint8 0..7); generateNoiseTextures
+% adds p.init.chromaticClutBase to land in these slots. Done here (not
+% as a separate post-initClut step) so pds.initDataPixx loads the
+% chromatic palette to VPixx in the same Screen('LoadNormalizedGammaTable')
+% call as the rest of the CLUT.
+if isfield(p, 'init') && isfield(p.init, 'stimType') && ...
+        strcmp(p.init.stimType, 'denseChromatic')
+    [paletteRGB, stateBits] = buildChromaticPalette( ...
+        p.trVarsInit.dklAxes, p.trVarsInit.dklContrasts);
+
+    % Fail fast if any tri-noise corner is out-of-gamut. dkl2rgb maps
+    % out-of-range RGB to bgRGB, which silently collapses two states
+    % to the same color and biases the STA. Operator-actionable fix:
+    % lower dklContrasts.
+    nUnique = size(unique(paletteRGB', 'rows'), 1);
+    nStatesExpected = 2 ^ 3;
+    if nUnique < nStatesExpected
+        sMax = gamutMaxContrasts(p.trVarsInit.dklAxes, [1 1 1]);
+        error('initClut:chromaticGamutClip', ...
+            ['Chromatic palette has %d unique colors but %d are needed ' ...
+             '(one or more tri-noise corners is out-of-gamut and got ' ...
+             'clipped to bgRGB). Lower p.trVarsInit.dklContrasts ' ...
+             '(currently %s). For this rig calibration, the max ' ...
+             'in-gamut uniform contrast is %.4f; recommend ' ...
+             'p.trVarsInit.dklContrasts = %.4f (5%% safety margin).'], ...
+             nUnique, nStatesExpected, ...
+             mat2str(p.trVarsInit.dklContrasts), sMax, 0.95 * sMax);
+    end
+
+    chromaticClutBase = size(p.draw.clut.expColors, 1);   % first free
+    paletteFloat      = double(paletteRGB) / 255;          % [3, 8]
+    p.draw.clut.expColors(end+1:end+nStatesExpected, :) = paletteFloat';
+    p.draw.clut.subColors(end+1:end+nStatesExpected, :) = paletteFloat';
+
+    p.init.chromaticClutBase   = chromaticClutBase;
+    p.init.chromaticPaletteRGB = paletteRGB;
+    p.init.chromaticStateBits  = stateBits;
+
+    % Per-axis drive variance, indexed by axis order [LM, S, Achro].
+    % Inactive axes get 0. Saved so offline analysis can renormalize
+    % cross-axis STA amplitudes when dklContrasts is a non-uniform
+    % vector (the raw STA scales by c_axis, so |sta(:,:,axis,k)| is
+    % NOT directly comparable across axes without dividing by
+    % sqrt(dklDriveVariancePerAxis(axis))).
+    contrastVec = zeros(1, 3);
+    if isscalar(p.trVarsInit.dklContrasts)
+        contrastVec(p.trVarsInit.dklAxes) = p.trVarsInit.dklContrasts;
+    else
+        contrastVec(p.trVarsInit.dklAxes) = p.trVarsInit.dklContrasts(:)';
+    end
+    p.init.dklDriveVariancePerAxis = contrastVec .^ 2;
+
+    fprintf(['initClut: chromatic mode -- installed %d palette ' ...
+        'slots at %d..%d (drive var = [%.3g %.3g %.3g])\n'], ...
+        nStatesExpected, chromaticClutBase, ...
+        chromaticClutBase + nStatesExpected - 1, ...
+        p.init.dklDriveVariancePerAxis(1), ...
+        p.init.dklDriveVariancePerAxis(2), ...
+        p.init.dklDriveVariancePerAxis(3));
+end
+
 %%
 
 % fill the remaining LUT slots with background RGB.

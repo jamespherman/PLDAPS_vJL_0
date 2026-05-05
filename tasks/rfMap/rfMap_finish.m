@@ -61,12 +61,18 @@ p.trData.missedFrameCount = nnz(diff(p.trData.timing.flipTime) > ...
 p.status.missedFrames = p.status.missedFrames + p.trData.missedFrameCount;
 
 %% (8) Auto save
-% Temporarily remove the large noise movie and STA accumulators from
-% p.init before saving. pds.saveP saves p.init on every trial, and the
-% noise movie alone is ~237 MB -- writing that per trial is very slow.
-% The RNG seed is saved, so the movie can be reconstructed offline.
-tempMovie    = p.init.noiseMovie;
-tempStaAccum = p.init.staAccum;
+% Temporarily remove the large noise movie, drive tensor (chromatic),
+% and STA accumulators from p.init before saving. pds.saveP saves p.init
+% on every trial; writing hundreds of MB per trial would be very slow.
+% The RNG seed and generator parameters are saved, so the movie / drive
+% tensor can be reconstructed offline.
+tempMovie     = p.init.noiseMovie;
+tempStaAccum  = p.init.staAccum;
+tempDklDrive  = [];
+if isfield(p.init, 'dklDriveTensor')
+    tempDklDrive = p.init.dklDriveTensor;
+    p.init.dklDriveTensor = [];
+end
 tempStaFig   = [];
 if isfield(p.init, 'staFigData')
     tempStaFig = p.init.staFigData;
@@ -77,6 +83,9 @@ p.init.staAccum   = [];    % only saved at session end if needed
 pds.saveP(p);
 p.init.noiseMovie = tempMovie;
 p.init.staAccum   = tempStaAccum;
+if ~isempty(tempDklDrive)
+    p.init.dklDriveTensor = tempDklDrive;
+end
 if ~isempty(tempStaFig)
     p.init.staFigData = tempStaFig;
 end
@@ -154,12 +163,23 @@ else
     spikeTimesPerChan{1} = p.trData.spikeTimes;
 end
 
+% Select the per-stim-type stimulus tensor. For denseChromatic, STA is
+% accumulated against the per-check DKL drive tensor, not the displayed
+% RGB movie. For achromatic / sparse, the noise movie is the stimulus
+% tensor directly.
+switch p.init.stimType
+    case 'denseChromatic'
+        stimTensor = p.init.dklDriveTensor;
+    otherwise
+        stimTensor = p.init.noiseMovie;
+end
+
 % Call the core STA accumulation function via dispatcher.
-% Jitter offsets default to (0, 0) in Phase 1; Phase 4 will activate.
+% Jitter offsets default to (0, 0); Phase 4 will activate.
 [p.init.staAccum, p.init.staSpikeCount] = updateSTA( ...
     p.init.stimType, p.init.staAccum, p.init.staSpikeCount, ...
     spikeTimesPerChan, noiseOnTimeRipple, ...
-    p.trVars.noiseFrameDurS, p.init.noiseMovie, ...
+    p.trVars.noiseFrameDurS, stimTensor, ...
     p.trVars.trialStartFrame, p.trVars.nFramesThisTrial, ...
     p.trVars.nSTALags);
 

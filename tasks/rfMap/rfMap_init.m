@@ -16,6 +16,10 @@ function p = rfMap_init(p)
 p = pds.initRigConfigFile(p);
 
 %% (2) define color look-up-table (lut)
+% For chromatic mode, initClut also installs the 8 tri-noise palette
+% slots (and saves p.init.chromaticClutBase / chromaticPaletteRGB /
+% chromaticStateBits). pds.initDataPixx then loads the full CLUT to
+% the VPixx in the usual single Screen('LoadNormalizedGammaTable') call.
 p = initClut(p);
 
 %% (3) initialize VIEWPixx/DATAPixx
@@ -39,8 +43,13 @@ p = initSTAAccumulators(p);
 %% (9) create online STA display figure (if Ripple STA enabled)
 if p.trVarsInit.useRippleSTA
     noiseFrameDurMs = p.trVarsInit.noiseFrameHold * p.rig.frameDuration * 1000;
+    if strcmp(p.init.stimType, 'denseChromatic')
+        nAxesDisplay = 3;
+    else
+        nAxesDisplay = 1;
+    end
     p.init.staFigData = initSTADisplay(p.trVarsInit.nSTALags, ...
-        p.trVarsInit.nChannels, noiseFrameDurMs);
+        p.trVarsInit.nChannels, noiseFrameDurMs, nAxesDisplay);
 end
 
 %% (10) define grid lines for experimenter display
@@ -103,11 +112,11 @@ switch p.init.stimType
             p.init.noiseRngSeed);
 
     case 'denseChromatic'
-        % Phase-2 stub. Function errors clearly.
-        p.init.noiseMovie = generateStim_denseChromatic( ...
-            nChecksY, nChecksX, nNoiseFrames, ...
-            p.trVarsInit.dklAxes, p.trVarsInit.dklContrasts, ...
-            p.init.noiseRngSeed);
+        [p.init.noiseMovie, p.init.dklDriveTensor] = ...
+            generateStim_denseChromatic( ...
+                nChecksY, nChecksX, nNoiseFrames, ...
+                p.trVarsInit.dklAxes, p.trVarsInit.dklContrasts, ...
+                p.init.noiseRngSeed);
 
     case 'checkerboard'
         % Phase-3 stub. Function errors clearly.
@@ -135,10 +144,10 @@ fprintf('rfMap stimType=%s: %d x %d checks, %d total frames\n', ...
 end
 
 function p = initSTAAccumulators(p)
-% Allocate STA accumulator arrays. Phase-1 layout is
-% [nY, nX, nLags] per channel for the spatial-map estimators
-% (denseAchromatic, sparse). Chromatic and checkerboard estimators
-% will allocate their own structures in Phase 2 / Phase 3.
+% Allocate STA accumulator arrays.
+%   Spatial-map estimators (denseAchromatic, sparse): [nY, nX, nLags]
+%   Chromatic estimator (denseChromatic):             [nY, nX, 3, nLags]
+%   Checkerboard (Phase 3):                           allocated by Phase 3.
 
 nCh   = p.trVarsInit.nChannels;
 nLags = p.trVarsInit.nSTALags;
@@ -146,11 +155,27 @@ nY    = p.init.noiseGridSize(1);
 nX    = p.init.noiseGridSize(2);
 
 p.init.staAccum = cell(nCh, 1);
-for ch = 1:nCh
-    p.init.staAccum{ch} = zeros(nY, nX, nLags);
+switch p.init.stimType
+    case {'denseAchromatic', 'sparse'}
+        for ch = 1:nCh
+            p.init.staAccum{ch} = zeros(nY, nX, nLags);
+        end
+    case 'denseChromatic'
+        for ch = 1:nCh
+            p.init.staAccum{ch} = zeros(nY, nX, 3, nLags);
+        end
+    case 'checkerboard'
+        % Phase 3 will allocate per-condition / per-channel buffers.
+        for ch = 1:nCh
+            p.init.staAccum{ch} = [];
+        end
+    otherwise
+        error('rfMap_init:initSTAAccumulators:badStimType', ...
+            'Unrecognized stimType ''%s''.', p.init.stimType);
 end
 p.init.staSpikeCount = zeros(nCh, 1);
 
-fprintf('STA accumulators initialized: %d channels, %d lags\n', nCh, nLags);
+fprintf('STA accumulators initialized: %d channels, %d lags (stimType=%s)\n', ...
+    nCh, nLags, p.init.stimType);
 
 end

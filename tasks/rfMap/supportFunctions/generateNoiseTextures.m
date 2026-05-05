@@ -2,41 +2,61 @@ function p = generateNoiseTextures(p)
 % p = generateNoiseTextures(p)
 %
 % Create PTB textures for this trial's noise frames from the pre-generated
-% noise movie. Each texture is a small grid (nChecksY x nChecksX) that
-% gets scaled up to fill the screen via Screen('DrawTexture') with
-% nearest-neighbor filtering.
+% noise movie. All three stim types use single-channel 8-bit indexed
+% textures, compatible with the VPixx L48 framebuffer mode (R-byte is
+% the CLUT index).
 %
-% CLUT indices used:
-%   Dense (uint8 0/1):      {0, 1} -> {black, white}
-%   Sparse (int8 -1/0/+1):  {-1, 0, +1} -> {black, background, white}
+% Movie layouts and index mappings:
+%   denseAchromatic (uint8 0/1):       [nY, nX, nFrames]
+%       0 -> expBlack_subBlack, 1 -> expWhite_subWhite.
+%   sparse (int8 -1/0/+1):             [nY, nX, nFrames]
+%       -1 -> expBlack_subBlack, 0 -> expBg_subBg, +1 -> expWhite_subWhite.
+%   denseChromatic (uint8 0..7):       [nY, nX, nFrames]
+%       k -> CLUT slot (chromaticClutBase + k). The 8 entries were
+%       installed by rfMap_init/installChromaticClut from the
+%       buildChromaticPalette output.
+%
+% Each texture is a small grid (nChecksY x nChecksX) that gets scaled up
+% to fill the screen via Screen('DrawTexture') with nearest-neighbor
+% filtering.
 
 nFrames    = p.trVars.nFramesThisTrial;
 startFrame = p.trVars.trialStartFrame;
 
-blackIdx = p.draw.clutIdx.expBlack_subBlack;  % 0
-whiteIdx = p.draw.clutIdx.expWhite_subWhite;  % 4
-bgIdx    = p.draw.clutIdx.expBg_subBg;        % 2
-
-isSparse = isa(p.init.noiseMovie, 'int8');
-
-% Pre-allocate texture handle array
 p.trVars.noiseTextures = zeros(1, nFrames);
+
+isChromatic = strcmp(p.init.stimType, 'denseChromatic');
+isSparse    = ~isChromatic && isa(p.init.noiseMovie, 'int8');
+
+if isChromatic
+    clutBase = uint8(p.init.chromaticClutBase);
+    for f = 1:nFrames
+        globalIdx = startFrame + f - 1;
+        frameData = p.init.noiseMovie(:, :, globalIdx);   % uint8 0..7
+        texData   = clutBase + frameData;                 % uint8
+        p.trVars.noiseTextures(f) = Screen('MakeTexture', ...
+            p.draw.window, texData);
+    end
+    return
+end
+
+% CLUT-indexed path (achromatic dense / sparse).
+blackIdx = p.draw.clutIdx.expBlack_subBlack;
+whiteIdx = p.draw.clutIdx.expWhite_subWhite;
+bgIdx    = p.draw.clutIdx.expBg_subBg;
 
 for f = 1:nFrames
     globalIdx = startFrame + f - 1;
     frameData = p.init.noiseMovie(:, :, globalIdx);
 
     if isSparse
-        % Sparse: values are -1, 0, +1 (int8).
         texData = repmat(uint8(bgIdx), size(frameData));
         texData(frameData == -1) = uint8(blackIdx);
         texData(frameData == +1) = uint8(whiteIdx);
     else
-        % Dense: values are 0, 1 (uint8). Linear map.
         texData = uint8(blackIdx + frameData * (whiteIdx - blackIdx));
     end
 
-    % Create PTB texture
     p.trVars.noiseTextures(f) = Screen('MakeTexture', ...
         p.draw.window, texData);
 end
