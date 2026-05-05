@@ -7,7 +7,8 @@ function c                      = initClut(c)
 
 
 % initialize DKL conversion variables`
-initmon('LUTvpixx');
+c.init.initMonFile = ['LUT_VPIXX_rig' c.init.pcName(end-1)];
+initmon(c.init.initMonFile);
 
 % set Background color to black.
 [bgRGB(1), bgRGB(2), bgRGB(3)] = dkl2rgb([-0.8 0 0]');

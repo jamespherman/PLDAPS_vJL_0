@@ -7,7 +7,8 @@ function p                      = initClut(p)
 
 
 % initialize DKL conversion variables`
-initmon('LUTvpixx');
+p.init.initMonFile = ['LUT_VPIXX_rig' p.init.pcName(end-1)];
+initmon(p.init.initMonFile);
 
 % set Bg to 0.5 0.5 0.5:
 [bgRGB(1), bgRGB(2), bgRGB(3)] = dkl2rgb([0 0 0]');
