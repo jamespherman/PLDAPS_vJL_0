@@ -28,11 +28,31 @@ p = pds.readDatapixxBuffers(p);
 p.trData.trialRepeatFlag = (p.trData.trialEndState > 10) & ...
     (p.trData.trialEndState < 20);
 
-%% (4) Update noise movie playback position
+%% (4) Update playback / trial-array progress
 if ~p.trData.trialRepeatFlag
-    % Successful trial: advance movie index
-    p.init.noiseFrameIdx = p.trVars.trialEndFrame + 1;
-    p.status.iGoodTrial  = p.status.iGoodTrial + 1;
+    % Successful trial.
+    p.status.iGoodTrial = p.status.iGoodTrial + 1;
+
+    if strcmp(p.init.stimType, 'checkerboard')
+        % Pop the row that nextParams peeked at, so it isn't shown
+        % again. Aborted trials would have left the row in place,
+        % causing it to re-present next trial.
+        if ~isempty(p.status.trialsArrayRowsPossible)
+            p.status.trialsArrayRowsPossible = ...
+                p.status.trialsArrayRowsPossible(2:end);
+        end
+        % Mark this row's `completed` column.
+        if isfield(p.trVars, 'checkerboardTrialRow')
+            cols = p.init.trialArrayColumnNames;
+            cIdx = find(strcmp(cols, 'completed'), 1);
+            if ~isempty(cIdx)
+                p.init.trialsArray(p.trVars.checkerboardTrialRow, cIdx) = 1;
+            end
+        end
+    else
+        % Noise-movie modes: advance playback index.
+        p.init.noiseFrameIdx = p.trVars.trialEndFrame + 1;
+    end
 
     % (4b) Accumulate STA from Ripple data (if enabled and data available)
     if p.trVars.useRippleSTA && p.rig.ripple.status && ...
@@ -40,7 +60,9 @@ if ~p.trData.trialRepeatFlag
         p = accumulateSTA(p);
     end
 end
-% If trial was aborted, noiseFrameIdx stays the same (re-present frames)
+% If trial was aborted: noise-movie modes re-present the same frames
+% next trial; checkerboard leaves the row in trialsArrayRowsPossible
+% so it gets retried.
 
 %% (5) Strobe trial data
 p = pds.strobeTrialData(p);
@@ -91,7 +113,13 @@ if ~isempty(tempStaFig)
 end
 
 %% (9) Close PTB textures to free VRAM
-if isfield(p.trVars, 'noiseTextures') && ~isempty(p.trVars.noiseTextures)
+% Per-frame textures generated each trial for the noise-movie modes
+% must be closed. Checkerboard textures live on
+% p.init.checkInfo.textures (persistent across trials), do NOT close
+% them per trial.
+if ~strcmp(p.init.stimType, 'checkerboard') && ...
+        isfield(p.trVars, 'noiseTextures') && ...
+        ~isempty(p.trVars.noiseTextures)
     validTex = p.trVars.noiseTextures(p.trVars.noiseTextures > 0);
     if ~isempty(validTex)
         Screen('Close', validTex);
@@ -100,7 +128,18 @@ if isfield(p.trVars, 'noiseTextures') && ~isempty(p.trVars.noiseTextures)
 end
 
 %% (10) Update status variables for GUI display
-p.status.moviePctComplete = round(100 * p.init.noiseFrameIdx / p.init.nNoiseFrames);
+if strcmp(p.init.stimType, 'checkerboard')
+    % Movie-frame progress is meaningless for checkerboard (no movie);
+    % use trial-array progress instead.
+    nTotalCheckTrials = size(p.init.trialsArray, 1);
+    nDoneCheckTrials  = nTotalCheckTrials - ...
+        numel(p.status.trialsArrayRowsPossible);
+    p.status.moviePctComplete = round( ...
+        100 * nDoneCheckTrials / max(1, nTotalCheckTrials));
+else
+    p.status.moviePctComplete = round( ...
+        100 * p.init.noiseFrameIdx / p.init.nNoiseFrames);
+end
 p.status.totalSpikesAccum = sum(p.init.staSpikeCount);
 p.status.iAbortedTrial    = p.status.iTrial - p.status.iGoodTrial;
 
@@ -163,25 +202,53 @@ else
     spikeTimesPerChan{1} = p.trData.spikeTimes;
 end
 
-% Select the per-stim-type stimulus tensor. For denseChromatic, STA is
-% accumulated against the per-check DKL drive tensor, not the displayed
-% RGB movie. For achromatic / sparse, the noise movie is the stimulus
-% tensor directly.
-switch p.init.stimType
-    case 'denseChromatic'
-        stimTensor = p.init.dklDriveTensor;
-    otherwise
-        stimTensor = p.init.noiseMovie;
-end
+% Branch by stim type. The spatial modes go through the standard
+% updateSTA dispatcher with a per-stim-type stimulus tensor;
+% checkerboard has a distinct call signature (per-trial polarity
+% sequence + condition + reversalHz) and a struct-shaped accumulator,
+% so we call updateSTA_checkerboard directly rather than via the
+% dispatcher.
+if strcmp(p.init.stimType, 'checkerboard')
+    p.init.staAccum = updateSTA_checkerboard( ...
+        p.init.staAccum, spikeTimesPerChan, noiseOnTimeRipple, ...
+        p.trVars.noiseFrameDurS, ...
+        p.trVars.checkPolaritySequence, ...
+        [p.trVars.checkSizeIdx, p.trVars.contrastIdx], ...
+        p.trVars.checkReversalHz, ...
+        p.trVars.nSTALags);
 
-% Call the core STA accumulation function via dispatcher.
-% Jitter offsets default to (0, 0); Phase 4 will activate.
-[p.init.staAccum, p.init.staSpikeCount] = updateSTA( ...
-    p.init.stimType, p.init.staAccum, p.init.staSpikeCount, ...
-    spikeTimesPerChan, noiseOnTimeRipple, ...
-    p.trVars.noiseFrameDurS, stimTensor, ...
-    p.trVars.trialStartFrame, p.trVars.nFramesThisTrial, ...
-    p.trVars.nSTALags);
+    % Update the flat staSpikeCount per channel (used by the GUI
+    % status display). Sum spikes across this trial within the trial
+    % window.
+    trialEndTime = noiseOnTimeRipple + ...
+        p.trVars.nFramesThisTrial * p.trVars.noiseFrameDurS;
+    for ch = 1:p.trVars.nChannels
+        spk = spikeTimesPerChan{ch};
+        if ~isempty(spk)
+            n = sum(spk >= noiseOnTimeRipple & spk < trialEndTime);
+            p.init.staSpikeCount(ch) = p.init.staSpikeCount(ch) + n;
+        end
+    end
+else
+    % Spatial-mode dispatcher path. For denseChromatic, STA is
+    % accumulated against the per-check DKL drive tensor, not the
+    % displayed RGB movie. For achromatic / sparse, the noise movie
+    % is the stimulus tensor directly.
+    switch p.init.stimType
+        case 'denseChromatic'
+            stimTensor = p.init.dklDriveTensor;
+        otherwise
+            stimTensor = p.init.noiseMovie;
+    end
+
+    % Jitter offsets default to (0, 0); Phase 4 will activate.
+    [p.init.staAccum, p.init.staSpikeCount] = updateSTA( ...
+        p.init.stimType, p.init.staAccum, p.init.staSpikeCount, ...
+        spikeTimesPerChan, noiseOnTimeRipple, ...
+        p.trVars.noiseFrameDurS, stimTensor, ...
+        p.trVars.trialStartFrame, p.trVars.nFramesThisTrial, ...
+        p.trVars.nSTALags);
+end
 
 % Update online STA display via dispatcher, throttled per
 % staPlotEveryNTrials. Accumulators update every successful trial;

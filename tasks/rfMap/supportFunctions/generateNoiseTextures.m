@@ -25,6 +25,14 @@ startFrame = p.trVars.trialStartFrame;
 
 p.trVars.noiseTextures = zeros(1, nFrames);
 
+% Checkerboard mode: textures are pre-rendered once at session init
+% (p.init.checkInfo.textures, persistent across trials). Nothing to do
+% per trial. _run.m looks up the right texture by (sizeIdx, contrastIdx,
+% polarityIdx) at draw time.
+if strcmp(p.init.stimType, 'checkerboard')
+    return
+end
+
 isChromatic = strcmp(p.init.stimType, 'denseChromatic');
 isSparse    = ~isChromatic && isa(p.init.noiseMovie, 'int8');
 

@@ -227,10 +227,42 @@ if timeNow > p.trData.timing.lastFrameTime + ...
     if p.trVars.noiseIsOn && p.trVars.currentNoiseIdx >= 1 && ...
             p.trVars.currentNoiseIdx <= p.trVars.nFramesThisTrial
 
+        % Per-stim-type texture lookup. denseAchromatic / sparse /
+        % denseChromatic use one texture per noise frame
+        % (p.trVars.noiseTextures, generated each trial). Checkerboard
+        % uses one of the persistent (size, contrast, polarity) textures
+        % pre-rendered at session init.
+        if strcmp(p.init.stimType, 'checkerboard')
+            polSign = double( ...
+                p.trVars.checkPolaritySequence(p.trVars.currentNoiseIdx));
+            polIdx  = (polSign < 0) + 1;     % 1 if +1, 2 if -1
+            texHandle = p.init.checkInfo.textures( ...
+                p.trVars.checkSizeIdx, p.trVars.contrastIdx, polIdx);
+
+            % Detect a polarity flip vs the previous frame and queue a
+            % reversal-event strobe. addValue() is buffered; the queued
+            % values are written out by p.init.strb.strobeList AFTER the
+            % flip below, so we never block the per-flip loop on
+            % synchronous DataPixx writes.
+            if p.trVars.currentNoiseIdx > 1
+                prevPol = double( ...
+                    p.trVars.checkPolaritySequence( ...
+                        p.trVars.currentNoiseIdx - 1));
+                if polSign ~= prevPol
+                    p.init.strb.addValue( ...
+                        p.init.codes.rfMapCheckReversalEvent);
+                    % Map +1 -> 1, -1 -> 2 (so all strobed values are
+                    % positive integers per the strobe-code contract).
+                    p.init.strb.addValue(polIdx);
+                end
+            end
+        else
+            texHandle = p.trVars.noiseTextures(p.trVars.currentNoiseIdx);
+        end
+
         % Draw noise texture with nearest-neighbor filtering (0)
         Screen('DrawTexture', p.draw.window, ...
-            p.trVars.noiseTextures(p.trVars.currentNoiseIdx), ...
-            [], p.draw.noiseDestRect, [], 0);
+            texHandle, [], p.draw.noiseDestRect, [], 0);
 
         % 5. Draw clearing patch over fixation area
         if ~isempty(p.draw.clearPatchRect)

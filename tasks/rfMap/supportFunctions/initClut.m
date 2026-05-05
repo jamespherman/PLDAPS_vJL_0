@@ -116,6 +116,13 @@ if isfield(p, 'init') && isfield(p.init, 'stimType') && ...
 
     chromaticClutBase = size(p.draw.clut.expColors, 1);   % first free
     paletteFloat      = double(paletteRGB) / 255;          % [3, 8]
+    % The rig gamma LUT files (.r/.g/.b) contain a top value ~256 that
+    % initmon divides by 255, producing entries up to ~1.003922.
+    % Screen('LoadNormalizedGammaTable') strictly requires [0, 1], so
+    % clamp our CLUT install values to that range. The rounding error
+    % (<= 0.4% per channel at the LUT top) is well below 8-bit fb
+    % quantization, no perceptual consequence.
+    paletteFloat = min(1, max(0, paletteFloat));
     p.draw.clut.expColors(end+1:end+nStatesExpected, :) = paletteFloat';
     p.draw.clut.subColors(end+1:end+nStatesExpected, :) = paletteFloat';
 
@@ -144,6 +151,64 @@ if isfield(p, 'init') && isfield(p.init, 'stimType') && ...
         p.init.dklDriveVariancePerAxis(1), ...
         p.init.dklDriveVariancePerAxis(2), ...
         p.init.dklDriveVariancePerAxis(3));
+end
+
+%% append per-stim-type CLUT slots (checkerboard achromatic contrast pairs)
+% Checkerboard mode reserves 2 CLUT slots PER contrast level (a "low" and
+% "high" gray, computed via dkl2rgb([+/-c; 0; 0]) so they're properly
+% gamma-corrected for the rig). The pre-rendered indexed textures for
+% each (checkSize, contrast) pair contain only those two slot values.
+% Polarity reversal is implemented by swapping which texture is drawn,
+% NOT by remapping the CLUT, so reversals don't churn the LUT.
+if isfield(p, 'init') && isfield(p.init, 'stimType') && ...
+        strcmp(p.init.stimType, 'checkerboard')
+    cContrasts = p.trVarsInit.checkContrasts(:)';
+    nC         = numel(cContrasts);
+    if any(cContrasts <= 0) || any(cContrasts > 1)
+        error('initClut:checkerboardBadContrast', ...
+            'p.trVarsInit.checkContrasts must be in (0, 1]; got %s.', ...
+            mat2str(cContrasts));
+    end
+
+    checkerClutBase = size(p.draw.clut.expColors, 1);
+    lowSlots  = zeros(1, nC);   % 0-based CLUT indices of "low" gray for each contrast
+    highSlots = zeros(1, nC);
+
+    for k = 1:nC
+        c = cContrasts(k);
+        % Achromatic-only DKL: Lum = +/- c, LM = 0, S = 0. dkl2rgb returns
+        % gamma-corrected [0,1] values for direct insertion into the CLUT.
+        [rL, gL, bL] = dkl2rgb([-c; 0; 0]);
+        [rH, gH, bH] = dkl2rgb([+c; 0; 0]);
+        % dkl2rgb maps out-of-gamut -> bgRGB, collapsing low and high.
+        if isequal([rL gL bL], [rH gH bH])
+            error('initClut:checkerboardGamutClip', ...
+                ['checkerboard contrast %g is out-of-gamut on this rig ' ...
+                 '(dkl2rgb collapsed low and high to bgRGB). Lower the ' ...
+                 'value in p.trVarsInit.checkContrasts.'], c);
+        end
+        % Clamp to [0, 1]: the rig gamma LUT can produce values ~1.0039
+        % at the top (256/255), which Screen rejects. See chromatic
+        % branch above for the same clamp rationale.
+        lowRGB  = min(1, max(0, [rL gL bL]));
+        highRGB = min(1, max(0, [rH gH bH]));
+        lowRow  = checkerClutBase + 2 * (k - 1) + 1;   % 1-based row
+        highRow = checkerClutBase + 2 * (k - 1) + 2;
+        p.draw.clut.expColors(lowRow,  :) = lowRGB;
+        p.draw.clut.expColors(highRow, :) = highRGB;
+        p.draw.clut.subColors(lowRow,  :) = lowRGB;
+        p.draw.clut.subColors(highRow, :) = highRGB;
+        lowSlots(k)  = lowRow  - 1;     % 0-based for texture data
+        highSlots(k) = highRow - 1;
+    end
+
+    p.init.checkerboardClutBase  = checkerClutBase;     % 0-based
+    p.init.checkerboardLowSlots  = lowSlots;            % per-contrast 0-based
+    p.init.checkerboardHighSlots = highSlots;
+
+    fprintf(['initClut: checkerboard mode -- installed %d contrast pairs ' ...
+        'at slots %d..%d\n'], nC, checkerClutBase, ...
+        checkerClutBase + 2 * nC - 1);
 end
 
 %%

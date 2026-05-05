@@ -42,14 +42,29 @@ p = initSTAAccumulators(p);
 
 %% (9) create online STA display figure (if Ripple STA enabled)
 if p.trVarsInit.useRippleSTA
-    noiseFrameDurMs = p.trVarsInit.noiseFrameHold * p.rig.frameDuration * 1000;
-    if strcmp(p.init.stimType, 'denseChromatic')
-        nAxesDisplay = 3;
-    else
-        nAxesDisplay = 1;
+    switch p.init.stimType
+        case 'checkerboard'
+            % Different layout entirely: kernel grid + F1/F2 bars.
+            % Display frames are the lag unit for checkerboard, so
+            % frameDurMs is 1/refreshRate in ms.
+            displayFrameMs = p.rig.frameDuration * 1000;
+            p.init.staFigData = initSTADisplay_checkerboard( ...
+                p.trVarsInit.nSTALags, p.trVarsInit.nChannels, ...
+                displayFrameMs, p.init.checkInfo.nCheckSize, ...
+                p.init.checkInfo.nContrast, ...
+                p.trVarsInit.checkSizesDva, ...
+                p.trVarsInit.checkContrasts);
+        otherwise
+            noiseFrameDurMs = p.trVarsInit.noiseFrameHold * ...
+                p.rig.frameDuration * 1000;
+            if strcmp(p.init.stimType, 'denseChromatic')
+                nAxesDisplay = 3;
+            else
+                nAxesDisplay = 1;
+            end
+            p.init.staFigData = initSTADisplay(p.trVarsInit.nSTALags, ...
+                p.trVarsInit.nChannels, noiseFrameDurMs, nAxesDisplay);
     end
-    p.init.staFigData = initSTADisplay(p.trVarsInit.nSTALags, ...
-        p.trVarsInit.nChannels, noiseFrameDurMs, nAxesDisplay);
 end
 
 %% (10) define grid lines for experimenter display
@@ -119,11 +134,19 @@ switch p.init.stimType
                 p.init.noiseRngSeed);
 
     case 'checkerboard'
-        % Phase-3 stub. Function errors clearly.
-        p.init.checkerboardTextures = prepareStim_checkerboard( ...
+        % Phase 3: pre-render indexed checkerboard texture data per
+        % (checkSize, contrast) condition. Convert dva -> pixels here
+        % via pds.deg2pix (codebase convention; no p.rig.PixPerDeg
+        % field).
+        checkSizesPix = arrayfun(@(d) pds.deg2pix(d, p), ...
+            p.trVarsInit.checkSizesDva);
+        p.init.checkInfo = prepareStim_checkerboard( ...
             p.trVarsInit.checkSizesDva, p.trVarsInit.checkContrasts, ...
-            screenWidthPix, screenHeightPix, ...
-            p.rig.PixPerDeg, p.init.noiseRngSeed);
+            screenWidthPix, screenHeightPix, checkSizesPix, ...
+            p.rig.refreshRate, p.trVarsInit.checkReversalHz, ...
+            p.init.checkerboardLowSlots, p.init.checkerboardHighSlots, ...
+            p.trVarsInit.checkGpuMemCapBytes);
+        p.init.checkInfo = uploadCheckerboardTextures(p, p.init.checkInfo);
         p.init.noiseMovie = [];
 
     otherwise
@@ -143,37 +166,76 @@ fprintf('rfMap stimType=%s: %d x %d checks, %d total frames\n', ...
 
 end
 
+
+function checkInfo = uploadCheckerboardTextures(p, checkInfo)
+% Upload the pre-computed checkerboard texture data matrices to PTB.
+% Returns checkInfo with .textures (nCheckSize x nContrast x 2) of
+% Screen('MakeTexture') handles. The original .textureData is cleared
+% to free MATLAB-side memory.
+texHandles = zeros(checkInfo.nCheckSize, checkInfo.nContrast, 2);
+for sz = 1:checkInfo.nCheckSize
+    for ct = 1:checkInfo.nContrast
+        for pol = 1:2
+            texHandles(sz, ct, pol) = Screen('MakeTexture', ...
+                p.draw.window, checkInfo.textureData{sz, ct, pol});
+        end
+    end
+end
+checkInfo.textures    = texHandles;
+checkInfo.textureData = [];   % free CPU-side memory; data is on GPU now
+
+% Destination rect: each condition's texture is screen-sized (or
+% larger), centered.
+checkInfo.destRect = p.draw.screenRect;
+end
+
 function p = initSTAAccumulators(p)
-% Allocate STA accumulator arrays.
-%   Spatial-map estimators (denseAchromatic, sparse): [nY, nX, nLags]
-%   Chromatic estimator (denseChromatic):             [nY, nX, 3, nLags]
-%   Checkerboard (Phase 3):                           allocated by Phase 3.
+% Allocate STA accumulator arrays. Layout depends on stim type:
+%   denseAchromatic / sparse: cell {nCh,1} of [nY, nX, nLags]
+%   denseChromatic:           cell {nCh,1} of [nY, nX, 3, nLags]
+%   checkerboard:             struct with temporalKernel, f1f2AmpSum,
+%                             spikeCountPerCondCh, f1f2TrialCount
+%                             (the dispatcher hands the struct directly
+%                             to updateSTA_checkerboard).
 
 nCh   = p.trVarsInit.nChannels;
 nLags = p.trVarsInit.nSTALags;
-nY    = p.init.noiseGridSize(1);
-nX    = p.init.noiseGridSize(2);
 
-p.init.staAccum = cell(nCh, 1);
 switch p.init.stimType
     case {'denseAchromatic', 'sparse'}
+        nY = p.init.noiseGridSize(1);
+        nX = p.init.noiseGridSize(2);
+        p.init.staAccum = cell(nCh, 1);
         for ch = 1:nCh
             p.init.staAccum{ch} = zeros(nY, nX, nLags);
         end
+        p.init.staSpikeCount = zeros(nCh, 1);
+
     case 'denseChromatic'
+        nY = p.init.noiseGridSize(1);
+        nX = p.init.noiseGridSize(2);
+        p.init.staAccum = cell(nCh, 1);
         for ch = 1:nCh
             p.init.staAccum{ch} = zeros(nY, nX, 3, nLags);
         end
+        p.init.staSpikeCount = zeros(nCh, 1);
+
     case 'checkerboard'
-        % Phase 3 will allocate per-condition / per-channel buffers.
-        for ch = 1:nCh
-            p.init.staAccum{ch} = [];
-        end
+        nCkSz = p.init.checkInfo.nCheckSize;
+        nCt   = p.init.checkInfo.nContrast;
+        p.init.staAccum = struct( ...
+            'temporalKernel',       zeros(nLags, nCkSz, nCt, nCh), ...
+            'spikeCountPerCondCh',  zeros(nCkSz, nCt, nCh), ...
+            'f1f2AmpSum',           zeros(2, nCkSz, nCt, nCh), ...
+            'f1f2TrialCount',       zeros(nCkSz, nCt));
+        % staSpikeCount kept for code-path compatibility (rfMap_finish
+        % reads it for the run-summary print and status display).
+        p.init.staSpikeCount = zeros(nCh, 1);
+
     otherwise
         error('rfMap_init:initSTAAccumulators:badStimType', ...
             'Unrecognized stimType ''%s''.', p.init.stimType);
 end
-p.init.staSpikeCount = zeros(nCh, 1);
 
 fprintf('STA accumulators initialized: %d channels, %d lags (stimType=%s)\n', ...
     nCh, nLags, p.init.stimType);

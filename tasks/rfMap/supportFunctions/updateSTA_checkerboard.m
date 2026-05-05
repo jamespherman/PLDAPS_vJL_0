@@ -1,20 +1,100 @@
-function [staAccum, staSpikeCount] = updateSTA_checkerboard( ...
-    staAccum, staSpikeCount, spikeTimesPerChan, noiseOnTime, frameDurS, ...
-    polaritySequence, conditionPerFrame, nLags, ...
-    jitterX, jitterY) %#ok<INUSD>
-% updateSTA_checkerboard  PHASE 3 STUB.
+function staAccum = updateSTA_checkerboard( ...
+    staAccum, spikeTimesPerChan, noiseOnTime, frameDurS, ...
+    polaritySequence, condIdx, reversalHz, nLags)
+% updateSTA_checkerboard  Accumulate temporal kernel + F1/F2 for one trial.
 %
-%   Per-(checkSize, contrast) condition reverse-correlation against the
-%   +/-1 polarity sequence. Two outputs in Phase 3:
-%     1. Temporal kernel: [nLags, nCheckSize, nContrast, nCh]
-%     2. F1/F2 amplitude: [2, nCheckSize, nContrast, nCh]
-%   Helper computeF1F2.m provides the per-trial complex sums.
+%   staAccum = updateSTA_checkerboard( ...
+%       staAccum, spikeTimesPerChan, noiseOnTime, frameDurS, ...
+%       polaritySequence, condIdx, reversalHz, nLags)
 %
-%   Phase 1 plumbing keeps the same jitterX/jitterY arguments as the
-%   other estimators so the dispatcher can hand them in uniformly.
+%   Aggregates this trial's spike data into the running checkerboard
+%   STA struct. Two analyses run in parallel:
+%
+%   (a) Temporal reverse-correlation. For each spike on each channel,
+%       walk back nLags display frames and accumulate the polarity
+%       (+/-1) at each lag into
+%           temporalKernel(lag, checkSize, contrast, channel).
+%       At plot time the kernel is normalized by the spike count for
+%       that (checkSize, contrast, channel) cell.
+%
+%   (b) F1/F2 amplitude. computeF1F2 returns the per-trial complex
+%       sum z = (z_F1, z_F2). We accumulate |z| (amplitude) into
+%       f1f2AmpSum and increment the per-condition trial count. At
+%       plot time amplitude = f1f2AmpSum / f1f2TrialCount (the plan
+%       locks the cross-trial average as mean(|z|), no phase-locking
+%       across trials).
+%
+%   Inputs:
+%     staAccum          - struct with these accumulator fields:
+%       .temporalKernel       [nLags, nCheckSize, nContrast, nCh]
+%       .spikeCountPerCondCh  [nCheckSize, nContrast, nCh]
+%       .f1f2AmpSum           [2, nCheckSize, nContrast, nCh]
+%       .f1f2TrialCount       [nCheckSize, nContrast] -- trials per cond
+%     spikeTimesPerChan - cell{nCh,1} of spike times in Ripple-clock
+%                         seconds.
+%     noiseOnTime       - Ripple-clock time of noiseOn for this trial.
+%     frameDurS         - DISPLAY frame duration (1/refreshRate).
+%                         Polarity-frame resolution; do NOT confuse
+%                         with the noise-frame-hold of dense modes.
+%     polaritySequence  - [1, nFramesTrial] vector of +/-1 recording the
+%                         polarity at each display frame of the trial.
+%     condIdx           - [checkSizeIdx, contrastIdx] for this trial.
+%     reversalHz        - polarity reversal frequency (Hz).
+%     nLags             - number of temporal lags (in display frames).
+%
+%   Output:
+%     staAccum updated in place. spikeCountPerCondCh, temporalKernel,
+%     and f1f2AmpSum are incremented; f1f2TrialCount(sz, ct) is
+%     incremented by 1 for this trial regardless of spike count
+%     (empty trials contribute z = 0 to the mean amplitude).
 
-error('updateSTA_checkerboard:notImplemented', ...
-    ['Checkerboard temporal STA + F1/F2 is a Phase-3 deliverable. ' ...
-     'See analysisPlanningDocs/rfMap_unified_merge_plan.md  ->  Phase 3.']);
+szIdx        = condIdx(1);
+ctIdx        = condIdx(2);
+nFramesTrial = numel(polaritySequence);
+nCh          = numel(spikeTimesPerChan);
+
+% Increment per-condition trial count once for this trial. F1/F2
+% averages across all trials at this condition; trials with zero
+% spikes contribute |z| = 0.
+staAccum.f1f2TrialCount(szIdx, ctIdx) = ...
+    staAccum.f1f2TrialCount(szIdx, ctIdx) + 1;
+
+trialEndTime = noiseOnTime + nFramesTrial * frameDurS;
+
+for ch = 1:nCh
+    spikes = spikeTimesPerChan{ch};
+    if isempty(spikes), continue; end
+
+    % Restrict to spikes within the trial window.
+    spikes = spikes(spikes >= noiseOnTime & spikes < trialEndTime);
+    if isempty(spikes), continue; end
+
+    % Spike times relative to noiseOn (trial-aligned for F1/F2).
+    spikesRel = spikes - noiseOnTime;
+
+    % --- (a) Temporal reverse-correlation ---
+    spikeFrameIdx = floor(spikesRel / frameDurS) + 1;
+    nSpikesInTrial = numel(spikeFrameIdx);
+
+    staAccum.spikeCountPerCondCh(szIdx, ctIdx, ch) = ...
+        staAccum.spikeCountPerCondCh(szIdx, ctIdx, ch) + nSpikesInTrial;
+
+    for s = 1:nSpikesInTrial
+        sf = spikeFrameIdx(s);
+        for lag = 1:nLags
+            stimIdx = sf - lag + 1;
+            if stimIdx >= 1 && stimIdx <= nFramesTrial
+                staAccum.temporalKernel(lag, szIdx, ctIdx, ch) = ...
+                    staAccum.temporalKernel(lag, szIdx, ctIdx, ch) + ...
+                    double(polaritySequence(stimIdx));
+            end
+        end
+    end
+
+    % --- (b) F1/F2 ---
+    z = computeF1F2(spikesRel, reversalHz);
+    staAccum.f1f2AmpSum(:, szIdx, ctIdx, ch) = ...
+        staAccum.f1f2AmpSum(:, szIdx, ctIdx, ch) + abs(z);
+end
 
 end

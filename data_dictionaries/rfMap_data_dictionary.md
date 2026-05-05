@@ -25,9 +25,16 @@ Important caveats:
 
 - **Checkerboard does NOT yield an online spatial RF.** The spatial
   pattern is fixed; only polarity reverses. Online output is a
-  per-condition temporal kernel and F1/F2 amplitudes (cell screening /
-  magno-parvo typing). Use a different mode (dense or sparse) if
-  spatial mapping is the goal.
+  per-(channel, checkSize, contrast) temporal kernel via reverse-
+  correlation against the ±1 polarity sequence, plus per-(channel,
+  checkSize, contrast) F1/F2 amplitudes from per-trial complex sums.
+  Reporting convention (locked): raw amplitude AND the F1/(F1+F2)
+  modulation index; phase is computed but not plotted online. Cross-
+  trial average is `mean(|z|)` (no phase-locking across trials, since
+  reversal phase is reset at each trial start). "Check size" is a
+  pragmatic spatial-scale knob, **not** a clean spatial-frequency
+  manipulation. Use a different mode (dense or sparse) for online
+  spatial mapping.
 - **Chromatic STA is accumulated against the DKL drive vector**, not
   RGB. This decouples offline analysis from rig calibration drift.
   The drive tensor itself is NOT saved (recomputable from the seed and
@@ -71,6 +78,9 @@ per-stim-type `_settings.m`; consumed once during `_init.m`.
 | `chromaticPaletteRGB` | `[3,8]` uint8 | (denseChromatic only.) The 8 gamma-corrected RGB triples (column k = state k-1). Built from `dkl2rgb(...)` via `buildChromaticPalette`. Saved so offline analysis can reconstruct the displayed colors without re-loading the rig calibration. |
 | `chromaticStateBits` | `[3,8]` int8 | (denseChromatic only.) +/-1 sign matrix mapping state index to (L-M, S, Achro) signs. Saved for offline reconstruction. |
 | `dklDriveVariancePerAxis` | `[1,3]` double | (denseChromatic only.) `c_axis^2` per axis in order `[LM, S, Achro]`; inactive axes are 0. With non-uniform per-axis contrasts the recovered STA amplitude scales by `c_axis`, so cross-axis tuning comparisons must divide `|sta(:,:,axis,k)|` by `sqrt(dklDriveVariancePerAxis(axis))` before treating the per-axis amplitudes as comparable. With uniform contrast (the default) all entries are equal and the renormalization is a no-op. |
+| `checkerboardClutBase` | int | (checkerboard only.) First CLUT row index (0-based) where the checkerboard contrast-pair grays were installed. Each contrast level uses 2 consecutive slots: `lowSlots(k) = checkerboardClutBase + 2*(k-1)`, `highSlots(k) = checkerboardClutBase + 2*(k-1) + 1`. |
+| `checkerboardLowSlots`/`HighSlots` | `[1, nContrast]` | (checkerboard only.) 0-based CLUT slots holding the gamma-corrected dark/bright gray for each contrast. Pre-rendered textures contain only these two values per condition. |
+| `checkInfo` | struct | (checkerboard only.) Texture-prep result. Fields: `.textures` (`[nCheckSize, nContrast, 2]` PTB handles, persistent across trials), `.framesPerReversal` (integer; how many display frames between polarity flips), `.conditionTable`, `.nCheckSize`, `.nContrast`, `.nConditions`, `.checkSizePix`, `.totalBytes`. `.textureData` is cleared after upload. `.destRect` is screen-sized. |
 | `dklCalibrationSource` | string | (denseChromatic only.) `'measured_primaries+measured_gamma'` or `'vendor_primaries+measured_gamma'`. Strobed as `rfMapDklCalibSource` (1 / 2). |
 | `dklAxisIdxStrobe` | int | (denseChromatic only.) Pre-computed value for the `rfMapDklAxisIdx` strobe (1=L-M, 2=S, 3=Achro, 4=mixed tri-noise). |
 | `dklCalibSourceStrobe` | int | (denseChromatic only.) Pre-computed value for the `rfMapDklCalibSource` strobe. |
@@ -115,6 +125,11 @@ Stim-type-specific:
 | `dklContrasts` | denseChromatic | Per-axis contrast magnitude. Scalar (broadcast) or vector. Default 0.45 = 0.95 × `gamutMaxContrasts([1 2 3], [1 1 1])` on rig1/rig2 (max safe uniform contrast 0.4738; 5% margin against fp / quantization). To pick a principled value for a different rig, call `gamutMaxContrasts(dklAxes, axisRatios)` from the rig command line after `initmon(LUT_VPIXX_rigN)`. `initClut` errors with the rig's max safe value if the configured contrast clips any corner. |
 | `nSparseSpots` | sparse | Number of nonzero spots per frame. |
 | `sparseBalancedFlag` | sparse | 1 = legacy uniform-random, 2 = balanced TwinDeck (default). |
+| `checkSizesDva` | checkerboard | Vector of check side lengths in dva. Pragmatic spatial-scale knob, NOT a clean SF manipulation (checkerboards are SF-broadband). |
+| `checkContrasts` | checkerboard | Vector of Michelson contrasts in (0, 1]. Each level reserves 2 CLUT slots (gamma-corrected via `dkl2rgb([±c; 0; 0])`). |
+| `checkReversalHz` | checkerboard | Polarity reversal frequency. **Validators**: must divide refresh rate evenly AND `2*checkReversalHz < refreshRate/2` (Nyquist). `prepareStim_checkerboard` errors with the legal set if either fails. |
+| `checkRepsPerCondition` | checkerboard | Trials per (checkSize, contrast) cell. Plan-target ≈ 80 for stable F1/F2; default 12 for short test sessions, calibrate against bootstrap CIs on first real session. |
+| `checkGpuMemCapBytes` | checkerboard | Hard cap on pre-rendered texture memory. Default 512 MB. `prepareStim_checkerboard` errors before allocating if the configured combination would exceed. |
 
 ### `p.trData`
 
@@ -161,7 +176,11 @@ the full block (16140-16175 reserved).
 | 16143 | `rfMapDklContrast_x100` | 2 | DKL contrast * 100 (max across active axes). |
 | 16144 | `rfMapDklHue_x10` | 2 | (Reserved; not strobed by tri-noise mode.) |
 | 16145 | `rfMapDklCalibSource` | 2 | 1=measured_primaries, 2=vendor_primaries, 0=other. |
-| 16146-16150 | `rfMapCheck*` | 3 | Checkerboard params (TBD Phase 3). |
+| 16146 | `rfMapCheckSizeIdx` | 3 | Per-trial: 1..nCheckSize index into `checkSizesDva`. |
+| 16147 | `rfMapCheckContrastIdx` | 3 | Per-trial: 1..nContrast index into `checkContrasts`. |
+| 16148 | `rfMapCheckReversalHz_x10` | 3 | Reversal Hz × 10 (session-constant). |
+| 16149 | `rfMapCheckPolaritySign` | 3 | Initial polarity (1 = +1, 2 = -1; reserved, not currently strobed since the schedule always starts at +1). |
+| 16150 | `rfMapCheckReversalEvent` | 3 | Strobed at each polarity-flip flip (queued via `addValue` between draw and flip; the value is the new polarity, 1 = +1, 2 = -1). |
 | 16151-16157 | `rfMapJitter*`, `rfMapAperture*` | 4 | Jitter / aperture (TBD Phase 4). |
 | 16158 | `rfMapSparseBalancedFlag` | 1 | 1=legacy uniform-random, 2=balanced TwinDeck. |
 | 16159 | `rfMapRngSeedHigh` | 1 | Upper 16 bits of `noiseRngSeed`. Lower 16 stay in `noiseRngSeed` (16106) for backwards reading. |

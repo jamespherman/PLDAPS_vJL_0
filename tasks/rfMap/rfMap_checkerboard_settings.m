@@ -3,25 +3,21 @@ function p = rfMap_checkerboard_settings
 %
 % Settings file for rfMap contrast-reversing checkerboard mode.
 %
-% PHASE 1 STATUS: STUB. The dispatcher recognizes this stim type, but
-% the texture pre-render, polarity-reversal scheduling, and online
-% F1/F2 estimator are not implemented yet. Phase 3 of
-% rfMap_unified_merge_plan.md adds:
-%   - prepareStim_checkerboard.m (texture pair  x  N conditions)
-%   - per-flip polarity reversal in _run.m
-%   - reversal-rate validator (must divide refresh rate evenly;
-%     F2 must be below Nyquist)
-%   - updateSTA_checkerboard.m: temporal kernel + F1/F2 amplitudes
-%   - plotSTA_checkerboard.m: kernel traces + F1/F2 bars
+% This is a CELL-CHARACTERIZATION mode -- it does NOT produce an online
+% spatial RF (the spatial pattern is fixed; only polarity reverses).
+% Online output:
+%   (a) per-(channel, checkSize, contrast) temporal kernel via
+%       reverse-correlation against the +/-1 polarity sequence.
+%   (b) per-(channel, checkSize, contrast) F1/F2 amplitudes from
+%       per-trial complex sums of cos/sin at f_rev and 2*f_rev.
+% Useful for magno/parvo typing (modulation index F1/(F1+F2)) and
+% rough contrast-response curves.
 %
-% Loading this settings file in Phase 1 succeeds up to the point where
-% _init.m attempts to dispatch the checkerboard preparer; that call
-% errors with a clear "Phase 3 not yet implemented" message.
+% Note: "check size" is a spatial-scale knob, NOT a clean spatial-
+% frequency manipulation -- checkerboards are SF-broadband. If clean
+% SF tuning is required, use a separate drifting-grating task.
 %
-% Note: checkerboard does NOT produce an online spatial RF. It is a
-% cell-characterization mode (magno/parvo typing, contrast response)
-% sharing the rfMap architecture (passive fixation, pre-rendered
-% textures, Ripple ingestion, online plot window).
+% Loads via the PLDAPS GUI: Browse  ->  this file  ->  Initialize  ->  Run.
 
 %% pin stim type FIRST
 p = struct;
@@ -30,20 +26,59 @@ p.init.stimType = 'checkerboard';
 %% common configuration
 p = rfMap_commonSettings(p);
 
-%% Phase-3 placeholder fields (documented for the data dictionary)
-p.trVarsInit.checkSizesDva    = [0.5 1.0 2.0]; % spatial-scale knob (NOT SF)
-p.trVarsInit.checkContrasts   = [0.25 0.5 1.0];
-p.trVarsInit.checkReversalHz  = 5;             % must divide refresh rate evenly,
-                                               % and 2*reversalHz must be below
-                                               % Nyquist (frame_rate/2).
+%% checkerboard-specific overrides
+% Spatial scales (NOT SF -- broadband).
+p.trVarsInit.checkSizesDva   = [0.5 1.0 2.0];
+
+% Michelson contrasts in (0, 1]. Each contrast reserves 2 CLUT slots
+% (low/high gray pair, gamma-corrected via dkl2rgb at install time).
+p.trVarsInit.checkContrasts  = [0.25 0.5 1.0];
+
+% Polarity reversal frequency. MUST divide refresh rate evenly AND
+% F2 = 2 * checkReversalHz must be strictly below Nyquist
+% (refreshRate / 2). prepareStim_checkerboard validates this and
+% prints the legal set if you pick a bad value. Default 5 Hz works at
+% 100 Hz (20 fpr, F2=10 Hz<50) and 120 Hz (24 fpr, F2=10 Hz<60).
+p.trVarsInit.checkReversalHz = 5;
+
+% Trials per (checkSize, contrast) cell. Plan target is ~80 for stable
+% F1/F2; calibrate against bootstrap CIs on first real session.
+% Trial count = nCheckSize * nContrast * checkRepsPerCondition.
+p.trVarsInit.checkRepsPerCondition = 12;
+
+% Aperture (Phase 4 will activate; full-field for Phase 3).
 p.trVarsInit.checkApertureMode = 'fullField';
 
-%% strobe additions specific to checkerboard mode (Phase 3 will populate
-%% these per-trial; reserved here for schema continuity).
+% Hard cap on pre-rendered texture memory (bytes). Default 512 MB.
+p.trVarsInit.checkGpuMemCapBytes = 512 * 1024 * 1024;
+
+% Override common defaults that don't apply or want different values:
+% - checkerboard doesn't use noiseFrameHold (it operates at display
+%   frame resolution); we set it to 1 so the dispatcher's per-frame
+%   index math doesn't surprise. Also need a longer trial duration
+%   (~4 s) so each trial sees several reversals.
+p.trVarsInit.noiseFrameHold = 1;
+p.trVarsInit.trialDurationS = 4.0;
+
+% Number of temporal lags: cover ~one reversal period of lookback so
+% the kernel shows the full impulse response. At 5 Hz reversal +
+% 100 Hz refresh that's 20 frames; at 120 Hz it's 24. Use 24 to cover
+% both common refresh rates.
+p.trVarsInit.nSTALags = 24;
+
+%% Pre-compute integer strobe values for per-condition strobing.
+% Reversal Hz is constant across the session.
+p.init.checkReversalHzStrobe = round(p.trVarsInit.checkReversalHz * 10);
+
+%% strobe additions specific to checkerboard mode
+% checkSizeIdx and contrastIdx are per-trial. Their expressions read
+% the active condition out of the trial array via the trVars fields
+% set by nextParams (p.trVars.checkSizeIdx, p.trVars.contrastIdx).
+% reversalHz is fixed across the session.
 p.init.strobeList = [p.init.strobeList; { ...
-    'rfMapCheckSizeIdx',         '1'; ...                                       % placeholder (per-trial in Phase 3)
-    'rfMapCheckContrastIdx',     '1'; ...                                       % placeholder
-    'rfMapCheckReversalHz_x10',  'round(p.trVarsInit.checkReversalHz * 10)'; ...
+    'rfMapCheckSizeIdx',        'p.trVars.checkSizeIdx'; ...
+    'rfMapCheckContrastIdx',    'p.trVars.contrastIdx'; ...
+    'rfMapCheckReversalHz_x10', 'p.init.checkReversalHzStrobe'; ...
     }];
 
 %% finalize gui-comm mirror
