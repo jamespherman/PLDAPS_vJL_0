@@ -139,7 +139,7 @@ p.trVars.checkPolaritySequence = int8(1 - 2 * mod(revBlock, 2));  % +1, -1, +1, 
 %% Fixation geometry (shared)
 p = setupFixationGeometry(p);
 
-%% Destination rect = full screen (Phase 4 will jitter via srcRect).
+%% Destination rect = full screen.
 p.draw.noiseDestRect = p.draw.screenRect;
 
 %% Reset presentation state

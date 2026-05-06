@@ -1,61 +1,54 @@
 function [staAccum, staSpikeCount] = updateSTA(stimType, ...
     staAccum, staSpikeCount, spikeTimesPerChan, noiseOnTime, frameDurS, ...
-    stimTensor, trialStartFrame, nFramesTrial, nLags, jitterX, jitterY)
+    stimTensor, trialStartFrame, nFramesTrial, nLags)
 % updateSTA  Stim-type dispatcher for online STA accumulation.
 %
 %   [staAccum, staSpikeCount] = updateSTA(stimType, ...
 %       staAccum, staSpikeCount, spikeTimesPerChan, noiseOnTime, ...
-%       frameDurS, stimTensor, trialStartFrame, nFramesTrial, nLags, ...
-%       jitterX, jitterY)
+%       frameDurS, stimTensor, trialStartFrame, nFramesTrial, nLags)
 %
 %   Routes to the per-stim-type estimator. stimType is the string from
 %   p.init.stimType; the dispatcher does not consult any settings file.
 %
 %   stimTensor is the per-type stimulus representation:
-%     denseAchromatic / sparse : [nY, nX, nFrames] noise movie (uint8 or int8)
+%     denseAchromatic / sparse : [nY, nX, nFrames] noise movie
+%                                (uint8 or int8)
 %     denseChromatic           : [nY, nX, 3, nFrames] single drive tensor
-%     checkerboard             : Phase-3 stub (polarity sequence + condition)
+%                                (per-trial; sessionFormatVersion >= 2)
 %
-%   The caller (rfMap_finish.accumulateSTA) is responsible for selecting
-%   the right tensor for the active stim type and passing it here.
+%   Active paths: denseAchromatic, sparse, denseChromatic.
 %
-%   Phase 1 active paths: 'denseAchromatic', 'sparse'.
-%   Phase 2 active path:  'denseChromatic'.
-%   Phase 3 stub:         'checkerboard'.
-%
-%   Jitter offsets default to (0, 0); pass nonzero values only after
-%   Phase 4 activates the offset-aware accumulator path.
-
-if nargin < 11 || isempty(jitterX), jitterX = 0; end
-if nargin < 12 || isempty(jitterY), jitterY = 0; end
+%   checkerboard is NOT routed through this dispatcher. Its accumulator
+%   has a different shape (struct with kernel + F1/F2 fields) and a
+%   different call signature (per-trial polarity sequence + condition);
+%   rfMap_finish.accumulateSTA branches and calls
+%   updateSTA_checkerboard directly.
 
 switch stimType
     case 'denseAchromatic'
         [staAccum, staSpikeCount] = updateSTA_denseAchromatic( ...
             staAccum, staSpikeCount, spikeTimesPerChan, noiseOnTime, ...
             frameDurS, stimTensor, trialStartFrame, nFramesTrial, ...
-            nLags, jitterX, jitterY);
+            nLags);
 
     case 'sparse'
         [staAccum, staSpikeCount] = updateSTA_sparse( ...
             staAccum, staSpikeCount, spikeTimesPerChan, noiseOnTime, ...
             frameDurS, stimTensor, trialStartFrame, nFramesTrial, ...
-            nLags, jitterX, jitterY);
+            nLags);
 
     case 'denseChromatic'
         [staAccum, staSpikeCount] = updateSTA_denseChromatic( ...
             staAccum, staSpikeCount, spikeTimesPerChan, noiseOnTime, ...
             frameDurS, stimTensor, trialStartFrame, nFramesTrial, ...
-            nLags, jitterX, jitterY);
+            nLags);
 
     case 'checkerboard'
-        % Phase-3 stub. Phase 3 will replace stimTensor /
-        % trialStartFrame with polaritySequence / conditionPerFrame at
-        % the call site.
-        [staAccum, staSpikeCount] = updateSTA_checkerboard( ...
-            staAccum, staSpikeCount, spikeTimesPerChan, noiseOnTime, ...
-            frameDurS, stimTensor, trialStartFrame, nLags, ...
-            jitterX, jitterY);
+        error('updateSTA:checkerboardNotDispatched', ...
+            ['Checkerboard accumulation has a struct-shaped accumulator ' ...
+             'and a different call signature; rfMap_finish.accumulateSTA ' ...
+             'must call updateSTA_checkerboard directly, not via this ' ...
+             'dispatcher.']);
 
     otherwise
         error('updateSTA:badStimType', ...

@@ -11,7 +11,9 @@ analyses appropriate to each. Deprecate `tasks/fix_present_squares(WiP)`.
 Inspired by `~/Downloads/feng_LGN/` collaborator code, with the following
 explicit exclusions: webcam recording, photodiode tracking, log-polar
 cortical-magnification warp, bar-sweep stimulus, natural-movie playback.
-Spatial jitter and restricted apertures are kept as opt-in features.
+Spatial jitter and restricted apertures were originally planned as
+opt-in features (Phase 4) but cancelled before implementation; see
+§ Phase 4 below for the decision rationale.
 
 ### What "RF mapping" means in each mode (be honest about scope)
 
@@ -294,11 +296,6 @@ an invented extension and has been corrected.
   immediately before its first random draw. Pre-allocations and
   parameter-derivation steps must not consume the RNG stream. Audit
   this at the dispatcher boundary.
-- **Jitter-aware accumulator hook from day one**: even though Phase 4
-  adds the actual jitter logic, all four `updateSTA_*` estimators take a
-  per-trial `(jitterX, jitterY)` offset argument in their Phase-1
-  signature, defaulted to `(0,0)`. This avoids re-touching chromatic and
-  checkerboard estimators in Phase 4.
 - Mirror the dispatcher pattern on the analysis side, **but only where
   the math actually differs**:
   - `updateSTA.m` → thin dispatcher → four per-type estimators
@@ -325,13 +322,11 @@ an invented extension and has been corrected.
   is **stim-type-conditional**, not a superset-with-NaN. Each
   per-stim-type `_settings.m` declares only its relevant columns
   (sparse omits checkSizeIdx/contrastIdx; checkerboard omits sparse
-  density). Phase 4's jitter and aperture columns are appended to
-  whichever stim type enables them. Analysis loaders branch on
-  `stimType` + `sessionFormatVersion`. The superset-with-NaN
-  alternative was rejected because it would let an operator
-  unintentionally configure irrelevant columns at the GUI/array level
-  — the same error the per-stim-type settings files are designed
-  to prevent.
+  density). Analysis loaders branch on `stimType` +
+  `sessionFormatVersion`. The superset-with-NaN alternative was
+  rejected because it would let an operator unintentionally
+  configure irrelevant columns at the GUI/array level — the same
+  error the per-stim-type settings files are designed to prevent.
 - Settings file gains a `p.init.stimTypeName` string (used in filenames /
   strobes) and stim-type-conditional defaults (check size, frame hold,
   lifetime, etc.).
@@ -342,10 +337,9 @@ an invented extension and has been corrected.
   tests below).
 
 **Phase dependency map (clarification):** Phase 1.5 gates **Phase 2
-only**. Phases 3 (checkerboard) and 4 (jitter/aperture) depend only on
-the Phase-1 dispatcher and are **not** blocked by the calibration
-audit. If the colorimeter is delayed, work continues on Phases 3 and 4
-in parallel.
+only**. Phase 3 (checkerboard) depends only on the Phase-1 dispatcher
+and is **not** blocked by the calibration audit. If the colorimeter
+is delayed, Phase 3 work continues in parallel.
 
 ### Phase 1.5 — DKL calibration audit (gates Phase 2)
 - Measure monitor primaries (R, G, B chromaticities + max luminance) on
@@ -470,8 +464,7 @@ relevant to anyone continuing the merge plan.
   the timing budget is comfortable, but keep the rule explicit: no
   blocking strobe writes inside the per-flip loop.
 - Settings additions: `checkSizesDva` (vector — note: spatial-scale knob,
-  not SF), `checkContrasts` (vector or pair), `checkReversalHz`,
-  `checkApertureMode`.
+  not SF), `checkContrasts` (vector or pair), `checkReversalHz`.
 - **Reversal-rate validator** (settings-time): `checkReversalHz` must
   divide `p.rig.refreshRate` evenly. At 100 Hz the legal set is
   `{50, 25, 20, 10, 5, 4, 2, 1}` Hz. Warn or error on mismatch.
@@ -511,65 +504,77 @@ relevant to anyone continuing the merge plan.
     amplitude bars adjacent. Throttle per Phase-1's
     `staPlotEveryNTrials` setting.
 
-### Phase 4 — Spatial jitter + restricted apertures (opt-in, all stim types)
-- Add `p.trVars.jitterMode` (`'none' | 'perTrial'`) and
-  `p.trVars.jitterRangeDva` (4-vector). Compute per-trial pixel offset in
-  `rfMap_next.m`, apply via the source rect in
-  `Screen('DrawTexture', …, srcRect, dstRect, …)` rather than regenerating
-  textures — pattern from `feng_LGN/run_Checkerboard.m:111-119`.
-- **Jitter-margin convention (locked)**: each generator allocates the
-  noise tensor at `(nY + 2·marginY) × (nX + 2·marginX)` where
-  `marginX = ceil(maxJitterX / checkSizePix)` and similarly for Y. The
-  *unjittered* center region is the configured grid, exposed online via
-  `srcRect`. Without margin, srcRect-based jitter runs off the texture
-  edge. Document this in each `generateStim_*` header and in the
-  data dictionary.
-- **Hooks already plumbed (do not redo).** Phase 1 added a per-trial
-  `(jitterX, jitterY)` argument to all four `updateSTA_*` estimators
-  (`updateSTA_denseAchromatic`, `_sparse`, `_denseChromatic`,
-  `_checkerboard`), defaulted to `(0, 0)`. The Phase-1 implementations
-  error if a nonzero offset is passed -- Phase 4 just removes that
-  guard and activates the offset-aware accumulator path. Estimator
-  signatures do **not** need to change.
-- **Per-trial chromatic implication.** As of `sessionFormatVersion = 2`
-  (per-trial seeded chromatic, see Phase 2 §"Per-trial chromatic"
-  below), the chromatic drive tensor is regenerated per trial in
-  `nextParams_noiseMovie`. The margin allocation needs to happen in
-  `generateStim_denseChromatic` so each trial's per-trial drive is
-  itself margin-padded; otherwise the per-trial drive lookup at
-  jittered indices falls outside the trial's small tensor. The
-  margin formula is the same; just applied per-trial.
-- **Checkerboard jitter texture sizing — decision needed.** The
-  Phase-3 `prepareStim_checkerboard` pre-renders textures at exactly
-  screen size (`nY × nX = ceil(screenH/pxPerSide) × ceil(screenW/pxPerSide)`).
-  Phase 4 srcRect-based jitter requires margin around the screen.
-  Options:
-    (a) Enlarge the pre-rendered checkerboard textures to
-        `(screenH + 2·maxJitterY) × (screenW + 2·maxJitterX)`. Memory
-        implication: at 3 sizes × 3 contrasts × 2 polarities the
-        current footprint is ~42 MB; with a 2× linear margin
-        allowance it grows to ~170 MB. Within the 512 MB GPU memory
-        cap but worth noting.
-    (b) Accept smaller jitter range bounded by what fits within the
-        existing screen-sized textures (i.e., zero margin -> jitter
-        eats from the screen, so corners of the screen show
-        background instead of checks at extreme offsets).
-    (a) is more in keeping with the locked margin convention above;
-    (b) is simpler. **Decide and lock before implementing.**
-- **Aperture API**: `p.trVars.apertureMode`
-  (`'fullField' | 'rect' | 'circle'`), `apertureCenterDva`,
-  `apertureSizeDva` are **per-trial**. Pre-generate a small bank of
-  alpha-mask textures in `_init` covering the discrete settings the
-  task will actually use (per the trial array); fall back to on-demand
-  generation in `_next` if the trial requests an unbanked combination.
-  Avoid generating a unique mask per trial in `_run` — texture creation
-  inside the per-flip loop is the timing risk.
-- The Phase-1 jitter-aware accumulator hooks now activate: per-trial
-  `(jitterX, jitterY)` is passed to each `updateSTA_*` and used as a
-  spatial-index offset into the cumulative map.
-- Strobe per-trial jitter offset (`jitterX_x10`, `jitterY_x10`) and
-  aperture parameters; store in `p.trData` for offline reconstruction.
-- Defaults: both options off → existing behavior unchanged.
+### Phase 4 — CANCELLED (decision recorded 2026-05-05)
+
+**Original scope**: spatial jitter via `srcRect` offsets, plus restricted
+apertures (rect / circle alpha masks), opt-in per stim type. Reasoning
+was sub-check spatial resolution for parafoveal LGN RFs and surround-
+isolation experiments via apertures.
+
+**Why cancelled**:
+
+- **Jitter buys nothing for this program.** Macaque fixational drift
+  is 0.1–0.5 dva over a 1–2 s trial — already on the order of the
+  0.5 dva check size. Trials accumulate over different drift
+  trajectories, so the effective check grid is jittered relative to
+  the RF without any task-side intervention. For prosthesis-relevant
+  electrode-localization work the RF location is recoverable to a
+  small fraction of a check from the unjittered STA already; sub-
+  quarter-degree resolution doesn't change the prosthesis design.
+  Explicit jitter would matter at very small RFs (foveal V1 / parvo
+  LGN ≤ 0.1 dva) recorded with check sizes forced larger than the
+  RF — not the regime here.
+- **Apertures are a separate scientific question.** Surround
+  isolation / size tuning is its own experiment (drifting gratings or
+  expanding-aperture protocols), not a wrapper on dense noise. SNR
+  improvements from "no peripheral spikes" are small under dense
+  noise because cell tuning falls off with distance from the RF;
+  the periphery contributes little to the cell's spike rate already.
+  Animal-comfort gains (vs full-field flashing) would matter if
+  sessions were a struggle, but they're running cleanly.
+- **Cost of carrying the option**: ~50 LOC of placeholder fields,
+  estimator signatures, and reserved strobe codes scattered across
+  `rfMap_commonSettings.m`, the four `updateSTA_*` estimators, the
+  dispatcher, and the data dictionary -- each a future-reader
+  question of "is this used?". Pruning is cheaper than maintaining.
+
+**Consequences**:
+
+- The opening-paragraph note about "Spatial jitter and restricted
+  apertures are kept as opt-in features" is no longer accurate; updated.
+- The Phase-1 `(jitterX, jitterY)` estimator-arg hook is removed.
+  Estimator signatures simplified to drop the unused params.
+- `p.trVarsInit.jitterMode / jitterRangeDva / apertureMode /
+  apertureCenterDva / apertureSizeDva` removed from
+  `rfMap_commonSettings.m`. `checkApertureMode` removed from
+  `rfMap_checkerboard_settings.m`.
+- Strobe codes 16151–16157 (`rfMapJitterX_x10`, `rfMapJitterY_x10`,
+  `rfMapJitterMode`, `rfMapApertureMode`, `rfMapApertureCenterTheta_x10`,
+  `rfMapApertureCenterRadius_x100`, `rfMapApertureSize_x100`) are kept
+  reserved-but-cancelled in `+pds/initCodes.m` per the "holy" rule —
+  they were never strobed in any session, so the numbers could
+  technically be reused, but the safe convention is to leave them
+  reserved.
+
+**If this decision is revisited later** (e.g., to extend the task to
+foveal mapping at sub-degree check sizes), these are the original
+design notes, kept here for that future reader:
+
+- `jitterMode` opt-in via `p.trVars.jitterMode = 'perTrial'` and
+  `p.trVars.jitterRangeDva` (4-vector `[-x +x -y +y]`).
+- Apply via `Screen('DrawTexture', ..., srcRect, dstRect, ...)`,
+  not by regenerating textures (Feng pattern at
+  `feng_LGN/run_Checkerboard.m:111-119`).
+- Margin convention: each generator allocates the noise tensor at
+  `(nY + 2·marginY) × (nX + 2·marginX)` where
+  `marginX = ceil(maxJitterX / checkSizePix)`. The unjittered grid
+  is the configured center region; srcRect indexes into the padded
+  tensor.
+- Per-trial chromatic implication: regenerate the trial's drive
+  tensor with the margin baked in (same formula, applied per trial).
+- Checkerboard texture sizing tradeoff: enlarge pre-rendered
+  textures to fit margin (~42 MB → ~170 MB) vs accept smaller
+  jitter range bounded by screen.
 
 ### Phase 5 — Cleanup
 - Re-run the Phase-0 grep for `fix_present_squares` and `stimMode` to
@@ -740,10 +745,6 @@ loads a saved session and verifies:
 - Frame timing: per trial, distribution of `diff(timing.flipTime)`
   with mean within 0.5 % of `frameDuration` and < 0.5 % of frames
   marked "missed" (configurable thresholds).
-- Phase 4 only: jitter offsets across trials pass a
-  Kolmogorov-Smirnov uniformity test at p > 0.05 (the test
-  already specified in the Phase 4 validation block, now
-  formalized into the audit tool).
 - Phase 3 only: reversal-event timestamps match the configured
   `checkReversalHz`; F1/F2 frequency stays below Nyquist.
 
@@ -816,22 +817,21 @@ between Phase 6 acceptance and routine production use.
   `false`.
 - No data-dictionary rewrite. A short Phase 6 appendix to the
   dictionary is added when 6a/6b ship; structural fields stay as
-  Phase 4 left them.
+  Phase 3 left them.
 
 ## Files touched (cumulative)
 
 ### Modified
 - **`tasks/rfMap/rfMap_settings.m` is replaced** by the four per-stim-type
   settings files plus `rfMap_commonSettings.m` (see Phase 1). Each
-  per-type file declares only its relevant parameters, jitter/aperture
-  fields, and a `sessionFormatVersion`. The current monolithic
-  `rfMap_settings.m` is removed in Phase 5 once the four replacements
-  are tested.
+  per-type file declares only its relevant parameters and a
+  `sessionFormatVersion`. The current monolithic `rfMap_settings.m`
+  is removed in Phase 5 once the four replacements are tested.
 - `tasks/rfMap/rfMap_init.m` — dispatch generator by `stimType`; lift RGB
   block.
-- `tasks/rfMap/rfMap_next.m` — compute jitter offset; select condition
-  (checkSize/contrast) for checker; resolve aperture mask from the
-  pre-generated bank (or on-demand fallback).
+- `tasks/rfMap/rfMap_next.m` — select condition (checkSize/contrast)
+  for checker; for chromatic, regenerate this trial's drive from the
+  per-trial seed (sessionFormatVersion 2).
 - `tasks/rfMap/rfMap_run.m` — branch draw call by `stimType`; handle
   checkerboard reversal scheduling and queued polarity strobe.
 - `tasks/rfMap/rfMap_finish.m` — branch STA accumulation by stim type;
@@ -839,8 +839,7 @@ between Phase 6 acceptance and routine production use.
   adds a single dispatcher line**: when `p.trVars.useSyntheticSpikes`
   is true, call `injectSyntheticSpikes(p)` instead of
   `pds.getRippleData(p)`. Default behavior unchanged.
-- `tasks/rfMap/supportFunctions/updateSTA.m` — thin dispatcher; passes
-  `(jitterX, jitterY)` to per-type estimators.
+- `tasks/rfMap/supportFunctions/updateSTA.m` — thin dispatcher.
 - `tasks/rfMap/supportFunctions/plotSTA.m` — thin dispatcher.
 - `tasks/rfMap/supportFunctions/initSTADisplay.m` — figure layout choice
   driven by stim type.
@@ -849,10 +848,12 @@ between Phase 6 acceptance and routine production use.
 - `tasks/rfMap/supportFunctions/initmon.m` — already exists; audit and
   update.
 - `+pds/initCodes.m` — append codes for stimType, sessionFormatVersion,
-  chromatic params, checker params, polarity reversals, jitter offsets,
-  aperture params (new code numbers in the **16140–16175** block, after
-  barsweep's last code at 16136; do **not** renumber existing entries —
-  the file is "holy" per CLAUDE.md). Mark `noiseColorMode` (16105) and
+  chromatic params, checker params, and polarity reversals (new code
+  numbers in the **16140–16175** block, after barsweep's last code at
+  16136; do **not** renumber existing entries — the file is "holy"
+  per CLAUDE.md). 16151–16157 were originally reserved for jitter and
+  aperture (Phase 4); Phase 4 is cancelled and those numbers stay
+  reserved-but-unused. Mark `noiseColorMode` (16105) and
   `noiseStimMode` (16113) as deprecated in comments; keep numbers
   reserved.
 
@@ -878,8 +879,6 @@ between Phase 6 acceptance and routine production use.
   `rfMap_checkerboard_settings.m`,
   plus a shared `rfMap_commonSettings.m` for parameters identical
   across all four.
-- `tasks/rfMap/supportFunctions/applyJitterAndAperture.m` (helper used
-  inside `_run`)
 - `tasks/rfMap/supportFunctions/computeF1F2.m`
 - `tasks/rfMap/_validation/compare_old_vs_new_generators.m` (Phase 1
   developer-side harness: pinned-seed byte-comparison of old
@@ -903,7 +902,7 @@ between Phase 6 acceptance and routine production use.
   - `tasks/rfMap/supportFunctions/injectSyntheticSpikes.m` (6a
     helper, reuses the LNP machinery in `testSTA.m`).
 - `data_dictionaries/rfMap_data_dictionary.md` — created in Phase 2,
-  extended through Phase 4; short Phase 6 appendix added when 6a/6b
+  extended through Phase 3; short Phase 6 appendix added when 6a/6b
   ship (documents `useSyntheticSpikes` flag and the audit-tool
   output schema).
 
@@ -938,13 +937,7 @@ late additions). Every code listed here must appear in `p.init.strobeList`.
 | 16148  | `rfMapCheckReversalHz_x10`    | 3 | reversal rate (Hz) × 10 |
 | 16149  | `rfMapCheckPolaritySign`      | 3 | 1 = +1 polarity, 2 = −1 polarity (offset to stay positive) |
 | 16150  | `rfMapCheckReversalEvent`     | 3 | strobed at each reversal flip (value = polarity sign) |
-| 16151  | `rfMapJitterX_x10`            | 4 | per-trial jitter X (dva) × 10 + 1800 (offset for negatives) |
-| 16152  | `rfMapJitterY_x10`            | 4 | per-trial jitter Y (dva) × 10 + 1800 |
-| 16153  | `rfMapJitterMode`             | 4 | 1=none, 2=perTrial |
-| 16154  | `rfMapApertureMode`           | 4 | 1=fullField, 2=rect, 3=circle |
-| 16155  | `rfMapApertureCenterTheta_x10`| 4 | aperture center polar angle × 10 + 1800 |
-| 16156  | `rfMapApertureCenterRadius_x100` | 4 | aperture center eccentricity × 100 |
-| 16157  | `rfMapApertureSize_x100`      | 4 | aperture size (dva) × 100 |
+| 16151–16157 | (cancelled; reserved-but-unused) | — | originally allocated for jitter / aperture params (Phase 4). Phase 4 cancelled before implementation; numbers stay reserved per the "holy" rule (never strobed in any session, but not reused). |
 | 16158  | `rfMapSparseBalancedFlag`     | 1 | 1 = uniform-random (legacy), 2 = balanced TwinDeck |
 | 16159  | `rfMapRngSeedHigh`            | 1 | RNG seed upper 16 bits (lower 16 stay in existing `noiseRngSeed` 16106 — kept active for backwards reading) |
 | 16160–16169 | (reserved future per-stim-type params) | — | leave free |
@@ -1054,21 +1047,13 @@ Tighter, less hand-wavy than the prior draft.
   - Strobe queue depth audit: log queue length each flip across a
     long session; confirm bounded.
   - On-rig smoke test on real Ripple hardware before shipping.
-- **Phase 4**:
-  - Per-trial jitter offsets distribute uniformly over the configured range
-    (Kolmogorov-Smirnov check on a session of trials — formalized into
-    `auditSession.m` in Phase 6d).
-  - Aperture mask covers exactly the configured pixels (image diff on a
-    test frame).
-  - On-rig smoke test on real Ripple hardware before shipping.
+- **Phase 4**: cancelled (see § Phase 4 above).
 - **Phase 6** (the integrated gate before any animal session):
   acceptance criteria are listed under §"Phase 6 — Pre-recording
   validation gate." The per-phase "on-rig smoke test" lines above are
   superseded by Phase 6a's full end-to-end loop closure plus Phase 6c's
-  on-rig readiness battery; Phases 1–4 ship after their *synthetic*
+  on-rig readiness battery; Phases 1–3 ship after their *synthetic*
   checks pass, with the *integrated* on-rig validation gated to Phase 6.
-  This deliberately avoids running four separate ad-hoc on-rig
-  smoke tests of overlapping scope.
 - Each phase ships only after passing its checks, before the next phase
   begins.
 
@@ -1082,5 +1067,3 @@ Tighter, less hand-wavy than the prior draft.
   - Balanced sparse: `create_sparsechecks.m:37-150`.
   - Multi-condition / contrast-reversing checkerboard:
     `create_Checkerboard.m`, `run_Checkerboard.m`.
-  - Spatial jitter pattern: `run_Checkerboard.m:111-119`.
-  - Aperture pattern: `run_Checkerboard.m:71-108`.

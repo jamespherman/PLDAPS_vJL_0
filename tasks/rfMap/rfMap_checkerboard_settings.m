@@ -46,9 +46,6 @@ p.trVarsInit.checkReversalHz = 5;
 % Trial count = nCheckSize * nContrast * checkRepsPerCondition.
 p.trVarsInit.checkRepsPerCondition = 12;
 
-% Aperture (Phase 4 will activate; full-field for Phase 3).
-p.trVarsInit.checkApertureMode = 'fullField';
-
 % Hard cap on pre-rendered texture memory (bytes). Default 512 MB.
 p.trVarsInit.checkGpuMemCapBytes = 512 * 1024 * 1024;
 

@@ -312,13 +312,11 @@ codes.rfMapCheckContrastIdx          = 16147;  % index into checkContrasts      
 codes.rfMapCheckReversalHz_x10       = 16148;  % reversal rate (Hz) * 10                             -- Phase 3
 codes.rfMapCheckPolaritySign         = 16149;  % 1 = +1 polarity, 2 = -1 polarity                    -- Phase 3
 codes.rfMapCheckReversalEvent        = 16150;  % strobed at each reversal flip (value = polarity)    -- Phase 3
-codes.rfMapJitterX_x10               = 16151;  % per-trial jitter X (dva) * 10 + 1800                -- Phase 4
-codes.rfMapJitterY_x10               = 16152;  % per-trial jitter Y (dva) * 10 + 1800                -- Phase 4
-codes.rfMapJitterMode                = 16153;  % 1=none, 2=perTrial                                  -- Phase 4
-codes.rfMapApertureMode              = 16154;  % 1=fullField, 2=rect, 3=circle                       -- Phase 4
-codes.rfMapApertureCenterTheta_x10   = 16155;  % aperture center polar angle * 10 + 1800             -- Phase 4
-codes.rfMapApertureCenterRadius_x100 = 16156;  % aperture center eccentricity * 100                  -- Phase 4
-codes.rfMapApertureSize_x100         = 16157;  % aperture size (dva) * 100                           -- Phase 4
+% 16151-16157 originally allocated to rfMap Phase 4 (jitter / aperture).
+% Phase 4 was cancelled before implementation; numbers are
+% reserved-but-unused per the "holy" rule (never strobed in any
+% session, but do not reuse). See analysisPlanningDocs/
+% rfMap_unified_merge_plan.md  -> Phase 4 for the cancellation rationale.
 codes.rfMapSparseBalancedFlag        = 16158;  % 1 = uniform-random (legacy), 2 = balanced TwinDeck
 codes.rfMapRngSeedHigh               = 16159;  % RNG seed upper 16 bits (lower 16 in noiseRngSeed 16106)
 % 16160-16169 reserved for future per-stim-type params

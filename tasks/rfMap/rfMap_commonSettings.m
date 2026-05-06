@@ -240,13 +240,6 @@ p.trVarsInit.currentNoiseIdx     = 1;
 p.trVarsInit.noiseStartFlipIdx   = 0;
 p.trVarsInit.movieExhausted      = false;
 
-% --- jitter / aperture (Phase 4 placeholders, off by default) ---
-p.trVarsInit.jitterMode          = 'none';   % 'none' | 'perTrial'
-p.trVarsInit.jitterRangeDva      = [0 0 0 0];% [-x +x -y +y]
-p.trVarsInit.apertureMode        = 'fullField'; % 'fullField' | 'rect' | 'circle'
-p.trVarsInit.apertureCenterDva   = [0 0];
-p.trVarsInit.apertureSizeDva     = 0;
-
 % --- postFlip ---
 p.trVarsInit.postFlip.logical    = false;
 p.trVarsInit.postFlip.varNames   = cell(0);

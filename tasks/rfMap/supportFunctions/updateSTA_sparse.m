@@ -1,12 +1,11 @@
 function [staAccum, staSpikeCount] = updateSTA_sparse( ...
     staAccum, staSpikeCount, spikeTimesPerChan, noiseOnTime, frameDurS, ...
-    noiseMovie, trialStartFrame, nFramesTrial, nLags, jitterX, jitterY)
+    noiseMovie, trialStartFrame, nFramesTrial, nLags)
 % updateSTA_sparse  Accumulate STA for sparse balanced noise.
 %
 %   [staAccum, staSpikeCount] = updateSTA_sparse( ...
 %       staAccum, staSpikeCount, spikeTimesPerChan, noiseOnTime, ...
-%       frameDurS, noiseMovie, trialStartFrame, nFramesTrial, nLags, ...
-%       jitterX, jitterY)
+%       frameDurS, noiseMovie, trialStartFrame, nFramesTrial, nLags)
 %
 %   Stimulus convention:
 %     Sparse movie is int8 with values in {-1, 0, +1}. The balanced
@@ -17,17 +16,6 @@ function [staAccum, staSpikeCount] = updateSTA_sparse( ...
 %   Lag convention:
 %     lagIdx 1  ->  stimulus at spike time (0 ms delay)
 %     lagIdx k  ->  stimulus (k-1) frames before spike (frameDurS * (k-1) delay)
-%
-%   Phase 4 (jitter): see updateSTA_denseAchromatic.m for the rationale.
-
-if nargin < 10 || isempty(jitterX), jitterX = 0; end
-if nargin < 11 || isempty(jitterY), jitterY = 0; end
-
-if jitterX ~= 0 || jitterY ~= 0
-    error('updateSTA_sparse:jitterUnsupported', ...
-        ['Phase-1 estimator does not support nonzero jitter. ' ...
-         'Phase 4 will activate the jitter offset path.']);
-end
 
 nChannels    = length(spikeTimesPerChan);
 nTotalFrames = size(noiseMovie, 3);

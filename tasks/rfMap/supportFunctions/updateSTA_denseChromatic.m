@@ -1,13 +1,12 @@
 function [staAccum, staSpikeCount] = updateSTA_denseChromatic( ...
     staAccum, staSpikeCount, spikeTimesPerChan, noiseOnTime, frameDurS, ...
-    dklDriveTensor, trialStartFrame, nFramesTrial, nLags, ...
-    jitterX, jitterY)
+    dklDriveTensor, trialStartFrame, nFramesTrial, nLags)
 % updateSTA_denseChromatic  Accumulate STA for dense chromatic (DKL) noise.
 %
 %   [staAccum, staSpikeCount] = updateSTA_denseChromatic( ...
 %       staAccum, staSpikeCount, spikeTimesPerChan, noiseOnTime, ...
 %       frameDurS, dklDriveTensor, trialStartFrame, nFramesTrial, ...
-%       nLags, jitterX, jitterY)
+%       nLags)
 %
 %   For each spike, identifies which dense noise frame was on screen,
 %   then accumulates the per-check DKL drive vector at each temporal lag
@@ -23,18 +22,6 @@ function [staAccum, staSpikeCount] = updateSTA_denseChromatic( ...
 %   Lag convention (matches updateSTA_denseAchromatic):
 %     lagIdx 1 -> stimulus at spike time (0 ms delay)
 %     lagIdx k -> stimulus (k-1) frames before spike
-%
-%   Phase 4 (jitter): jitterX, jitterY are placeholders; nonzero values
-%   are not yet supported.
-
-if nargin < 10 || isempty(jitterX), jitterX = 0; end
-if nargin < 11 || isempty(jitterY), jitterY = 0; end
-
-if jitterX ~= 0 || jitterY ~= 0
-    error('updateSTA_denseChromatic:jitterUnsupported', ...
-        ['Phase-2 estimator does not support nonzero jitter. ' ...
-         'Phase 4 will activate the jitter offset path.']);
-end
 
 nChannels    = length(spikeTimesPerChan);
 nTotalFrames = size(dklDriveTensor, 4);

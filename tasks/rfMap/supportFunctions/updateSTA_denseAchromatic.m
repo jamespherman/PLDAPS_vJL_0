@@ -1,12 +1,11 @@
 function [staAccum, staSpikeCount] = updateSTA_denseAchromatic( ...
     staAccum, staSpikeCount, spikeTimesPerChan, noiseOnTime, frameDurS, ...
-    noiseMovie, trialStartFrame, nFramesTrial, nLags, jitterX, jitterY)
+    noiseMovie, trialStartFrame, nFramesTrial, nLags)
 % updateSTA_denseAchromatic  Accumulate STA for dense achromatic noise.
 %
 %   [staAccum, staSpikeCount] = updateSTA_denseAchromatic( ...
 %       staAccum, staSpikeCount, spikeTimesPerChan, noiseOnTime, ...
-%       frameDurS, noiseMovie, trialStartFrame, nFramesTrial, nLags, ...
-%       jitterX, jitterY)
+%       frameDurS, noiseMovie, trialStartFrame, nFramesTrial, nLags)
 %
 %   For each spike, identifies which dense noise frame was on screen,
 %   then accumulates the mean-subtracted stimulus at each temporal lag
@@ -20,20 +19,6 @@ function [staAccum, staSpikeCount] = updateSTA_denseAchromatic( ...
 %   Lag convention:
 %     lagIdx 1  ->  stimulus at spike time (0 ms delay)
 %     lagIdx k  ->  stimulus (k-1) frames before spike (frameDurS * (k-1) delay)
-%
-%   Phase 4 (jitter): jitterX, jitterY are per-trial pixel-grid offsets
-%   into a margin-padded noise tensor. Phase 1 always passes (0,0); the
-%   arguments are present in the signature so Phase 4 does not need to
-%   re-touch this file. Defaults are 0 if unspecified.
-
-if nargin < 10 || isempty(jitterX), jitterX = 0; end
-if nargin < 11 || isempty(jitterY), jitterY = 0; end
-
-if jitterX ~= 0 || jitterY ~= 0
-    error('updateSTA_denseAchromatic:jitterUnsupported', ...
-        ['Phase-1 estimator does not support nonzero jitter. ' ...
-         'Phase 4 will activate the jitter offset path.']);
-end
 
 nChannels    = length(spikeTimesPerChan);
 nTotalFrames = size(noiseMovie, 3);

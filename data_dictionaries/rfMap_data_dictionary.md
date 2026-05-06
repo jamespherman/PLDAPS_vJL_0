@@ -115,7 +115,6 @@ Common fields (all stim types):
 | `connectRipple`, `useOnlineSort`, `useRippleSTA` | 0/0/0 | Ripple integration. |
 | `nSTALags`, `nChannels` | 8, 32 | STA dimensions. |
 | `staPlotEveryNTrials`, `staPlotChannels` | 5, [] | Online-plot throttling. |
-| `jitterMode`, `jitterRangeDva`, `apertureMode`, `apertureCenterDva`, `apertureSizeDva` | -- | Phase-4 placeholders (off by default). |
 
 Stim-type-specific:
 
@@ -181,7 +180,7 @@ the full block (16140-16175 reserved).
 | 16148 | `rfMapCheckReversalHz_x10` | 3 | Reversal Hz × 10 (session-constant). |
 | 16149 | `rfMapCheckPolaritySign` | 3 | Initial polarity (1 = +1, 2 = -1; reserved, not currently strobed since the schedule always starts at +1). |
 | 16150 | `rfMapCheckReversalEvent` | 3 | Strobed at each polarity-flip flip (queued via `addValue` between draw and flip; the value is the new polarity, 1 = +1, 2 = -1). |
-| 16151-16157 | `rfMapJitter*`, `rfMapAperture*` | 4 | Jitter / aperture (TBD Phase 4). |
+| 16151-16157 | (cancelled; reserved-but-unused) | — | Originally allocated for jitter / aperture params (Phase 4). Phase 4 was cancelled before implementation; numbers stay reserved per the "holy" rule. |
 | 16158 | `rfMapSparseBalancedFlag` | 1 | 1=legacy uniform-random, 2=balanced TwinDeck. |
 | 16159 | `rfMapRngSeedHigh` | 1 | Upper 16 bits of `noiseRngSeed`. Lower 16 stay in `noiseRngSeed` (16106) for backwards reading. |
 | 16160-16175 | -- | -- | Reserved for future per-stim-type params. |
