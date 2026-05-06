@@ -365,6 +365,26 @@ in parallel.
 - **Phase 2 cannot start until calibration is documented and signed off,
   using whichever source was used.**
 
+#### Phase 1.5 outcome (recorded 2026-05-05)
+
+Partial pass, with the colorimeter validation step deferred:
+
+- Per-rig LUT files (`tasks/rfMap/supportFunctions/LUT_VPIXX_rig{1,2}.{xyY,r,g,b}`)
+  exist and are wired up: `initClut.m:10-11` picks `LUT_VPIXX_rig<N>`
+  by `p.init.pcName(end-1)` and calls `initmon` to populate
+  `M_dkl2rgb`, `Rg`/`Gg`/`Bg`. Rig-side measurement of primaries +
+  gamma is presumed (the per-rig file naming convention implies on-
+  rig measurement), so `rfMap_denseChromatic_settings.m` defaults
+  `dklCalibrationSource = 'measured_primaries+measured_gamma'`.
+- The **canonical-DKL-axis-via-colorimeter validation step is NOT
+  done.** Phases 2 and 3 proceeded without it on the basis of the
+  vendor-primaries-fallback clause above (i.e., we have measured
+  gamma per rig and we trust the per-rig `.xyY` files). The gate is
+  technically still open. Acceptable for screening / piloting; the
+  validation should be completed before publishing chromatic data
+  acquired with this task. Phase 6 (`§ Phase 6` below) is a natural
+  place to add it as a gate for first real recording sessions.
+
 ### Phase 2 — Chromatic dense noise
 - **Audit the existing `dkl2rgb.m` and `initmon.m`** already present in
   `tasks/rfMap/supportFunctions/`. Diff them against the
@@ -391,6 +411,46 @@ in parallel.
   `noiseDklHue_x10`.
 - Update `data_dictionaries/rfMap_data_dictionary.md` (newly created in
   this phase — none currently exists) with the chromatic field set.
+
+#### Phase 2 outcome (recorded 2026-05-05)
+
+Phase 2 shipped (commit `17877dad`), then was amended to a per-trial
+seeding scheme to handle the LGN-scale memory blowup. Both pieces are
+relevant to anyone continuing the merge plan.
+
+- **Per-trial chromatic seeding** (commit `46482dcd`,
+  `sessionFormatVersion = 2`). The original Phase-2 design pre-
+  rendered the entire session's chromatic drive tensor at session
+  init (~180 MB at 2-dva checks; ~8.6 GB at LGN-scale 0.5-dva checks
+  -- untenable). Refactored so the chromatic drive tensor is
+  regenerated per trial in `nextParams_noiseMovie` from a per-trial
+  seed saved on the trial array (`chromaticSeed` column). The
+  per-trial seeds are themselves derived deterministically from
+  `p.trVarsInit.noiseRngSeed` via `rng(masterSeed); randi(...)`, so
+  any session is bit-exact regenerable from the master seed alone.
+  Pattern mirrored from `joystick_release_for_stim_change_and_dim`
+  `stimSeed`. Per-trial memory at LGN scale: ~0.2 MB movie + ~2.2 MB
+  drive (gc'd by `_next` on the next trial). Achromatic / sparse
+  retain the whole-session pre-rendered movie (their memory at LGN
+  scale is ~720 MB uint8, fine; refactoring would break the Phase-1
+  bit-exact regression test).
+- **LGN-tuned check size**: `checkSizeDeg` default lowered from
+  `2 dva` to `0.5 dva` in `rfMap_commonSettings.m`. Standard for LGN
+  parafoveal RFs. Bump to ~1 dva for SC sessions (larger RFs).
+- **`p.rig.frameDuration` local fix**. `pds.initDataPixx.m` updates
+  `p.rig.refreshRate` from PTB but does NOT update
+  `p.rig.frameDuration`, which therefore stays at the rig-config
+  file's stale value (e.g., 0.01 s for a nominal 100 Hz config on a
+  display actually running at 120 Hz). Every consumer of
+  frameDuration in rfMap (spike-frame alignment, polarity sequence,
+  trial frame count) was reading the wrong value. Patched locally
+  in `rfMap_init.m:30` (`p.rig.frameDuration = 1/p.rig.refreshRate`
+  immediately after `pds.initDataPixx`). This is a generic +pds
+  bug; **upstream the fix to `pds.initDataPixx.m` as part of Phase 5
+  hygiene** so other tasks benefit too.
+- **DKL vs RGB design rationale** is documented separately in
+  `tasks/rfMap/dklVsRgbChomaticNoise.md` (collaborator-facing
+  explainer). Locked decision; no change planned.
 
 ### Phase 3 — Checkerboard with online F1/F2 + temporal kernel
 - `prepareStim_checkerboard.m` ports `create_Checkerboard.m` logic:
@@ -464,6 +524,38 @@ in parallel.
   `srcRect`. Without margin, srcRect-based jitter runs off the texture
   edge. Document this in each `generateStim_*` header and in the
   data dictionary.
+- **Hooks already plumbed (do not redo).** Phase 1 added a per-trial
+  `(jitterX, jitterY)` argument to all four `updateSTA_*` estimators
+  (`updateSTA_denseAchromatic`, `_sparse`, `_denseChromatic`,
+  `_checkerboard`), defaulted to `(0, 0)`. The Phase-1 implementations
+  error if a nonzero offset is passed -- Phase 4 just removes that
+  guard and activates the offset-aware accumulator path. Estimator
+  signatures do **not** need to change.
+- **Per-trial chromatic implication.** As of `sessionFormatVersion = 2`
+  (per-trial seeded chromatic, see Phase 2 §"Per-trial chromatic"
+  below), the chromatic drive tensor is regenerated per trial in
+  `nextParams_noiseMovie`. The margin allocation needs to happen in
+  `generateStim_denseChromatic` so each trial's per-trial drive is
+  itself margin-padded; otherwise the per-trial drive lookup at
+  jittered indices falls outside the trial's small tensor. The
+  margin formula is the same; just applied per-trial.
+- **Checkerboard jitter texture sizing — decision needed.** The
+  Phase-3 `prepareStim_checkerboard` pre-renders textures at exactly
+  screen size (`nY × nX = ceil(screenH/pxPerSide) × ceil(screenW/pxPerSide)`).
+  Phase 4 srcRect-based jitter requires margin around the screen.
+  Options:
+    (a) Enlarge the pre-rendered checkerboard textures to
+        `(screenH + 2·maxJitterY) × (screenW + 2·maxJitterX)`. Memory
+        implication: at 3 sizes × 3 contrasts × 2 polarities the
+        current footprint is ~42 MB; with a 2× linear margin
+        allowance it grows to ~170 MB. Within the 512 MB GPU memory
+        cap but worth noting.
+    (b) Accept smaller jitter range bounded by what fits within the
+        existing screen-sized textures (i.e., zero margin -> jitter
+        eats from the screen, so corners of the screen show
+        background instead of checks at extreme offsets).
+    (a) is more in keeping with the locked margin convention above;
+    (b) is simpler. **Decide and lock before implementing.**
 - **Aperture API**: `p.trVars.apertureMode`
   (`'fullField' | 'rect' | 'circle'`), `apertureCenterDva`,
   `apertureSizeDva` are **per-trial**. Pre-generate a small bank of
@@ -484,6 +576,19 @@ in parallel.
   confirm no live references before deletion.
 - `git rm -r tasks/fix_present_squares(WiP)/`. The Phase-0 tag is the
   archive — no `_archive/` directory needed; that just pollutes the tree.
+- Remove the legacy monolithic `tasks/rfMap/rfMap_settings.m` and
+  `tasks/rfMap/supportFunctions/generateNoiseMovie.m`; per-stim-type
+  settings files and per-stim-type generators have replaced them.
+  Confirm no live references first.
+- **Upstream the `p.rig.frameDuration` fix** from
+  `tasks/rfMap/rfMap_init.m:30` (`p.rig.frameDuration = 1/p.rig.refreshRate`
+  immediately after `pds.initDataPixx`) into `+pds/initDataPixx.m`
+  itself, so every task benefits. The local mitigation was added in
+  the Phase-2 outcome (see above); it shadows a generic +pds bug
+  affecting any task that uses `pds.initDataPixx` and then reads
+  `p.rig.frameDuration`. Phase-5 hygiene is the right place to
+  graduate the fix. Once upstreamed, remove the local override from
+  `rfMap_init.m`.
 - Finalize `data_dictionaries/rfMap_data_dictionary.md` (already created
   in Phase 2, extended in Phase 3); ensure all per-stim-type fields,
   trial-array column conventions, and the strobe-code table are
