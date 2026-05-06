@@ -59,7 +59,7 @@ per-stim-type `_settings.m`; consumed once during `_init.m`.
 | `taskCode` | int | Numeric task code (32020). |
 | `pldapsFolder` | string | Repo root. |
 | `date`, `time` | string | yyyymmdd / HHMM at session start. |
-| `sessionFormatVersion` | int | Schema version. **Bump on incompatible changes.** Phase 1 = 1. |
+| `sessionFormatVersion` | int | Schema version. **Bump on incompatible changes.** v1 = initial Phase-1 merge. v2 = chromatic switched to per-trial seeded generation; chromatic `dklDriveTensor` and `noiseMovie` no longer held at session level (offline analysis pulls per-trial seeds from `trialsArray(:, 'chromaticSeed')`). |
 | `stimType` | string | One of `denseAchromatic` \| `denseChromatic` \| `sparse` \| `checkerboard`. **Self-describing** -- analysis scripts should branch on this string, not the integer. |
 | `stimTypeIntMap` | struct | String -> integer lookup used at strobe time only. |
 | `stimTypeInt` | int | Integer form of `stimType` for the wire format (1=denseAchromatic, 2=denseChromatic, 3=sparse, 4=checkerboard). |
@@ -72,8 +72,8 @@ per-stim-type `_settings.m`; consumed once during `_init.m`.
 | `noiseGridSize` | `[nY nX]` | Number of checks. |
 | `nNoiseFrames` | int | Total noise frames pre-generated. |
 | `noiseFrameIdx` | int | Playback position; advances on successful trials. |
-| `noiseMovie` | array | Pre-rendered movie. **Stripped before save** (recomputable from seed). All stim types use single-channel indexed `[nY,nX,nFrames]` arrays so the framebuffer-as-CLUT-index path of VPixx L48 mode displays them correctly: uint8 0/1 (denseAchromatic, mapped at draw time to `{expBlack, expWhite}` slots); int8 in {-1,0,+1} (sparse, mapped to `{expBlack, expBg, expWhite}`); uint8 0..7 (denseChromatic, **state index** -- bit 0 = L-M sign, bit 1 = S sign, bit 2 = Achro sign -- mapped to CLUT slots `chromaticClutBase + state` at draw time). |
-| `dklDriveTensor` | `[nY,nX,3,nFrames]` single | (denseChromatic only.) Per-check signed DKL contrasts. **Stripped before save**; recomputable via `recomputeDklDrive(seed, ...)`. |
+| `noiseMovie` | array | Pre-rendered session-level movie for **denseAchromatic / sparse only**. Single-channel indexed `[nY,nX,nFrames]` so the L48 framebuffer-as-CLUT-index path displays them correctly: uint8 0/1 (denseAchromatic, mapped at draw time to `{expBlack, expWhite}` slots); int8 in {-1,0,+1} (sparse, mapped to `{expBlack, expBg, expWhite}`). **Stripped before save** (recomputable from `noiseRngSeed`). For **denseChromatic this field is empty at the session level** (sessionFormatVersion ≥ 2); the per-trial movie lives on `p.trVars.thisTrialNoiseMovie` and is regenerated each trial from the trial's `chromaticSeed`. |
+| `dklDriveTensor` | -- | **Empty at the session level for sessionFormatVersion ≥ 2.** Pre-2 sessions held the whole-session `[nY,nX,3,nFrames]` single tensor here; v2+ regenerates per trial onto `p.trVars.thisTrialDklDrive` from the per-trial `chromaticSeed`. The session-level tensor at LGN check sizes (~88×136) for a 10-min session would be ~8.6 GB; per-trial generation is ~70 MB per trial and gc'd at trial end. |
 | `chromaticClutBase` | int | (denseChromatic only.) First CLUT row index (0-based) where the 8 tri-noise palette entries are installed. Texture value `k` (0..7) lives at slot `chromaticClutBase + k`. Set during `_init.m`; saved to disk. |
 | `chromaticPaletteRGB` | `[3,8]` uint8 | (denseChromatic only.) The 8 gamma-corrected RGB triples (column k = state k-1). Built from `dkl2rgb(...)` via `buildChromaticPalette`. Saved so offline analysis can reconstruct the displayed colors without re-loading the rig calibration. |
 | `chromaticStateBits` | `[3,8]` int8 | (denseChromatic only.) +/-1 sign matrix mapping state index to (L-M, S, Achro) signs. Saved for offline reconstruction. |
@@ -201,15 +201,25 @@ movie = generateStim_denseAchromatic(nY, nX, nFrames, isBinary, seed);
 % Sparse balanced:
 movie = generateStim_sparseBalanced(nY, nX, nFrames, nSparseSpots, seed);
 
-% Chromatic (drive tensor -- no rig calibration needed):
-drive = recomputeDklDrive(nY, nX, nFrames, dklAxes, dklContrasts, seed);
-
-% Chromatic (state-index movie + drive tensor):
-[movie, drive] = generateStim_denseChromatic(nY, nX, nFrames, ...
-    dklAxes, dklContrasts, seed);
-% movie values 0..7 are state indices, NOT RGB. To recover the
+% Chromatic (sessionFormatVersion >= 2): per-trial seeds saved in
+% the trial array. Pull the trial's seed and regenerate that trial's
+% drive / movie:
+trialIdx  = ...;     % 1..nTrials
+seedCol   = strcmp(p.init.trialArrayColumnNames, 'chromaticSeed');
+trialSeed = p.init.trialsArray(trialIdx, seedCol);
+nFramesTr = (frame range for the trial; see trialStartFrame /
+             trialEndFrame in saved p.trData);
+[movieTr, driveTr] = generateStim_denseChromatic( ...
+    p.init.noiseGridSize(1), p.init.noiseGridSize(2), nFramesTr, ...
+    p.trVars.dklAxes, p.trVars.dklContrasts, double(trialSeed));
+% movieTr values 0..7 are state indices, NOT RGB. To recover the
 % displayed RGB triple for a check, use the saved chromaticPaletteRGB:
-%   rgbForCheck = p.init.chromaticPaletteRGB(:, movie(y,x,f) + 1);
+%   rgbForCheck = p.init.chromaticPaletteRGB(:, movieTr(y,x,f) + 1);
+
+% Chromatic (sessionFormatVersion = 1): one-shot whole-session call
+% with the master seed:
+%   [movie, drive] = generateStim_denseChromatic( ...
+%       nY, nX, nFrames, dklAxes, dklContrasts, p.init.noiseRngSeed);
 ```
 
 Required parameters all live in `p.init` (`noiseGridSize`, `nNoiseFrames`,

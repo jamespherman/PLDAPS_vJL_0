@@ -16,7 +16,10 @@ end
 
 
 function p = nextParams_noiseMovie(p)
-% Original behavior: chunk the pre-generated noise movie.
+% Movie-mode trial setup. Frame-range chunking is the same for all
+% three movie modes; chromatic additionally generates this trial's
+% noise movie + drive tensor on the fly from the trial's per-trial
+% seed (saved on the trial array at session init).
 
 %% Check if movie is exhausted (must be FIRST, before computing frame range)
 if p.init.noiseFrameIdx > p.init.nNoiseFrames
@@ -35,6 +38,34 @@ p.trVars.trialEndFrame    = min(p.trVars.trialStartFrame + framesPerTrial - 1, .
                                 p.init.nNoiseFrames);
 p.trVars.nFramesThisTrial = p.trVars.trialEndFrame - p.trVars.trialStartFrame + 1;
 p.trVars.noiseFrameDurS   = frameDurS;
+
+%% Chromatic per-trial generation
+if strcmp(p.init.stimType, 'denseChromatic')
+    % Pull this trial's seed from the trial array. Trial-array index
+    % matches p.status.iTrial since rows aren't permuted in noise-movie
+    % mode (still presented in order). NB: failed trials repeat the
+    % current frame range without advancing iTrial-bound seed lookup --
+    % we use trialStartFrame as the canonical row identifier.
+    trialIdx = ceil(p.trVars.trialStartFrame / framesPerTrial);
+    cols = p.init.trialArrayColumnNames;
+    seedColIdx = find(strcmp(cols, 'chromaticSeed'), 1);
+    if isempty(seedColIdx)
+        error('rfMap_next:noChromaticSeed', ...
+            ['p.init.trialsArray has no chromaticSeed column. ' ...
+             'Phase-2 v2+ requires per-trial seeds; bumped via ' ...
+             'p.init.sessionFormatVersion = 2.']);
+    end
+    trialIdx = max(1, min(trialIdx, size(p.init.trialsArray, 1)));
+    trialSeed = p.init.trialsArray(trialIdx, seedColIdx);
+
+    [p.trVars.thisTrialNoiseMovie, p.trVars.thisTrialDklDrive] = ...
+        generateStim_denseChromatic( ...
+            p.init.noiseGridSize(1), p.init.noiseGridSize(2), ...
+            p.trVars.nFramesThisTrial, ...
+            p.trVarsInit.dklAxes, p.trVarsInit.dklContrasts, ...
+            double(trialSeed));
+    p.trVars.chromaticTrialSeed = trialSeed;
+end
 
 %% Fixation point + window in pixels (shared)
 p = setupFixationGeometry(p);

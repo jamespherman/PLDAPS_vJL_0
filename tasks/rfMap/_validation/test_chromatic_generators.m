@@ -134,6 +134,44 @@ if ~results.test2.driveMatchesHelper
         'generator drive tensor does not match recomputeDklDrive output.');
 end
 
+%% TEST 2b: per-trial seed independence
+% Different seeds must produce different drives (anti-collision check),
+% AND a per-trial seeding scheme like the one used in
+% nextParams_noiseMovie (rng(masterSeed); randi to get nTrials seeds)
+% must be reproducible from the master seed alone.
+fprintf('\n[TEST 2b] Per-trial seed independence and reproducibility\n');
+seedX = 1001; seedY = 1002;   % adjacent integers
+driveX = recomputeDklDrive(nY, nX, nFrames, dklAxes, dklContrasts, seedX);
+driveY = recomputeDklDrive(nY, nX, nFrames, dklAxes, dklContrasts, seedY);
+results.test2b.adjacentSeedsDiffer = ~isequal(driveX, driveY);
+fprintf('  adjacent seeds (%d, %d) produce different drives: %d\n', ...
+    seedX, seedY, results.test2b.adjacentSeedsDiffer);
+if ~results.test2b.adjacentSeedsDiffer
+    error('test_chromatic_generators:test2bCollision', ...
+        'adjacent integer seeds collided -- per-axis sub-seed hash too weak.');
+end
+
+% Reproducible per-trial seeds from a master seed (mirrors the
+% initTrialStructure_noiseMovie scheme).
+masterSeed = 12345;
+nTrials = 20;
+rngStateSave = rng();
+rng(masterSeed, 'twister'); seedsRunA = randi(2^31 - 1, nTrials, 1);
+rng(masterSeed, 'twister'); seedsRunB = randi(2^31 - 1, nTrials, 1);
+rng(rngStateSave);
+results.test2b.masterSeedReproducible = isequal(seedsRunA, seedsRunB);
+fprintf('  master seed -> trial seeds reproducible across runs: %d\n', ...
+    results.test2b.masterSeedReproducible);
+assert(results.test2b.masterSeedReproducible, ...
+    'master-seed -> trial-seed mapping not deterministic');
+
+% Trial seeds within a session must all differ (no duplicates from the
+% randi draw -- low probability of collision but worth a sanity check).
+results.test2b.trialSeedsUnique = (numel(unique(seedsRunA)) == nTrials);
+assert(results.test2b.trialSeedsUnique, ...
+    'master seed produced duplicate trial seeds (very unlikely)');
+fprintf('  %d trial seeds all unique\n', nTrials);
+
 %% TEST 3: DKL-axis recovery
 fprintf('\n[TEST 3] DKL-axis recovery from synthetic spikes\n');
 nY = 24; nX = 32; nFrames = 6000; nLags = 8; nCh = 1;

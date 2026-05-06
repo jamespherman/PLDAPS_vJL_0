@@ -37,11 +37,14 @@ isChromatic = strcmp(p.init.stimType, 'denseChromatic');
 isSparse    = ~isChromatic && isa(p.init.noiseMovie, 'int8');
 
 if isChromatic
-    clutBase = uint8(p.init.chromaticClutBase);
+    % Chromatic mode regenerates the trial's movie per trial (lives on
+    % p.trVars.thisTrialNoiseMovie, indexed 1..nFrames -- not by global
+    % frame index, since there's no session-level tensor).
+    clutBase  = uint8(p.init.chromaticClutBase);
+    movieTrial = p.trVars.thisTrialNoiseMovie;
     for f = 1:nFrames
-        globalIdx = startFrame + f - 1;
-        frameData = p.init.noiseMovie(:, :, globalIdx);   % uint8 0..7
-        texData   = clutBase + frameData;                 % uint8
+        frameData = movieTrial(:, :, f);              % uint8 0..7
+        texData   = clutBase + frameData;             % uint8
         p.trVars.noiseTextures(f) = Screen('MakeTexture', ...
             p.draw.window, texData);
     end

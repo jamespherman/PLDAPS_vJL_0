@@ -47,10 +47,17 @@ p.init.date_1yyyy             = str2double(['1' datestr(now, 'yyyy')]);
 p.init.date_1mmdd             = str2double(['1' datestr(now, 'mmdd')]);
 p.init.time_1hhmm             = str2double(['1' datestr(now, 'HHMM')]);
 
-% Phase 1 of rfMap unified merge (rfMap_unified_merge_plan.md). Bumped
-% whenever the saved schema changes in a way analysis loaders need to
-% branch on.
-p.init.sessionFormatVersion   = 1;
+% Schema version of the saved session (bumped on incompatible changes).
+%   1: initial Phase-1 merge (denseAchromatic, sparse, denseChromatic
+%      whole-session pre-rendered movie/drive).
+%   2: chromatic switched to per-trial seeded generation. Drive tensor
+%      and noiseMovie are no longer held at session level for
+%      denseChromatic; offline analysis must read the per-trial
+%      `chromaticSeed` column from p.init.trialsArray and call
+%      recomputeDklDrive(seed, ...) per trial. Achromatic / sparse
+%      schemes unchanged. checkSizeDeg default reduced from 2 dva to
+%      0.5 dva (LGN-standard).
+p.init.sessionFormatVersion   = 2;
 
 % Map the stim type string to the integer used by the wire format. The
 % lookup lives here so analysis tools can read either field; they should
@@ -174,7 +181,12 @@ p.trVarsInit.flipIdx             = 1;
 
 % --- noise stimulus parameters (defaults shared by dense/sparse paths;
 %     per-type files override as needed) ---
-p.trVarsInit.checkSizeDeg        = 2;
+% checkSizeDeg = 0.5 deg matches the standard LGN dense-noise STA scale
+% (Solomon et al., feng_LGN/stim_densenoise_color.m). Macaque parafoveal
+% LGN RF centers are ~0.05-0.3 dva, so 0.5 dva checks resolve them.
+% Bump to ~1 dva for SC sessions (larger RFs); 2 dva is a cortex-flavor
+% choice and was the old (pre-LGN-tuning) default.
+p.trVarsInit.checkSizeDeg        = 0.5;
 p.trVarsInit.noiseFrameHold      = 6;       % display frames per noise frame
 p.trVarsInit.contrastBinary      = 1;       % 1 = binary (0/1), 0 = continuous uniform
 p.trVarsInit.clearPatchDeg       = 1.0;

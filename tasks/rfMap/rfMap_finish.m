@@ -83,18 +83,19 @@ p.trData.missedFrameCount = nnz(diff(p.trData.timing.flipTime) > ...
 p.status.missedFrames = p.status.missedFrames + p.trData.missedFrameCount;
 
 %% (8) Auto save
-% Temporarily remove the large noise movie, drive tensor (chromatic),
-% and STA accumulators from p.init before saving. pds.saveP saves p.init
-% on every trial; writing hundreds of MB per trial would be very slow.
-% The RNG seed and generator parameters are saved, so the movie / drive
-% tensor can be reconstructed offline.
-tempMovie     = p.init.noiseMovie;
-tempStaAccum  = p.init.staAccum;
-tempDklDrive  = [];
-if isfield(p.init, 'dklDriveTensor')
-    tempDklDrive = p.init.dklDriveTensor;
-    p.init.dklDriveTensor = [];
-end
+% Temporarily remove the large noise movie and STA accumulators from
+% p.init before saving. pds.saveP saves p.init on every trial; writing
+% hundreds of MB per trial would be very slow. The RNG seed and
+% generator parameters are saved, so the movie can be reconstructed
+% offline.
+%
+% Chromatic mode no longer holds a session-level dklDriveTensor or
+% noiseMovie: nextParams.m regenerates them per trial from per-trial
+% seeds saved in the trial array. The per-trial fields live on
+% p.trVars.* and are reset by _next on the next trial; we don't need
+% to strip them here.
+tempMovie    = p.init.noiseMovie;
+tempStaAccum = p.init.staAccum;
 tempStaFig   = [];
 if isfield(p.init, 'staFigData')
     tempStaFig = p.init.staFigData;
@@ -105,9 +106,6 @@ p.init.staAccum   = [];    % only saved at session end if needed
 pds.saveP(p);
 p.init.noiseMovie = tempMovie;
 p.init.staAccum   = tempStaAccum;
-if ~isempty(tempDklDrive)
-    p.init.dklDriveTensor = tempDklDrive;
-end
 if ~isempty(tempStaFig)
     p.init.staFigData = tempStaFig;
 end
@@ -231,14 +229,18 @@ if strcmp(p.init.stimType, 'checkerboard')
     end
 else
     % Spatial-mode dispatcher path. For denseChromatic, STA is
-    % accumulated against the per-check DKL drive tensor, not the
-    % displayed RGB movie. For achromatic / sparse, the noise movie
-    % is the stimulus tensor directly.
+    % accumulated against the per-trial DKL drive tensor (regenerated
+    % in nextParams from the per-trial seed; lives on p.trVars). For
+    % achromatic / sparse, the session-level pre-rendered movie on
+    % p.init is the stimulus tensor directly.
     switch p.init.stimType
         case 'denseChromatic'
-            stimTensor = p.init.dklDriveTensor;
+            stimTensor = p.trVars.thisTrialDklDrive;
+            % Per-trial drive starts at frame 1 of its own tensor.
+            stimStartFrame = 1;
         otherwise
-            stimTensor = p.init.noiseMovie;
+            stimTensor     = p.init.noiseMovie;
+            stimStartFrame = p.trVars.trialStartFrame;
     end
 
     % Jitter offsets default to (0, 0); Phase 4 will activate.
@@ -246,7 +248,7 @@ else
         p.init.stimType, p.init.staAccum, p.init.staSpikeCount, ...
         spikeTimesPerChan, noiseOnTimeRipple, ...
         p.trVars.noiseFrameDurS, stimTensor, ...
-        p.trVars.trialStartFrame, p.trVars.nFramesThisTrial, ...
+        stimStartFrame, p.trVars.nFramesThisTrial, ...
         p.trVars.nSTALags);
 end
 

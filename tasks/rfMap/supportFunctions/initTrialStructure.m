@@ -30,15 +30,43 @@ end
 
 
 function p = initTrialStructure_noiseMovie(p)
-% Continuous-movie chunking (denseAchromatic, denseChromatic, sparse).
+% Trial chunking for the noise-movie modes.
+%
+% denseAchromatic / sparse:
+%   Movie is generated whole-session in rfMap_init; trials chunk the
+%   pre-rendered tensor by frame index. Trial array is just trialIndex.
+%
+% denseChromatic:
+%   Drive tensor and noise movie are regenerated PER TRIAL from a
+%   per-trial seed (memory: 8.6 GB session-tensor at 0.5 deg checks
+%   would be untenable -- per-trial is ~70 MB and gc'd at trial end).
+%   Each row gets a `chromaticSeed` column generated deterministically
+%   from p.trVarsInit.noiseRngSeed (the master seed) so any session
+%   can be regenerated bit-exact from the master seed alone, while
+%   keeping per-trial RNG independence.
 
 frameDurS       = p.trVarsInit.noiseFrameHold * p.rig.frameDuration;
 nNoiseFrames    = ceil(p.trVarsInit.movieDurationMin * 60 / frameDurS);
 framesPerTrial  = round(p.trVarsInit.trialDurationS / frameDurS);
 nTrials         = ceil(nNoiseFrames / framesPerTrial);
 
-p.init.trialsArray = (1:nTrials)';
-p.init.trialArrayColumnNames = {'trialIndex'};
+trialIndex = (1:nTrials)';
+
+if strcmp(p.init.stimType, 'denseChromatic')
+    % Generate per-trial seeds from the master seed. Save current RNG
+    % state and restore after, so the global stream isn't perturbed.
+    rngState = rng();
+    rng(p.trVarsInit.noiseRngSeed, 'twister');
+    chromaticSeeds = randi(2^31 - 1, nTrials, 1);
+    rng(rngState);
+
+    p.init.trialsArray = [trialIndex, chromaticSeeds];
+    p.init.trialArrayColumnNames = {'trialIndex', 'chromaticSeed'};
+else
+    p.init.trialsArray = trialIndex;
+    p.init.trialArrayColumnNames = {'trialIndex'};
+end
+
 p.status.trialsArrayRowsPossible = 1:nTrials;
 
 fprintf('rfMap trial structure: %d trials (%.1f min movie, %.1f s/trial)\n', ...
