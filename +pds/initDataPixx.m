@@ -30,6 +30,7 @@ p.draw.middleXY                     = [p.draw.screenRect(3)/2 p.draw.screenRect(
 Screen('LoadNormalizedGammaTable', p.draw.window, p.draw.clut.combinedClut, 2);
 
 p.rig.refreshRate                   = FrameRate(p.draw.window);
+p.rig.frameDuration                 = 1 / p.rig.refreshRate;
 
 % load an identity CLUT into the graphics-card hardware to make sure that
 % it doesn't transform our pixel colors at all. This uses the stored CLUT

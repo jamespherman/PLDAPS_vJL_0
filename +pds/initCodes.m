@@ -312,11 +312,9 @@ codes.rfMapCheckContrastIdx          = 16147;  % index into checkContrasts      
 codes.rfMapCheckReversalHz_x10       = 16148;  % reversal rate (Hz) * 10                             -- Phase 3
 codes.rfMapCheckPolaritySign         = 16149;  % 1 = +1 polarity, 2 = -1 polarity                    -- Phase 3
 codes.rfMapCheckReversalEvent        = 16150;  % strobed at each reversal flip (value = polarity)    -- Phase 3
-% 16151-16157 originally allocated to rfMap Phase 4 (jitter / aperture).
-% Phase 4 was cancelled before implementation; numbers are
-% reserved-but-unused per the "holy" rule (never strobed in any
-% session, but do not reuse). See analysisPlanningDocs/
-% rfMap_unified_merge_plan.md  -> Phase 4 for the cancellation rationale.
+% 16151-16157 reserved-but-unused (jitter/aperture features cancelled
+% before implementation; never strobed in any session, but do not reuse
+% per the "holy" rule). See rfMap_unified_merge_plan.md goal section.
 codes.rfMapSparseBalancedFlag        = 16158;  % 1 = uniform-random (legacy), 2 = balanced TwinDeck
 codes.rfMapRngSeedHigh               = 16159;  % RNG seed upper 16 bits (lower 16 in noiseRngSeed 16106)
 % 16160-16169 reserved for future per-stim-type params

@@ -10,10 +10,8 @@ analyses appropriate to each. Deprecate `tasks/fix_present_squares(WiP)`.
 
 Inspired by `~/Downloads/feng_LGN/` collaborator code, with the following
 explicit exclusions: webcam recording, photodiode tracking, log-polar
-cortical-magnification warp, bar-sweep stimulus, natural-movie playback.
-Spatial jitter and restricted apertures were originally planned as
-opt-in features (Phase 4) but cancelled before implementation; see
-§ Phase 4 below for the decision rationale.
+cortical-magnification warp, bar-sweep stimulus, natural-movie playback,
+spatial jitter, restricted apertures.
 
 ### What "RF mapping" means in each mode (be honest about scope)
 
@@ -376,7 +374,7 @@ Partial pass, with the colorimeter validation step deferred:
   gamma per rig and we trust the per-rig `.xyY` files). The gate is
   technically still open. Acceptable for screening / piloting; the
   validation should be completed before publishing chromatic data
-  acquired with this task. Phase 6 (`§ Phase 6` below) is a natural
+  acquired with this task. Phase 5 (`§ Phase 5` below) is a natural
   place to add it as a gate for first real recording sessions.
 
 ### Phase 2 — Chromatic dense noise
@@ -440,7 +438,7 @@ relevant to anyone continuing the merge plan.
   trial frame count) was reading the wrong value. Patched locally
   in `rfMap_init.m:30` (`p.rig.frameDuration = 1/p.rig.refreshRate`
   immediately after `pds.initDataPixx`). This is a generic +pds
-  bug; **upstream the fix to `pds.initDataPixx.m` as part of Phase 5
+  bug; **upstream the fix to `pds.initDataPixx.m` as part of Phase 4
   hygiene** so other tasks benefit too.
 - **DKL vs RGB design rationale** is documented separately in
   `tasks/rfMap/dklVsRgbChomaticNoise.md` (collaborator-facing
@@ -504,79 +502,7 @@ relevant to anyone continuing the merge plan.
     amplitude bars adjacent. Throttle per Phase-1's
     `staPlotEveryNTrials` setting.
 
-### Phase 4 — CANCELLED (decision recorded 2026-05-05)
-
-**Original scope**: spatial jitter via `srcRect` offsets, plus restricted
-apertures (rect / circle alpha masks), opt-in per stim type. Reasoning
-was sub-check spatial resolution for parafoveal LGN RFs and surround-
-isolation experiments via apertures.
-
-**Why cancelled**:
-
-- **Jitter buys nothing for this program.** Macaque fixational drift
-  is 0.1–0.5 dva over a 1–2 s trial — already on the order of the
-  0.5 dva check size. Trials accumulate over different drift
-  trajectories, so the effective check grid is jittered relative to
-  the RF without any task-side intervention. For prosthesis-relevant
-  electrode-localization work the RF location is recoverable to a
-  small fraction of a check from the unjittered STA already; sub-
-  quarter-degree resolution doesn't change the prosthesis design.
-  Explicit jitter would matter at very small RFs (foveal V1 / parvo
-  LGN ≤ 0.1 dva) recorded with check sizes forced larger than the
-  RF — not the regime here.
-- **Apertures are a separate scientific question.** Surround
-  isolation / size tuning is its own experiment (drifting gratings or
-  expanding-aperture protocols), not a wrapper on dense noise. SNR
-  improvements from "no peripheral spikes" are small under dense
-  noise because cell tuning falls off with distance from the RF;
-  the periphery contributes little to the cell's spike rate already.
-  Animal-comfort gains (vs full-field flashing) would matter if
-  sessions were a struggle, but they're running cleanly.
-- **Cost of carrying the option**: ~50 LOC of placeholder fields,
-  estimator signatures, and reserved strobe codes scattered across
-  `rfMap_commonSettings.m`, the four `updateSTA_*` estimators, the
-  dispatcher, and the data dictionary -- each a future-reader
-  question of "is this used?". Pruning is cheaper than maintaining.
-
-**Consequences**:
-
-- The opening-paragraph note about "Spatial jitter and restricted
-  apertures are kept as opt-in features" is no longer accurate; updated.
-- The Phase-1 `(jitterX, jitterY)` estimator-arg hook is removed.
-  Estimator signatures simplified to drop the unused params.
-- `p.trVarsInit.jitterMode / jitterRangeDva / apertureMode /
-  apertureCenterDva / apertureSizeDva` removed from
-  `rfMap_commonSettings.m`. `checkApertureMode` removed from
-  `rfMap_checkerboard_settings.m`.
-- Strobe codes 16151–16157 (`rfMapJitterX_x10`, `rfMapJitterY_x10`,
-  `rfMapJitterMode`, `rfMapApertureMode`, `rfMapApertureCenterTheta_x10`,
-  `rfMapApertureCenterRadius_x100`, `rfMapApertureSize_x100`) are kept
-  reserved-but-cancelled in `+pds/initCodes.m` per the "holy" rule —
-  they were never strobed in any session, so the numbers could
-  technically be reused, but the safe convention is to leave them
-  reserved.
-
-**If this decision is revisited later** (e.g., to extend the task to
-foveal mapping at sub-degree check sizes), these are the original
-design notes, kept here for that future reader:
-
-- `jitterMode` opt-in via `p.trVars.jitterMode = 'perTrial'` and
-  `p.trVars.jitterRangeDva` (4-vector `[-x +x -y +y]`).
-- Apply via `Screen('DrawTexture', ..., srcRect, dstRect, ...)`,
-  not by regenerating textures (Feng pattern at
-  `feng_LGN/run_Checkerboard.m:111-119`).
-- Margin convention: each generator allocates the noise tensor at
-  `(nY + 2·marginY) × (nX + 2·marginX)` where
-  `marginX = ceil(maxJitterX / checkSizePix)`. The unjittered grid
-  is the configured center region; srcRect indexes into the padded
-  tensor.
-- Per-trial chromatic implication: regenerate the trial's drive
-  tensor with the margin baked in (same formula, applied per trial).
-- Checkerboard texture sizing tradeoff: enlarge pre-rendered
-  textures to fit margin (~42 MB → ~170 MB) vs accept smaller
-  jitter range bounded by screen.
-
-### Phase 5 — Cleanup
+### Phase 4 — Cleanup
 - Re-run the Phase-0 grep for `fix_present_squares` and `stimMode` to
   confirm no live references before deletion.
 - `git rm -r tasks/fix_present_squares(WiP)/`. The Phase-0 tag is the
@@ -591,9 +517,18 @@ design notes, kept here for that future reader:
   itself, so every task benefits. The local mitigation was added in
   the Phase-2 outcome (see above); it shadows a generic +pds bug
   affecting any task that uses `pds.initDataPixx` and then reads
-  `p.rig.frameDuration`. Phase-5 hygiene is the right place to
+  `p.rig.frameDuration`. Phase-4 hygiene is the right place to
   graduate the fix. Once upstreamed, remove the local override from
   `rfMap_init.m`.
+- **Remove the dangling jitter/aperture comment block from
+  `+pds/initCodes.m`** (a 5-line comment immediately above
+  `codes.rfMapSparseBalancedFlag = 16158`, at lines 315–319 at
+  time of writing). The comment reserves codes 16151–16157 for an
+  abandoned jitter/aperture design that never strobed in any
+  session, so the holy rule does not bind. Grep the repo for
+  `16151`, `16152`, `16153`, `16154`, `16155`, `16156`, `16157`,
+  `rfMapJitter`, `rfMapAperture` first; delete the comment only
+  after confirming zero live references.
 - Finalize `data_dictionaries/rfMap_data_dictionary.md` (already created
   in Phase 2, extended in Phase 3); ensure all per-stim-type fields,
   trial-array column conventions, and the strobe-code table are
@@ -604,14 +539,14 @@ design notes, kept here for that future reader:
   including the explicit "checkerboard does not give a spatial RF
   online" caveat.
 
-### Phase 6 — Pre-recording validation gate (no animal, no new core code)
+### Phase 5 — Pre-recording validation gate (no animal, no new core code)
 
 **Goal**: close the gap between "synthetic per-phase tests pass" and
 "the task will produce a trustworthy, fully-analyzable dataset on the
-rig with an animal and an electrode in LGN." Runs once after Phase 5
+rig with an animal and an electrode in LGN." Runs once after Phase 4
 ships, then partial subsets re-run on each recording day.
 
-**Scope rule (locked)**: Phase 6 adds *protocol* and *lightweight
+**Scope rule (locked)**: Phase 5 adds *protocol* and *lightweight
 bench tools* only. **No new core-code architecture, no rewrites of
 the quintet files.** Allowed changes to quintet files are limited to
 (a) a single `p.trVars.useSyntheticSpikes` flag (default `false`)
@@ -619,7 +554,7 @@ that, when set, makes `_finish.m` skip `pds.getRippleData` and call
 `injectSyntheticSpikes(p)` instead — < 10 LoC of dispatcher code,
 no logic change to STA accumulation; and (b) optional inclusion of
 the audit tool's diagnostics in `_finish.m`'s end-of-trial console
-print. Anything beyond that is out of scope and goes to Phase 7+.
+print. Anything beyond that is out of scope and goes to Phase 6+.
 
 **Why these gaps exist** (recorded so the test surface is honest):
 - Phase 0a baselines have no spikes (no probe), so the only
@@ -636,7 +571,7 @@ print. Anything beyond that is out of scope and goes to Phase 7+.
   (the most powerful behavioral integration test available without
   a separate ground-truth instrument).
 
-#### Phase 6a — End-to-end loop-closure (post-hoc spike injection)
+#### Phase 5a — End-to-end loop-closure (post-hoc spike injection)
 
 `tasks/rfMap/_validation/test_loopClosure.m` runs each of the four
 stim types as a *real* PLDAPS session (live Screen flips, real
@@ -668,10 +603,10 @@ the offline simulator co-located with the task.
 
 This subsumes the prior plan's per-phase "On-rig smoke test on
 real Ripple hardware before shipping." Those were never formally
-defined and would have shipped Phase 1–4 individually before any
-end-to-end gate; Phase 6a is the integrated gate they implied.
+defined and would have shipped Phase 1–3 individually before any
+end-to-end gate; Phase 5a is the integrated gate they implied.
 
-#### Phase 6b — Cross-stim-type RF consistency probe
+#### Phase 5b — Cross-stim-type RF consistency probe
 
 `tasks/rfMap/_validation/test_crossStimType.m`: with one planted
 RF kernel (same `rfCenterDeg`, same temporal lag profile), run
@@ -686,9 +621,9 @@ off-by-one between movie indexing and accumulator indexing) that
 no single-stim-type test would catch.
 
 Checkerboard is excluded from this probe (it does not produce a
-spatial RF) but is exercised separately by 6a.
+spatial RF) but is exercised separately by 5a.
 
-#### Phase 6c — Day-of-recording readiness check (on-rig, partial subset re-runnable)
+#### Phase 5c — Day-of-recording readiness check (on-rig, partial subset re-runnable)
 
 `tasks/rfMap/_validation/preRecordingChecklist.m`: an automated,
 < 5-minute battery the user runs on the recording PC (not the dev
@@ -729,7 +664,7 @@ prompt. A failed check prints a remediation hint and does not
 proceed. The user retains the option to override in true emergency
 recording situations, which is logged.
 
-#### Phase 6d — Post-session audit tool
+#### Phase 5d — Post-session audit tool
 
 `tasks/rfMap/_validation/auditSession.m <sessionFolder>`:
 loads a saved session and verifies:
@@ -752,7 +687,7 @@ Designed to run on the day's first real session (the
 "ground-truth establishing" session below), but cheap enough to
 run on every session. Output is a one-page report.
 
-#### Phase 6e — First-real-session ground-truth protocol
+#### Phase 5e — First-real-session ground-truth protocol
 
 The first session with a real probe in real LGN is documented
 explicitly so future re-validations have something to point back
@@ -784,39 +719,39 @@ production output:
   photodiode is available, document the absence and rely on the
   flipTime statistics from `auditSession.m`.
 
-#### Acceptance criteria for shipping Phase 6 (and unblocking real recordings)
+#### Acceptance criteria for shipping Phase 5 (and unblocking real recordings)
 
 The merged task may go in front of an animal once and only once
 all of the following hold:
-- 6a passes for all four stim types.
-- 6b passes (cross-stim-type RF agreement within 1.5 checks).
-- 6c passes on the recording PC, with results logged to the
+- 5a passes for all four stim types.
+- 5b passes (cross-stim-type RF agreement within 1.5 checks).
+- 5c passes on the recording PC, with results logged to the
   daily readiness log.
-- 6d's audit runs cleanly on at least one Phase-6a output session
+- 5d's audit runs cleanly on at least one Phase-5a output session
   per stim type.
-- 6e's protocol is documented and the storage location for the
+- 5e's protocol is documented and the storage location for the
   first real session's ground-truth folder is agreed.
 
-Phases 6a, 6b, 6d are repo-side and can be developed and run on
-the dev laptop. 6c must run on the recording PC. 6e is the gate
-between Phase 6 acceptance and routine production use.
+Phases 5a, 5b, 5d are repo-side and can be developed and run on
+the dev laptop. 5c must run on the recording PC. 5e is the gate
+between Phase 5 acceptance and routine production use.
 
-#### Phase 6 — out of scope (explicit)
+#### Phase 5 — out of scope (explicit)
 
 - No changes to existing strobe codes, no new strobe-code
   numbers. The 16140–16175 reserved block is final.
 - No new estimator code, no new generator code, no new
-  `_settings.m` files. If a Phase 6 test uncovers a bug in
+  `_settings.m` files. If a Phase 5 test uncovers a bug in
   generator/estimator code, the fix is a back-patch to the
-  responsible Phase (1–4), not a new file in Phase 6.
+  responsible Phase (1–3), not a new file in Phase 5.
 - No expansion of `+pds/` (the synthetic-spike injector lives in
   `tasks/rfMap/supportFunctions/`, not `+pds/`). Promotion is a
   later concern.
 - No GUI changes. `useSyntheticSpikes` is a `trVarsInit` field
   flipped manually for validation; production sessions leave it
   `false`.
-- No data-dictionary rewrite. A short Phase 6 appendix to the
-  dictionary is added when 6a/6b ship; structural fields stay as
+- No data-dictionary rewrite. A short Phase 5 appendix to the
+  dictionary is added when 5a/5b ship; structural fields stay as
   Phase 3 left them.
 
 ## Files touched (cumulative)
@@ -826,7 +761,7 @@ between Phase 6 acceptance and routine production use.
   settings files plus `rfMap_commonSettings.m` (see Phase 1). Each
   per-type file declares only its relevant parameters and a
   `sessionFormatVersion`. The current monolithic `rfMap_settings.m`
-  is removed in Phase 5 once the four replacements are tested.
+  is removed in Phase 4 once the four replacements are tested.
 - `tasks/rfMap/rfMap_init.m` — dispatch generator by `stimType`; lift RGB
   block.
 - `tasks/rfMap/rfMap_next.m` — select condition (checkSize/contrast)
@@ -835,7 +770,7 @@ between Phase 6 acceptance and routine production use.
 - `tasks/rfMap/rfMap_run.m` — branch draw call by `stimType`; handle
   checkerboard reversal scheduling and queued polarity strobe.
 - `tasks/rfMap/rfMap_finish.m` — branch STA accumulation by stim type;
-  handle exclusion of large per-type buffers from saved `p`. **Phase 6
+  handle exclusion of large per-type buffers from saved `p`. **Phase 5
   adds a single dispatcher line**: when `p.trVars.useSyntheticSpikes`
   is true, call `injectSyntheticSpikes(p)` instead of
   `pds.getRippleData(p)`. Default behavior unchanged.
@@ -851,9 +786,7 @@ between Phase 6 acceptance and routine production use.
   chromatic params, checker params, and polarity reversals (new code
   numbers in the **16140–16175** block, after barsweep's last code at
   16136; do **not** renumber existing entries — the file is "holy"
-  per CLAUDE.md). 16151–16157 were originally reserved for jitter and
-  aperture (Phase 4); Phase 4 is cancelled and those numbers stay
-  reserved-but-unused. Mark `noiseColorMode` (16105) and
+  per CLAUDE.md). Mark `noiseColorMode` (16105) and
   `noiseStimMode` (16113) as deprecated in comments; keep numbers
   reserved.
 
@@ -890,23 +823,23 @@ between Phase 6 acceptance and routine production use.
 - `tasks/rfMap/_validation/test_chromatic_generators.m` (Phase 2
   developer-side harness: DKL ↔ RGB round-trip, seed reproducibility,
   DKL-axis recovery from synthetic spikes.)
-- Phase 6 validation files (added once, not modified later):
-  - `tasks/rfMap/_validation/test_loopClosure.m` (6a: end-to-end run
+- Phase 5 validation files (added once, not modified later):
+  - `tasks/rfMap/_validation/test_loopClosure.m` (5a: end-to-end run
     of the quintet for each stim type with synthetic spike injection).
-  - `tasks/rfMap/_validation/test_crossStimType.m` (6b: planted-RF
+  - `tasks/rfMap/_validation/test_crossStimType.m` (5b: planted-RF
     consistency probe across achromatic / sparse / chromatic-achro).
-  - `tasks/rfMap/_validation/preRecordingChecklist.m` (6c: on-rig
+  - `tasks/rfMap/_validation/preRecordingChecklist.m` (5c: on-rig
     daily readiness battery).
-  - `tasks/rfMap/_validation/auditSession.m` (6d: post-session
+  - `tasks/rfMap/_validation/auditSession.m` (5d: post-session
     saved-file validator).
-  - `tasks/rfMap/supportFunctions/injectSyntheticSpikes.m` (6a
+  - `tasks/rfMap/supportFunctions/injectSyntheticSpikes.m` (5a
     helper, reuses the LNP machinery in `testSTA.m`).
 - `data_dictionaries/rfMap_data_dictionary.md` — created in Phase 2,
-  extended through Phase 3; short Phase 6 appendix added when 6a/6b
+  extended through Phase 3; short Phase 5 appendix added when 5a/5b
   ship (documents `useSyntheticSpikes` flag and the audit-tool
   output schema).
 
-### Removed (Phase 5)
+### Removed (Phase 4)
 - `tasks/rfMap/supportFunctions/generateNoiseMovie.m` (logic absorbed into
   the per-type generator files).
 - `tasks/fix_present_squares(WiP)/` (deleted via `git rm`; Phase-0 tag is
@@ -937,7 +870,6 @@ late additions). Every code listed here must appear in `p.init.strobeList`.
 | 16148  | `rfMapCheckReversalHz_x10`    | 3 | reversal rate (Hz) × 10 |
 | 16149  | `rfMapCheckPolaritySign`      | 3 | 1 = +1 polarity, 2 = −1 polarity (offset to stay positive) |
 | 16150  | `rfMapCheckReversalEvent`     | 3 | strobed at each reversal flip (value = polarity sign) |
-| 16151–16157 | (cancelled; reserved-but-unused) | — | originally allocated for jitter / aperture params (Phase 4). Phase 4 cancelled before implementation; numbers stay reserved per the "holy" rule (never strobed in any session, but not reused). |
 | 16158  | `rfMapSparseBalancedFlag`     | 1 | 1 = uniform-random (legacy), 2 = balanced TwinDeck |
 | 16159  | `rfMapRngSeedHigh`            | 1 | RNG seed upper 16 bits (lower 16 stay in existing `noiseRngSeed` 16106 — kept active for backwards reading) |
 | 16160–16169 | (reserved future per-stim-type params) | — | leave free |
@@ -1047,13 +979,12 @@ Tighter, less hand-wavy than the prior draft.
   - Strobe queue depth audit: log queue length each flip across a
     long session; confirm bounded.
   - On-rig smoke test on real Ripple hardware before shipping.
-- **Phase 4**: cancelled (see § Phase 4 above).
-- **Phase 6** (the integrated gate before any animal session):
-  acceptance criteria are listed under §"Phase 6 — Pre-recording
+- **Phase 5** (the integrated gate before any animal session):
+  acceptance criteria are listed under §"Phase 5 — Pre-recording
   validation gate." The per-phase "on-rig smoke test" lines above are
-  superseded by Phase 6a's full end-to-end loop closure plus Phase 6c's
+  superseded by Phase 5a's full end-to-end loop closure plus Phase 5c's
   on-rig readiness battery; Phases 1–3 ship after their *synthetic*
-  checks pass, with the *integrated* on-rig validation gated to Phase 6.
+  checks pass, with the *integrated* on-rig validation gated to Phase 5.
 - Each phase ships only after passing its checks, before the next phase
   begins.
 

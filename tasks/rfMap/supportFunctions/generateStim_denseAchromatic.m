@@ -23,10 +23,11 @@ function noiseMovie = generateStim_denseAchromatic(nChecksY, nChecksX, ...
 %
 %   Notes:
 %   - This is the Phase-1 isolated dense-achromatic path, ported
-%     verbatim (algorithmically) from supportFunctions/generateNoiseMovie.m
-%     (the 'dense' / 'luminance' branch). Output is bit-exact identical
-%     when called with the same seed and shape, modulo the seed-capture
-%     bug fix (this function takes the seed as input rather than calling
+%     verbatim (algorithmically) from the pre-merge generator (frozen
+%     in tasks/rfMap/_validation/_legacy_snapshot/generateNoiseMovie_legacy.m,
+%     'dense' / 'luminance' branch). Output is bit-exact identical when
+%     called with the same seed and shape, modulo the seed-capture bug
+%     fix (this function takes the seed as input rather than calling
 %     the broken rng('shuffle')-and-grab-previous-state idiom).
 %   - The RNG state is set immediately before the first random draw.
 %     No upstream pre-allocation order changes between the rng() call

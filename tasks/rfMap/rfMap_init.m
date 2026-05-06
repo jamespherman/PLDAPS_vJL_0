@@ -25,19 +25,6 @@ p = initClut(p);
 %% (3) initialize VIEWPixx/DATAPixx
 p = pds.initDataPixx(p);
 
-%% (3b) reconcile p.rig.frameDuration with the actual measured refresh.
-% pds.initDataPixx overwrites p.rig.refreshRate from FrameRate(...) but
-% does NOT touch p.rig.frameDuration -- which therefore stays at the
-% rig-config file's stale value (e.g., 0.01 s for a nominal 100 Hz
-% config on a display actually running at 120 Hz). Every consumer of
-% frameDuration in rfMap (spike-frame alignment for STA, polarity-
-% sequence length, trial frame count) was reading the wrong value.
-% This is a generic +pds bug; fix locally for now and flag for a wider
-% hygiene pass.
-p.rig.frameDuration = 1 / p.rig.refreshRate;
-fprintf('rfMap_init: forced p.rig.frameDuration = %.6f s (refresh %.3f Hz)\n', ...
-    p.rig.frameDuration, p.rig.refreshRate);
-
 %% (4) define audio waveforms and load to VIEWPixx
 p = pds.initAudio(p);
 

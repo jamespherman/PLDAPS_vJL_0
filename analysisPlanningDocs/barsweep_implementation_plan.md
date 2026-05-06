@@ -140,12 +140,12 @@ Key facts established by reading the source:
 
 ### In-Repo PLDAPS Patterns to Follow
 - Hostname-based rig config selection:
-  - e.g. [rfMap_settings.m](/home/herman_lab/Documents/PLDAPS_vK2_MASTER/tasks/rfMap/rfMap_settings.m:1)
+  - e.g. [rfMap_commonSettings.m](/home/herman_lab/Documents/PLDAPS_vK2_MASTER/tasks/rfMap/rfMap_commonSettings.m:1)
   - e.g. [fixate_settings.m](/home/herman_lab/Documents/PLDAPS_vK2_MASTER/tasks/fixate/fixate_settings.m:1)
 - Task metadata and unique task code resolution:
   - [initTaskMetadata.m](/home/herman_lab/Documents/PLDAPS_vK2_MASTER/+pds/initTaskMetadata.m:1)
 - Trial-end parameter strobes via `p.init.strobeList`:
-  - [rfMap_settings.m](/home/herman_lab/Documents/PLDAPS_vK2_MASTER/tasks/rfMap/rfMap_settings.m:292)
+  - [rfMap_commonSettings.m](/home/herman_lab/Documents/PLDAPS_vK2_MASTER/tasks/rfMap/rfMap_commonSettings.m:341)
   - [conflict_task_settings.m](/home/herman_lab/Documents/PLDAPS_vK2_MASTER/tasks/conflict_task/conflict_task_settings.m:486)
 - Polar (theta, radius) location encoding for negative-safe strobing:
   - conflict_task `targetTheta` / `targetRadius` pattern.

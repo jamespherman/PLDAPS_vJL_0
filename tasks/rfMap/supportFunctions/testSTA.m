@@ -85,8 +85,8 @@ fprintf('\n');
 
 %% 1. Generate noise movie
 fprintf('Step 1: Generating noise movie...\n');
-[noiseMovie, ~] = generateNoiseMovie(params.nChecksY, params.nChecksX, ...
-    nFrames, 'luminance', true, params.rngSeed);
+noiseMovie = generateStim_denseAchromatic(params.nChecksY, params.nChecksX, ...
+    nFrames, true, params.rngSeed);
 
 %% 2. Build ground-truth stRF kernel
 fprintf('Step 2: Building ground-truth stRF kernel...\n');
