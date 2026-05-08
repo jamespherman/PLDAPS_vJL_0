@@ -338,6 +338,7 @@ p.trVarsInit.sparseNoiseYMax = 19; % in dva
 p.trVarsInit.sparseNoiseGridSizeX = 29; % number of grid positions
 p.trVarsInit.sparseNoiseGridSizeY = 19; % total = x*y
 
+p.trVarsInit.sparseNoiseCLUTIndex = 15;
 
 % for denseNoise
 

@@ -332,7 +332,7 @@ if p.trVars.stimIsOn
             rectIndex1 = p.trVars.sparseNoiseNumSquares*(p.trVars.presentationCounter - 1) + 1;
             rectIndex2 = p.trVars.sparseNoiseNumSquares*p.trVars.presentationCounter;
             
-            Screen('FillRect', p.draw.window, 15, ...
+            Screen('FillRect', p.draw.window, p.trVarsInit.sparseNoiseCLUTIndex, ...
                 p.trVars.sparseNoiseRectList(:, rectIndex1:rectIndex2));
 
         case 'denseNoise' % denseNoise

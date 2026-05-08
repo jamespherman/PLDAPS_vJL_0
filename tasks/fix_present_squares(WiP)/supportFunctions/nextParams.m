@@ -335,6 +335,8 @@ p.trVars.timeReward = p.trVars.preStimDur + ...
 
     end
 
+p.trVars.expCLUT = p.draw.clut.expColors;
+p.trVars.subCLUT = p.draw.clut.subColors;
 
 end
 
