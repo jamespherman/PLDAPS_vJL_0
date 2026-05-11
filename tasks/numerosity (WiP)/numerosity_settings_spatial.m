@@ -99,11 +99,12 @@ p.state.holdTarg            = 7;
 
 % end states - success:
 p.state.sacComplete         = 21;
-p.state.wrongTarget	    = 22;
+p.state.wrongTarget	        = 22;
+p.state.heldFix             = 23;
 
 % end states - aborted:
 p.state.fixBreak            = 31;
-p.state.joyBreak            = 32;
+%p.state.joyBreak            = 32;
 p.state.nonStart            = 33;
 p.state.failedToHoldTarg    = 34;
 
@@ -247,8 +248,7 @@ p.trVarsInit.goLatencyMax            = 0.5;  % maximum saccade-latency criterion
 % p.trVarsInit.preTargMin            = 0.75; % minimum fixation-only time before target onset
 % p.trVarsInit.preTargMax            = 1;    % maximum fixation-only time before target onset
 
-
-p.trVarsInit.totalFixDur             = 0.8; % Total duration from FixAq to FixOff (go cue)
+p.trVarsInit.totalFixDur             = 0.9; % Total duration from FixAq to FixOff (go cue)
 p.trVarsInit.stimOnsetMin	         = 0.3; % Minimum time after fixation before stim comes on
 p.trVarsInit.targOnsetMin            = 0.15; % Minimum time after stim goes off before target onset
 p.trVarsInit.goTimePostTarg          = 0.15; % Time from targ onset to the 'go' signal to saccade (which is fixation offset)
@@ -271,10 +271,10 @@ p.trVarsInit.interStimIntervalMax    = 0.12;
 % Microstim variables
 
 % Load in data about the electrode (RFs, SNR, etc.)
-% p.electrodeInfo = load ('electrodeInfo.mat'); % make sure to make the address correct
+% p.init.electrodeInfo = load ('electrodeInfo.mat'); % make sure to make the address correct
 
 % For testing:
-p.electrodeInfo = load ('fakeElectrodeInfo.mat');
+p.init.electrodeInfo = load ('fakeElectrodeInfo.mat');
 
 p.trVarsInit.cmdPeriod              = 100; % duration between two pulses, in 33.333 us clock cycles, calculated as 30,000/stimFrequency
 p.trVarsInit.cmdRepeats             = 50; % number of pulses
@@ -288,11 +288,6 @@ p.trVarsInit.stimElectrode1         = 0; % Initialized to 0;
 p.trVarsInit.stimElectrode2         = 0; 
 p.trVarsInit.stimAmplitude1         = 0; % Initialized to 0;
 p.trVarsInit.stimAmplitude2         = 0; 
-
-% For transition version of temporal task; How much should the two stim overlap?
-% 0 = no overlap; i.e. full temporal task. 1 = complete overlap; i.e. full spatial task
-% between 0 and 1 = transition temporal task where the stim partially overlap
-p.trVarsInit.temporalOverlap         = 0;
 
 p.trVarsInit.maxFixWait              = 5;    % maximum time to wait for fixation-acquisition
 p.trVarsInit.targOnSacOnly           = 1;    % condition target reappearance on saccade?
@@ -457,8 +452,8 @@ p.draw.clutIdx.expBlack_subBlack         = 0;
 p.draw.clutIdx.expGrey25_subBg           = 1;
 p.draw.clutIdx.expBg_subBg               = 2;
 p.draw.clutIdx.expGrey70_subBg           = 3;
-p.draw.clutIdx.expWhite_subWhite         = 4;
-p.draw.clutIdx.expRed_subBg              = 5;
+p.draw.clutIdx.expRed_subRed             = 4;
+p.draw.clutIdx.expGreen_subGreen         = 5;
 p.draw.clutIdx.expOrange_subBg           = 6;
 p.draw.clutIdx.expBlue_subBg             = 7;
 p.draw.clutIdx.expCyan_subCyan           = 8;
@@ -478,9 +473,10 @@ p.draw.clutIdx.expCyan_subBg             = 16;
 % CLUT section above.
 p.draw.color.background     = p.draw.clutIdx.expBg_subBg;                   % background CLUT index
 p.draw.color.cursor         = p.draw.clutIdx.expOrange_subBg;               % cursor CLUT index
+p.draw.color.fixWhenOn      = p.draw.clutIdx.expRed_subRed;                 % fixation CLUT index
 p.draw.color.fix            = p.draw.clutIdx.expBg_subBg;                   % fixation CLUT index
 p.draw.color.fixWin         = p.draw.clutIdx.expBg_subBg;                   % fixation window CLUT index
-p.draw.color.targ           = p.draw.clutIdx.expWhite_subWhite;             % fixation CLUT index
+p.draw.color.targ           = p.draw.clutIdx.expBlack_subBlack;             % fixation CLUT index
 p.draw.color.targWin        = p.draw.clutIdx.expBg_subBg;                   % fixation window CLUT index
 p.draw.color.eyePos         = p.draw.clutIdx.expBlue_subBg;                 % eye position indicator CLUT index
 p.draw.color.gridMajor      = p.draw.clutIdx.expGrey90_subBg;               % grid line CLUT index

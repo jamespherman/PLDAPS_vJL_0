@@ -442,7 +442,7 @@ if p.trData.timing.fixAq > 0
             p.trVars.stimIsOn    = true;
             p.trData.timing.stimOn   = timeNow;
             
-            if p.trVars.trialType == 1 % if visual trial, send strobe
+            if p.trVars.trialType == 1 % if visual trial, send strobe on next flip
                 p.init.strb.addValueOnce(p.init.codes.stimOn);
             end
 
@@ -451,7 +451,7 @@ if p.trData.timing.fixAq > 0
             p.trVars.stimIsOn   = false;
             p.trVars.timing.stimOff  = timeNow;
 
-            if p.trVars.trialType == 1 % if visual trial, send strobe
+            if p.trVars.trialType == 1 % if visual trial, send strobe on next flip
                 p.init.strb.addValueOnce(p.init.codes.stimOff);
             end
     end

@@ -23,32 +23,6 @@ visGreen    = [0.1 0.9 0.1];
 memMagenta  = [1 0 1];
 yellowISH   = [1 1 0];
 
-randColors = rand (98, 3);
-
-% Alternative way to generate random colors, using LAB colorspace
-% randomly generate angle values (thetas)
-% choose radius values within a certain range (r)
-% convert to ab coordinates for the LAB colorspace (ab)
-% choose luminance values within a certain range (L) 
-% convert to RGB values using lab2rgb
-thetas = randn(100,1)*10 + 90;
-r = rand(100,1)*20 + 80;
-ab = repmat(r,1,2).*[cosd(thetas), sind(thetas)];
-L = rand(100,1)*10 + 60;
-rgbVals = lab2rgb([L,ab]);
-
-
-% Scans the "randColors" array for any row with all three elements between 0.4 and 0.5
-% (i.e. too close in color to background grey) and rerolls them, then rechecks that row
-
-
-for i = 1:98
-    if ((randColors (i, 1) > 0.4 & randColors (i, 1) < 0.5) & ...
-	(randColors (i, 2) > 0.4 & randColors (i, 1) < 0.5) & ...
-	(randColors (i, 3) > 0.4 & randColors (i, 1) < 0.5))
-		randColors (i, :) = rand (1, 3);
-		i = i - 1;
-end
 
 % colors for exp's display
 % black                     0

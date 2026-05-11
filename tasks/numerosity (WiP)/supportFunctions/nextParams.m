@@ -538,15 +538,6 @@ p.draw.clut.subCLUT (51:150, :) = stimClut1;
 p.draw.clut.expCLUT (151:250, :) = stimClut2;
 p.draw.clut.subCLUT (151:250, :) = stimClut2;
 
-if p.trVars.temporalOverlap < 1
-	p.draw.clut.expCLUT (5, :) = [0, 1, 0];
-	p.draw.clut.subCLUT (5, :) = [0, 1, 0];
-elseif p.trVars.temporalOverlap >= 1
-	p.draw.clut.expCLUT (5, :) = [1, 0, 0];
-	p.draw.clut.subCLUT (5, :) = [1, 0, 0];
-end
-
-
 % Push new CLUTs to ViewPIXX
 Datapixx('SetVideoClut', [p.draw.clut.subCLUT; p.draw.clut.expCLUT]);
 
@@ -572,7 +563,7 @@ stim2_color (stim2_color >= 249) = 249;
     p.draw.stimTwoTexture = Screen ('MakeTexture', p.draw.window, stim2_color);
 
     % for temporal, if interStimInterval is greater than 0, 50% of the time make stimTwo the same as stimOne
-	if p.init.exptType == 'temporal' && p.trVars.interStimIntervalMin > 0 && rand > 0.5
+	if strcmp(p.init.exptType, 'temporal') && p.trVars.interStimInterval > 0 && rand > 0.5
    	    p.draw.stimTwoTexture = p.draw.stimOneTexture;
 	end
 
@@ -595,14 +586,14 @@ stim2_color (stim2_color >= 249) = 249;
 % Timing stuff
 
 % determine total stim duration based on spatial vs temporal and 1 vs 2
-if p.init.exptType == 'temporal' && p.numStim == 2
+if strcmp(p.init.exptType, 'temporal') && p.trVars.numStim == 2
     totalStimDur = p.trVars.stimDur*2 + p.trVars.interStimInterval;
 else
     totalStimDur = p.trVars.stimDur;
 end
 
 % Check if total fix duration is too small for input parameters
-if p.trVars.totalFixDur < (totalStimDur + ...
+if p.trVars.totalFixDur <= (totalStimDur + ...
                            p.trVars.stimOnsetMin + ...
                            p.trVars.targOnsetMin + ...
                            p.trVars.goTimePostTarg)
@@ -610,58 +601,70 @@ if p.trVars.totalFixDur < (totalStimDur + ...
 end
 
 % Randomly allocate "extra" time to either pre-stim or post-stim
-remainingTime = p.trVars.totalFixDur - totalStimDur ...
-                                     - p.trVars.stimOnsetMin ...
-                                     - p.trVars.targOnsetMin ...
-                                     - p.trVars.goTimePostTarg;
+remainingTime = p.trVars.totalFixDur - (totalStimDur + ...
+                                     	p.trVars.stimOnsetMin + ...
+                                     	p.trVars.targOnsetMin + ...
+                                     	p.trVars.goTimePostTarg);
 randTimeLeft = unifrnd (0, remainingTime);
 
 p.trVars.timeStimOneOnset   = p.trVars.stimOnsetMin + randTimeLeft;
 p.trVars.timeStimOneOffset  = p.trVars.timeStimOneOnset + p.trVars.stimDur;
 
 
-% if spatial task, one stim
-if p.init.exptType == 'spatial' && p.trVars.numStim == 1
 
-    % stim two does not occur
-    p.trVars.timeStimTwoOnset = Inf;
-    p.trVars.timeStimTwoOffset = Inf;
+switch p.init.exptType
 
-    p.trVars.timeTargOnset = p.trVars.timeStimOneOffset + (remainingTime-randTimeLeft);
-    p.trVars.timeFixOffset = p.trVars.timeTargOnset + p.trVars.goTimePostTarg;
+    case 'spatial'
+        % if spatial task, one stim
+        if p.trVars.numStim == 1
+            
+            % stim two does not occur
+            p.trVars.timeStimTwoOnset = Inf;
+            p.trVars.timeStimTwoOffset = Inf;
+        
+            p.trVars.timeTargOnset = p.trVars.timeStimOneOffset + (remainingTime-randTimeLeft);
+            p.trVars.timeFixOffset = p.trVars.timeTargOnset + p.trVars.goTimePostTarg;
 
-% if spatial task, two stim
-elseif p.init.exptType == 'spatial' && p.trVars.numStim == 2
+        % if spatial task, two stim
+        elseif p.trVars.numStim == 2
 
-    % stim two happens at same time as stim one
-    p.trVars.timeStimTwoOnset = p.trVars.timeStimOneOnset;
-    p.trVars.timeStimTwoOffset = p.trVars.timeStimOneOffset;
+            % stim two happens at same time as stim one
+            p.trVars.timeStimTwoOnset = p.trVars.timeStimOneOnset;
+            p.trVars.timeStimTwoOffset = p.trVars.timeStimOneOffset;
+        
+            p.trVars.timeTargOnset = p.trVars.timeStimTwoOffset + (remainingTime-randTimeLeft);
+            p.trVars.timeFixOffset = p.trVars.timeTargOnset + p.trVars.goTimePostTarg;
 
-    p.trVars.timeTargOnset = p.trVars.timeStimTwoOffset + (remainingTime-randTimeLeft);
-    p.trVars.timeFixOffset = p.trVars.timeTargOnset + p.trVars.goTimePostTarg;
+        end
 
-% if temporal task, one stim
-elseif p.init.exptType == 'temporal' && p.trVars.numStim == 1
 
-    % stim two does not occur
-    p.trVars.timeStimTwoOnset = Inf;
-    p.trVars.timeStimTwoOffset = Inf;
+    case 'temporal'
 
-    p.trVars.timeTargOnset = p.trVars.timeStimOneOffset + (remainingTime-randTimeLeft);
-    p.trVars.timeFixOffset = p.trVars.timeTargOnset + p.trVars.goTimePostTarg;
+        % if temporal task, one stim
+        if p.trVars.numStim == 1
 
-% if temporal task, two stim
-elseif p.init.exptType == 'temporal' && p.trVars.numStim == 2
+            % stim two does not occur
+            p.trVars.timeStimTwoOnset = Inf;
+            p.trVars.timeStimTwoOffset = Inf;
+        
+            p.trVars.timeTargOnset = p.trVars.timeStimOneOffset + (remainingTime-randTimeLeft);
+            p.trVars.timeFixOffset = p.trVars.timeTargOnset + p.trVars.goTimePostTarg;
 
-    % stime two occurs after interstim interval
-    p.trVars.timeStimTwoOnset = p.trVars.timeStimOneOnset + p.trVars.interStimInterval;
-    p.trVars.timeStimTwoOffset = p.trVars.timeStimTwoOnset + p.trVars.stimDur;
+        % if temporal task, two stim
+        elseif p.trVars.numStim == 2
 
-    p.trVars.timeTargOnset = p.trVars.timeStimTwoOffset + (remainingTime-randTimeLeft);
-    p.trVars.timeFixOffset = p.trVars.timeTargOnset + p.trVars.goTimePostTarg;
+            % stim two occurs after interstim interval
+            p.trVars.timeStimTwoOnset = p.trVars.timeStimOneOnset + p.trVars.interStimInterval;
+            p.trVars.timeStimTwoOffset = p.trVars.timeStimTwoOnset + p.trVars.stimDur;
+        
+            p.trVars.timeTargOnset = p.trVars.timeStimTwoOffset + (remainingTime-randTimeLeft);
+            p.trVars.timeFixOffset = p.trVars.timeTargOnset + p.trVars.goTimePostTarg;
+
+        end
 
 end
 
+p.trVars.timeTargOffset     = Inf;
 
 end
 
@@ -697,10 +700,19 @@ p.trVars.interElectrodeSpacing = p.init.trialsArray(p.trVars.currentTrialsArrayR
    interElectrodeSpacingCol);
 
 
+% Locations of fixation and targets
+
+% fixation location in pixels relative to the center of the screen!
+% (Y is flipped because positive is down in psychophysics toolbox).
+p.draw.fixPointPix      =  p.draw.middleXY + [1, -1] .* ...
+    pds.deg2pix([p.trVars.fixDegX, p.trVars.fixDegY], p);
+
+% fixation window width and height in pixels.
+p.draw.fixWinWidthPix       = pds.deg2pix(p.trVars.fixWinWidthDeg, p);
+p.draw.fixWinHeightPix      = pds.deg2pix(p.trVars.fixWinHeightDeg, p);
+
 
 % Choose target locations:
-%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 p.draw.targOnePointPix     =  p.draw.middleXY + [1, -1] .* ...
     pds.deg2pix([p.trVars.targOneDegX, p.trVars.targOneDegY], p);
 p.draw.targTwoPointPix     =  p.draw.middleXY + [1, -1] .* ...
@@ -738,7 +750,7 @@ spacingChNum = p.trVars.interElectrodeSpacing/75;
 % If using the "random suitable choice" method:
 
 % Create matrix of differences between channel numbers of "good electrodes"
-allDiffsGoodElectrodes = abs(p.electrodeInfo.goodElectrodeList - p.electrodeInfo.goodElectrodeList');
+allDiffsGoodElectrodes = abs(p.init.electrodeInfo.goodElectrodes - p.init.electrodeInfo.goodElectrodes');
 
 % find the paired indices where differences == desired spacing
 [rows, cols] = find (allDiffsGoodElectrodes == spacingChNum);
@@ -752,8 +764,8 @@ end
 randCol = randi(length(cols));
 
 % Set that pair as the two stimulation electrodes for this trial
-p.trVars.stimElectrode1 = p.electrodeInfo.goodElectrodeList (rows(randCol));
-p.trVars.stimElectrode2 = p.electrodeInfo.goodElectrodeList (cols(randCol));
+p.trVars.stimElectrode1 = p.init.electrodeInfo.goodElectrodes (rows(randCol));
+p.trVars.stimElectrode2 = p.init.electrodeInfo.goodElectrodes (cols(randCol));
 
 
 
@@ -763,24 +775,24 @@ p.trVars.stimElectrode2 = p.electrodeInfo.goodElectrodeList (cols(randCol));
 % Check that refStimElectrode is set correctly
 if p.trVars.refStimElectrode == -1
     error ('Need to set reference stimulation electrode');
-elseif ~any(p.trVars.refStimElectrode == p.electrodeInfo.goodElectrodes)
+elseif ~any(p.trVars.refStimElectrode == p.init.electrodeInfo.goodElectrodes)
     error ('Chosen reference stimulation electrode is not on good electrodes list')
 end
 
 % If electrodes + or - spacing are both not on good electrode list, send error
-if      ~any (p.trVars.refStimElectrode + spacingChNum == p.electrodeInfo.goodElectrodesList) && ...
-        ~any (p.trVars.refStimElectrode - spacingChNum == p.electrodeInfo.goodElectrodesList)
+if      ~any (p.trVars.refStimElectrode + spacingChNum == p.init.electrodeInfo.goodElectrodes) && ...
+        ~any (p.trVars.refStimElectrode - spacingChNum == p.init.electrodeInfo.goodElectrodes)
     errorStr = append ('No electrodes on good electrode list that are ', num2Str(p.trVars.interElectrodeSpacing), ' um from the chosen refStimElectrode');
     error (errorStr);
 
 % If only electrode + spacing is on good electrode list, use that
-elseif  any (p.trVars.refStimElectrode + spacingChNum == p.electrodeInfo.goodElectrodesList) && ...
-        ~any (p.trVars.refStimElectrode - spacingChNum == p.electrodeInfo.goodElectrodesList)
+elseif  any (p.trVars.refStimElectrode + spacingChNum == p.init.electrodeInfo.goodElectrodes) && ...
+        ~any (p.trVars.refStimElectrode - spacingChNum == p.init.electrodeInfo.goodElectrodes)
     p.trVars.otherStimElectrode = p.trVars.refStimElectrode + spacingChNum;
 
 % If only electrode - spacing is on good electrode list, use that
-elseif  ~any (p.trVars.refStimElectrode + spacingChNum == p.electrodeInfo.goodElectrodesList) && ...
-        any (p.trVars.refStimElectrode - spacingChNum == p.electrodeInfo.goodElectrodesList)
+elseif  ~any (p.trVars.refStimElectrode + spacingChNum == p.init.electrodeInfo.goodElectrodes) && ...
+        any (p.trVars.refStimElectrode - spacingChNum == p.init.electrodeInfo.goodElectrodes)
     p.trVars.otherStimElectrode = p.trVars.refStimElectrode - spacingChNum;
 
 % If both electrodes + or - spacing are on good electrode list, randomly choose one
@@ -805,20 +817,23 @@ p.trVars.stimElectrode2 = p.trVars.otherStimElectrode;
 
 % Calculate desired current amplitude based on C50 of that electrode and
 % the multiplier in the trial structure
-p.trVars.stimAmplitude1 = p.electrodeInfo.C50(p.trVars.stimElectrode1)*p.trVars.currentThresholdMultiplier;
-p.trVars.stimAmplitude2 = p.electrodeInfo.C50(p.trVars.stimElectrode2)*p.trVars.currentThresholdMultiplier;
+p.trVars.stimAmplitude1 = p.init.electrodeInfo.C50(p.trVars.stimElectrode1)*p.trVars.currentThresholdMultiplier;
+p.trVars.stimAmplitude2 = p.init.electrodeInfo.C50(p.trVars.stimElectrode2)*p.trVars.currentThresholdMultiplier;
 
 
 % If stimulation amplitude is >200, set it =200 and send a message saying
 % we have done this (we are artificially limiting the current to 200 uA)
 if p.trVars.stimAmplitude1 > 200
-    dispStr = append('Calculated stimulation amplitude for elecctrode 1 is ' + ...
-        num2Str(p.trVars.stimAmplitude1) + '. Limiting to 200 uA instead');
+    dispStr = append('Calculated stimulation amplitude for elecctrode 1 is ', ...
+        num2str(p.trVars.stimAmplitude1), '. Limiting to 200 uA instead');
     disp (dispStr);
     p.trVars.stimAmplitude1 = 200;
-elseif p.trVars.stimAmplitude2 > 200
-    dispStr = append('Calculated stimulation amplitude for elecctrode 1 is ' + ...
-        num2Str(p.trVars.stimAmplitude2) + '. Limiting to 200 uA instead');
+    
+end
+    
+if p.trVars.stimAmplitude2 > 200
+    dispStr = append('Calculated stimulation amplitude for elecctrode 1 is ', ...
+        num2str(p.trVars.stimAmplitude2), '. Limiting to 200 uA instead');
     disp (dispStr);
     p.trVars.stimAmplitude2 = 200;
 end
@@ -837,6 +852,10 @@ p.trVars.stimAmplitude2 = p.trVars.stimCurrentSteps2*2;
 % this error should never actually be seen with how the code is written,
 % but is here as a check just in case something weird happens
 if p.trVars.stimCurrentSteps1 > 100 || p.trVars.stimCurrentSteps2 > 100
+
+	currentSteps1 = p.trVars.stimCurrentSteps1
+	currentSteps2 = p.trVars.stimCurrentSteps2
+	
     error ('Stimulation current steps is >100');
 end
 
@@ -883,8 +902,8 @@ p.trVars.stimDur             = (p.trVars.stimPeriod*p.trVars.stimNumPulses*(100/
 
 
 % determine total stim duration based on spatial vs temporal and 1 vs 2
-if p.init.exptType == 'temporal' && p.numStim == 2
-    totalStimDur = p.trVars.stimDur*2 + p.trVars.interStimInterval;
+if strcmp(p.init.exptType, 'temporal') && p.trVars.numStim == 2
+    totalStimDur = p.trVars.stimDur*2 + p.trVars.interTrainInterval;
 else
     totalStimDur = p.trVars.stimDur;
 end
@@ -908,55 +927,60 @@ p.trVars.timeStimOneOnset   = p.trVars.stimOnsetMin + randTimeLeft;
 p.trVars.timeStimOneOffset  = p.trVars.timeStimOneOnset + p.trVars.stimDur;
 
 
-% if spatial task, one stim
-if p.init.exptType == 'spatial' && p.trVars.numStim == 1
 
-    % stim two does not occur
-    p.trVars.timeStimTwoOnset = Inf;
-    p.trVars.timeStimTwoOffset = Inf;
+switch p.init.exptType
 
-    p.trVars.timeTargOnset = p.trVars.timeStimOneOffset + (remainingTime-randTimeLeft);
-    p.trVars.timeFixOffset = p.trVars.timeTargOnset + p.trVars.goTimePostTarg;
+    case 'spatial'
+        % if spatial task, one stim
+        if p.trVars.numStim == 1
+            
+            % stim two does not occur
+            p.trVars.timeStimTwoOnset = Inf;
+            p.trVars.timeStimTwoOffset = Inf;
+        
+            p.trVars.timeTargOnset = p.trVars.timeStimOneOffset + (remainingTime-randTimeLeft);
+            p.trVars.timeFixOffset = p.trVars.timeTargOnset + p.trVars.goTimePostTarg;
 
-    % Setting values to 0 for strobing
-    p.trVars.stimElectrode2 = 0;
-    p.trVars.stimAmplitude2 = 0;
+        % if spatial task, two stim
+        elseif p.trVars.numStim == 2
 
-% if spatial task, two stim
-elseif p.init.exptType == 'spatial' && p.trVars.numStim == 2
+            % stim two happens at same time as stim one
+            p.trVars.timeStimTwoOnset = p.trVars.timeStimOneOnset;
+            p.trVars.timeStimTwoOffset = p.trVars.timeStimOneOffset;
+        
+            p.trVars.timeTargOnset = p.trVars.timeStimTwoOffset + (remainingTime-randTimeLeft);
+            p.trVars.timeFixOffset = p.trVars.timeTargOnset + p.trVars.goTimePostTarg;
 
-    % stim two happens at same time as stim one
-    p.trVars.timeStimTwoOnset = p.trVars.timeStimOneOnset;
-    p.trVars.timeStimTwoOffset = p.trVars.timeStimOneOffset;
+        end
 
-    p.trVars.timeTargOnset = p.trVars.timeStimTwoOffset + (remainingTime-randTimeLeft);
-    p.trVars.timeFixOffset = p.trVars.timeTargOnset + p.trVars.goTimePostTarg;
 
-% if temporal task, one stim
-elseif p.init.exptType == 'temporal' && p.trVars.numStim == 1
+    case 'temporal'
 
-    % stim two does not occur
-    p.trVars.timeStimTwoOnset = Inf;
-    p.trVars.timeStimTwoOffset = Inf;
+        % if temporal task, one stim
+        if p.trVars.numStim == 1
 
-    p.trVars.timeTargOnset = p.trVars.timeStimOneOffset + (remainingTime-randTimeLeft);
-    p.trVars.timeFixOffset = p.trVars.timeTargOnset + p.trVars.goTimePostTarg;
+            % stim two does not occur
+            p.trVars.timeStimTwoOnset = Inf;
+            p.trVars.timeStimTwoOffset = Inf;
+        
+            p.trVars.timeTargOnset = p.trVars.timeStimOneOffset + (remainingTime-randTimeLeft);
+            p.trVars.timeFixOffset = p.trVars.timeTargOnset + p.trVars.goTimePostTarg;
 
-    % Setting values to 0 for strobing
-    p.trVars.stimElectrode2 = 0;
-    p.trVars.stimAmplitude2 = 0;
+        % if temporal task, two stim
+        elseif p.trVars.numStim == 2
 
-% if temporal task, two stim
-elseif p.init.exptType == 'temporal' && p.trVars.numStim == 2
+            % stim two occurs after interstim interval
+            p.trVars.timeStimTwoOnset = p.trVars.timeStimOneOnset + p.trVars.interTrainInterval;
+            p.trVars.timeStimTwoOffset = p.trVars.timeStimTwoOnset + p.trVars.stimDur;
+        
+            p.trVars.timeTargOnset = p.trVars.timeStimTwoOffset + (remainingTime-randTimeLeft);
+            p.trVars.timeFixOffset = p.trVars.timeTargOnset + p.trVars.goTimePostTarg;
 
-    % stime two occurs after interstim interval
-    p.trVars.timeStimTwoOnset = p.trVars.timeStimOneOnset + p.trVars.interStimInterval;
-    p.trVars.timeStimTwoOffset = p.trVars.timeStimTwoOnset + p.trVars.stimDur;
-
-    p.trVars.timeTargOnset = p.trVars.timeStimTwoOffset + (remainingTime-randTimeLeft);
-    p.trVars.timeFixOffset = p.trVars.timeTargOnset + p.trVars.goTimePostTarg;
+        end
 
 end
+
+p.trVars.timeTargOffset     = Inf;
 
 end
 
