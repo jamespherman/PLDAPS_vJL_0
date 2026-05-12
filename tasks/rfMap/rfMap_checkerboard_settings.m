@@ -51,9 +51,10 @@ p.trVarsInit.checkGpuMemCapBytes = 512 * 1024 * 1024;
 
 % Override common defaults that don't apply or want different values:
 % - checkerboard doesn't use noiseFrameHold (it operates at display
-%   frame resolution); we set it to 1 so the dispatcher's per-frame
-%   index math doesn't surprise. Also need a longer trial duration
-%   (~4 s) so each trial sees several reversals.
+%   frame resolution); we pin it to 1 so the dispatcher's per-frame
+%   index math doesn't surprise. rfMap_init skips the
+%   noiseTargetUpdateHz -> noiseFrameHold derivation for checkerboard.
+% - longer trial duration (~4 s) so each trial sees several reversals.
 p.trVarsInit.noiseFrameHold = 1;
 p.trVarsInit.trialDurationS = 4.0;
 

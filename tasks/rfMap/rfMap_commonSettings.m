@@ -187,7 +187,17 @@ p.trVarsInit.flipIdx             = 1;
 % Bump to ~1 dva for SC sessions (larger RFs); 2 dva is a cortex-flavor
 % choice and was the old (pre-LGN-tuning) default.
 p.trVarsInit.checkSizeDeg        = 0.5;
-p.trVarsInit.noiseFrameHold      = 6;       % display frames per noise frame
+
+% Noise update rate. Target Hz is rig-rate-independent; rfMap_init derives
+% the integer noiseFrameHold = round(refreshRate / noiseTargetUpdateHz)
+% after pds.initDataPixx populates p.rig.refreshRate. 12 Hz matches
+% feng_LGN's canonical LGN sparse / dense cadence (5 frames at 60 Hz).
+% denseChromatic overrides to 10 Hz (Phase 2 outcome: longer dwell helps
+% per-axis SNR with 8 corner states per check). checkerboard ignores this
+% field and pins noiseFrameHold = 1 (reversal-driven).
+p.trVarsInit.noiseTargetUpdateHz = 12;
+p.trVarsInit.noiseFrameHold      = NaN;     % computed in rfMap_init from noiseTargetUpdateHz
+
 p.trVarsInit.contrastBinary      = 1;       % 1 = binary (0/1), 0 = continuous uniform
 p.trVarsInit.clearPatchDeg       = 1.0;
 p.trVarsInit.clearPatchShape     = 1;       % 1 = disk, 2 = square

@@ -25,6 +25,30 @@ p = initClut(p);
 %% (3) initialize VIEWPixx/DATAPixx
 p = pds.initDataPixx(p);
 
+%% (3b) derive noiseFrameHold from the target noise update rate.
+% Settings declare a rig-rate-independent target Hz; we round to the
+% nearest integer hold length now that p.rig.refreshRate is populated.
+% Skipped for checkerboard, which is reversal-driven (noiseFrameHold
+% pinned to 1 in rfMap_checkerboard_settings).
+if ~strcmp(p.init.stimType, 'checkerboard')
+    if ~isfield(p.trVarsInit, 'noiseTargetUpdateHz') || ...
+            ~isfinite(p.trVarsInit.noiseTargetUpdateHz) || ...
+            p.trVarsInit.noiseTargetUpdateHz <= 0
+        error('rfMap_init:badTargetHz', ...
+            ['p.trVarsInit.noiseTargetUpdateHz must be a positive ' ...
+             'finite number for stimType=%s. Set it in commonSettings ' ...
+             'or the per-stim-type settings file.'], p.init.stimType);
+    end
+    nfh = round(p.rig.refreshRate / p.trVarsInit.noiseTargetUpdateHz);
+    p.trVarsInit.noiseFrameHold    = nfh;
+    p.trVars.noiseFrameHold        = nfh;
+    p.trVarsGuiComm.noiseFrameHold = nfh;
+    fprintf(['rfMap_init: noiseFrameHold = %d (target %.1f Hz, ' ...
+             'actual %.2f Hz at %.2f Hz refresh)\n'], ...
+        nfh, p.trVarsInit.noiseTargetUpdateHz, ...
+        p.rig.refreshRate / nfh, p.rig.refreshRate);
+end
+
 %% (4) define audio waveforms and load to VIEWPixx
 p = pds.initAudio(p);
 

@@ -58,9 +58,12 @@ p.trVarsInit.dklContrasts = 0.45;
 p.init.dklCalibrationSource = 'measured_primaries+measured_gamma';
 
 % Slow the noise rate for chromatic. Chromatic LGN responses are
-% bandlimited below typical luminance responses; ~8 Hz check rate (12
-% display frames at 100 Hz) is closer to the operating range.
-p.trVarsInit.noiseFrameHold = 12;
+% bandlimited below typical luminance responses, and per-axis STA SNR
+% benefits from longer per-check dwell because chromatic tri-noise
+% spreads spikes across 8 corner states per check rather than 2.
+% rfMap_init turns this into noiseFrameHold = round(refreshRate / 10);
+% at 120 Hz that is 12 (~83 ms / check), matching the Phase-2 design.
+p.trVarsInit.noiseTargetUpdateHz = 10;
 
 %% Pre-compute integer strobe values (eval'd at strobe time only sees p).
 % rfMapDklAxisIdx enum: 1=L-M, 2=S, 3=achromatic, 4=mixed (tri-noise).

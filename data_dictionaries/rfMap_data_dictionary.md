@@ -104,7 +104,8 @@ Common fields (all stim types):
 | `passEye`, `passJoy` | 0/1 | Pass through eye / joystick samples. |
 | `repeat`, `blockNumber`, `finish` | -- | Standard PLDAPS bookkeeping. |
 | `checkSizeDeg` | 2 | Side length of one check in dva. |
-| `noiseFrameHold` | 6 (12 chromatic) | Display frames per noise frame. |
+| `noiseTargetUpdateHz` | 12 (10 chromatic) | Target noise update rate in Hz. Rig-rate-independent. `rfMap_init` derives `noiseFrameHold = round(refreshRate / noiseTargetUpdateHz)` after `pds.initDataPixx` populates `refreshRate`. 12 Hz matches feng_LGN's 5-frames-at-60-Hz canonical LGN cadence. Not used for checkerboard. |
+| `noiseFrameHold` | computed | Display frames per noise frame. Initialized to NaN in `commonSettings`; overwritten in `rfMap_init` from `noiseTargetUpdateHz × refreshRate` for non-checkerboard stim types. checkerboard pins this to 1 (reversal-driven). Strobed (16114) so saved sessions record the actual integer used; offline analysis can recover the per-noise-frame duration as `noiseFrameHold / refreshRate`. |
 | `contrastBinary` | 1 | 1 = binary (0/1), 0 = continuous uniform. (Achromatic only.) |
 | `clearPatchDeg`, `clearPatchShape` | 1.0, 1=disk | Hide region around fixation. |
 | `movieDurationMin` | 10 | Total noise movie length (minutes). |
