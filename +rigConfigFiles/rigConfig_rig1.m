@@ -22,8 +22,8 @@ p.rig.deg2PixConstant = p.rig.viewdist * p.rig.screenhpix / p.rig.screenh;
 %% Screen
 p.rig.screen_name       = 'viewpixx';
 p.rig.screen_number     = 1;                    % zero for one screen set-up, 1 or 2 for multiscreen
-p.rig.refreshRate       = 100;                  % display refresh rate (Hz).
-p.rig.frameDuration     = 1/p.rig.refreshRate;  % display frame duration (s);
+p.rig.refreshRate       = 120;                  % display refresh rate (Hz). Authoritative value comes from FrameRate() in pds.initPsychToolbox; this is just the rig-config-time prediction.
+p.rig.frameDuration     = 1/p.rig.refreshRate;  % display frame duration (s); also recomputed from measured refreshRate in pds.initPsychToolbox.
 p.rig.magicNumber       = 0.008;                % time to wait for screen flip
 
 %% Reward (some systems have slightly different calibrations):

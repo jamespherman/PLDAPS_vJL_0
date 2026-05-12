@@ -27,5 +27,7 @@ if p.rig.ripple.status && p.trVarsInit.connectRipple
         pds.xippmex('elec','nano')];
 
     % if recChans is empty we have a problem - warn the user:
-    warning('Ripple is connected but there are no channels found!');
+    if isempty(p.rig.ripple.recChans)
+        warning('Ripple is connected but there are no channels found!');
+    end
 end

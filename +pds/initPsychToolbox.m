@@ -27,9 +27,12 @@ p.draw.middleXY                     = [p.draw.screenRect(3)/2, ...
     p.draw.screenRect(4)/2];
 
 % Now that we have the window open, we can use that information to estimate
-% the refresh rate / frame duration.
+% the refresh rate / frame duration. p.rig.frameDuration is recomputed
+% here (not used from the rig config) so that frameDuration always tracks
+% the actual measured refresh rate -- a stale rig-config refreshRate
+% would otherwise leave frameDuration disagreeing with reality.
 p.rig.refreshRate                   = FrameRate(p.draw.window);
-p.rig.frameDuration
+p.rig.frameDuration                 = 1/p.rig.refreshRate;
 
 % define color range:
 p.draw.colorRange = Screen('ColorRange', p.draw.window);
