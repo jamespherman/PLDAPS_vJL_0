@@ -100,7 +100,7 @@ p.state.holdTarg            = 7;
 
 % end states - success:
 p.state.sacComplete         = 21;
-p.state.heldFix             = 22;
+p.state.heldFix             = 23;
 
 % end states - aborted:
 p.state.fixBreak            = 31;

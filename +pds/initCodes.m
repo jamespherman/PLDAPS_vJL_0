@@ -42,11 +42,9 @@ codes.uniqueTaskCode_seansFirstTask 	= 32013;
 codes.uniqueTaskCode_tokens         	= 32014;
 codes.uniqueTaskCode_gSac_4factors  	= 32015;
 codes.uniqueTaskCode_conflict_task  	= 32016;
-codes.uniqueTaskCode_numerosity_spatial = 32017;
-codes.uniqueTaskCode_numerosity_temporal= 32018;
+codes.uniqueTaskCode_numerosity         = 32017;
 codes.uniqueTaskCode_sacc_to_phosph     = 32019;
 codes.uniqueTaskCode_rfMap              = 32020;
-codes.uniqueTaskCode_fix_present_squares= 32021;
 codes.uniqueTaskCode_barsweep           = 32022;
 
 %% unique codes that are internal to the 'classyStrobe' function class

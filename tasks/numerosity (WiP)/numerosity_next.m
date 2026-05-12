@@ -1,5 +1,5 @@
-function p = numerosity_temporal_next(p)
-%   function p = numerosity_temporal_next(p)
+function p = numerosity_next(p)
+%   function p = numerosity_next(p)
 % Part of the quintet of pldpas functions:
 %
 %   settings function

@@ -1,5 +1,5 @@
-function p = numerosity_spatial_init(p)
-%   p = numerosity_spatial_init(p)
+function p = numerosity_init(p)
+%   p = numerosity_init(p)
 %
 % Part of the quintet of pldpas functions:
 %   settings function
@@ -27,6 +27,9 @@ p   = initClut(p);
 
 % initialize VIEWPixx/DATAPixx
 p   = pds.initDataPixx(p);
+
+% enable 'DinLoopBack':
+Datapixx('EnableDoutDinLoopback');
 
 % define audio waveforms and load to VIEWPixx
 p   = pds.initAudio(p);

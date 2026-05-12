@@ -1,7 +1,7 @@
-function p = numerosity_spatial_settings
-%  p = numerosity_spatial_settings
+function p = numerosity_settings_temporal
+%  p = numerosity_settings_temporal
 %
-%   numerosity_spatial task
+%   numerosity task
 % =============
 % gSac - guided saccades. 
 % This is your stock visually- or memory-guided saccade task.
@@ -25,7 +25,6 @@ function p = numerosity_spatial_settings
 % All settings are set here.
 %   s struct has status values that change within the trial
 %   p struct has control parameters that are defined once
-
 
 %%
 % p.init;           % all things that are saved once except for trialVarsInit
@@ -67,7 +66,7 @@ p.init.rigConfigFile     = which(['rigConfigFiles.rigConfig_rig' ...
     p.init.pcName(end-1)]);
 
 % define task name and related files:
-p.init.taskName     = 'numerosity_spatial';
+p.init.taskName     = 'numerosity';
 p                   = pds.initTaskMetadata(p); % ye ye I know, shouldn't this be in init? well it's here. For now...
 
 
@@ -100,11 +99,12 @@ p.state.holdTarg            = 7;
 
 % end states - success:
 p.state.sacComplete         = 21;
-p.state.wrongTarget	    = 22;
+p.state.wrongTarget	        = 22;
+p.state.heldFix             = 23;
 
 % end states - aborted:
 p.state.fixBreak            = 31;
-p.state.joyBreak            = 32;
+%p.state.joyBreak            = 32;
 p.state.nonStart            = 33;
 p.state.failedToHoldTarg    = 34;
 
@@ -112,59 +112,25 @@ p.state.failedToHoldTarg    = 34;
 
 p.status.iTrial                     = 0; % ITERATOR for current trial count
 p.status.iGoodTrial                 = 0; % 
-p.status.iGoodVis                 = 0; % 
-p.status.iGoodMem                 = 0; % 
+p.status.iGoodVis                   = 0; % 
+p.status.iGoodMem                   = 0; % 
 p.status.pGoodVis                   = 0; % proportion good (ie successfuly completed) visually guided
 p.status.pGoodMem                   = 0; % proportion good (ie successfuly completed) memory guided
 p.status.iTarget                    = 1; % iterator into the list of target locations (defined in _init). Used when multiple locations are predeteremined (e.g. a grid of targets).  
 p.status.trialsLeftInBlock          = 0; % how many trials remain in the current block?
 
-p.status.iGoodOneTargetOneDot		    = 0;
-p.status.iGoodOneTargetTwoDots		    = 0;
-
-p.status.iGoodTwoTargetOneDot		    = 0;
-p.status.iGoodTwoTargetTwoDots		    = 0;
-
-p.status.iWrongOneTargetOneDot		    = 0;
-p.status.iWrongOneTargetTwoDots		    = 0;
-
-p.status.iWrongTwoTargetOneDot		    = 0;
-p.status.iWrongTwoTargetTwoDots		    = 0;
-
-p.status.iGoodUpTargsSameColor		    = 0;
-p.status.iGoodUpTargsDiffColor		    = 0;
-p.status.iGoodDownTargsSameColor	    = 0;
-p.status.iGoodDownTargsDiffColor	    = 0;
-
-p.status.iWrongUpTargsSameColor		    = 0;
-p.status.iWrongUpTargsDiffColor		    = 0;
-p.status.iWrongDownTargsSameColor	    = 0;
-p.status.iWrongDownTargsDiffColor	    = 0;
-
-p.status.iGoodUpOval			    = 0;
-p.status.iGoodUpRect			    = 0;
-p.status.iGoodDownOval			    = 0;
-p.status.iGoodDownRect			    = 0;
-p.status.iGoodDownBoth			    = 0;
-
-p.status.iWrongUpOval			    = 0;
-p.status.iWrongUpRect			    = 0;
-p.status.iWrongDownOval			    = 0;
-p.status.iWrongDownRect			    = 0;
-p.status.iWrongDownBoth			    = 0;
-
 p.rig.guiStatVals = {...   
-    'iGoodTrial'; ...
-    'iGoodUpOval'; ...
-    'iWrongUpOval'; ...
-    'iGoodDownOval'; ...
-    'iWrongDownOval'; ...
-    'iGoodUpRect'; ...
-    'iWrongUpRect'; ...
-    'iGoodDownRect'; ...
-    'iWrongDownRect'; ...
-    'iGoodDownBoth'; ...
-    'iWrongDownBoth'; ...
+    'iTrial'; ...
+    'iTrial'; ...
+    'iTrial'; ...
+    'iTrial'; ...
+    'iTrial'; ...
+    'iTrial'; ...
+    'iTrial'; ...
+    'iTrial'; ...
+    'iTrial'; ...
+    'iTrial'; ...
+    'iTrial'; ...
     'trialsLeftInBlock'; ...   
 };              
 
@@ -194,7 +160,7 @@ p.rig.guiVars = {...
 
 % Which experiment are we running? The full version with all trial types? 
 % The single-stimulus-only version? Something else?
-p.init.exptType         = 'step1';
+p.init.exptType         = 'temporal';
 
 %% TRIAL VARIABLES
 % vars that may change throughout an experimental session and are therefore
@@ -250,7 +216,7 @@ p.trVarsInit.stimRangeXmax	 = 28.0;
 p.trVarsInit.stimRangeYmin	 = -17.5; % Together with previous lines, randomly position stimuli between Ymin and Ymax
 p.trVarsInit.stimRangeYmax	 = 17.5;
 p.trVarsInit.stimSizeMin	 = 0.1; % create stimuli of what size? (randomly chosen between min and max, in dva)
-p.trVarsInit.stimSizeMax	 = 1.0;
+p.trVarsInit.stimSizeMax	 = 0.3;
 p.trVarsInit.oneStimRotationRange= 360; % Range within which individual stimuli are rotated
 p.trVarsInit.twoStimRotationRange= 360; % Range within which stimuli are rotated relative to each other
 
@@ -274,8 +240,7 @@ p.trVarsInit.postRewardDuration      = 0.25;     % how long should the trial las
 p.trVarsInit.targetFlashDuration     = 0.2;      % Duration target stays on for the memory-guided trials.
 % p.trVarsInit.postFlashFixMin       = 1;    % minimum post-flash fixation-duration
 % p.trVarsInit.postFlashFixMax       = 1.5;  % maximum post-flash fixation-duration
-p.trVarsInit.targHoldDurationMin     = 0.3;  % minimum duration to maintain fixation on the target post-saccade 
-p.trVarsInit.targHoldDurationMax     = 0.5;      % maximum duration to maintain fixation on the target post-saccade 
+p.trVarsInit.targHoldDuration        = 0.3;  % duration to maintain fixation on the target post-saccade 
 p.trVarsInit.maxSacDurationToAccept  = 0.1; % this is the max duration of a saccades that we're willing to wait for. 
 p.trVarsInit.targetReillumDelay      = 0.15; % the delay (s) between saccadeOffset (ie entry into target window) and target reillumination
 p.trVarsInit.goLatencyMin            = 0.1;  % minimum saccade-latency criterion
@@ -283,17 +248,48 @@ p.trVarsInit.goLatencyMax            = 0.5;  % maximum saccade-latency criterion
 % p.trVarsInit.preTargMin            = 0.75; % minimum fixation-only time before target onset
 % p.trVarsInit.preTargMax            = 1;    % maximum fixation-only time before target onset
 
+p.trVarsInit.totalFixDur             = 1.3; % Total duration from FixAq to FixOff (go cue)
+p.trVarsInit.stimOnsetMin	         = 0.2; % Minimum time after fixation before stim comes on
+p.trVarsInit.targOnsetMin            = 0.1; % Minimum time after stim goes off before target onset
+p.trVarsInit.goTimePostTarg          = 0.15; % Time from targ onset to the 'go' signal to saccade (which is fixation offset)
+
+%{
 p.trVarsInit.stimOnsetMin	     = 0.25; % Time after fixation before stim comes on
 p.trVarsInit.stimOnsetMax	     = 0.4;
 p.trVarsInit.stimDurMin		     = 0.12; % Time stim stays on
 p.trVarsInit.stimDurMax		     = 0.20;
 p.trVarsInit.targOnsetMin            = 0.15; % Time after stim goes off before target onset
 p.trVarsInit.targOnsetMax            = 0.2;
-p.trVarsInit.goTimePostTargMin       = 0.25; % min duration from targ onset to the 'go' signal to saccade (which is fixation offset)
+p.trVarsInit.goTimePostTargMin       = 0.25; % min duration from targ onset to the 'go' signal to saccade p.draw.clutIdx.expRed_subRed(which is fixation offset)
 p.trVarsInit.goTimePostTargMax       = 0.4; % max duration from targ onset to the 'go' signal to saccade (which is fixation offset)
 
 p.trVarsInit.interStimIntervalMin    = 0.03; % For temporal task; time between stims
-p.trVarsInit.interStimIntervalMax    = 0.36; 
+p.trVarsInit.interStimIntervalMax    = 0.12; 
+
+%}
+
+% Microstim variables
+
+% Load in data about the electrode (RFs, SNR, etc.)
+% p.init.electrodeInfo = load ('electrodeInfo.mat'); % make sure to make the address correct
+
+% For testing:
+p.init.electrodeInfo = load ('fakeElectrodeInfo.mat');
+
+p.trVarsInit.cmdPeriod              = 100; % duration between two pulses, in 33.333 us clock cycles, calculated as 30,000/stimFrequency
+p.trVarsInit.cmdRepeats             = 50; % number of pulses
+
+p.trVarsInit.cmdSeqLength           = 5; % Duration of single phase of pulse, in 33.333 us clock cycles
+p.trVarsInit.cmdSeqIPI              = 2; % Duration of interphase interval, in 33.333 us clock cycles
+
+%p.trVarsInit.refStimElectrode       = -1; % Initialized to -1 to force user to set it
+
+p.trVarsInit.stimElectrode1         = 0; % Initialized to 0;
+p.trVarsInit.stimElectrode2         = 0; 
+p.trVarsInit.stimAmplitude1         = 0; % Initialized to 0;
+p.trVarsInit.stimAmplitude2         = 0; 
+
+
 
 p.trVarsInit.maxFixWait              = 5;    % maximum time to wait for fixation-acquisition
 p.trVarsInit.targOnSacOnly           = 1;    % condition target reappearance on saccade?
@@ -447,57 +443,6 @@ p.stim.dotWidth              = 6;        % dot width
 
 p.trVarsGuiComm = p.trVarsInit;
 
-
-%% trData - These are variables that acquire their values during the trial.
-% These variables need to be initialized to specific values prior to each
-% trial. Define a cell-array of variable names and values to loop over and
-% initialize prior to each trial.
-p.init.trDataInitList = {...
-    'p.trData.eyeX',                    '[]'; ...
-    'p.trData.eyeY',                    '[]'; ...
-    'p.trData.eyeP',                    '[]'; ...
-    'p.trData.eyeT',                    '[]'; ...
-    'p.trData.joyV',                    '[]'; ...
-    'p.trData.dInValues',               '[]'; ...
-    'p.trData.dInTimes',                '[]'; ...
-    'p.trData.onlineGaze',              '[]'; ...
-    'p.trData.strobed',                 '[]'; ...
-    'p.trData.spikeTimes',              '[]'; ...
-    'p.trData.eventTimes',              '[]'; ...
-    'p.trData.eventValues',             '[]'; ...
-    'p.trData.preSacXY',                '[]'; ...
-    'p.trData.postSacXY',               '[]'; ...
-    'p.trData.peakVel',                 '[]'; ...
-    'p.trData.SRT',                     '[]'; ...
-    'p.trData.spikeClusters',           '[]'; ...
-    'p.trData.trialEndState',           '-1'; ...   % final state in trial
-    'p.trData.trialRepeatFlag',         'false'; ...
-    'p.trData.timing.lastFrameTime',    '0'; ...    % time at which last video frame was displayed
-    'p.trData.timing.fixOn',            '-1'; ...   % time of fixation onset
-    'p.trData.timing.fixAq',            '-1'; ...   % time of fixation acquisition
-    'p.trData.timing.fixOff',           '-1'; ...   % time of fixation offset
-    'p.trData.timing.targetOn'          '-1'; ...   % time of target onset
-    'p.trData.timing.targetOff',        '-1'; ...   % time of target offset
-    'p.trData.timing.targetReillum',    '-1'; ...   % time of target reillumination (memsac)
-    'p.trData.timing.targetAq',         '-1'; ...   % time of target acquisition
-    'p.trData.timing.saccadeOnset',     '-1'; ...   % time of saccade start
-    'p.trData.timing.saccadeOffset',    '-1'; ...   % time of saccade end
-    'p.trData.timing.brokeFix',         '-1'; ...   % time of fixation break
-    'p.trData.timing.reward',           '-1'; ...   % time of reward delivery
-    'p.trData.timing.tone',             '-1'; ...   % time of audio feedback delivery
-    'p.trData.timing.trialBegin',       '-1'; ...   % time of trial begin
-    'p.trData.timing.trialStartPTB'     '-1'; ...   % time of joystick release relative to dimming
-    'p.trData.timing.trialStartDP',     '-1'; ...   % time that fixation hold duration was met (also time of fixation dimming)
-    'p.trData.timing.frameNow',         '-1'; ...   % current frame number
-    };
-
-% since the list above is 50fixed, count its rows now for looping over later.
-p.init.nTrDataListRows                  = size(p.init.trDataInitList, 1);
-
-
-
-
-
 %% CLUT - Color Look Up Table
 % the CLUT gets initialized in the _init file, but here I set verbal
 % identifiers that may be used. 
@@ -509,8 +454,8 @@ p.draw.clutIdx.expBlack_subBlack         = 0;
 p.draw.clutIdx.expGrey25_subBg           = 1;
 p.draw.clutIdx.expBg_subBg               = 2;
 p.draw.clutIdx.expGrey70_subBg           = 3;
-p.draw.clutIdx.expWhite_subWhite         = 4;
-p.draw.clutIdx.expRed_subBg              = 5;
+p.draw.clutIdx.expRed_subRed             = 4;
+p.draw.clutIdx.expGreen_subGreen         = 5;
 p.draw.clutIdx.expOrange_subBg           = 6;
 p.draw.clutIdx.expBlue_subBg             = 7;
 p.draw.clutIdx.expCyan_subCyan           = 8;
@@ -530,9 +475,10 @@ p.draw.clutIdx.expCyan_subBg             = 16;
 % CLUT section above.
 p.draw.color.background     = p.draw.clutIdx.expBg_subBg;                   % background CLUT index
 p.draw.color.cursor         = p.draw.clutIdx.expOrange_subBg;               % cursor CLUT index
+p.draw.color.fixWhenOn      = p.draw.clutIdx.expGreen_subGreen;             % fixation CLUT index
 p.draw.color.fix            = p.draw.clutIdx.expBg_subBg;                   % fixation CLUT index
 p.draw.color.fixWin         = p.draw.clutIdx.expBg_subBg;                   % fixation window CLUT index
-p.draw.color.targ           = p.draw.clutIdx.expWhite_subWhite;             % fixation CLUT index
+p.draw.color.targ           = p.draw.clutIdx.expBlack_subBlack;             % fixation CLUT index
 p.draw.color.targWin        = p.draw.clutIdx.expBg_subBg;                   % fixation window CLUT index
 p.draw.color.eyePos         = p.draw.clutIdx.expBlue_subBg;                 % eye position indicator CLUT index
 p.draw.color.gridMajor      = p.draw.clutIdx.expGrey90_subBg;               % grid line CLUT index
@@ -589,19 +535,12 @@ p.draw.cursorW              = 6;        % cursor width in pixels
 
 p.init.strobeList = {...
     'taskCode',         'p.init.taskCode'; ...
-    'date_1yyyy',       'p.init.date_1yyyy'; ...
-    'date_1mmdd',       'p.init.date_1mmdd'; ...
-    'time_1hhmm',       'p.init.time_1hhmm'; ...
-    'connectPLX',       'p.trVars.connectPLX'; ...
-    'vissac',           'p.trVars.isVisSac'; ...
-    'targetTheta',      'p.trVars.targTheta_x10'; ...
-    'targetRadius',     'p.trVars.targRadius_x100'; ...
-    'rewardDuration',   'p.trVars.rewardDurationMs'; ...
-    'trialCount',       'p.status.iTrial'; ...
-    'goodTrialCount',   'p.status.iGoodTrial'; ...
-    'passJoy',          'p.trVarsInit.passJoy'; ...
-    'joyPressVoltDir',  'p.trVarsInit.joyPressVoltDir'; ...
     'trialCode',        'p.init.trialsArray(p.trVars.currentTrialsArrayRow, strcmp(p.init.trialArrayColumnNames, ''trialCode''))';
+    'trialEndState'     'p.trData.trialEndState'; ...
+    'microStimChannel', 'p.trVars.stimElectrode1'; ...
+    'microStimCurrAmp', 'p.trVars.stimAmplitude1'; ...
+    'microStimChanne;', 'p.trVars.stimElectrode2'; ...
+    'microStimCurrAmp', 'p.trVars.stimAmplitude2'; ...
     };
 
 

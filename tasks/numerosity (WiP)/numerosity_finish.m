@@ -1,5 +1,5 @@
-function p = numerosity_spatial_finish(p)
-%   p = numerosity_spatial_finish(p)
+function p = numerosity_finish(p)
+%   p = numerosity_finish(p)
 %
 % Part of the quintet of pldpas functions:
 %   settings function
@@ -23,7 +23,7 @@ p           = pds.readDatapixxBuffers(p);
 
 % Was the previous trial aborted?
 p.trData.trialRepeatFlag = ismember(p.trData.trialEndState, ...
-    [p.state.fixBreak, p.state.joyBreak, p.state.nonStart, p.state.wrongTarget]);
+    [p.state.fixBreak, p.state.nonStart, p.state.failedToHoldTarg, p.state.heldFix]);
 
 % update status variables
 p           = updateStatusVariables(p);

@@ -6,29 +6,11 @@ function p = updateStatusVariables(p)
 % iterate "good trial" count
 p.status.iGoodTrial = p.status.iGoodTrial + double(~p.trData.trialRepeatFlag);
 
-% iterator for visual & memeory saccades:
-p.status.iGoodVis = p.status.iGoodVis + (p.trVars.isVisSac & double(~p.trData.trialRepeatFlag));
-p.status.iGoodMem = p.status.iGoodMem + (~p.trVars.isVisSac & double(~p.trData.trialRepeatFlag));
-
-        
-% iterator for oval/rect stim and one vs two dot tasks:
-
-p.status.iGoodUpOval = p.status.iGoodUpOval + ((p.trVars.stimShape == 1) & (p.trVars.numDots == 1) & double(~p.trData.trialRepeatFlag));
-p.status.iGoodUpRect = p.status.iGoodUpRect + ((p.trVars.stimShape == 2) & (p.trVars.numDots == 1) & double(~p.trData.trialRepeatFlag));
-p.status.iGoodDownOval = p.status.iGoodDownOval + ((p.trVars.stimShape == 1) & (p.trVars.numDots == 2) & double(~p.trData.trialRepeatFlag));
-p.status.iGoodDownRect = p.status.iGoodDownRect + ((p.trVars.stimShape == 2) & (p.trVars.numDots == 2) & double(~p.trData.trialRepeatFlag));
-p.status.iGoodDownBoth = p.status.iGoodDownBoth + ((p.trVars.stimShape == 3) & (p.trVars.numDots == 2) & double(~p.trData.trialRepeatFlag));
-
-p.status.iWrongUpOval = p.status.iWrongUpOval + ((p.trVars.stimShape == 1) & (p.trVars.numDots == 1) & (p.trData.trialEndState == p.state.wrongTarget));
-p.status.iWrongUpRect = p.status.iWrongUpRect + ((p.trVars.stimShape == 2) & (p.trVars.numDots == 1) & (p.trData.trialEndState == p.state.wrongTarget));
-p.status.iWrongDownOval = p.status.iWrongDownOval + ((p.trVars.stimShape == 1) & (p.trVars.numDots == 2) & (p.trData.trialEndState == p.state.wrongTarget));
-p.status.iWrongDownRect = p.status.iWrongDownRect + ((p.trVars.stimShape == 2) & (p.trVars.numDots == 2) & (p.trData.trialEndState == p.state.wrongTarget));
-p.status.iWrongDownBoth = p.status.iWrongDownBoth + ((p.trVars.stimShape == 3) & (p.trVars.numDots == 2) & (p.trData.trialEndState == p.state.wrongTarget));
 
 
-% proportion good for visual & memeory saccades:
-p.status.pGoodVis = p.status.iGoodVis / p.status.iGoodTrial;
-p.status.pGoodMem = p.status.iGoodMem / p.status.iGoodTrial;
+
+
+
 
 p.status.trialsLeftInBlock  = nnz(p.status.trialsArrayRowsPossible);
 
