@@ -129,6 +129,23 @@ else
     p.trVars.sweepCenterPix = p.trVars.sweepStartPix;
 end
 
+%% (7b) Parallel bar-center array in dva (y-up sign convention).
+% Sweep endpoints in dva, derived from pathCenterDeg + half-length along
+% the motion axis. Used by accumulateBarsweepRF to compute the
+% path-center-relative projection coordinate without inverting deg2pix.
+% Distinct from the existing static [1x2] p.trData.sweepCenterDeg.
+dxDeg = 0.5 * p.trVars.pathLengthDeg * cos(theta);
+dyDeg = 0.5 * p.trVars.pathLengthDeg * sin(theta);
+startDeg = [p.trVars.pathCenterXDeg - dxDeg; p.trVars.pathCenterYDeg - dyDeg];
+endDeg   = [p.trVars.pathCenterXDeg + dxDeg; p.trVars.pathCenterYDeg + dyDeg];
+if sweepFrames >= 2
+    p.trVars.sweepCenterDegByFrame = [ ...
+        linspace(startDeg(1), endDeg(1), sweepFrames); ...
+        linspace(startDeg(2), endDeg(2), sweepFrames) ];
+else
+    p.trVars.sweepCenterDegByFrame = startDeg;
+end
+
 %% (8) Bar geometry in pixels for textures and dest rect.
 barWidthPix  = max(1, round(pds.deg2pix(p.trVars.barWidthDeg,  p)));
 barLengthPix = max(1, round(pds.deg2pix(p.trVars.barLengthDeg, p)));

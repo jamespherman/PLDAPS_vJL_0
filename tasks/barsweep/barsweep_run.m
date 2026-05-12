@@ -47,10 +47,10 @@ while ~p.trVars.exitWhileLoop
     % Mouse-eye simulation (debug pathway).
     if p.trVars.mouseEyeSim
         p = pds.getMouse(p);
-        p.trVars.eyeDegX = pds.pix2deg( ...
-            p.trVars.mouseCursorX - p.draw.middleXY(1), p);
-        p.trVars.eyeDegY = pds.pix2deg( ...
-            p.draw.middleXY(2) - p.trVars.mouseCursorY, p);
+        p.trVars.eyePixX = p.trVars.mouseCursorX - p.draw.middleXY(1);
+        p.trVars.eyePixY = p.trVars.mouseCursorY - p.draw.middleXY(2);
+        p.trVars.eyeDegX = pds.pix2deg(p.trVars.eyePixX, p);
+        p.trVars.eyeDegY = pds.pix2deg(-p.trVars.eyePixY, p);
     end
 
     i = i + 1;
@@ -291,6 +291,15 @@ if timeNow > p.trData.timing.lastFrameTime + ...
         end
         p.trVars.postFlip.logical  = false;
         p.trVars.postFlip.varNames = cell(0);
+    end
+
+    % 10b. Capture the flip index that rendered stimOn. Runs after the
+    % postFlip block (so timing.stimOn has just been assigned a real
+    % timestamp) and before flipIdx increments below, so flipIdx still
+    % points at the flip that just rendered the bar's first frame.
+    % accumulateBarsweepRF slices flipTime starting at this index.
+    if p.trData.timing.stimOn > 0 && p.trData.timing.flipIdxStimOn < 0
+        p.trData.timing.flipIdxStimOn = p.trVars.flipIdx;
     end
 
     % 11. Increment flip index; advance sweep frame iff a bar frame

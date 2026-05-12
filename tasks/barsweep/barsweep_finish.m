@@ -32,9 +32,60 @@ if p.trVars.barsweepSessionDone
 end
 
 %% (1) Retrieve Ripple data if connected.
+% Online RF mapping needs spikeTimes/spikeClusters/eventTimes/eventValues
+% from Ripple. Pull whenever Ripple is alive; the accumulator step below
+% gates on useOnlineRF separately.
 if isfield(p.rig, 'ripple') && isfield(p.rig.ripple, 'recChans') && ...
         p.rig.ripple.status && ~isempty(p.rig.ripple.recChans)
     p = pds.getRippleData(p);
+    if p.trVars.useOnlineRF
+        ev = p.trData.eventValues;
+        if isempty(ev)
+            fprintf('  Ripple digin: 0 events received this trial.\n');
+        else
+            uniqEv = unique(ev(:)');
+            fprintf('  Ripple digin: %d events, unique codes = [%s]\n', ...
+                numel(ev), num2str(uniqEv, '%d '));
+        end
+    end
+end
+
+%% (1b) Online RF: detect spatial-knob changes and reset if needed.
+% Compares live trVars (which already reflects mid-session GUI edits via
+% trVarsGuiComm) against the snapshot in p.init.barsweepRF. Sub-bin
+% pathCenterDeg moves are treated as label-only (continuity preserved);
+% larger spatial moves and any pathLengthDeg/barWidthDeg/rfPosBinDeg/
+% rfLatencyMs change snapshot-then-reset the accumulator.
+[p, didReset] = barsweepRF_detectAndReset(p);
+
+%% (1c) Online RF: accumulate this trial.
+% Per plan §0 acceptance criterion #5:
+%   nonStart      -> excluded outright (no bar visibility).
+%   trialComplete -> full sweep contributes.
+%   fixBreak      -> partial sweep up to fixBreak time; accumulator
+%                    truncates internally based on p.trData.timing.fixBreak.
+% Dwell time accumulates regardless of whether any spikes were emitted,
+% so we don't gate on isempty(spikeTimes) here -- bar position coverage
+% is stimulus-only.
+if p.trVars.useOnlineRF && isfield(p.init, 'barsweepRF') && ...
+        isfield(p.init.barsweepRF, 'enabled') && p.init.barsweepRF.enabled && ...
+        p.rig.ripple.status && ...
+        (p.trData.trialEndState == p.state.trialComplete || ...
+         p.trData.trialEndState == p.state.fixBreak)
+    p = accumulateBarsweepRF(p);
+end
+
+%% (1d) Online RF: refresh the figure (reads live trVars knobs).
+if p.trVars.useOnlineRF && isfield(p.init, 'barsweepRF') && ...
+        isfield(p.init.barsweepRF, 'enabled') && p.init.barsweepRF.enabled && ...
+        isfield(p.init.barsweepRF, 'figData') && ...
+        ~isempty(p.init.barsweepRF.figData) && ...
+        isvalid(p.init.barsweepRF.figData.fig)
+    if didReset
+        p.init.barsweepRF.bannerNextTrial = ...
+            sprintf('RF accumulator reset (N=%d)', p.init.barsweepRF.resetCount);
+    end
+    plotBarsweepRF(p);
 end
 
 %% (2) Fill background and flip once to clear the bar.
@@ -60,9 +111,11 @@ if p.trData.trialEndState == p.state.trialComplete
     if isempty(p.status.barsweepPool)
         p.status.barsweepSetsCompleted = ...
             p.status.barsweepSetsCompleted + 1;
-        nA = numel(p.init.barsweepSchedule.angleList);
-        p.status.barsweepPool = ...
-            p.init.barsweepSchedule.angleList(randperm(nA));
+        % Live pair-shuffle flag (mid-session GUI-tunable). Default true
+        % so the §2 forward/reverse balance window is one trial wide.
+        p.status.barsweepPool = shuffleAngleList( ...
+            p.init.barsweepSchedule.angleList, ...
+            p.trVars.barsweepPairShuffle);
     end
 end
 
@@ -78,10 +131,43 @@ p.trData.timing.trialEnd = GetSecs - p.trData.timing.trialStartPTB;
 p.init.strb.strobeNow(p.init.codes.trialEnd);
 
 %% (8) Save trial data.
+% Strip the large RF accumulators from p.init before saveP (pds.saveP
+% writes p.init on every trial; the accumulators are ~hundreds of KB
+% and are also saved separately to a sidecar below). Mirrors the
+% rfMap_finish.m:68-82 strip-restore pattern.
+%
 % Note: pds.saveP(p) skips the per-trial trialNNNN.mat and the
 % in-function status append on nonStart trials (returns at line 27).
 % We close that gap with the unconditional status append in step (11).
+tempBsRF = [];
+if isfield(p.init, 'barsweepRF') && isstruct(p.init.barsweepRF) && ...
+        isfield(p.init.barsweepRF, 'enabled') && p.init.barsweepRF.enabled
+    tempBsRF = p.init.barsweepRF;
+    pruned   = rmfield(tempBsRF, intersect(fieldnames(tempBsRF), ...
+        {'spikeHist', 'dwellTime', 'figData'}));
+    p.init.barsweepRF = pruned;
+end
 pds.saveP(p);
+if ~isempty(tempBsRF)
+    p.init.barsweepRF = tempBsRF;
+end
+
+%% (8b) Per-trial sidecar with full RF accumulator state.
+% Overwritten each trial; the latest snapshot on disk is the post-session
+% state. Cost is ~hundreds of KB to a local SSD; if the output folder is
+% on a network share this can grow into the tens of ms and chew into the
+% ITI -- gate on a future flag if/when that bites.
+%
+% figData carries live graphics handles (figure, axes, image/plot objects)
+% that MATLAB warns about when serialized into a .mat file and which are
+% useless on disk anyway. Strip before saving.
+if ~isempty(tempBsRF)
+    barsweepRF = rmfield(tempBsRF, ...
+        intersect(fieldnames(tempBsRF), {'figData'}));
+    sidecarPath = fullfile(p.init.sessionFolder, ...
+        [p.init.sessionId '_barsweepRF.mat']);
+    save(sidecarPath, 'barsweepRF');
+end
 
 %% (9) Release pre-built textures.
 % Both modes pre-build per trial in _next.m and release per trial here.
@@ -142,5 +228,70 @@ fprintf(['Trial %d: %s | angle=%d | sets=%d/%d | pool=[%s] | ' ...
     num2str(p.status.barsweepPool, '%d '), ...
     p.status.iGoodTrial, p.status.fixBreakCount, ...
     p.status.nonStartCount, p.trData.missedFrameCount);
+
+end
+
+%% -------------------- LOCAL: RF accumulator change detection --------------------
+function [p, didReset] = barsweepRF_detectAndReset(p)
+% Compare live trVars spatial knobs against the snapshot in
+% p.init.barsweepRF. Sub-bin pathCenterDeg moves are absorbed as
+% label-only (continuity preserved). Larger spatial moves and any
+% pathLengthDeg/barWidthDeg/rfPosBinDeg/rfLatencyMs change snapshot the
+% accumulator to a versioned sidecar, then re-init. Reconstruction-only
+% knobs (rfMapExtentDeg, rfRampFilter, rfRampCutoff, rfSelectedChannel)
+% are read live by plotBarsweepRF and never trigger a reset.
+
+didReset = false;
+
+if ~p.trVars.useOnlineRF
+    return;
+end
+if ~isfield(p.init, 'barsweepRF') || ~isstruct(p.init.barsweepRF) || ...
+        ~isfield(p.init.barsweepRF, 'enabled') || ~p.init.barsweepRF.enabled
+    return;
+end
+
+rf = p.init.barsweepRF;
+needReset = false;
+
+% Spatial knobs that DO trigger a reset.
+if abs(rf.pathLengthDeg - p.trVars.pathLengthDeg) > 1e-6, needReset = true; end
+if abs(rf.barWidthDeg   - p.trVars.barWidthDeg)   > 1e-6, needReset = true; end
+if abs(rf.rfPosBinDeg   - p.trVars.rfPosBinDeg)   > 1e-6, needReset = true; end
+if abs(rf.latencyMs     - p.trVars.rfLatencyMs)   > 1e-6, needReset = true; end
+
+% pathCenterDeg: sub-bin nudge -> absorbed (label-only); super-bin -> reset.
+deltaPath = abs([p.trVars.pathCenterXDeg; p.trVars.pathCenterYDeg] - rf.pathCenterDeg);
+if any(deltaPath >= rf.rfPosBinDeg)
+    needReset = true;
+elseif any(deltaPath > 0)
+    % Sub-bin move: just update the snapshot so future deltas are computed
+    % from the new origin. The accumulator stays bit-identical.
+    rf.pathCenterDeg = [p.trVars.pathCenterXDeg; p.trVars.pathCenterYDeg];
+    p.init.barsweepRF = rf;
+end
+
+if ~needReset
+    return;
+end
+
+% Snapshot the pre-reset accumulator. The §1 plan emphasis: this save
+% must happen BEFORE re-init zeroes the arrays, otherwise the auto-reset
+% destroys exactly the data the experimenter wants to review post hoc.
+nextN = rf.resetCount + 1;
+sidecarPath = fullfile(p.init.sessionFolder, ...
+    sprintf('%s_barsweepRF_reset%d.mat', p.init.sessionId, nextN));
+try
+    barsweepRF = rf;
+    save(sidecarPath, 'barsweepRF');
+catch me
+    warning('barsweepRF:snapshotSaveFailed', ...
+        'Failed to save reset snapshot %s: %s', sidecarPath, me.message);
+end
+
+% Increment the reset counter, then re-init (which preserves figData).
+p.init.barsweepRF.resetCount = nextN;
+p = initBarsweepRF(p);
+didReset = true;
 
 end
