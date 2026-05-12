@@ -27,7 +27,16 @@ if p.rig.ripple.status && p.trVarsInit.connectRipple
         pds.xippmex('elec','nano')];
 
     % if recChans is empty we have a problem - warn the user:
-    if isempty(p.rig.ripple.recChans)
-        warning('Ripple is connected but there are no channels found!');
+    if isempty (p.rig.ripple.recChans)
+        warning(['Ripple is connected but there are no recording ...' ...
+            'channels found!']);
+    end
+
+    % get stimulation channels
+    p.rig.ripple.stimChans = pds.xippmex('elec', 'stim');
+
+    if isempty (p.rig.ripple.stimChans)
+        warning(['Ripple is connected but there are no stimulation ...' ...
+            'channels found!']);
     end
 end
