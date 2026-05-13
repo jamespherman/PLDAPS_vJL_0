@@ -85,7 +85,7 @@ if p.trVars.useOnlineRF && isfield(p.init, 'barsweepRF') && ...
         p.init.barsweepRF.bannerNextTrial = ...
             sprintf('RF accumulator reset (N=%d)', p.init.barsweepRF.resetCount);
     end
-    plotBarsweepRF(p);
+    p = plotBarsweepRF(p);
 end
 
 %% (2) Fill background and flip once to clear the bar.

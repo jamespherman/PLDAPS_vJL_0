@@ -1,11 +1,16 @@
-function plotBarsweepRF(p)
-% plotBarsweepRF(p)
+function p = plotBarsweepRF(p)
+% p = plotBarsweepRF(p)
 %
 % Refresh the online RF figure with the current accumulator state.
 % Reads live values from p.trVars for the channel selector and
 % reconstruction-only knobs (rfMapExtentDeg, rfRampFilter, rfRampCutoff)
 % so mid-session GUI edits are honored without resetting the
 % accumulator (see plan §1 "Mid-session parameter changes").
+%
+% Returns p so that lazy-created handles (zero contour, Gaussian-fit
+% ellipse/marker) persist across calls -- the caller must capture the
+% return value, otherwise each trial leaks a fresh set of overlay
+% handles into the axes.
 
 rf = p.init.barsweepRF;
 if ~isstruct(rf) || ~isfield(rf, 'enabled') || ~rf.enabled
@@ -63,18 +68,24 @@ switch rf.exptType
         set(fd.detailCrosshairY, 'XData', [axisDispX(1) axisDispX(end)], ...
             'YData', [cy cy]);
         % Zero-isocontour to distinguish "no RF" from "ringing artifact".
-        if ~isempty(fd.detailZeroContour) && ishandle(fd.detailZeroContour)
-            delete(fd.detailZeroContour);
+        % Created lazily on the first refresh, then updated in place on
+        % every subsequent call. hold on is required on creation:
+        % contour() goes through newplot and would otherwise wipe the
+        % cached detailImg / detailTitle / crosshair handles on the axes.
+        if isempty(fd.detailZeroContour) || ~ishandle(fd.detailZeroContour)
+            hold(fd.detailAx, 'on');
+            [~, fd.detailZeroContour] = contour(fd.detailAx, ...
+                axisDispX, axisDispY, out.rfImage, [0 0], ...
+                'k', 'LineWidth', 0.5);
+            hold(fd.detailAx, 'off');
+            p.init.barsweepRF.figData.detailZeroContour = fd.detailZeroContour;
         end
         if any(out.rfImage(:) > 0) && any(out.rfImage(:) < 0)
-            try
-                [~, fd.detailZeroContour] = contour(fd.detailAx, ...
-                    axisDispX, axisDispY, out.rfImage, [0 0], ...
-                    'k', 'LineWidth', 0.5);
-                p.init.barsweepRF.figData.detailZeroContour = fd.detailZeroContour;
-            catch
-                fd.detailZeroContour = [];
-            end
+            set(fd.detailZeroContour, ...
+                'XData', axisDispX, 'YData', axisDispY, ...
+                'ZData', out.rfImage, 'Visible', 'on');
+        else
+            set(fd.detailZeroContour, 'Visible', 'off');
         end
         % Gaussian-fit overlay: 1-sigma ellipse + centroid marker.
         % Drawn only when peakStats.detected (no point fitting noise).
