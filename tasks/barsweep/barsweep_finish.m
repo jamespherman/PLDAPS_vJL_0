@@ -144,7 +144,7 @@ if isfield(p.init, 'barsweepRF') && isstruct(p.init.barsweepRF) && ...
         isfield(p.init.barsweepRF, 'enabled') && p.init.barsweepRF.enabled
     tempBsRF = p.init.barsweepRF;
     pruned   = rmfield(tempBsRF, intersect(fieldnames(tempBsRF), ...
-        {'spikeHist', 'dwellTime', 'figData'}));
+        {'spikeHist', 'dwellTime', 'figData', 'browser'}));
     p.init.barsweepRF = pruned;
 end
 pds.saveP(p);
@@ -163,7 +163,7 @@ end
 % useless on disk anyway. Strip before saving.
 if ~isempty(tempBsRF)
     barsweepRF = rmfield(tempBsRF, ...
-        intersect(fieldnames(tempBsRF), {'figData'}));
+        intersect(fieldnames(tempBsRF), {'figData', 'browser'}));
     sidecarPath = fullfile(p.init.sessionFolder, ...
         [p.init.sessionId '_barsweepRF.mat']);
     save(sidecarPath, 'barsweepRF');
@@ -282,7 +282,7 @@ nextN = rf.resetCount + 1;
 sidecarPath = fullfile(p.init.sessionFolder, ...
     sprintf('%s_barsweepRF_reset%d.mat', p.init.sessionId, nextN));
 try
-    barsweepRF = rf;
+    barsweepRF = rmfield(rf, intersect(fieldnames(rf), {'figData', 'browser'}));
     save(sidecarPath, 'barsweepRF');
 catch me
     warning('barsweepRF:snapshotSaveFailed', ...

@@ -1,20 +1,18 @@
 function figData = initBarsweepRFDisplay(p)
 % figData = initBarsweepRFDisplay(p)
 %
-% Create the online RF figure and cache plotting handles. Called once
-% from barsweep_init.m. Layout differs by regime:
+% Create the online RF detail figure and cache plotting handles. Called
+% once from barsweep_init.m. Layout differs by regime:
 %
 %   barsweep_rfmap12 -> single 2D image axis (FBP) for the selected
-%                       channel + an all-channels grid below it.
+%                       channel.
 %   barsweep_cardinal4 -> 1x3 row of (rate-vs-x, rate-vs-y, separable-2D
-%                         thumbnail) for the selected channel + an
-%                         all-channels grid showing the two 1D profiles
-%                         per tile.
+%                         thumbnail) for the selected channel.
 %
-% The all-channels grid is created lazily on first plotBarsweepRF call
-% (we don't know whether iradon will be cheap enough until we see the
-% channel count and rig speed in practice). This file just creates the
-% main figure and the detail-panel handles.
+% The cross-channel grid that used to live in this figure was replaced
+% by the per-channel browser uifigure created by
+% initBarsweepChannelBrowser; plotBarsweepRF drives it via
+% updateBarsweepChannelBrowser.
 
 rf = p.init.barsweepRF;
 nCh = rf.nChannels;
@@ -27,17 +25,17 @@ g = [linspace(0, 1, half), linspace(1, 0, half)]';
 b = [ones(1, half), linspace(1, 0, half)]';
 bwrMap = [r, g, b];
 
-fig = figure('Name', sprintf('Online barsweep RF (%s)', rf.exptType), ...
+fig = figure('Name', sprintf('Online barsweep RF detail (%s)', rf.exptType), ...
     'NumberTitle', 'off', ...
-    'Position', [50 50 1500 850], ...
+    'Position', [50 450 1500 450], ...
     'Color', 'w');
 
-% Detail-panel layout takes the top half (rows 1-2 of a 4x6 tiled grid).
-% All-channels grid takes the bottom half (rows 3-4).
-detailRows = 2;
-gridRows   = 2;
+% Detail-panel layout occupies the entire figure now (the all-channels
+% grid moved to a separate uifigure browser).
+detailRows = 1;
+gridRows   = 0;
 nGridCols  = 6;
-nRowsTotal = detailRows + gridRows;
+nRowsTotal = detailRows;
 
 figData.fig          = fig;
 figData.bwrMap       = bwrMap;
@@ -122,43 +120,9 @@ switch rf.exptType
         error('initBarsweepRFDisplay: unknown exptType "%s".', rf.exptType);
 end
 
-%% All-channels grid: place handles, populate lazily on first refresh.
-figData.gridAx  = gobjects(1, nCh);
-figData.gridImg = gobjects(1, nCh);     % rfmap12 only
-figData.gridLineX = gobjects(1, nCh);   % cardinal4 only
-figData.gridLineY = gobjects(1, nCh);   % cardinal4 only
-figData.gridTxt = gobjects(1, nCh);
-gridStart = detailRows * nGridCols;
-for ch = 1:nCh
-    pos = gridStart + ch;
-    if pos > nRowsTotal * nGridCols
-        % Too many channels for our 2-row grid; expand by one row.
-        % Caller can resize the figure manually if desired.
-        break;
-    end
-    ax = subplot(nRowsTotal, nGridCols, pos);
-    switch rf.exptType
-        case 'barsweep_rfmap12'
-            figData.gridImg(ch) = imagesc(ax, zeros(2));
-            axis(ax, 'image'); axis(ax, 'xy'); axis(ax, 'off');
-            colormap(ax, bwrMap);
-        case 'barsweep_cardinal4'
-            % Two overlaid 1D profiles per tile.
-            hold(ax, 'on');
-            figData.gridLineX(ch) = plot(ax, NaN, NaN, 'b-', 'LineWidth', 0.8);
-            figData.gridLineY(ch) = plot(ax, NaN, NaN, 'r-', 'LineWidth', 0.8);
-            hold(ax, 'off');
-            ax.XTick = []; ax.YTick = [];
-    end
-    figData.gridTxt(ch) = title(ax, sprintf('ch%d  N=0', ch), 'FontSize', 7);
-    figData.gridAx(ch) = ax;
-    % Used only for cardinal4 grid axis padding; harmless for rfmap12.
-    if isvalid(ax)
-        if strcmp(rf.exptType, 'barsweep_cardinal4')
-            xlim(ax, [rf.positionCenters(1), rf.positionCenters(end)]);
-        end
-    end
-end
+% The all-channels grid is now a separate uifigure browser created by
+% initBarsweepChannelBrowser; legacy grid* handle fields are no longer
+% allocated here. plotBarsweepRF iterates through the browser instead.
 
 % Suppress the stale-figure warning by drawing once now.
 drawnow;

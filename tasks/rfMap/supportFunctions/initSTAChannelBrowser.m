@@ -1,0 +1,57 @@
+function bd = initSTAChannelBrowser(nCh, nLags, noiseFrameDurMs, isChromatic)
+% initSTAChannelBrowser  Per-channel STA browser uifigure for rfMap.
+%
+%   bd = initSTAChannelBrowser(nCh, nLags, noiseFrameDurMs, isChromatic)
+%
+%   Wraps pds.initChannelBrowser with the rfMap tile content:
+%     - top axes: peak-lag spatial slice (m x n imagesc)
+%     - bottom axes (1/4 height): power-vs-lag curve with red 'x' at peak
+%
+%   Chromatic STAs (4D: nY x nX x 3 x nLags) are collapsed to a 3D
+%   "color-blind RF magnitude" tensor by per-pixel L2 norm across the
+%   three DKL axes before computing the lag-energy curve and peak slice.
+%   This is the standard "color-blind STA energy" convention (Field et
+%   al., 2010 Nature; Chichilnisky 2001 footnote). Per-DKL-axis tuning
+%   detail still lives in the existing 3-row detail panel from
+%   initSTADisplay; this browser is meant for cross-channel scanning,
+%   not color-axis dissection.
+%
+%   bd is the struct returned by pds.initChannelBrowser plus:
+%     .nLags           - cached lag count
+%     .lagAxisMs       - 1 x nLags vector of lag values in ms
+%     .isChromatic     - cached for updateSTAChannelBrowser
+
+if nargin < 4 || isempty(isChromatic), isChromatic = false; end
+if nargin < 3 || isempty(noiseFrameDurMs), noiseFrameDurMs = 30; end
+
+opts = struct( ...
+    'figName',          'rfMap STA - Channel browser', ...
+    'imgXLabel',        '', ...
+    'imgYLabel',        '', ...
+    'lineXLabel',       'lag (ms)', ...
+    'lineYLabel',       'power', ...
+    'initialSelection', 1:min(nCh, 16), ...
+    'climMode',         'per-channel', ...
+    'figPos',           [60 60 1500 850]);
+
+bd = pds.initChannelBrowser(nCh, 'image+line', opts);
+
+bd.nLags       = nLags;
+bd.lagAxisMs   = (0:nLags - 1) * noiseFrameDurMs;
+bd.isChromatic = logical(isChromatic);
+
+% Pre-set the line axes x-data so the user sees correct ms ticks even
+% before the first spike arrives.
+for ch = 1:nCh
+    if isgraphics(bd.lineObj(ch))
+        set(bd.lineObj(ch), 'XData', bd.lagAxisMs, ...
+            'YData', zeros(1, nLags));
+    end
+    if isgraphics(bd.lineAx(ch))
+        xlim(bd.lineAx(ch), [bd.lagAxisMs(1), bd.lagAxisMs(end) + eps]);
+    end
+end
+
+bd.fig.UserData = bd;
+
+end

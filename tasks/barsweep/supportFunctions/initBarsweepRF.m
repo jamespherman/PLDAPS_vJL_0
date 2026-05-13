@@ -23,9 +23,9 @@ function p = initBarsweepRF(p)
 %   p.init.barsweepRF.positionCenters  1 x nPosBins
 % plus snapshots of the spatial knobs that drive the accumulator extent.
 %
-% Preserves figData and resetCount across resets so the figure handle
-% stays alive and the on-disk versioned sidecar names monotonically
-% increment.
+% Preserves figData, browser, and resetCount across resets so the
+% figure handles stay alive and the on-disk versioned sidecar names
+% monotonically increment.
 
 % Read live params if p.trVars has been wholesale-populated (sentinel on
 % pathLengthDeg, a task-specific spatial knob). Otherwise fall back to
@@ -38,11 +38,15 @@ else
 end
 
 % Preserve handles and resetCount across resets.
-priorFig    = [];
-priorReset  = 0;
+priorFig     = [];
+priorBrowser = [];
+priorReset   = 0;
 if isfield(p.init, 'barsweepRF') && isstruct(p.init.barsweepRF)
     if isfield(p.init.barsweepRF, 'figData')
         priorFig = p.init.barsweepRF.figData;
+    end
+    if isfield(p.init.barsweepRF, 'browser')
+        priorBrowser = p.init.barsweepRF.browser;
     end
     if isfield(p.init.barsweepRF, 'resetCount') && ...
             ~isempty(p.init.barsweepRF.resetCount)
@@ -104,6 +108,7 @@ rf.spikeCount         = zeros(nCh, 1);
 rf.trialsByDirection  = zeros(nDir, 1);
 rf.resetCount         = priorReset;
 rf.figData            = priorFig;
+rf.browser            = priorBrowser;
 rf.lastUpdateTrial    = 0;
 rf.bannerNextTrial    = '';
 

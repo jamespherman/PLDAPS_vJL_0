@@ -101,6 +101,11 @@ if isfield(p.init, 'staFigData')
     tempStaFig = p.init.staFigData;
     p.init.staFigData = [];
 end
+tempStaBrowser = [];
+if isfield(p.init, 'staBrowser')
+    tempStaBrowser = p.init.staBrowser;
+    p.init.staBrowser = [];
+end
 p.init.noiseMovie = [];    % replaced by RNG seed for reconstruction
 p.init.staAccum   = [];    % only saved at session end if needed
 pds.saveP(p);
@@ -108,6 +113,9 @@ p.init.noiseMovie = tempMovie;
 p.init.staAccum   = tempStaAccum;
 if ~isempty(tempStaFig)
     p.init.staFigData = tempStaFig;
+end
+if ~isempty(tempStaBrowser)
+    p.init.staBrowser = tempStaBrowser;
 end
 
 %% (9) Close PTB textures to free VRAM
@@ -258,6 +266,21 @@ if isfield(p.init, 'staFigData') && ...
         mod(p.status.iGoodTrial, p.trVars.staPlotEveryNTrials) == 0
     plotSTA(p.init.stimType, p.init.staFigData, ...
         p.init.staAccum, p.init.staSpikeCount, 1);
+    % Refresh the per-channel browser (separate uifigure, same cadence).
+    % Dispatched by stimType: checkerboard uses an F1-amplitude image
+    % per channel; everything else uses the spatial image + power-vs-lag
+    % tile.
+    if isfield(p.init, 'staBrowser') && ~isempty(p.init.staBrowser) && ...
+            isfield(p.init.staBrowser, 'fig') && isvalid(p.init.staBrowser.fig)
+        switch p.init.stimType
+            case 'checkerboard'
+                updateCheckerboardChannelBrowser(p.init.staBrowser, ...
+                    p.init.staAccum);
+            otherwise
+                updateSTAChannelBrowser(p.init.staBrowser, ...
+                    p.init.staAccum, p.init.staSpikeCount);
+        end
+    end
 end
 
 fprintf('  STA: %d total spikes accumulated\n', p.init.staSpikeCount(1));

@@ -230,48 +230,14 @@ switch rf.exptType
             'Interpreter', 'none');
 end
 
-%% ---------- All-channels grid ----------
-% initBarsweepRFDisplay allocates handle arrays sized to nCh but its
-% per-tile loop only fills gridRows*nGridCols slots (the bottom half of
-% the figure). Cap the iteration at that physical limit; relying on
-% isvalid() of the unfilled gobjects placeholders is unreliable across
-% MATLAB versions (some return true for heterogeneous-array placeholders).
-nGridSlots = fd.gridRows * fd.nGridCols;
-nChDraw    = min(rf.nChannels, nGridSlots);
-for ch = 1:nChDraw
-    if rf.spikeCount(ch) < 1
-        set(fd.gridTxt(ch), 'String', sprintf('ch%d  N=0', ch));
-        continue;
-    end
-    out = reconstructBarsweepRF(rf, ch, rf.exptType, reconOpts);
-    switch rf.exptType
-        case 'barsweep_rfmap12'
-            cMax = max(abs(out.rfImage(:)));
-            if cMax == 0, cMax = 1; end
-            set(fd.gridImg(ch), 'CData', out.rfImage);
-            set(fd.gridAx(ch), 'CLim', [-cMax, cMax]);
-        case 'barsweep_cardinal4'
-            % Normalize each profile to its own max so the two are
-            % co-visible regardless of absolute rate.
-            mx = max(out.rateX); if mx == 0, mx = 1; end
-            my = max(out.rateY); if my == 0, my = 1; end
-            set(fd.gridLineX(ch), 'XData', out.axisX, ...
-                'YData', out.rateX / mx);
-            set(fd.gridLineY(ch), 'XData', out.axisY, ...
-                'YData', out.rateY / my);
-            ylim(fd.gridAx(ch), [0, 1.05]);
-    end
-    % Tag the title with snr and a "*" suffix when undetected so the
-    % operator can scan the grid at a glance for channels with real RFs.
-    if out.peakStats.detected
-        set(fd.gridTxt(ch), 'String', ...
-            sprintf('ch%d  N=%d  snr=%.1f', ch, rf.spikeCount(ch), out.peakStats.snr), ...
-            'Color', [0 0 0]);
-    else
-        set(fd.gridTxt(ch), 'String', ...
-            sprintf('ch%d  N=%d  snr=%.1f *', ch, rf.spikeCount(ch), out.peakStats.snr), ...
-            'Color', [0.5 0.5 0.5]);
-    end
+%% ---------- All-channels browser ----------
+% The cross-channel grid lives in a separate uifigure browser created
+% by initBarsweepChannelBrowser. Refresh it here so it shares the
+% per-trial cadence of the detail panel.
+if isfield(rf, 'browser') && ~isempty(rf.browser) && ...
+        isfield(rf.browser, 'fig') && isvalid(rf.browser.fig)
+    axisOffset = [p.trVars.pathCenterXDeg, p.trVars.pathCenterYDeg];
+    updateBarsweepChannelBrowser(rf.browser, rf, reconOpts, axisOffset);
 end
 
 % Clear the banner after one refresh.
