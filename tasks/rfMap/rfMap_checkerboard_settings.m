@@ -56,7 +56,7 @@ p.trVarsInit.checkGpuMemCapBytes = 512 * 1024 * 1024;
 %   noiseTargetUpdateHz -> noiseFrameHold derivation for checkerboard.
 % - longer trial duration (~4 s) so each trial sees several reversals.
 p.trVarsInit.noiseFrameHold = 1;
-p.trVarsInit.trialDurationS = 4.0;
+p.trVarsInit.trialDurationS = 2;
 
 % Number of temporal lags: cover ~one reversal period of lookback so
 % the kernel shows the full impulse response. At 5 Hz reversal +

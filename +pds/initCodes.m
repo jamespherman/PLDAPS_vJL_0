@@ -315,7 +315,8 @@ codes.rfMapCheckReversalEvent        = 16150;  % strobed at each reversal flip (
 % per the "holy" rule). See rfMap_unified_merge_plan.md goal section.
 codes.rfMapSparseBalancedFlag        = 16158;  % 1 = uniform-random (legacy), 2 = balanced TwinDeck
 codes.rfMapRngSeedHigh               = 16159;  % RNG seed upper 16 bits (lower 16 in noiseRngSeed 16106)
-% 16160-16169 reserved for future per-stim-type params
+codes.rfMapNoiseCycleCount           = 16160;  % # times the pre-generated noise movie has wrapped (0 = first pass)
+% 16161-16169 reserved for future per-stim-type params
 % 16170-16175 reserved as headroom
 
 %% validation

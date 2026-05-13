@@ -196,19 +196,6 @@ function p = drawMachine(p)
 
 timeNow = GetSecs - p.trData.timing.trialStartPTB;
 
-% Joystick indicator color.
-[~, joyState] = pds.joyHeld(p);
-if isnan(joyState)
-    p.draw.color.joyInd = p.draw.clutIdx.expGrey25_subBg;
-elseif joyState == 0
-    p.draw.color.joyInd = p.draw.clutIdx.expGrey70_subBg;
-elseif joyState == -1
-    p.draw.color.joyInd = p.draw.clutIdx.expBlue_subBg;
-elseif joyState == 1
-    p.draw.color.joyInd = p.draw.clutIdx.expOrange_subBg;
-end
-joyRectNow = pds.joyRectFillCalc(p);
-
 % Only draw when it's time for the next screen flip.
 if timeNow > p.trData.timing.lastFrameTime + ...
         p.rig.frameDuration - p.rig.magicNumber
@@ -268,23 +255,19 @@ if timeNow > p.trData.timing.lastFrameTime + ...
         repmat(p.draw.fixPointPix, 1, 2) + ...
         p.draw.fixPointRadius * [-1 -1 1 1], p.draw.fixPointWidth);
 
-    % 7. Joystick indicator.
-    Screen('FrameRect', p.draw.window, p.draw.color.joyInd, p.draw.joyRect);
-    Screen('FillRect',  p.draw.window, p.draw.color.joyInd, joyRectNow);
-
-    % 8. Flip and store time.
+    % 7. Flip and store time.
     [p.trData.timing.flipTime(p.trVars.flipIdx), ~, ~, ~] = ...
         Screen('Flip', p.draw.window);
     p.trData.timing.lastFrameTime = ...
         p.trData.timing.flipTime(p.trVars.flipIdx) - ...
         p.trData.timing.trialStartPTB;
 
-    % 9. Strobe pending values.
+    % 8. Strobe pending values.
     if p.init.strb.armedToStrobe
         p.init.strb.strobeList;
     end
 
-    % 10. postFlip timing assignments.
+    % 9. postFlip timing assignments.
     if p.trVars.postFlip.logical
         for j = 1:length(p.trVars.postFlip.varNames)
             if p.trData.timing.(p.trVars.postFlip.varNames{j}) < 0
@@ -296,7 +279,7 @@ if timeNow > p.trData.timing.lastFrameTime + ...
         p.trVars.postFlip.varNames = cell(0);
     end
 
-    % 10b. Capture the flip index that rendered stimOn. Runs after the
+    % 9b. Capture the flip index that rendered stimOn. Runs after the
     % postFlip block (so timing.stimOn has just been assigned a real
     % timestamp) and before flipIdx increments below, so flipIdx still
     % points at the flip that just rendered the bar's first frame.
@@ -305,7 +288,7 @@ if timeNow > p.trData.timing.lastFrameTime + ...
         p.trData.timing.flipIdxStimOn = p.trVars.flipIdx;
     end
 
-    % 11. Increment flip index; advance sweep frame iff a bar frame
+    % 10. Increment flip index; advance sweep frame iff a bar frame
     % was actually drawn (not on pre/post-sweep blank flips).
     p.trVars.flipIdx = p.trVars.flipIdx + 1;
     if drewBar

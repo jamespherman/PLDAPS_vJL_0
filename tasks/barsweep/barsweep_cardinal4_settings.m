@@ -166,7 +166,7 @@ p.trVarsInit.barWidthDeg         = 0.5;     % thickness (perpendicular to motion
 p.trVarsInit.barLengthDeg        = 80;      % total end-to-end length (1:1 mapping)
 
 % --- stimulus appearance ---
-p.trVarsInit.stimulusMode        = 1;       % 1 = noise, 2 = solid
+p.trVarsInit.stimulusMode        = 2;       % 1 = noise, 2 = solid
 p.trVarsInit.backgroundLumIdx    = 2;       % palette index
 p.trVarsInit.barLumIdx           = 3;       % palette index (solid mode)
 p.trVarsInit.noiseLumLowIdx      = 1;       % palette index (noise mode)
@@ -282,7 +282,6 @@ p.draw.fixWinPenPost        = 8;
 p.draw.fixWinPenDraw        = [];
 p.draw.gridSpacing          = 2;
 p.draw.gridW                = 2;
-p.draw.joyRect              = [1705 900 1735 1100];
 p.draw.cursorW              = 6;
 
 %% datapixx
@@ -319,7 +318,6 @@ p.draw.color.fixWin     = p.draw.clutIdx.expGrey25_subBg;
 p.draw.color.eyePos     = p.draw.clutIdx.expBlue_subBg;
 p.draw.color.gridMajor  = p.draw.clutIdx.expGrey25_subBg;
 p.draw.color.gridMinor  = p.draw.clutIdx.expGrey25_subBg;
-p.draw.color.joyInd     = p.draw.clutIdx.expGrey90_subBg;
 
 %% Indexed luminance palette (1=dark, 2=mid, 3=light)
 % Maps the v1 luminance indices to existing CLUT slots.
