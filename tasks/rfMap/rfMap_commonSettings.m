@@ -229,7 +229,7 @@ p.trVarsInit.fixPointRadPix      = 20;
 p.trVarsInit.fixPointLinePix     = 12;
 
 % --- STA / Ripple ---
-p.trVarsInit.connectRipple       = 0;
+p.trVarsInit.connectRipple       = 1;
 p.trVarsInit.useOnlineSort       = 0;
 p.trVarsInit.useRippleSTA        = 0;
 p.trVarsInit.nSTALags            = 8;
