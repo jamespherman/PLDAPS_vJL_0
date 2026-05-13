@@ -273,14 +273,19 @@ p.trVarsInit.interStimIntervalMax    = 0.12;
 p.trVarsInit.connectRipple           = true;
 
 % Load in data about the electrode (Channel mapping, RFs, SNR, etc.)
-p.init.electrodeInfo = load ('electrodeInfo.mat'); % make sure to make the address correct
+% p.init.electrodeInfo = load ('electrodeInfo.mat'); % make sure to make the address correct
 
-p.init.electrodeInfo.rippleChannel = [129:160, 1:32];
+% p.init.electrodeInfo.rippleChannel = [1 3 5 7 9 11 13 15 17 19 21 23 25 27 29 31 ...
+%                                2 4 6 8 10 12 14 16 18 20 22 24 26 28 30 32 ...
+%                                33 35 37 39 41 43 45 47 49 51 53 55 57 59 61 63 ...
+%                                34 36 38 40 42 44 46 48 50 52 54 56 58 60 62 64];
 
-% p.init.electrodeInfo.rippleChannel = [1:2:31 ...
-%                                2:2:32 ...
-%                                129:2:159, ...
-%                                130:2:160];
+% For testing:
+p.init.electrodeInfo = load ('fakeElectrodeInfo.mat');
+p.init.electrodeInfo.rippleChannel = 1:64;
+
+p.init.electrodeInfo.rippleChannel = [33:64, 1:32];
+
 
 p.trVarsInit.cmdPeriod              = 100; % duration between two pulses, in 33.333 us clock cycles, calculated as 30,000/stimFrequency
 p.trVarsInit.cmdRepeats             = 50; % number of pulses

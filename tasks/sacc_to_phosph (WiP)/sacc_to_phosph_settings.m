@@ -257,10 +257,10 @@ p.trVarsInit.goTimePostTargMax       = 0.4; % max duration from targ onset to th
 
 % Microstim variables
 
+p.trVarsInit.connectRipple           = true;
+
 % Load in data about the electrode (RFs, SNR, etc.)
-% p.electrodeInfo = load ('electrodeInfo.mat'); % Load in data about the electrodes from RF mapping
-% For testing:
-p.electrodeInfo = load ('fakeElectrodeInfo.mat');
+p.init.electrodeInfo = load ('electrodeInfo.mat'); % Load in data about the electrodes from RF mapping
 
 p.trVarsInit.stimulatedElectrode = -1; % initialized to -1 to force user to set it when starting
 p.status.previousElectrode = p.trVarsInit.stimulatedElectrode; % Used to check when the stimulated electrode has been switched

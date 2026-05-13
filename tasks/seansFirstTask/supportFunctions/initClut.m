@@ -60,12 +60,10 @@ c.draw.clut.expColors = ...
     0, 0 ,1;		% 20
     0, 1, 1;		% 21
     1, 0, 1;		% 22
-    1, 1, 0;		% 23
-    1, 1, 1;		% 24 (Note: 24-25 are both white, so that there are always some white stim when randomly picking
-    1, 1, 1];         	% 25
+    1, 1, 0];		% 23
 
 % 26-123 (below) randomly generated to create randomly colored stim
-c.draw.clut.expColors (27:124, :) = randColors;
+%c.draw.clut.expColors (27:124, :) = randColors;
 
 % colors for subject's display
 % black                     0
@@ -106,7 +104,7 @@ c.draw.clut.subColors = ...
     1, 1, 0];         	% 23
 
 % 24-123 (below) randomly generated to create randomly colored stim    
-c.draw.clut.subColors (27:124, :) = randColors;
+%c.draw.clut.subColors (27:124, :) = randColors;
 
     
 assert(size(c.draw.clut.subColors,1)==size(c.draw.clut.expColors,1), 'ERROR-- exp & sub Colors must have equal length')

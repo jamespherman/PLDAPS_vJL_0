@@ -31,12 +31,14 @@ randColors = rand (98, 3);
 % convert to ab coordinates for the LAB colorspace (ab)
 % choose luminance values within a certain range (L) 
 % convert to RGB values using lab2rgb
+
+%{
 thetas = randn(100,1)*10 + 90;
 r = rand(100,1)*20 + 80;
 ab = repmat(r,1,2).*[cosd(thetas), sind(thetas)];
 L = rand(100,1)*10 + 60;
 rgbVals = lab2rgb([L,ab]);
-
+%}
 
 % Scans the "randColors" array for any row with all three elements between 0.4 and 0.5
 % (i.e. too close in color to background grey) and rerolls them, then rechecks that row

@@ -16,7 +16,7 @@ end
 % and check for whether the stimulated electrode is chosen appropriately
 if p.trVars.stimulatedElectrode == -1
     error ('Need to set stimulated electrode')
-elseif ~any(p.trVars.stimulatedElectrode == p.electrodeInfo.goodElectrodes)
+elseif ~any(p.trVars.stimulatedElectrode == p.init.electrodeInfo.goodElectrodes)
     error ('Chosen electrode is not on good electrodes list')
 end
 
@@ -312,11 +312,7 @@ end
 %%%%%%%%%%%%%%%%%%%
 function p = createMicrostimTrain(p)
 
-%**************
-% Reset values for staircasing when "stimulatedElectrode" changes
-%**************
-
-
+p.trVars.rippleStimElectrode = p.init.electrodeInfo.rippleChannel (p.trVars.stimulatedElectrode);
 
 % Timing Info:
 
@@ -349,8 +345,8 @@ p.draw.fixWinHeightPix      = pds.deg2pix(p.trVars.fixWinHeightDeg, p);
 
 % Set target location as predicted RF of stimulated electrode
 % ************
-p.trVars.targDegX	= p.electrodeInfo.predictedRFX(p.trVars.stimulatedElectrode);
-p.trVars.targDegY	= p.electrodeInfo.predictedRFY(p.trVars.stimulatedElectrode);
+p.trVars.targDegX	= p.init.electrodeInfo.predictedRFX(p.trVars.stimulatedElectrode);
+p.trVars.targDegY	= p.init.electrodeInfo.predictedRFY(p.trVars.stimulatedElectrode);
 p.draw.targPointPix     =  p.draw.middleXY + [1, -1] .* ...
     pds.deg2pix([p.trVars.targDegX, p.trVars.targDegY], p);
 
@@ -424,7 +420,7 @@ if p.trVars.stimAmplitude > 210
 elseif p.trVars.stimAmplitude <= 100
 
     % send command to change step size to 1
-    %xippmex('stim', 'res', p.trVars.stimulatedElectrode, 1);
+    pds.xippmex('stim', 'res', p.trVars.rippleStimElectrode, 1);
 
     % # steps = stim amplitude
     p.trVars.stimCurrentSteps = p.trVars.stimAmplitude;
@@ -433,7 +429,7 @@ elseif p.trVars.stimAmplitude <= 100
 elseif p.trVars.stimAmplitude > 100 && p.trVars.stimAmplitude <= 200
 
     % send command to change step size to 2
-    %xippmex('stim', 'res', p.trVars.stimulatedElectrode, 2);
+    pds.xippmex('stim', 'res', p.trVars.rippleStimElectrode, 2);
 
     % # steps = stim amplitude / 2. Steps must be whole number, so
     % stimAmplitude must be an even number. We must overwrite stimAmplitude
@@ -445,7 +441,7 @@ elseif p.trVars.stimAmplitude > 100 && p.trVars.stimAmplitude <= 200
 elseif p.trVars.stimAmplitude > 200 && p.trVars.stimAmplitude <= 500
 
     % send command to change step size to 5
-   % xippmex('stim', 'res', p.trVars.stimulatedElectrode, 3);
+    pds.xippmex('stim', 'res', p.trVars.rippleStimElectrode, 3);
 
     % # steps = stim amplitude / 5. Steps must be whole number, so
     % stimAmplitude must be divisible by 5. We must overwrite stimAmplitude
@@ -464,22 +460,20 @@ end
 
 
 
-
-
 % Make stimulation train
-p.trVars.cmd = struct ('elec', p.trVars.stimulatedElectrode, ...
+p.trVars.cmd = struct ('elec', p.trVars.rippleStimElectrode, ...
     'period', p.trVars.cmdPeriod, 'repeats', p.trVars.cmdRepeats);
 
 % cmd.seq(1) describes the first phase of the biphasic pulse
 p.trVars.cmd.seq(1) = struct('length', p.trVars.cmdSeqLength, 'ampl', p.trVars.stimCurrentSteps, ...
-    'pol', 0, 'fs', 1, 'enable', 1, 'delay', 0, 'amdSelect', 1);
+    'pol', 0, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
 
 % cmd.seq(2) describes the interphase interval of the biphasic pulse
 p.trVars.cmd.seq(2) = struct('length', p.trVars.cmdSeqIPI, 'ampl', 0, ...
-    'pol', 0, 'fs', 1, 'enable', 1, 'delay', 0, 'amdSelect', 1);
+    'pol', 0, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
 % cmd.seq(3) describes the second phase of the biphasic pulse
 p.trVars.cmd.seq(3) = struct('length', p.trVars.cmdSeqLength, 'ampl', p.trVars.stimCurrentSteps, ...
-    'pol', 1, 'fs', 1, 'enable', 1, 'delay', 0, 'amdSelect', 1);
+    'pol', 1, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
 
 end
 

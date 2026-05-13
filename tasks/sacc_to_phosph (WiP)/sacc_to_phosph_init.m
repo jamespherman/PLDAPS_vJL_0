@@ -40,6 +40,9 @@ p   = plotWindowSetup(p);
 % define grid line locations:
 p   = pds.defineGridLines(p);
 
+% initialize connection to Ripple:
+p = pds.initRipple(p);
+
 % set task codes:
 p.init.codes = pds.initCodes;
 

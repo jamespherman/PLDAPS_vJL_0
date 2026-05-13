@@ -523,10 +523,12 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
             [-p.draw.textureWindowDimensions/2 -p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2]);
 
         elseif p.trVars.trialType == 2 && p.trData.timing.microstimSent == -1 % Electrode microstimulation
-            %xippmex ('stimseq', p.trVars.cmd); % Send microstim command
+            
             disp (append ('microstim @ ', num2str(p.trVars.stimAmplitude), 'uA / ', num2str(p.trVars.stimCurrentSteps), ' steps on channel #', num2str(p.trVars.stimulatedElectrode)));
             p.trData.timing.microstimSent = timeNow;
             p.init.strb.strobeNow(p.init.codes.microStimOn);
+            
+            pds.xippmex ('stimseq', p.trVars.cmd); % Send microstim command
 
         elseif p.trVars.trialType == 3 % No stimulus
             % do nothing

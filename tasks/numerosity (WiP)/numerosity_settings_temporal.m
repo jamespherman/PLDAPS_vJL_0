@@ -265,16 +265,19 @@ p.trVarsInit.goTimePostTargMax       = 0.4; % max duration from targ onset to th
 
 p.trVarsInit.interStimIntervalMin    = 0.03; % For temporal task; time between stims
 p.trVarsInit.interStimIntervalMax    = 0.12; 
-
 %}
 
 % Microstim variables
 
-% Load in data about the electrode (RFs, SNR, etc.)
-% p.init.electrodeInfo = load ('electrodeInfo.mat'); % make sure to make the address correct
+p.trVarsInit.connectRipple           = true;
 
-% For testing:
-p.init.electrodeInfo = load ('fakeElectrodeInfo.mat');
+% Load in data about the electrode (Channel mapping, RFs, SNR, etc.)
+p.init.electrodeInfo = load ('electrodeInfo.mat'); % make sure to make the address correct
+
+% p.init.electrodeInfo.rippleChannel = [1:2:31 ...
+%                                2:2:32 ...
+%                                129:2:159, ...
+%                                130:2:160];
 
 p.trVarsInit.cmdPeriod              = 100; % duration between two pulses, in 33.333 us clock cycles, calculated as 30,000/stimFrequency
 p.trVarsInit.cmdRepeats             = 50; % number of pulses
@@ -288,8 +291,6 @@ p.trVarsInit.stimElectrode1         = 0; % Initialized to 0;
 p.trVarsInit.stimElectrode2         = 0; 
 p.trVarsInit.stimAmplitude1         = 0; % Initialized to 0;
 p.trVarsInit.stimAmplitude2         = 0; 
-
-
 
 p.trVarsInit.maxFixWait              = 5;    % maximum time to wait for fixation-acquisition
 p.trVarsInit.targOnSacOnly           = 1;    % condition target reappearance on saccade?

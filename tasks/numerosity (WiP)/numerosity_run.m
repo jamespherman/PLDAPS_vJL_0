@@ -591,7 +591,11 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
 
     % If microstim trial
     elseif p.trVars.trialType == 2
-        
+
+        % Apply Ripple's fast settle function to all recording channels
+        % for 1 ms when we stimulate on any electrode
+        [index, source_list, duration] = pds.xippmex ('fastsettle', 'stim', p.rig.ripple.recChans, 2, 1);
+
         if p.trVars.stimOneIsOn && p.trVars.stimTwoIsOn && ...
                 p.trData.timing.microstimOneSent == -1 && p.trData.timing.microstimTwoSent == -1
 
@@ -603,7 +607,7 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
             p.trData.timing.microstimTwoSent = timeNow;
             p.init.strb.strobeNow(p.init.codes.microStimOn);
 
-            %xippmex ('stimseq', [p.trVars.cmd1, p.trVars.cmd2]); % Send microstim command
+            pds.xippmex ('stimseq', [p.trVars.cmd1, p.trVars.cmd2]); % Send microstim command
 
         elseif p.trVars.stimOneIsOn && ~p.trVars.stimTwoIsOn && ...
                 p.trData.timing.microstimOneSent == -1
@@ -613,7 +617,7 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
             p.trData.timing.microstimOneSent = timeNow;
             p.init.strb.strobeNow(p.init.codes.microStimOn);
 
-            %xippmex ('stimseq', p.trVars.cmd1); % Send microstim command
+            pds.xippmex ('stimseq', p.trVars.cmd1); % Send microstim command
 
         elseif ~p.trVars.stimOneIsOn && p.trVars.stimTwoIsOn && ...
                 p.trData.timing.microstimTwoSent == -1
@@ -623,7 +627,7 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
             p.trData.timing.microstimTwoSent = timeNow;
             p.init.strb.strobeNow(p.init.codes.microStimOn);
 
-            %xippmex ('stimseq', p.trVars.cmd2); % Send microstim command
+            pds.xippmex ('stimseq', p.trVars.cmd2); % Send microstim command
 
         end
 

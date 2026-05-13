@@ -166,7 +166,7 @@ p.trVarsInit.barWidthDeg         = 0.5;     % thickness (perpendicular to motion
 p.trVarsInit.barLengthDeg        = 80;      % total end-to-end length (1:1 mapping)
 
 % --- stimulus appearance ---
-p.trVarsInit.stimulusMode        = 1;       % 1 = noise, 2 = solid
+p.trVarsInit.stimulusMode        = 2;       % 1 = noise, 2 = solid
 p.trVarsInit.backgroundLumIdx    = 2;       % palette index
 p.trVarsInit.barLumIdx           = 3;       % palette index (solid mode)
 p.trVarsInit.noiseLumLowIdx      = 1;       % palette index (noise mode)

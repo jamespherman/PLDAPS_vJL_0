@@ -767,7 +767,21 @@ randCol = randi(length(cols));
 p.trVars.stimElectrode1 = p.init.electrodeInfo.goodElectrodes (rows(randCol));
 p.trVars.stimElectrode2 = p.init.electrodeInfo.goodElectrodes (cols(randCol));
 
+% Use the channel-mapping to select the appropriate Ripple channel
+p.trVars.rippleStimElectrode1 = p.init.electrodeInfo.rippleChannel (p.trVars.stimElectrode1);
+p.trVars.rippleStimElectrode2 = p.init.electrodeInfo.rippleChannel (p.trVars.stimElectrode2);
 
+% Check if the chosen ripple channel is a valid stim channel, based on info
+% pulled using xippmex in initRipple
+if ~ismember (p.trVars.rippleStimElectrode1, p.rig.ripple.stimChans)
+    errorMessage = append('Ripple channel ', p.trVars.rippleStimElectrode1, ' is not a valid stim channel');
+    error (errorMessage);
+end
+
+if ~ismember (p.trVars.rippleStimElectrode2, p.rig.ripple.stimChans)
+    errorMessage = append('Ripple channel ', p.trVars.rippleStimElectrode2, ' is not a valid stim channel');
+    error (errorMessage);
+end
 
 % If using the "refStimElectrode" method:
 %{
@@ -802,6 +816,24 @@ end
 
 p.trVars.stimElectrode1 = p.trVars.refStimElectrode;
 p.trVars.stimElectrode2 = p.trVars.otherStimElectrode;
+
+% Use the channel-mapping to select the appropriate Ripple channel
+p.trVars.rippleStimElectrode1 = p.init.electrodeInfo.rippleChannel (p.trVars.stimElectrode1);
+p.trVars.rippleStimElectrode2 = p.init.electrodeInfo.rippleChannel (p.trVars.stimElectrode2);
+
+% Check if the chosen ripple channel is a valid stim channel, based on info
+% pulled using xippmex in initRipple
+if ~ismember (p.trVars.rippleStimElectrode1, p.rig.ripple.stimChans)
+    errorMessage = append('Ripple channel ', p.trVars.rippleStimElectrode1, ' is not a valid stim channel');
+    error (errorMessage);
+end
+
+if ~ismember (p.trVars.rippleStimElectrode2, p.rig.ripple.stimChans)
+    errorMessage = append('Ripple channel ', p.trVars.rippleStimElectrode2, ' is not a valid stim channel');
+    error (errorMessage);
+end
+
+
 %}
 
 
@@ -811,9 +843,11 @@ p.trVars.stimElectrode2 = p.trVars.otherStimElectrode;
 
 % Set step size to 2 for both electrodes
 % **Note: For this task, we are simply always using a step size of 2
-%xippmex('stim', 'res', p.trVars.stimElectrode1, 2);
-%xippmex('stim', 'res', p.trVars.stimElectrode2, 2);
 
+pds.xippmex ('stim', 'enable', 0);
+
+pds.xippmex('stim', 'res', p.trVars.rippleStimElectrode1, 2);
+pds.xippmex('stim', 'res', p.trVars.rippleStimElectrode2, 2);
 
 % Calculate desired current amplitude based on C50 of that electrode and
 % the multiplier in the trial structure
@@ -824,7 +858,7 @@ p.trVars.stimAmplitude2 = p.init.electrodeInfo.C50(p.trVars.stimElectrode2)*p.tr
 % If stimulation amplitude is >200, set it =200 and send a message saying
 % we have done this (we are artificially limiting the current to 200 uA)
 if p.trVars.stimAmplitude1 > 200
-    dispStr = append('Calculated stimulation amplitude for elecctrode 1 is ', ...
+    dispStr = append('Calculated stimulation amplitude for electrode 1 is ', ...
         num2str(p.trVars.stimAmplitude1), '. Limiting to 200 uA instead');
     disp (dispStr);
     p.trVars.stimAmplitude1 = 200;
@@ -832,7 +866,7 @@ if p.trVars.stimAmplitude1 > 200
 end
     
 if p.trVars.stimAmplitude2 > 200
-    dispStr = append('Calculated stimulation amplitude for elecctrode 1 is ', ...
+    dispStr = append('Calculated stimulation amplitude for electrode 1 is ', ...
         num2str(p.trVars.stimAmplitude2), '. Limiting to 200 uA instead');
     disp (dispStr);
     p.trVars.stimAmplitude2 = 200;
@@ -861,33 +895,33 @@ end
 
 
 
-% Make stimulation trains:
-%%%%%%%%%%%%%%%%%%%%%%%%%
+% Make stimulation commands:
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Which electrodes, period between pulses, how many pulses
-p.trVars.cmd1 = struct ('elec', p.trVars.stimElectrode1, ...
+p.trVars.cmd1 = struct ('elec', p.trVars.rippleStimElectrode1, ...
     'period', p.trVars.stimPeriod, 'repeats', p.trVars.stimNumPulses);
-p.trVars.cmd2 = struct ('elec', p.trVars.stimElectrode2, ...
+p.trVars.cmd2 = struct ('elec', p.trVars.rippleStimElectrode2, ...
     'period', p.trVars.stimPeriod, 'repeats', p.trVars.stimNumPulses);
 
 
 % cmd.seq(1) describes first phase of the biphasic pulse
-p.trVars.cmd1.seq(1) = struct('length', p.trVars.cmdSeqIPI, 'ampl', p.trVars.stimCurrentSteps1, ...
-    'pol', 0, 'fs', 1, 'enable', 1, 'delay', 0, 'amdSelect', 1);
-p.trVars.cmd2.seq(1) = struct('length', p.trVars.cmdSeqIPI, 'ampl', p.trVars.stimCurrentSteps2, ...
-    'pol', 0, 'fs', 1, 'enable', 1, 'delay', 0, 'amdSelect', 1);
+p.trVars.cmd1.seq(1) = struct('length', p.trVars.cmdSeqLength, 'ampl', p.trVars.stimCurrentSteps1, ...
+    'pol', 0, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
+p.trVars.cmd2.seq(1) = struct('length', p.trVars.cmdSeqLength, 'ampl', p.trVars.stimCurrentSteps2, ...
+    'pol', 0, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
 
 % cmd.seq(2) describes interphase interval of the biphasic pulse
 p.trVars.cmd1.seq(2) = struct('length', p.trVars.cmdSeqIPI, 'ampl', 0, ...
-    'pol', 0, 'fs', 1, 'enable', 1, 'delay', 0, 'amdSelect', 1);
+    'pol', 0, 'fs', 1, 'enable', 0, 'delay', 0, 'ampSelect', 1);
 p.trVars.cmd2.seq(2) = struct('length', p.trVars.cmdSeqIPI, 'ampl', 0, ...
-    'pol', 0, 'fs', 1, 'enable', 1, 'delay', 0, 'amdSelect', 1);
+    'pol', 0, 'fs', 1, 'enable', 0, 'delay', 0, 'ampSelect', 1);
 
 % cmd.seq(3) describes second phase of the biphasic pulse
-p.trVars.cmd1.seq(3) = struct('length', p.trVars.cmdSeqIPI, 'ampl', p.trVars.stimCurrentSteps1, ...
-    'pol', 1, 'fs', 1, 'enable', 1, 'delay', 0, 'amdSelect', 1);
-p.trVars.cmd2.seq(3) = struct('length', p.trVars.cmdSeqIPI, 'ampl', p.trVars.stimCurrentSteps2, ...
-    'pol', 1, 'fs', 1, 'enable', 1, 'delay', 0, 'amdSelect', 1);
+p.trVars.cmd1.seq(3) = struct('length', p.trVars.cmdSeqLength, 'ampl', p.trVars.stimCurrentSteps1, ...
+    'pol', 1, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
+p.trVars.cmd2.seq(3) = struct('length', p.trVars.cmdSeqLength, 'ampl', p.trVars.stimCurrentSteps2, ...
+    'pol', 1, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
 
 
 
