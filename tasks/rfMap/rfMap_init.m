@@ -57,6 +57,7 @@ p = initTrialStructure(p);
 
 %% (6) initialize connection to Ripple
 p = pds.initRipple(p);
+p = pds.setSpikeThreshFromRMS(p);
 
 %% (7) pre-generate the stimulus by stim type (dispatcher)
 p = generateStimForTask(p);

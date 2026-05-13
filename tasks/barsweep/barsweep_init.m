@@ -99,6 +99,7 @@ end
 % useOnlineRF=false regardless of Ripple state.
 if p.trVarsInit.connectRipple
     p = pds.initRipple(p);
+    p = pds.setSpikeThreshFromRMS(p);
 else
     p.rig.ripple.status   = false;
     p.rig.ripple.recChans = [];
