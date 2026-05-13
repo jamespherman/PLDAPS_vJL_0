@@ -21,12 +21,20 @@ function p = nextParams_noiseMovie(p)
 % noise movie + drive tensor on the fly from the trial's per-trial
 % seed (saved on the trial array at session init).
 
-%% Check if movie is exhausted (must be FIRST, before computing frame range)
+%% Wrap the playback cursor if we've walked past the end of the movie.
+% The noise movie is statistically white; replaying it does not bias
+% STA, it just gives each unique frame multiple (frame, spike) pairs.
+% The cycle counter is strobed (rfMapNoiseCycleCount) so offline
+% analysis can reconstruct exactly what was shown -- combined with the
+% RNG seed and nNoiseFrames, the (cycleCount, trialStartFrame,
+% trialEndFrame) trio is sufficient. For denseChromatic, wrapping the
+% cursor also wraps the trial-array index, so the same per-trial seeds
+% are reused and the same noise is regenerated.
 if p.init.noiseFrameIdx > p.init.nNoiseFrames
-    fprintf('*** rfMap: noise movie exhausted. Ending session. ***\n');
-    p.trVars.movieExhausted = true;
-    p.trVars.nFramesThisTrial = 0;
-    return;
+    p.init.noiseFrameIdx   = 1;
+    p.init.noiseCycleCount = p.init.noiseCycleCount + 1;
+    fprintf('*** rfMap: noise movie wrapped (cycle %d). ***\n', ...
+        p.init.noiseCycleCount);
 end
 
 %% Noise frame range for this trial

@@ -1,39 +1,59 @@
 function p = setSpikeThreshFromRMS(p, chans, mult)
-% pds.setSpikeThreshFromRMS  Set spike thresholds to a multiple of median-based RMS.
+% pds.setSpikeThreshFromRMS  Set spike thresholds to a multiple of robust RMS.
 %
 % p = pds.setSpikeThreshFromRMS(p, chans, mult)
 %
 % Emulates Trellis's "Global Thresholding -> Multiple of RMS (Median)" mode
-% using only xippmex. For each channel in chans, retrieves ~2 s of raw
-% continuous data, applies the same bandpass filter the NIP uses for spike
-% detection, computes a robust noise estimate
-%
-%     sigma_n = median(|x|) / 0.6745     (Quian Quiroga et al., 2004)
-%
-% and sets the lower spike threshold to -mult * sigma_n via
-% xippmex('spike-thresh', ...).
+% using xippmex. Sets each channel's lower spike threshold to -mult*sigma,
+% where sigma is the noise standard deviation in Ripple's spike-band stream
+% (the same stream Trellis itself thresholds against).
 %
 % Inputs:
 %   p     - PLDAPS struct. Requires p.rig.ripple.status==true; uses
 %           p.rig.ripple.recChans as the default channel list.
 %   chans - 1-indexed electrode IDs (optional, default p.rig.ripple.recChans).
-%   mult  - RMS multiplier; threshold = -mult*sigma_n (optional, default 4).
+%   mult  - RMS multiplier; threshold = -mult*sigma (optional, default 4).
 %
 % Output:
 %   p.rig.ripple.spikeThresh - struct logging chans, sigma, lowThresh, mult,
-%                              filter label, durMs, and a NIP timestamp.
+%                              nWaveforms, and a NIP timestamp.
+%
+% How it works:
+%   xippmex's 'cont' command can only retrieve raw/lfp/hi-res continuous data
+%   -- the spike-band stream that Trellis computes RMS-Median on is not
+%   exposed as a continuous stream. Filtering 'raw' ourselves does not give a
+%   matching signal: in practice it yields a sigma estimate ~3x larger than
+%   Trellis's, because raw and the spike stream are on different amplitude
+%   scales (different quantization, possibly different gains/CMR in the NIP's
+%   DSP). What IS exposed are the 52-sample waveform snippets that get
+%   captured whenever a channel crosses its current threshold ('spike'
+%   command). Those snippets ARE the spike-band stream.
+%
+%   So the algorithm here:
+%     1. Save the current spike-thresh values.
+%     2. Set a permissive test threshold (-3 uV) on each channel so that
+%        every channel produces many noise-driven threshold crossings.
+%     3. Flush any leftover spike packets from before the threshold change.
+%     4. Wait briefly for new noise-crossing waveforms to accumulate.
+%     5. Pull the waveforms with xippmex('spike',...).
+%     6. Estimate sigma per channel as std of pooled pre-trigger baseline
+%        samples (first nBaselinePre samples of each waveform). Trellis's
+%        documented formula is MAD/0.6745 (i.e. scaled by 1.482), which for
+%        Gaussian noise equals std exactly. We use std instead of MAD here
+%        because the waveforms xippmex returns are quantized at 0.2 uV --
+%        too coarse a grid for MAD to discriminate channels with sigma in
+%        the 2-3 uV range. std averages over ~2500 baseline samples per
+%        channel and stays well-behaved through the quantization.
+%     7. Apply final thresholds at -mult * sigma. If a channel produced no
+%        waveforms (dead/very quiet), its prior threshold is restored.
 %
 % Notes:
-%   - The 'raw' stream is enabled for these channels for the duration of the
-%     measurement and restored to its prior state afterwards (raw at 30 kHz
-%     across many channels is expensive on the NIP->PC link).
-%   - The spike-band filter is queried from the NIP and used directly (SOS
-%     coefficients), so the noise statistic is computed on a signal whose
-%     bandwidth matches the stream the NIP actually thresholds.
-%   - Intended to be called from a task's _init.m after pds.initRipple, on a
-%     quiet period (no visual stim driving units, no electrical stim, no
-%     opto). The default 2 s window with 32-64 channels easily fits in the
-%     5 s circular buffer.
+%   - Should be called during _init.m before recording starts. The brief
+%     -3 uV test interval will produce a burst of spike packets that gets
+%     transmitted/saved if recording is active.
+%   - Does not touch the 'raw' stream, design any filters, or assume
+%     anything about the NIP's filter chain -- it just uses what Ripple
+%     emits as the spike stream.
 
 % ---- arg defaults
 if nargin < 3 || isempty(mult);  mult  = 4;                       end
@@ -51,91 +71,102 @@ if isempty(chans)
         'No recording channels supplied; skipping spike-thresh setting.');
     return;
 end
-chans = chans(:)';   % row vector for xippmex
+chans = chans(:)';
 
 % ---- configuration
-durMs = 2000;     % length of background snippet (ms); ring buffer holds 5 s
-fsRaw = 30000;    % 'raw' stream sample rate (Hz), per Xippmex manual
+testThresh      = -3;     % uV: low enough to elicit many noise crossings
+                          % on any reasonable channel (sigma 1-10 uV)
+testDurSec      = 0.5;    % how long to accumulate noise crossings
+nBaselinePre    = 10;     % samples 1..10 of each 52-sample waveform are
+                          % pre-trigger -- pure baseline noise
 
-% ---- query the spike-band cutoffs from the NIP, then design our own
-% 4th-order Butterworth bandpass at those cutoffs. The SOS matrix that
-% xippmex returns from filter('list',...) for built-in slots isn't always
-% usable directly with filtfilt (column convention not guaranteed to match
-% MATLAB's [b0 b1 b2 a0 a1 a2]), and an SOS that silently behaves as a
-% near-passthrough yields LFP-dominated noise estimates orders of magnitude
-% too large. Re-designing at the queried cutoffs keeps the noise band
-% matched to what the NIP actually thresholds on.
-[sel, filt] = pds.xippmex('filter', 'list', chans(1), 'spike');
-lo = filt(sel).lowCutoff;
-hi = filt(sel).highCutoff;
-if ~(isfinite(lo) && isfinite(hi) && lo > 0 && hi > lo && hi < fsRaw/2)
-    % Cutoffs are missing or nonsensical; use a sensible default spike band.
-    lo = 300;  hi = 5000;
-    fLabel = sprintf('%s -> default %g-%g Hz Butterworth-4', ...
-                     filt(sel).label, lo, hi);
-else
-    fLabel = sprintf('%s -> %g-%g Hz Butterworth-4', filt(sel).label, lo, hi);
+% ---- save prior thresholds so we can restore them on failure or for
+% channels that yield no waveforms
+priorThresh = pds.xippmex('spike-thresh', chans);
+priorThresh = priorThresh(:)';
+
+restored = false;
+try
+    % Apply test threshold uniformly across channels
+    pds.xippmex('spike-thresh', chans, testThresh * ones(1, numel(chans)));
+
+    % Flush whatever was already buffered (events from prior thresholds)
+    pds.xippmex('spike', chans, 0);
+
+    % Accumulate noise crossings under the new test threshold
+    WaitSecs(testDurSec);
+
+    % Pull spike packets and extract waveforms
+    [~, ~, waves, ~] = pds.xippmex('spike', chans, 0);
+
+    % Estimate sigma per channel as std of pooled pre-trigger baseline
+    % samples. The Trellis manual specifies MAD/0.6745 ("scaled by 1.482"),
+    % which is the same as std for Gaussian noise -- but the waveforms
+    % xippmex returns are quantized at 0.2 uV, and MAD on that quantized
+    % grid is too coarse to discriminate channels with sigma in the 2-3 uV
+    % range (every channel lands in the same MAD bin). std averages over
+    % the ~2500 baseline samples per channel and stays well-behaved.
+    sigma     = nan(numel(chans), 1);
+    nWavesPer = zeros(numel(chans), 1);
+    for c = 1:numel(chans)
+        w = waves{c};
+        if isempty(w);                              continue; end
+        w = double(w);
+        if size(w, 2) < nBaselinePre;               continue; end
+        b = w(:, 1:nBaselinePre);
+        sigma(c)     = std(b(:));
+        nWavesPer(c) = size(w, 1);
+    end
+
+    valid = ~isnan(sigma) & sigma > 0;
+    if ~any(valid)
+        % Nothing crossed -- restore prior thresholds and bail
+        pds.xippmex('spike-thresh', chans, priorThresh);
+        restored = true;
+        warning('pds:setSpikeThreshFromRMS:noCrossings', ...
+            ['No noise crossings on any channel at test threshold ' ...
+             '%g uV. Thresholds left at prior values.'], testThresh);
+        return;
+    end
+
+    % Apply final thresholds. Channels without crossings keep prior values.
+    lowThresh = priorThresh;
+    lowThresh(valid) = -mult * sigma(valid)';
+    pds.xippmex('spike-thresh', chans, lowThresh);
+    restored = true;
+
+catch ME
+    if ~restored
+        pds.xippmex('spike-thresh', chans, priorThresh);
+    end
+    rethrow(ME);
 end
-[zz, pp, kk] = butter(4, [lo hi] / (fsRaw/2), 'bandpass');
-sos = zp2sos(zz, pp, kk);
 
-% ---- save prior raw-stream enable state; enable any channels that are off.
-% 'raw' is enabled on a per-FrontEnd basis (manual p.8), so xippmex rejects
-% per-channel array values for this stream -- pass scalars to channel subsets.
-priorRawState = double(pds.xippmex('signal', chans, 'raw'));
-priorRawState = priorRawState(:)';
-offChans = chans(priorRawState == 0);
-if ~isempty(offChans)
-    pds.xippmex('signal', offChans, 'raw', 1);
-    % only need a long wait if we just enabled streaming
-    WaitSecs(durMs/1000 + 0.3);
-else
-    % already streaming; ring buffer is full -- short settle is enough
-    WaitSecs(0.1);
-end
-
-% ---- pull background snippet, [nChan x nSamp], microvolts
-data = pds.xippmex('cont', chans, durMs, 'raw');
-data = double(data);
-
-% ---- bandpass to the spike band, then robust sigma per channel
-xbp       = filtfilt(sos, 1, data')';        % filtfilt operates on columns
-sigma     = median(abs(xbp), 2) / 0.6745;    % [nChan x 1], microvolts
-lowThresh = -mult * sigma;                   % microvolts, negative
-
-% ---- sanity check: spike-band sigma is typically a few uV. If it's much
-% larger, the filter probably isn't doing its job (e.g. LFP leaking through)
-% and the thresholds are about to be set absurdly large. Warn loudly.
-if max(sigma) > 30
+% ---- sanity check warning
+if max(sigma(valid)) > 30
     warning('pds:setSpikeThreshFromRMS:sigmaSuspect', ...
         ['Estimated noise sigma exceeds 30 uV on at least one channel ' ...
          '(max %.1f uV, median %.1f uV). Typical spike-band noise is ' ...
-         '2-8 uV; this usually means the bandpass filter isn''t working ' ...
-         'as intended (LFP leaking through). Thresholds were set anyway.'], ...
-        max(sigma), median(sigma));
+         '1-5 uV; verify recording quality.'], ...
+        max(sigma(valid)), median(sigma(valid)));
 end
 
-% ---- apply lower thresholds (upper left untouched)
-pds.xippmex('spike-thresh', chans, lowThresh(:)');
-
-% ---- restore prior raw-stream enable state (only disable channels we turned on)
-if ~isempty(offChans)
-    pds.xippmex('signal', offChans, 'raw', 0);
-end
-
-% ---- log into p for the saved data file
+% ---- log into p
 p.rig.ripple.spikeThresh = struct( ...
     'chans',       chans, ...
     'mult',        mult, ...
     'sigma',       sigma(:)', ...
-    'lowThresh',   lowThresh(:)', ...
-    'filterLabel', fLabel, ...
-    'durMs',       durMs, ...
+    'lowThresh',   lowThresh, ...
+    'nWaveforms',  nWavesPer(:)', ...
+    'testThresh',  testThresh, ...
+    'testDurSec',  testDurSec, ...
     'nipTime',     pds.xippmex('time'));
 
-fprintf(['pds.setSpikeThreshFromRMS: set lower thresholds on %d channels ' ...
-         '(median|x|/0.6745, mult=%.2f, filter=%s; ', ...
-         'sigma range %.1f-%.1f uV)\n'], ...
-        numel(chans), mult, fLabel, min(sigma), max(sigma));
+fprintf(['pds.setSpikeThreshFromRMS: set lower thresholds on %d/%d ' ...
+         'channels (mult=%.2f, sigma %.2f-%.2f uV from %d-%d ' ...
+         'noise-crossing waveforms per channel)\n'], ...
+        sum(valid), numel(chans), mult, ...
+        min(sigma(valid)), max(sigma(valid)), ...
+        min(nWavesPer(valid)), max(nWavesPer(valid)));
 
 end

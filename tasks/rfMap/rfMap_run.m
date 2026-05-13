@@ -191,20 +191,6 @@ function p = drawMachine(p)
 % timeNow is relative to trial start
 timeNow = GetSecs - p.trData.timing.trialStartPTB;
 
-% Determine joystick indicator color
-[~, joyState] = pds.joyHeld(p);
-if isnan(joyState)
-    p.draw.color.joyInd = p.draw.clutIdx.expGrey25_subBg;
-elseif joyState == 0
-    p.draw.color.joyInd = p.draw.clutIdx.expGrey70_subBg;
-elseif joyState == -1
-    p.draw.color.joyInd = p.draw.clutIdx.expBlue_subBg;
-elseif joyState == 1
-    p.draw.color.joyInd = p.draw.clutIdx.expOrange_subBg;
-end
-
-joyRectNow = pds.joyRectFillCalc(p);
-
 % Only draw when it's time for the next screen flip
 if timeNow > p.trData.timing.lastFrameTime + ...
         p.rig.frameDuration - p.rig.magicNumber
@@ -293,23 +279,19 @@ if timeNow > p.trData.timing.lastFrameTime + ...
         repmat(p.draw.fixPointPix, 1, 2) + ...
         p.draw.fixPointRadius * [-1 -1 1 1], p.draw.fixPointWidth);
 
-    % 8. Draw joystick bar
-    Screen('FrameRect', p.draw.window, p.draw.color.joyInd, p.draw.joyRect);
-    Screen('FillRect',  p.draw.window, p.draw.color.joyInd, joyRectNow);
-
-    % 9. Flip and store time
+    % 8. Flip and store time
     [p.trData.timing.flipTime(p.trVars.flipIdx), ~, ~, ~] = ...
         Screen('Flip', p.draw.window);
     p.trData.timing.lastFrameTime = ...
         p.trData.timing.flipTime(p.trVars.flipIdx) - ...
         p.trData.timing.trialStartPTB;
 
-    % 10. Strobe pending values
+    % 9. Strobe pending values
     if p.init.strb.armedToStrobe
         p.init.strb.strobeList;
     end
 
-    % 11. Handle postFlip timing assignments
+    % 10. Handle postFlip timing assignments
     if p.trVars.postFlip.logical
         for j = 1:length(p.trVars.postFlip.varNames)
             if p.trData.timing.(p.trVars.postFlip.varNames{j}) < 0
@@ -321,7 +303,7 @@ if timeNow > p.trData.timing.lastFrameTime + ...
         p.trVars.postFlip.varNames = cell(0);
     end
 
-    % 12. Increment flip index
+    % 11. Increment flip index
     p.trVars.flipIdx = p.trVars.flipIdx + 1;
 end
 

@@ -55,8 +55,9 @@ p = pds.initAudio(p);
 %% (5) define trial structure
 p = initTrialStructure(p);
 
-%% (6) initialize connection to Ripple
+%% (6) initialize connection to Ripple and set thresholds
 p = pds.initRipple(p);
+p = pds.setSpikeThreshFromRMS(p);
 
 %% (7) pre-generate the stimulus by stim type (dispatcher)
 p = generateStimForTask(p);
@@ -186,9 +187,10 @@ switch p.init.stimType
 end
 
 % Store metadata
-p.init.noiseGridSize  = [nChecksY, nChecksX];
-p.init.nNoiseFrames   = nNoiseFrames;
-p.init.noiseFrameIdx  = 1;
+p.init.noiseGridSize   = [nChecksY, nChecksX];
+p.init.nNoiseFrames    = nNoiseFrames;
+p.init.noiseFrameIdx   = 1;
+p.init.noiseCycleCount = 0;   % # times the cursor has wrapped (movie modes)
 
 fprintf('rfMap stimType=%s: %d x %d checks, %d total frames\n', ...
     p.init.stimType, nChecksY, nChecksX, nNoiseFrames);

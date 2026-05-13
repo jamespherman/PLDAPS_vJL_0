@@ -300,7 +300,6 @@ p.draw.fixWinPenPost        = 8;
 p.draw.fixWinPenDraw        = [];
 p.draw.gridSpacing          = 2;
 p.draw.gridW                = 2;
-p.draw.joyRect              = [1705 900 1735 1100];
 p.draw.cursorW              = 6;
 
 %% datapixx
@@ -337,7 +336,6 @@ p.draw.color.fixWin     = p.draw.clutIdx.expGrey25_subBg;
 p.draw.color.eyePos     = p.draw.clutIdx.expBlue_subBg;
 p.draw.color.gridMajor  = p.draw.clutIdx.expGrey25_subBg;
 p.draw.color.gridMinor  = p.draw.clutIdx.expGrey25_subBg;
-p.draw.color.joyInd     = p.draw.clutIdx.expGrey90_subBg;
 
 %% WHAT TO STROBE: shared base list
 % Per-stim-type settings files MAY append additional entries (e.g., DKL
@@ -365,6 +363,7 @@ p.init.strobeList = { ...
     'noiseTotalFrames',         'min(p.init.nNoiseFrames, 32767)'; ...
     'noiseGridW',               'p.init.noiseGridSize(2)'; ...
     'noiseGridH',               'p.init.noiseGridSize(1)'; ...
+    'rfMapNoiseCycleCount',     'min(p.init.noiseCycleCount, 32767)'; ...
     };
 
 % Note: p.trVarsGuiComm assignment is left to the per-stim-type settings
