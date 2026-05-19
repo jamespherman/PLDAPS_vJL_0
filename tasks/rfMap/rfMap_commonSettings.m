@@ -187,7 +187,7 @@ p.trVarsInit.flipIdx             = 1;
 % LGN RF centers are ~0.05-0.3 dva, so 0.5 dva checks resolve them.
 % Bump to ~1 dva for SC sessions (larger RFs); 2 dva is a cortex-flavor
 % choice and was the old (pre-LGN-tuning) default.
-p.trVarsInit.checkSizeDeg        = 0.5;
+p.trVarsInit.checkSizeDeg        = 2;
 
 % Noise update rate. Target Hz is rig-rate-independent; rfMap_init derives
 % the integer noiseFrameHold = round(refreshRate / noiseTargetUpdateHz)
@@ -234,7 +234,7 @@ p.trVarsInit.connectRipple       = 1;
 p.trVarsInit.useOnlineSort       = 0;
 p.trVarsInit.useRippleSTA        = 1;
 p.trVarsInit.nSTALags            = 8;
-p.trVarsInit.nChannels           = 32;
+p.trVarsInit.nChannels           = 64;
 
 % Online-plot throttling. Plotter renders only on schedule; accumulators
 % update every trial regardless.
