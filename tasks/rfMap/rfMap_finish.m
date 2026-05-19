@@ -58,7 +58,21 @@ if ~p.trData.trialRepeatFlag
     if p.trVars.useRippleSTA && p.rig.ripple.status && ...
             ~isempty(p.trData.spikeTimes)
         p = accumulateSTA(p);
+
+        % (4c) Per-channel RF center estimate (dva re fixation).
+        % Cheap (argmax + centroid over ~nY x nX), runs every good
+        % trial. Checkerboard returns all-NaN inside the helper.
+        % Persisted on p.init so aborts/zero-spike trials inherit the
+        % latest valid estimate when saved.
+        p.init.lastRFCentersDeg = computeRFCenters(p);
     end
+end
+
+% Mirror the persistent estimate into trData so every saved trial file
+% carries the most recent centers. Initialized to NaN in rfMap_init;
+% updated above on successful trials with spikes.
+if isfield(p.init, 'lastRFCentersDeg')
+    p.trData.rfCentersDeg = p.init.lastRFCentersDeg;
 end
 % If trial was aborted: noise-movie modes re-present the same frames
 % next trial; checkerboard leaves the row in trialsArrayRowsPossible

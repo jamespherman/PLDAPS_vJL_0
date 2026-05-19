@@ -282,6 +282,12 @@ switch p.init.stimType
             'Unrecognized stimType ''%s''.', p.init.stimType);
 end
 
+% Latest valid per-channel RF center estimate (dva re fixation),
+% persisted across trials so an abort or zero-spike trial still carries
+% the most recent centers in its saved .mat. Updated by computeRFCenters
+% in rfMap_finish on every successful trial with spikes.
+p.init.lastRFCentersDeg = nan(nCh, 2);
+
 fprintf('STA accumulators initialized: %d channels, %d lags (stimType=%s)\n', ...
     nCh, nLags, p.init.stimType);
 

@@ -97,6 +97,7 @@ p.init.taskActions{4} = 'pdsActions.stopAudioSchedule';
 p.init.taskActions{5} = 'pdsActions.rewardDrain';
 p.init.taskActions{6} = 'pdsActions.singleReward';
 p.init.taskActions{7} = 'pdsActions.catOldOutput';
+p.init.taskActions{8} = 'pdsActions.exportRFCentersCSV';
 
 %% audio:
 p.audio.audsplfq        = 48000;
@@ -240,6 +241,14 @@ p.trVarsInit.nChannels           = 32;
 p.trVarsInit.staPlotEveryNTrials = 5;
 p.trVarsInit.staPlotChannels     = [];      % [] = all channels
 
+% Per-channel RF center estimator. Centroid is taken over the peak-lag
+% spatial slice after thresholding |slice| at rfCenterThreshFrac * max
+% (half-max is the LGN-standard default). Computed every successful
+% trial; written to p.trData.rfCentersDeg as [nChannels x 2] in dva
+% relative to fixation. Checkerboard mode leaves it NaN (no spatial
+% grid).
+p.trVarsInit.rfCenterThreshFrac  = 0.5;
+
 % --- state machine ---
 p.trVarsInit.currentState        = p.state.trialBegun;
 p.trVarsInit.exitWhileLoop       = false;
@@ -289,6 +298,7 @@ p.init.trDataInitList = { ...
     'p.trData.timing.flipTime',         'zeros(1, 3000)'; ...
     'p.trData.trialEndState',           '0'; ...
     'p.trData.trialRepeatFlag',         'false'; ...
+    'p.trData.rfCentersDeg',            'nan(p.trVarsInit.nChannels, 2)'; ...
     };
 
 p.init.nTrDataListRows = size(p.init.trDataInitList, 1);
