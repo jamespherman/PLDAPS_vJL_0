@@ -76,6 +76,7 @@ p.init.taskActions{4} = 'pdsActions.stopAudioSchedule';
 p.init.taskActions{5} = 'pdsActions.rewardDrain';
 p.init.taskActions{6} = 'pdsActions.singleReward';
 p.init.taskActions{7} = 'pdsActions.catOldOutput';
+p.init.taskActions{8} = 'pdsActions.exportBarsweepRFCentersCSV';
 
 %% audio:
 p.audio.audsplfq        = 48000;
