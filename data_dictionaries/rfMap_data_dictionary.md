@@ -144,7 +144,7 @@ Per-trial collected data.
 | `spikeTimes`, `spikeClusters` | Ripple spike data (channel = cluster). Empty if no probe / Ripple disabled. |
 | `eventTimes`, `eventValues` | Ripple digital-event timestamps. |
 | `timing.lastFrameTime`, `trialStartPTB`, `trialStartDP` | Frame / trial start times. |
-| `timing.fixOn`, `fixAq`, `fixBreak`, `noiseOn`, `noiseOff`, `reward`, `tone`, `trialEnd` | Event timestamps (relative to trial start). **All initialize to -1**; check `> 0` before use (postFlip-assigned timing variables are not real until the corresponding flip has happened). |
+| `timing.fixOn`, `fixAq`, `fixOff`, `fixBreak`, `stimOn`, `stimOff`, `reward`, `tone`, `trialRunDone`, `trialEnd` | Event timestamps (relative to trial start). **All initialize to -1**; check `> 0` before use (postFlip-assigned timing variables are not real until the corresponding flip has happened). |
 | `timing.flipTime` | Per-flip timestamps (preallocated 3000 entries). |
 | `trialEndState` | Final state value. |
 | `trialRepeatFlag` | True if trial aborted (state 11..19). |

@@ -50,6 +50,13 @@ while ~p.trVars.exitWhileLoop
 
 end % while loop
 
+% Strobe trialRunDone once, after the run loop exits, regardless of
+% outcome. Distinct from trialEnd (which fires in _finish.m after the
+% paired info strobes). Trial-relative timestamp consistent with other
+% timing variables in this file.
+p.trData.timing.trialRunDone = GetSecs - p.trData.timing.trialStartPTB;
+p.init.strb.strobeNow(p.init.codes.trialRunDone);
+
 end
 
 %% -------------------- STATE MACHINE --------------------
@@ -111,37 +118,78 @@ switch p.trVars.currentState
         % Enable noise display
         p.trVars.noiseIsOn = true;
 
-        % Mark noiseOn via postFlip (once)
-        if p.trData.timing.noiseOn < 0 ...
-                && ~ismember('noiseOn', p.trVars.postFlip.varNames)
+        % Mark stimOn via postFlip (once)
+        if p.trData.timing.stimOn < 0 ...
+                && ~ismember('stimOn', p.trVars.postFlip.varNames)
             p.trVars.postFlip.logical           = true;
-            p.trVars.postFlip.varNames{end + 1} = 'noiseOn';
-            p.init.strb.addValueOnce(p.init.codes.noiseOn);
+            p.trVars.postFlip.varNames{end + 1} = 'stimOn';
+            p.init.strb.addValueOnce(p.init.codes.stimOn);
             p.trVars.noiseStartFlipIdx = p.trVars.flipIdx;
         end
 
         % Determine which noise frame to show (time-based)
-        if p.trData.timing.noiseOn > 0
-            displayFramesSinceNoiseOn = floor( ...
-                (timeNow - p.trData.timing.noiseOn) / p.rig.frameDuration);
+        if p.trData.timing.stimOn > 0
+            displayFramesSinceStimOn = floor( ...
+                (timeNow - p.trData.timing.stimOn) / p.rig.frameDuration);
             p.trVars.currentNoiseIdx = floor( ...
-                displayFramesSinceNoiseOn / p.trVars.noiseFrameHold) + 1;
+                displayFramesSinceStimOn / p.trVars.noiseFrameHold) + 1;
         end
 
         % Check if all noise frames have been shown
         if p.trVars.currentNoiseIdx > p.trVars.nFramesThisTrial && ...
-                p.trData.timing.noiseOn > 0
-            % Noise presentation complete
-            p.trVars.noiseIsOn = false;
-            p.trData.timing.noiseOff = timeNow;
-            p.init.strb.addValue(p.init.codes.noiseOff);
-            p.trVars.currentState = p.state.noiseComplete;
+                p.trData.timing.stimOn > 0
+            % Stim presentation complete. Stop drawing noise; hide fix
+            % point and fix window on the next flip; tag stimOff and
+            % fixOff at that flip via postFlip. Gate the transition to
+            % noiseComplete on stimOff actually being assigned (i.e., the
+            % flip happened and the queued stimOff strobe was flushed) so
+            % the reward strobeNow can't race ahead of the stimOff
+            % postFlip strobe.
+            p.trVars.noiseIsOn  = false;
+            p.draw.color.fix    = p.draw.clutIdx.expBg_subBg;
+            p.draw.color.fixWin = p.draw.clutIdx.expBg_subBg;
 
-        elseif ~pds.eyeInWindow(p) && p.trData.timing.noiseOn > 0
-            % Fixation broken during noise
+            if p.trData.timing.stimOff < 0 ...
+                    && ~ismember('stimOff', p.trVars.postFlip.varNames)
+                p.trVars.postFlip.logical           = true;
+                p.trVars.postFlip.varNames{end + 1} = 'stimOff';
+                p.init.strb.addValueOnce(p.init.codes.stimOff);
+            end
+            if p.trData.timing.fixOff < 0 ...
+                    && ~ismember('fixOff', p.trVars.postFlip.varNames)
+                p.trVars.postFlip.logical           = true;
+                p.trVars.postFlip.varNames{end + 1} = 'fixOff';
+                p.init.strb.addValueOnce(p.init.codes.fixOff);
+            end
+
+            if p.trData.timing.stimOff > 0
+                p.trVars.currentState = p.state.noiseComplete;
+            end
+
+        elseif ~pds.eyeInWindow(p) && p.trData.timing.stimOn > 0
+            % Fixation broken during noise. fixBreak is a BEHAVIORAL
+            % event -> strobeNow immediately. The visual consequences
+            % (stimOff, fixOff) happen on the next flip and are tagged
+            % via postFlip.
             p.init.strb.strobeNow(p.init.codes.fixBreak);
             p.trData.timing.fixBreak = timeNow;
-            p.trVars.noiseIsOn = false;
+            p.trVars.noiseIsOn  = false;
+            p.draw.color.fix    = p.draw.clutIdx.expBg_subBg;
+            p.draw.color.fixWin = p.draw.clutIdx.expBg_subBg;
+
+            if p.trData.timing.stimOff < 0 ...
+                    && ~ismember('stimOff', p.trVars.postFlip.varNames)
+                p.trVars.postFlip.logical           = true;
+                p.trVars.postFlip.varNames{end + 1} = 'stimOff';
+                p.init.strb.addValueOnce(p.init.codes.stimOff);
+            end
+            if p.trData.timing.fixOff < 0 ...
+                    && ~ismember('fixOff', p.trVars.postFlip.varNames)
+                p.trVars.postFlip.logical           = true;
+                p.trVars.postFlip.varNames{end + 1} = 'fixOff';
+                p.init.strb.addValueOnce(p.init.codes.fixOff);
+            end
+
             p.trVars.currentState = p.state.fixBreak;
         end
 
@@ -173,14 +221,14 @@ switch p.trVars.currentState
         p.trVars.exitWhileLoop = true;
 end
 
-% On exit, record trial end state and strobe trial end
+% On exit, record trial end state. trialEnd is strobed in _finish.m
+% (after pds.strobeTrialData has emitted the paired info strobes), not
+% here. trialRunDone is strobed in the caller, after the while loop.
 if p.trVars.exitWhileLoop
     p.draw.color.fix    = p.draw.color.background;
     p.draw.color.fixWin = p.draw.color.background;
 
     p.trData.trialEndState = p.trVars.currentState;
-    p.init.strb.strobeNow(p.init.codes.trialEnd);
-    p.trData.timing.trialEnd = timeNow;
 end
 
 end

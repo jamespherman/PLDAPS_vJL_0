@@ -255,8 +255,8 @@ codes.rewardRatioBig_x100   = 16035;  % reward ratio * 100 (e.g., 2.0 -> 200)
 codes.rewardProbHigh_x1000  = 16036;  % P(canonical reward) * 1000 (e.g., 0.9 -> 900)
 
 % rfMap task codes (dense noise RF mapping)
-codes.noiseOn               = 16101;  % first noise frame onset
-codes.noiseOff              = 16102;  % noise presentation complete
+codes.noiseOn               = 16101;  % DEPRECATED 2026-05-18: superseded by generic stimOn (6002) for cross-task consistency. Number reserved, do not reuse.
+codes.noiseOff              = 16102;  % DEPRECATED 2026-05-18: superseded by generic stimOff (6003) for cross-task consistency. Number reserved, do not reuse.
 codes.noiseCheckSize_x100   = 16103;  % check size in degrees * 100
 codes.noiseFrameHold        = 16104;  % display frames per noise update
 codes.noiseColorMode        = 16105;  % DEPRECATED post-rfMap unified merge: superseded by rfMapStimType (16140). Number reserved, do not reuse.

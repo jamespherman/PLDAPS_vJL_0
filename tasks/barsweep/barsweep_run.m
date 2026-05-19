@@ -128,16 +128,25 @@ switch p.trVars.currentState
 
         % (3a) Fixation-break check FIRST.
         if ~pds.eyeInWindow(p)
+            % fixBreak is a BEHAVIORAL event -> strobeNow immediately.
+            % The visual consequences (bar removed, fix point removed)
+            % happen on the next flip and are tagged via postFlip.
             p.init.strb.strobeNow(p.init.codes.fixBreak);
             p.trData.timing.fixBreak = timeNow;
             p.trVars.currentState = p.state.fixBreak;
-            % Arm stimOff on the next blank flip (the flip that removes
-            % the bar). Half-open visibility window for fixBreak too.
+            p.draw.color.fix    = p.draw.clutIdx.expBg_subBg;
+            p.draw.color.fixWin = p.draw.clutIdx.expBg_subBg;
             if p.trData.timing.stimOff < 0 ...
                     && ~ismember('stimOff', p.trVars.postFlip.varNames)
                 p.trVars.postFlip.logical           = true;
                 p.trVars.postFlip.varNames{end + 1} = 'stimOff';
                 p.init.strb.addValueOnce(p.init.codes.stimOff);
+            end
+            if p.trData.timing.fixOff < 0 ...
+                    && ~ismember('fixOff', p.trVars.postFlip.varNames)
+                p.trVars.postFlip.logical           = true;
+                p.trVars.postFlip.varNames{end + 1} = 'fixOff';
+                p.init.strb.addValueOnce(p.init.codes.fixOff);
             end
             return;
         end
@@ -146,15 +155,30 @@ switch p.trVars.currentState
         % p.trVars.sweepFrameIdx is the frame ABOUT to be drawn this
         % iteration; drawMachine increments it after a successful flip.
         % If sweepFrameIdx > sweepFrames, the bar has already been drawn
-        % for sweepFrames flips; arm stimOff for the next blank flip.
+        % for sweepFrames flips; arm stimOff and fixOff for the next
+        % blank flip, hide the fix point, and gate the transition to
+        % trialComplete on stimOff being assigned (i.e., the next flip
+        % happened and the queued stimOff strobe was flushed). This
+        % prevents the reward strobeNow from racing ahead of the stimOff
+        % postFlip strobe when run-loop iterations outpace frame flips.
         if p.trVars.sweepFrameIdx > p.trVars.sweepFrames
+            p.draw.color.fix    = p.draw.clutIdx.expBg_subBg;
+            p.draw.color.fixWin = p.draw.clutIdx.expBg_subBg;
             if p.trData.timing.stimOff < 0 ...
                     && ~ismember('stimOff', p.trVars.postFlip.varNames)
                 p.trVars.postFlip.logical           = true;
                 p.trVars.postFlip.varNames{end + 1} = 'stimOff';
                 p.init.strb.addValueOnce(p.init.codes.stimOff);
             end
-            p.trVars.currentState = p.state.trialComplete;
+            if p.trData.timing.fixOff < 0 ...
+                    && ~ismember('fixOff', p.trVars.postFlip.varNames)
+                p.trVars.postFlip.logical           = true;
+                p.trVars.postFlip.varNames{end + 1} = 'fixOff';
+                p.init.strb.addValueOnce(p.init.codes.fixOff);
+            end
+            if p.trData.timing.stimOff > 0
+                p.trVars.currentState = p.state.trialComplete;
+            end
         end
 
     case p.state.trialComplete

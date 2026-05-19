@@ -72,6 +72,11 @@ p.trData.strobed = p.init.strb.strobedList;
 p.init.strb.flushVetoList;
 p.init.strb.flushStrobedList;
 
+%% (5b) Strobe trialEnd (exactly once, after the paired info strobes,
+% before any post-trial WaitSecs). Mirrors barsweep_finish.m:128-131.
+p.trData.timing.trialEnd = GetSecs - p.trData.timing.trialStartPTB;
+p.init.strb.strobeNow(p.init.codes.trialEnd);
+
 %% (6) Post-trial timeout (for fixation breaks)
 if p.trData.trialRepeatFlag
     WaitSecs(p.trVars.timeoutAfterFixBreak);
@@ -157,8 +162,8 @@ elseif p.trData.trialEndState == p.state.noiseComplete
     p.status.rewardCount = p.status.rewardCount + 1;
 end
 
-if p.trData.timing.noiseOn > 0 && p.trData.timing.trialEnd > 0
-    p.status.lastTrialDurS = p.trData.timing.trialEnd - p.trData.timing.noiseOn;
+if p.trData.timing.stimOn > 0 && p.trData.timing.trialEnd > 0
+    p.status.lastTrialDurS = p.trData.timing.trialEnd - p.trData.timing.stimOn;
 end
 if p.status.iGoodTrial > 0
     p.status.meanFixHoldS = round(100 * p.status.rewardCount * ...
@@ -182,19 +187,19 @@ end
 function p = accumulateSTA(p)
 % Accumulate STA from this trial's Ripple spike data.
 %
-% Uses event times from Ripple to find noiseOn in Ripple clock,
+% Uses event times from Ripple to find stimOn in Ripple clock,
 % then feeds spike times through updateSTA.
 
-% Find the noiseOn event in Ripple's digital event stream
-noiseOnCode = p.init.codes.noiseOn;
-eventIdx = find(p.trData.eventValues == noiseOnCode, 1, 'last');
+% Find the stimOn event in Ripple's digital event stream
+stimOnCode = p.init.codes.stimOn;
+eventIdx = find(p.trData.eventValues == stimOnCode, 1, 'last');
 
 if isempty(eventIdx)
-    fprintf('  STA: noiseOn event not found in Ripple data, skipping.\n');
+    fprintf('  STA: stimOn event not found in Ripple data, skipping.\n');
     return;
 end
 
-noiseOnTimeRipple = p.trData.eventTimes(eventIdx);
+stimOnTimeRipple = p.trData.eventTimes(eventIdx);
 
 % Organize spike times by channel
 spikeTimesPerChan = cell(p.trVars.nChannels, 1);
@@ -216,7 +221,7 @@ end
 % dispatcher.
 if strcmp(p.init.stimType, 'checkerboard')
     p.init.staAccum = updateSTA_checkerboard( ...
-        p.init.staAccum, spikeTimesPerChan, noiseOnTimeRipple, ...
+        p.init.staAccum, spikeTimesPerChan, stimOnTimeRipple, ...
         p.trVars.noiseFrameDurS, ...
         p.trVars.checkPolaritySequence, ...
         [p.trVars.checkSizeIdx, p.trVars.contrastIdx], ...
@@ -226,12 +231,12 @@ if strcmp(p.init.stimType, 'checkerboard')
     % Update the flat staSpikeCount per channel (used by the GUI
     % status display). Sum spikes across this trial within the trial
     % window.
-    trialEndTime = noiseOnTimeRipple + ...
+    trialEndTime = stimOnTimeRipple + ...
         p.trVars.nFramesThisTrial * p.trVars.noiseFrameDurS;
     for ch = 1:p.trVars.nChannels
         spk = spikeTimesPerChan{ch};
         if ~isempty(spk)
-            n = sum(spk >= noiseOnTimeRipple & spk < trialEndTime);
+            n = sum(spk >= stimOnTimeRipple & spk < trialEndTime);
             p.init.staSpikeCount(ch) = p.init.staSpikeCount(ch) + n;
         end
     end
@@ -253,7 +258,7 @@ else
 
     [p.init.staAccum, p.init.staSpikeCount] = updateSTA( ...
         p.init.stimType, p.init.staAccum, p.init.staSpikeCount, ...
-        spikeTimesPerChan, noiseOnTimeRipple, ...
+        spikeTimesPerChan, stimOnTimeRipple, ...
         p.trVars.noiseFrameDurS, stimTensor, ...
         stimStartFrame, p.trVars.nFramesThisTrial, ...
         p.trVars.nSTALags);

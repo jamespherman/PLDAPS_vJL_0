@@ -192,20 +192,20 @@ convergenceCheckInterval = max(1, floor(nTrials / 20));
 % Process each trial (simulating the PLDAPS _finish.m flow)
 for trial = 1:nTrials
     trialStartFrame = (trial - 1) * framesPerTrial + 1;
-    noiseOnTime     = (trialStartFrame - 1) * frameDurS;
-    trialEndTime    = noiseOnTime + framesPerTrial * frameDurS;
+    stimOnTime     = (trialStartFrame - 1) * frameDurS;
+    trialEndTime    = stimOnTime + framesPerTrial * frameDurS;
 
     % Extract spikes that fall within this trial's noise presentation
     trialSpikes = cell(params.nChannels, 1);
     for ch = 1:params.nChannels
-        valid = allSpikeTimes{ch} >= noiseOnTime & ...
+        valid = allSpikeTimes{ch} >= stimOnTime & ...
                 allSpikeTimes{ch} < trialEndTime;
         trialSpikes{ch} = allSpikeTimes{ch}(valid);
     end
 
     % Accumulate STA (calls the same function the task will use)
     [staAccum, staSpikeCount] = updateSTA(staAccum, staSpikeCount, ...
-        trialSpikes, noiseOnTime, frameDurS, noiseMovie, ...
+        trialSpikes, stimOnTime, frameDurS, noiseMovie, ...
         trialStartFrame, framesPerTrial, params.nSTALags);
 
     % Convergence checkpoint

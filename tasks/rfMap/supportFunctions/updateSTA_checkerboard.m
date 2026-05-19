@@ -1,10 +1,10 @@
 function staAccum = updateSTA_checkerboard( ...
-    staAccum, spikeTimesPerChan, noiseOnTime, frameDurS, ...
+    staAccum, spikeTimesPerChan, stimOnTime, frameDurS, ...
     polaritySequence, condIdx, reversalHz, nLags)
 % updateSTA_checkerboard  Accumulate temporal kernel + F1/F2 for one trial.
 %
 %   staAccum = updateSTA_checkerboard( ...
-%       staAccum, spikeTimesPerChan, noiseOnTime, frameDurS, ...
+%       staAccum, spikeTimesPerChan, stimOnTime, frameDurS, ...
 %       polaritySequence, condIdx, reversalHz, nLags)
 %
 %   Aggregates this trial's spike data into the running checkerboard
@@ -32,7 +32,7 @@ function staAccum = updateSTA_checkerboard( ...
 %       .f1f2TrialCount       [nCheckSize, nContrast] -- trials per cond
 %     spikeTimesPerChan - cell{nCh,1} of spike times in Ripple-clock
 %                         seconds.
-%     noiseOnTime       - Ripple-clock time of noiseOn for this trial.
+%     stimOnTime       - Ripple-clock time of stimOn for this trial.
 %     frameDurS         - DISPLAY frame duration (1/refreshRate).
 %                         Polarity-frame resolution; do NOT confuse
 %                         with the noise-frame-hold of dense modes.
@@ -59,18 +59,18 @@ nCh          = numel(spikeTimesPerChan);
 staAccum.f1f2TrialCount(szIdx, ctIdx) = ...
     staAccum.f1f2TrialCount(szIdx, ctIdx) + 1;
 
-trialEndTime = noiseOnTime + nFramesTrial * frameDurS;
+trialEndTime = stimOnTime + nFramesTrial * frameDurS;
 
 for ch = 1:nCh
     spikes = spikeTimesPerChan{ch};
     if isempty(spikes), continue; end
 
     % Restrict to spikes within the trial window.
-    spikes = spikes(spikes >= noiseOnTime & spikes < trialEndTime);
+    spikes = spikes(spikes >= stimOnTime & spikes < trialEndTime);
     if isempty(spikes), continue; end
 
-    % Spike times relative to noiseOn (trial-aligned for F1/F2).
-    spikesRel = spikes - noiseOnTime;
+    % Spike times relative to stimOn (trial-aligned for F1/F2).
+    spikesRel = spikes - stimOnTime;
 
     % --- (a) Temporal reverse-correlation ---
     spikeFrameIdx = floor(spikesRel / frameDurS) + 1;

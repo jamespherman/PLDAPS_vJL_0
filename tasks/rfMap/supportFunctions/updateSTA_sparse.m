@@ -1,10 +1,10 @@
 function [staAccum, staSpikeCount] = updateSTA_sparse( ...
-    staAccum, staSpikeCount, spikeTimesPerChan, noiseOnTime, frameDurS, ...
+    staAccum, staSpikeCount, spikeTimesPerChan, stimOnTime, frameDurS, ...
     noiseMovie, trialStartFrame, nFramesTrial, nLags)
 % updateSTA_sparse  Accumulate STA for sparse balanced noise.
 %
 %   [staAccum, staSpikeCount] = updateSTA_sparse( ...
-%       staAccum, staSpikeCount, spikeTimesPerChan, noiseOnTime, ...
+%       staAccum, staSpikeCount, spikeTimesPerChan, stimOnTime, ...
 %       frameDurS, noiseMovie, trialStartFrame, nFramesTrial, nLags)
 %
 %   Stimulus convention:
@@ -27,7 +27,7 @@ for ch = 1:nChannels
     end
 
     for s = 1:length(theseSpikes)
-        tRel          = theseSpikes(s) - noiseOnTime;
+        tRel          = theseSpikes(s) - stimOnTime;
         noiseFrameIdx = floor(tRel / frameDurS) + 1;
         if noiseFrameIdx < 1 || noiseFrameIdx > nFramesTrial
             continue

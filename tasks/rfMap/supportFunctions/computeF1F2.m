@@ -5,7 +5,7 @@ function z = computeF1F2(spikeTimesRel, reversalHz)
 %
 %   Inputs:
 %     spikeTimesRel - column vector of spike times in seconds, with
-%                     t = 0 at trial start (i.e., relative to noiseOn).
+%                     t = 0 at trial start (i.e., relative to stimOn).
 %                     Spikes outside the analysis window should already
 %                     have been excluded by the caller.
 %     reversalHz    - polarity reversal frequency f_rev (Hz). F1 is
