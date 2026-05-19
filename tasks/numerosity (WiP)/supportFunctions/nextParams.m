@@ -10,6 +10,12 @@ if p.trVars.setTargLocViaTrialArray
     p = chooseRow(p);
 end
 
+% Check if Ripple recording is on, and send error or warning if not
+xippmexStatus = pds.xippmex('trial');
+if strcmp(xippmexStatus.status, 'stopped') && p.trVars.stopIfNotRecording == true
+    error('Ripple recording is not active. Please start recording before proceeding.');
+end
+
 
 trialTypeCol = strcmp(p.init.trialArrayColumnNames, 'trialType');
 p.trVars.trialType = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
@@ -65,6 +71,8 @@ p.draw.targTwoPointPix     =  p.draw.middleXY + [1, -1] .* ...
 % target window width and height in pixels.
 p.draw.targWinWidthPix      = pds.deg2pix(p.trVars.targWinWidthDeg, p);
 p.draw.targWinHeightPix     = pds.deg2pix(p.trVars.targWinHeightDeg, p);
+
+p.draw.color.targWin = p.draw.clutIdx.expVisGreen_subBg;
 
 % what is the separation between the two dots (when there are two dots
 % shown) in pixels?
@@ -133,7 +141,8 @@ p.trVars.stimRotation1 = deg2rad(unifrnd(-p.trVars.oneStimRotationRange/2, p.trV
 p.trVars.stimRotation2 = deg2rad(unifrnd(-p.trVars.oneStimRotationRange/2, p.trVars.oneStimRotationRange/2));
 
 % For two-stim trials, how separated should they be (edge to edge)?
-p.draw.twoStimSepPix = pds.deg2pix(unifrnd(p.trVars.twoStimSepDegMin, p.trVars.twoStimSepDegMax), p);
+p.trVars.twoStimSepDeg = unifrnd(p.trVars.twoStimSepDegMin, p.trVars.twoStimSepDegMax);
+p.draw.twoStimSepPix = pds.deg2pix(p.trVars.twoStimSepDeg, p);
 
 % Now randomly rotate the stimuli relative to each other by between 0 and twoStimRotationRange degrees
 p.trVars.twoStimRotation = deg2rad(unifrnd(-p.trVars.twoStimRotationRange/2, p.trVars.twoStimRotationRange/2));
@@ -722,6 +731,8 @@ p.draw.targTwoPointPix     =  p.draw.middleXY + [1, -1] .* ...
 p.draw.targWinWidthPix      = pds.deg2pix(p.trVars.targWinWidthDeg, p);
 p.draw.targWinHeightPix     = pds.deg2pix(p.trVars.targWinHeightDeg, p);
 
+p.draw.color.targWin = p.draw.clutIdx.expMemMagenta_subBg;
+
 % what is the separation between the two dots (when there are two dots
 % shown) in pixels?
 p.draw.twoTargSepPix = pds.deg2pix(p.trVars.twoTargSepDeg, p);
@@ -736,7 +747,7 @@ p.draw.twoTargSepPix = pds.deg2pix(p.trVars.twoTargSepDeg, p);
 % point precision, good enough!
 p.trVars.targTheta_x10  = round(mod(tmpTheta * 180 / pi, 360) * 10); 
 
-% For radius, I multiply by 100 ('_x100') and round. That gives 2 decimlal
+% For radius, I multiply by 100 ('_x100') and round. That gives 2 decimal
 % point precision, goo enough!
 p.trVars.targRadius_x100 = round(tmpRadius * 100);
 
@@ -774,12 +785,12 @@ p.trVars.rippleStimElectrode2 = p.init.electrodeInfo.rippleChannel (p.trVars.sti
 % Check if the chosen ripple channel is a valid stim channel, based on info
 % pulled using xippmex in initRipple
 if ~ismember (p.trVars.rippleStimElectrode1, p.rig.ripple.stimChans)
-    errorMessage = append('Ripple channel ', p.trVars.rippleStimElectrode1, ' is not a valid stim channel');
+    errorMessage = append('Ripple channel ', num2str(p.trVars.rippleStimElectrode1), ' is not a valid stim channel');
     error (errorMessage);
 end
 
 if ~ismember (p.trVars.rippleStimElectrode2, p.rig.ripple.stimChans)
-    errorMessage = append('Ripple channel ', p.trVars.rippleStimElectrode2, ' is not a valid stim channel');
+    errorMessage = append('Ripple channel ', num2str(p.trVars.rippleStimElectrode2), ' is not a valid stim channel');
     error (errorMessage);
 end
 

@@ -168,9 +168,6 @@ switch p.trVars.currentState
         %
         %   The next state is money time, where subject is to either 
         %   respond or not, and the outcome of the trial is determiend.
-        
-
-        p.draw.color.targWin                = p.draw.clutIdx.expVisGreen_subBg;
 
         
         % increase the thickness of the fixation window to inform
@@ -248,48 +245,40 @@ switch p.trVars.currentState
 %             p.trVars.currentState       = p.state.fixBreak;
 %       
 	    elseif (eyeInTargetWin1 && (timeNow < p.trData.timing.saccadeOnset + p.trVars.maxSacDurationToAccept)) || p.trVars.passEye
-	    % if the eyes entered target window 1 we onsider that the real-time estimate of saccade offset
+	    % if the eyes entered target window 1 we consider that the real-time estimate of saccade offset
             p.init.strb.strobeNow(p.init.codes.saccadeOffset);
             p.trData.timing.saccadeOffset    = timeNow;
             % and 'target acquired':
             p.init.strb.strobeNow(p.init.codes.targetAq);
             p.trData.timing.targetAq        = timeNow;
 
-	        % strobe to indicate we looked at target 1
+	        % save that we looked at target 1 and strobe that
+            p.trVars.saccTarget = 1;
 	        p.init.strb.strobeNow(p.init.codes.saccToTargetOne);
 		
-	    % If Target 1 was the correct target, we switch state to holdTarg. Otherwise, we switch state to wrongTarget
-            
-            if p.trVars.numStim == 1
-                p.trVars.currentState           = p.state.holdTarg;
-                % and thicken up that targWin:
-            	p.draw.targWinPenDraw = p.draw.targWinPenThick;
-            else
-            	p.trVars.currentState		= p.state.wrongTarget;
-                p.trData.wrongTargetFlag	= true;
-            end
+            % change state to hold targ
+            p.trVars.currentState           = p.state.holdTarg;
+
+            % and thicken up that targWin:
+            p.draw.targWinPenDraw = p.draw.targWinPenThick;
 
 	    elseif (eyeInTargetWin2 && (timeNow < p.trData.timing.saccadeOnset + p.trVars.maxSacDurationToAccept)) || p.trVars.passEye
-	    % if the eyes entered target window 1 we onsider that the real-time estimate of saccade offset
+	    % if the eyes entered target window 2 we consider that the real-time estimate of saccade offset
             p.init.strb.strobeNow(p.init.codes.saccadeOffset);
             p.trData.timing.saccadeOffset    = timeNow;
             % and 'target acquired':
             p.init.strb.strobeNow(p.init.codes.targetAq);
             p.trData.timing.targetAq        = timeNow;
 
-	        % strobe to indicate we looked at target 2
+	        % save that we looked at target 2 and strobe that
+            p.trVars.saccTarget = 2;
 	        p.init.strb.strobeNow(p.init.codes.saccToTargetTwo);
 	    
-	    % If Target 2 was the correct target, we switch state to holdTarg. Otherwise, we switch state to wrongTarget
-            
-            if p.trVars.numStim == 2
-                p.trVars.currentState           = p.state.holdTarg;
-                % and thicken up that targWin:
-            	p.draw.targWinPenDraw = p.draw.targWinPenThick;
-            else
-            	p.trVars.currentState		= p.state.wrongTarget;
-                p.trData.wrongTargetFlag	= true;
-	        end
+            % change state to hold targ
+            p.trVars.currentState           = p.state.holdTarg;
+
+            % and thicken up that targWin:
+            p.draw.targWinPenDraw = p.draw.targWinPenThick;
 	    
         else %if (eyeInTargetWin && (timeNow > p.trData.timing.saccadeOnset + p.trVars.maxSacDurationToAccept)) %|| ~p.trVars.passEye
             % this means subject got into the target win too late. Likely
@@ -318,8 +307,8 @@ switch p.trVars.currentState
         % window. If they exit the window before the holdTargDuration has
         % elapsed, it is a breakFix.
        
-        % check if eyes are in target window:
-        eyeInTargetWin = pds.eyeInWindow(p, 'target', p.trVars.numStim);
+        % check if eyes are in same target window:
+        eyeInTargetWin = pds.eyeInWindow(p, 'target', p.trVars.saccTarget);
         
         
         % if eyes stayed on target for full duration, bravo!
@@ -339,15 +328,33 @@ switch p.trVars.currentState
             
         end
         
-               
+
+
+    case p.state.sacComplete
+        %% SACCADE COMPLETE!
+        % STATE 8 = check if target was correct
+
+        % If Target 1 was the correct target, and that is what was looked at, deliver reward         
+        if p.trVars.numStim == 1 && p.trVars.saccTarget == 1
+            p.trVars.currentState		= p.state.correctTarget;
+
+            % If Target 2 was the correct target, and that is what was looked at, deliver reward  
+        elseif p.trVars.numStim == 2 && p.trVars.saccTarget == 2
+            p.trVars.currentState		= p.state.correctTarget;
+
+            % If he looked at the wrong target, no reward
+        else
+            p.trVars.currentState		= p.state.wrongTarget;
+            p.trData.wrongTargetFlag	= true;
+        end            
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% end states: trial COMPLETED %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    case p.state.sacComplete
-        %% SACCADE COMPLETE!
-        % STATE 21 = get reward delivery
+    case p.state.correctTarget
+        %% CORRECT TARGET
+        % STATE 21 = Subject looked at the correct target, deliver reward!
 
         % if the delay for reward delivery has elapsed and reward delivery
         % hasn't yet been triggered, deliver the reward.
@@ -355,22 +362,22 @@ switch p.trVars.currentState
             p = pds.deliverReward(p);
             disp ('reward');    
 
-        % if reward delivery has been triggered and the interval to wait
-        % after reward delivery has elapsed, it's time to exit the
-        % while-loop.
+            % if reward delivery has been triggered and the interval to wait
+            % after reward delivery has elapsed, it's time to exit the
+            % while-loop.
         elseif p.trData.timing.reward > 0 && (timeNow - p.trData.timing.reward) > (p.trVars.postRewardDuration + p.rig.dp.dacPadDur + p.trVars.rewardDurationMs/1000)
             p.trVars.exitWhileLoop = true;            
         end
-        
+
     case p.state.wrongTarget   
         %% WRONG TARGET
-        % subject looked at the incorrect target
+        % STATE 22 = subject looked at the incorrect target
         
 	    p.trVars.exitWhileLoop = true;  
 
     case p.state.heldFix
         %% HELD FIXATION
-        % Subject did not saccade toward either target
+        % STATE 23 = Subject did not saccade toward either target
 
         p.trVars.exitWhileLoop = true;
 
