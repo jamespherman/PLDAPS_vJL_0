@@ -4,7 +4,6 @@ function p = updateStatusVariables(p)
 %
 
 
-
 % For visual trials
 p.status.visTrials = p.status.visTrials + (p.trVars.trialType == 1);
 

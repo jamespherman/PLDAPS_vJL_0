@@ -11,15 +11,24 @@ if ~(p.status.previousElectrode == p.trVars.stimulatedElectrode)
     p.status.staircaseHits = 0;
     p.status.staircaseMisses = 0;
     p.status.previousElectrode = p.trVars.stimulatedElectrode;
+    p.status.badElectrodeWarningFlag = true;
 end
 
 % and check for whether the stimulated electrode is chosen appropriately
 if p.trVars.stimulatedElectrode == -1
-    error ('Need to set stimulated electrode')
-elseif ~any(p.trVars.stimulatedElectrode == p.init.electrodeInfo.goodElectrodes)
-    error ('Chosen electrode is not on good electrodes list')
+    error ('Need to set stimulated electrode');
+elseif ~any(p.trVars.stimulatedElectrode == p.init.electrodeInfo.goodElectrodes) && p.status.badElectrodeWarningFlag
+    warning ('Chosen electrode is not on good electrodes list!');
+    p.status.badElectrodeWarningFlag = false;
 end
 
+% Check if Ripple recording is on, and send error if not
+%{
+xippmexStatus = pds.xippmex('trial');
+if strcmp(xippmexStatus.status, 'stopped') && p.trVars.stopIfNotRecording == true
+    error('Ripple recording is not active. Please start recording before proceeding.');
+end
+%}
 
 % if we're using p.init.trialsArray to determine target locations, do the
 % book keeping for that here:
@@ -55,16 +64,25 @@ p.trVars.timeStimOnset		= unifrnd (p.trVars.stimOnsetMin, p.trVars.stimOnsetMax)
 p.trVars.stimDur             = unifrnd (p.trVars.stimDurMin, p.trVars.stimDurMax);
 p.trVars.timeStimOffset		= p.trVars.timeStimOnset + p.trVars.stimDur;
 
-% time of target onset wrt fixAcq:
-p.trVars.timeTargOnset          = p.trVars.timeStimOffset + unifrnd(p.trVars.targOnsetMin, p.trVars.targOnsetMax);
-
-% time of target offset wrt fixAcq:
-p.trVars.timeTargOffset     = Inf;
+% time of target onset and offset wrt fixAcq:
+p.trVars.timeTargOnset          = p.trVars.timeStimOnset;
+p.trVars.timeTargOffset         = Inf;
 
 % time of fix offset wrt fix acquired:
-p.trVars.timeFixOffset          = p.trVars.timeTargOnset + unifrnd(p.trVars.goTimePostTargMin, p.trVars.goTimePostTargMax);
+p.trVars.timeFixOffset          =  p.trVars.totalFixDur;
 
+% How long should he hold gaze on the target after saccading to it
 p.trVars.targHoldDuration         = unifrnd(p.trVars.targHoldDurationMin, p.trVars.targHoldDurationMax);
+
+% For training purposes:
+%{
+if rand < p.trVars.propVis
+    p.trVars.timeStimOffset = Inf; % To make stimulus stay on permanently once triggered
+    %p.trVars.timeStimOffset = p.trVars.timeFixOffset + 0.3; % To make stimulus disappear slightly after fixation does
+else
+    % Do nothing
+end
+%}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Set locations of stimulus and target %
@@ -102,7 +120,7 @@ p.trVars.targWinHeightDeg   = p.trVarsInit.visTargWinHeightDeg;
 p.draw.targWinWidthPix      = pds.deg2pix(p.trVars.targWinWidthDeg, p);
 p.draw.targWinHeightPix     = pds.deg2pix(p.trVars.targWinHeightDeg, p);
 
-
+p.draw.color.targWin         = p.draw.clutIdx.expVisGreen_subBg;
 
 % Convert target X & Y into radius and theta so that we can strobe:
 % (can't strobe negative values, so r/th solves that)
@@ -312,24 +330,22 @@ end
 %%%%%%%%%%%%%%%%%%%
 function p = createMicrostimTrain(p)
 
-p.trVars.rippleStimElectrode = p.init.electrodeInfo.rippleChannel (p.trVars.stimulatedElectrode);
-
 % Timing Info:
 
 % time of stim onset and offset wrt fixAcq:
 p.trVars.timeStimOnset		= unifrnd (p.trVars.stimOnsetMin, p.trVars.stimOnsetMax);
-p.trVars.stimDur            = (p.trVars.cmdPeriod*p.trVars.cmdRepeats*(100/3))/1000000;
+p.trVars.stimDur             = (p.trVars.cmdPeriod*p.trVars.cmdRepeats*(100/3))/1000000;
 p.trVars.timeStimOffset		= p.trVars.timeStimOnset + p.trVars.stimDur;
 
 % time of target onset wrt fixAcq:
-p.trVars.timeTargOnset          = p.trVars.timeStimOffset + unifrnd(p.trVars.targOnsetMin, p.trVars.targOnsetMax);
+p.trVars.timeTargOnset          = p.trVars.timeStimOnset;
+p.trVars.timeTargOffset         = Inf;
 
-% time of target offset wrt fixAcq:
-p.trVars.timeTargOffset     = Inf;
 
 % time of fix offset wrt fix acquired:
-p.trVars.timeFixOffset          = p.trVars.timeTargOnset + unifrnd(p.trVars.goTimePostTargMin, p.trVars.goTimePostTargMax);
+p.trVars.timeFixOffset          = p.trVars.totalFixDur;
 
+% Time subject should hold fix on the target
 p.trVars.targHoldDuration         = unifrnd(p.trVars.targHoldDurationMin, p.trVars.targHoldDurationMax);
 
 
@@ -343,6 +359,23 @@ p.draw.fixWinWidthPix       = pds.deg2pix(p.trVars.fixWinWidthDeg, p);
 p.draw.fixWinHeightPix      = pds.deg2pix(p.trVars.fixWinHeightDeg, p);
 
 
+% If we want the target window to be the entire screen
+% Set target location as centre of screen
+p.trVars.targDegX	= 0;
+p.trVars.targDegY	= 0;
+p.draw.targPointPix = p.draw.middleXY + [1, -1] .* ...
+    pds.deg2pix([p.trVars.targDegX, p.trVars.targDegY], p);
+
+% target window width and height in pixels.
+p.trVars.targWinWidthDeg    = 30;
+p.trVars.targWinHeightDeg   = 20;
+p.draw.targWinWidthPix      = pds.deg2pix(p.trVars.targWinWidthDeg, p);
+p.draw.targWinHeightPix     = pds.deg2pix(p.trVars.targWinHeightDeg, p);
+
+p.draw.color.targWin         = p.draw.clutIdx.expMemMagenta_subBg;
+
+% If we instead want to set target location as predicted RF of stimulated electrode:
+%{
 % Set target location as predicted RF of stimulated electrode
 % ************
 p.trVars.targDegX	= p.init.electrodeInfo.predictedRFX(p.trVars.stimulatedElectrode);
@@ -351,11 +384,11 @@ p.draw.targPointPix     =  p.draw.middleXY + [1, -1] .* ...
     pds.deg2pix([p.trVars.targDegX, p.trVars.targDegY], p);
 
 % target window width and height in pixels.
-p.trVars.targWinWidthDeg    = p.trVarsInit.microstimTargWinWidthDeg;
-p.trVars.targWinHeightDeg   = p.trVarsInit.microstimTargWinHeightDeg;
+p.trVars.targWinWidthDeg    = p.trVars.microstimTargWinWidthDeg;
+p.trVars.targWinHeightDeg   = p.trVars.microstimTargWinHeightDeg;
 p.draw.targWinWidthPix      = pds.deg2pix(p.trVars.targWinWidthDeg, p);
 p.draw.targWinHeightPix     = pds.deg2pix(p.trVars.targWinHeightDeg, p);
-
+%}
 
 
 % Convert target X & Y into radius and theta so that we can strobe:
@@ -374,9 +407,13 @@ p.trVars.targRadius_x100 = round(tmpRadius * 100);
 
 
 
+% Use channel-mapping to convert to Ripple channel
+p.trVars.rippleStimElectrode = p.init.electrodeInfo.rippleChannel (p.trVars.stimulatedElectrode);
+
+% Record the electrode to strobe
+p.trVars.stimulatedElectrodeStrobe = p.trVars.stimulatedElectrode;
 
 
-% ***********
 % Determine current based on where we are in the staircase procedure
 
 if p.status.staircaseHits >= 2 && p.status.staircaseCurrentIndex > 1 
@@ -475,6 +512,40 @@ p.trVars.cmd.seq(2) = struct('length', p.trVars.cmdSeqIPI, 'ampl', 0, ...
 p.trVars.cmd.seq(3) = struct('length', p.trVars.cmdSeqLength, 'ampl', p.trVars.stimCurrentSteps, ...
     'pol', 1, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
 
+
+
+
+% For bipolar stim
+
+p.trVars.stimulatedElectrode2 = p.trVars.stimulatedElectrode - 1;
+p.trVars.rippleStimElectrode2 = p.init.electrodeInfo.rippleChannel (p.trVars.stimulatedElectrode2);
+
+% Make stimulation train
+p.trVars.cmd2 = struct ('elec', (p.trVars.rippleStimElectrode2), ...
+    'period', p.trVars.cmdPeriod, 'repeats', p.trVars.cmdRepeats);
+
+% cmd.seq(1) describes the first phase of the biphasic pulse
+p.trVars.cmd2.seq(1) = struct('length', p.trVars.cmdSeqLength, 'ampl', p.trVars.stimCurrentSteps, ...
+    'pol', 1, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
+
+% cmd.seq(2) describes the interphase interval of the biphasic pulse
+p.trVars.cmd2.seq(2) = struct('length', p.trVars.cmdSeqIPI, 'ampl', 0, ...
+    'pol', 0, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
+% cmd.seq(3) describes the second phase of the biphasic pulse
+p.trVars.cmd2.seq(3) = struct('length', p.trVars.cmdSeqLength, 'ampl', p.trVars.stimCurrentSteps, ...
+    'pol', 0, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
+
+
+
+
+
+
+
+
+
+
+
+
 end
 
 
@@ -489,14 +560,14 @@ p.trVars.stimDur             = unifrnd (p.trVars.stimDurMin, p.trVars.stimDurMax
 p.trVars.timeStimOffset		= p.trVars.timeStimOnset + p.trVars.stimDur;
 
 % time of target onset wrt fixAcq:
-p.trVars.timeTargOnset          = p.trVars.timeStimOffset + unifrnd(p.trVars.targOnsetMin, p.trVars.targOnsetMax);
+p.trVars.timeTargOnset          = p.trVars.timeStimOnset;
+p.trVars.timeTargOffset         = Inf;
 
-% time of target offset wrt fixAcq:
-p.trVars.timeTargOffset     = Inf;
 
 % time of fix offset wrt fix acquired:
-p.trVars.timeFixOffset          = p.trVars.timeTargOnset + unifrnd(p.trVars.goTimePostTargMin, p.trVars.goTimePostTargMax);
+p.trVars.timeFixOffset          = p.trVars.totalFixDur;
 
+% Time subject should hold fix on the target
 p.trVars.targHoldDuration         = unifrnd(p.trVars.targHoldDurationMin, p.trVars.targHoldDurationMax);
 
 
@@ -523,7 +594,7 @@ p.trVars.targWinHeightDeg   = 20;
 p.draw.targWinWidthPix      = pds.deg2pix(p.trVars.targWinWidthDeg, p);
 p.draw.targWinHeightPix     = pds.deg2pix(p.trVars.targWinHeightDeg, p);
 
-
+p.draw.color.targWin         = p.draw.clutIdx.expVisGreen_subBg;
 
 % Convert target X & Y into radius and theta so that we can strobe:
 % (can't strobe negative values, so r/th solves that)

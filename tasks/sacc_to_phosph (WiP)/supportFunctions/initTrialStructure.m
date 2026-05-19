@@ -54,11 +54,11 @@ end
 
 function table = step1
 table = [
-    1 1 24001; ... % visual stimulus, 0 reps, 24001 trial code
+    1 25 24001; ... % visual stimulus, 0 reps, 24001 trial code
 
-    2 0 24002; ... % microstimulation, 0 reps, 24002 trial code
+    2 25 24002; ... % microstimulation, 0 reps, 24002 trial code
 
-    3 1 24003; ... % no stimulus, 0 reps, 24003 trial code
+    3 50 24003; ... % no stimulus, 0 reps, 24003 trial code
 
     ];
 end

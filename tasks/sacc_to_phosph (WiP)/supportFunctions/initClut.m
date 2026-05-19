@@ -82,18 +82,9 @@ c.draw.clut.expColors = ...
     visGreen;           % 14
     memMagenta;         % 15
     0, 1, 1;		% 16
-    yellowISH;		% 17
-    1, 0, 0;		% 18 (Note: 18-23 used for varying color of stim)
-    0, 1, 0;		% 19
-    0, 0 ,1;		% 20
-    0, 1, 1;		% 21
-    1, 0, 1;		% 22
-    1, 1, 0;		% 23
-    1, 1, 1;		% 24 (Note: 24-25 are both white, so that there are always some white stim when randomly picking
-    1, 1, 1];         	% 25
+    yellowISH];		% 17
 
-% 26-123 (below) randomly generated to create randomly colored stim
-c.draw.clut.expColors (27:124, :) = randColors;
+
 
 % colors for subject's display
 % black                     0
@@ -125,18 +116,9 @@ c.draw.clut.subColors = ...
     bgRGB;        % 14
     bgRGB;        % 15
     bgRGB;	  % 16
-    yellowISH;    % 17
-    1, 0, 0;		% 18-23 used for varying color of stim
-    0, 1, 0;		% 19
-    0, 0 ,1;		% 20
-    0, 1, 1;		% 21
-    1, 0, 1;		% 22
-    1, 1, 0];         	% 23
+    yellowISH];    % 17
 
-% 24-123 (below) randomly generated to create randomly colored stim    
-c.draw.clut.subColors (27:124, :) = randColors;
 
-    
 assert(size(c.draw.clut.subColors,1)==size(c.draw.clut.expColors,1), 'ERROR-- exp & sub Colors must have equal length')
 
 %%
