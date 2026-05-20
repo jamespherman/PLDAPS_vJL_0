@@ -34,12 +34,17 @@ nCh      = bd.nChannels;
 exptType = bd.exptType;
 
 % First pass: reconstruct + cache per-channel slices for the global
-% CLim sweep below.
+% CLim sweep below. Also cache per-channel RF-center estimates so the
+% second pass can drive the pre-allocated marker on each tile. Same
+% estimator that the CSV export uses (parabolic peaks for cardinal4,
+% gaussFit centroid for rfmap12) so the live display agrees with what
+% gets written to disk.
 sliceByCh = cell(1, nCh);
 xByCh     = cell(1, nCh);
 yByCh     = cell(1, nCh);
 snrByCh   = nan(1, nCh);
 detected  = false(1, nCh);
+centerXY  = nan(nCh, 2);
 
 for ch = 1:nCh
     if ~isgraphics(bd.imgObj(ch)), continue; end
@@ -59,13 +64,25 @@ for ch = 1:nCh
             sliceByCh{ch} = out.rfImage;
             xByCh{ch}     = out.axisDeg + axisOffset(1);
             yByCh{ch}     = out.axisDeg + axisOffset(2);
+            % gaussFit on a small disc around the iradon argmax --
+            % localized and unbiased; matches the rfmap12 CSV column.
+            cx = out.gaussFit.x0;
+            cy = out.gaussFit.y0;
         case 'barsweep_cardinal4'
             sliceByCh{ch} = out.separable2D;
             xByCh{ch}     = out.axisX + axisOffset(1);
             yByCh{ch}     = out.axisY + axisOffset(2);
+            % Parabolic peaks of the 1-D marginals -- the cardinal4
+            % CSV's estimator (gaussFit on the outer-product thumbnail
+            % is biased toward path center; don't use it).
+            cx = out.xCenter;
+            cy = out.yCenter;
         otherwise
             error('updateBarsweepChannelBrowser:badExptType', ...
                 'Unknown exptType "%s".', exptType);
+    end
+    if isfinite(cx) && isfinite(cy)
+        centerXY(ch, :) = [cx + axisOffset(1), cy + axisOffset(2)];
     end
 end
 
@@ -118,6 +135,24 @@ for ch = 1:nCh
             ch, rf.spikeCount(ch), snrByCh(ch), suffix);
     end
     set(bd.titleObj(ch), 'Text', titleStr);
+
+    % RF center marker. Plot whenever an estimate is finite (including
+    % below-threshold channels) so the experimenter can see the argmax
+    % the algorithm landed on -- but mute the color when undetected so
+    % real RFs read at a glance and noise peaks don't.
+    if isfield(bd, 'rfCenterMarker') && isgraphics(bd.rfCenterMarker(ch))
+        cx = centerXY(ch, 1);
+        cy = centerXY(ch, 2);
+        if isnan(cx) || isnan(cy)
+            set(bd.rfCenterMarker(ch), 'XData', NaN, 'YData', NaN);
+        elseif detected(ch)
+            set(bd.rfCenterMarker(ch), 'XData', cx, 'YData', cy, ...
+                'Color', [0.85 0 0], 'LineWidth', 1.8);
+        else
+            set(bd.rfCenterMarker(ch), 'XData', cx, 'YData', cy, ...
+                'Color', [0.55 0.55 0.55], 'LineWidth', 1.0);
+        end
+    end
 end
 
 end

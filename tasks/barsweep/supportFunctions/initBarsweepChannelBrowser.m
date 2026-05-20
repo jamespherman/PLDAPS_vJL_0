@@ -18,8 +18,14 @@ function bd = initBarsweepChannelBrowser(rf)
 %          exptType.
 %
 %   Returns bd from pds.initChannelBrowser plus:
-%     .exptType - mirror of rf.exptType (used by updateBarsweepChannelBrowser
-%                 to decide which reconstruction output to display)
+%     .exptType        - mirror of rf.exptType (used by
+%                        updateBarsweepChannelBrowser to decide which
+%                        reconstruction output to display)
+%     .rfCenterMarker  - 1 x nCh handles to per-tile RF center markers
+%                        (a '+' plot object on each imgAx). Pre-allocated
+%                        at NaN; updateBarsweepChannelBrowser sets their
+%                        XData/YData (and color, muted when undetected)
+%                        each refresh.
 
 nCh = rf.nChannels;
 % Per-tile dva extent: image spans pathCenter +/- mapExtentDeg in both
@@ -42,6 +48,21 @@ opts = struct( ...
 
 bd = pds.initChannelBrowser(nCh, 'image', opts);
 bd.exptType = rf.exptType;
+
+% Pre-allocate one RF center marker per tile, hidden at NaN until
+% updateBarsweepChannelBrowser supplies a real (x, y). Held on the
+% image axes so we don't have to re-create it each refresh.
+bd.rfCenterMarker = gobjects(1, nCh);
+for ch = 1:nCh
+    if ~isgraphics(bd.imgAx(ch)), continue; end
+    ax       = bd.imgAx(ch);
+    prevHold = ishold(ax);
+    hold(ax, 'on');
+    bd.rfCenterMarker(ch) = plot(ax, NaN, NaN, '+', ...
+        'MarkerSize', 10, 'LineWidth', 1.5, 'Color', [0 0 0]);
+    if ~prevHold, hold(ax, 'off'); end
+end
+
 bd.fig.UserData = bd;
 
 end
