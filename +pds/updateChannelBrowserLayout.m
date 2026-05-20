@@ -9,6 +9,12 @@ function bd = updateChannelBrowserLayout(bd)
 %   and toggles Visible on/off. Pre-allocated panels are never destroyed
 %   or recreated -- only their grid position and Visible state change.
 %
+%   For small selections the sqrt grid wastes viewport space (2 channels
+%   -> 2x1 tiny cells in the corner). Override at the low end:
+%     n <= 2  -> 1 column  (tall, full-height panels)
+%     n <= 4  -> 2 columns (large 2x2 or 2x1)
+%     n  > 4  -> ceil(sqrt(n)) (legacy behaviour)
+%
 %   The right-hand uigridlayout (bd.rightGl) is also resized to match
 %   the new row/column count so each visible tile gets a 1x cell.
 
@@ -37,8 +43,14 @@ if isempty(sel)
     return;
 end
 
-n     = numel(sel);
-nCols = ceil(sqrt(n));
+n = numel(sel);
+if n <= 2
+    nCols = 1;
+elseif n <= 4
+    nCols = 2;
+else
+    nCols = ceil(sqrt(n));
+end
 nRows = ceil(n / nCols);
 
 bd.rightGl.RowHeight   = repmat({'1x'}, 1, nRows);
