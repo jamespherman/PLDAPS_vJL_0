@@ -255,6 +255,7 @@ end
 bd.fig             = fig;
 bd.mainGl          = mainGl;
 bd.leftPanel       = leftPanel;
+bd.leftGl          = leftGl;
 bd.rightGl         = rightGl;
 bd.listbox         = listbox;
 bd.rangeEdit       = rangeEdit;

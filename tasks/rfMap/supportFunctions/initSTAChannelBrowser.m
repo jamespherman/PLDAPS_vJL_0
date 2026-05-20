@@ -74,6 +74,27 @@ for ch = 1:nCh
     end
 end
 
+% Append a "Save PDF" button below the existing left-column rows.
+% leftGl rows are currently {'1x', 18, 28, 28, 28, 28}; tack on a 28-px
+% row and place the button spanning both columns.
+if isfield(bd, 'leftGl') && isgraphics(bd.leftGl)
+    bd.leftGl.RowHeight = [bd.leftGl.RowHeight, {28}];
+    newRow = numel(bd.leftGl.RowHeight);
+    bd.savePdfBtn = uibutton(bd.leftGl, 'push', 'Text', 'Save PDF');
+    bd.savePdfBtn.Layout.Row    = newRow;
+    bd.savePdfBtn.Layout.Column = [1 2];
+    bd.savePdfBtn.ButtonPushedFcn = @(src, evt) onSavePdf(src, evt);
+end
+
 bd.fig.UserData = bd;
 
+end
+
+
+function onSavePdf(src, ~)
+fig = ancestor(src, 'figure');
+defaultName = sprintf('sta_browser_%s.pdf', datestr(now, 'yyyymmdd_HHMMSS'));
+[file, path] = uiputfile('*.pdf', 'Save STA browser as PDF', defaultName);
+if isequal(file, 0), return; end
+pds.pdfSave(fullfile(path, file), fig.Position(3:4) / 72, fig);
 end
