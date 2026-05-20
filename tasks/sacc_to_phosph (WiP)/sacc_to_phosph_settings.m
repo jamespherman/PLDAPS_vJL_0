@@ -256,7 +256,7 @@ p.trVarsInit.totalFixDur         = 1.5; % Total time from fixAcq to "heldFix" st
 % Microstim variables
 
 p.trVarsInit.connectRipple           = true;
-p.trVarsInit.stopIfNotRecording      = false;
+%p.trVarsInit.stopIfNotRecording      = false;
 
 % Flag to notify only once if we're stimulating on an electrode that is not 
 % on the good electrode list. Reset when switching to a new electrode
@@ -279,6 +279,8 @@ p.trVarsInit.ampVals = [1, 2, 3, 4, 5, 6, 7, 9, 12, 14, 18, ...
                             23, 28, 35, 44, 55, 69, 86, 108, 134, 168, 210];
 p.trVarsInit.staircaseStartingIndex = 1;
 
+% Predicted RF circle size, in dva
+p.trVarsInit.predRFCircleSize = 1;
 
 % Status variables for this task. Normally should be above but certain 
 % variables aren't initialized yet so it's down here instead.
@@ -320,8 +322,8 @@ p.trVarsInit.staticTargAmp           = 12;  % fixed target amplitude
 
 p.trVarsInit.fixWinWidthDeg       = 1.2;        % fixation window width in degrees
 p.trVarsInit.fixWinHeightDeg      = 1.2;        % fixation window height in degrees
-p.trVarsInit.visTargWinWidthDeg      = 4;        % target window width in degrees, for visual stimuli
-p.trVarsInit.visTargWinHeightDeg     = 4;        % target window height in degrees, for visual stimuli
+p.trVarsInit.visTargWinWidthDeg      = 3;        % target window width in degrees, for visual stimuli
+p.trVarsInit.visTargWinHeightDeg     = 3;        % target window height in degrees, for visual stimuli
 p.trVarsInit.microstimTargWinWidthDeg      = 8;        % target window width in degrees, for microstim
 p.trVarsInit.microstimTargWinHeightDeg     = 8;        % target window height in degrees, for microstim
 
@@ -504,6 +506,7 @@ p.draw.color.gridMinor      = p.draw.clutIdx.expGrey70_subBg;               % gr
 p.draw.color.cueRing        = p.draw.clutIdx.expOldGreen_subOldGreen;       % fixation window CLUT index
 p.draw.color.joyInd         = p.draw.clutIdx.expGrey90_subBg;               % joy position indicator CLUT index
 p.draw.color.mouseCursor    = p.draw.clutIdx.expCyan_subBg;                % mouse cursor
+p.draw.color.predRFCircle   = p.draw.clutIdx.expCyan_subBg;                  % Predicted RF location
 
 %% draw - these are paramters used for drawing
 % the boring stuff, like width and height of stuff that gets drawn.

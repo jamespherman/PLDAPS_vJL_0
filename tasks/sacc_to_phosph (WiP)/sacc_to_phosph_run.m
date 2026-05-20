@@ -320,7 +320,7 @@ switch p.trVars.currentState
         % STATE 21 = get reward delivery if not nostim trial
 
         % If this was visual or microstim, this means he did it correctly
-        if p.trVars.trialType == 1 || p.trVars.trialType == 2
+        if ismember(p.trVars.trialType, [1 2 4 5])
 
         % if the delay for reward delivery has elapsed and reward delivery
         % hasn't yet been triggered, deliver the reward.
@@ -349,7 +349,7 @@ switch p.trVars.currentState
         % STATE 22 
 
         % If this was visual or microstim, this means he did it incorrectly
-        if p.trVars.trialType == 1 || p.trVars.trialType == 2
+        if ismember(p.trVars.trialType, [1 2 4 5])
             % p = playTone(p, 'low');
             p.trVars.exitWhileLoop = true;
 
@@ -539,28 +539,61 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     % draw fixation window
     Screen('FrameRect',p.draw.window, p.draw.color.fixWin, repmat(p.draw.fixPointPix, 1, 2) +  [-p.draw.fixWinWidthPix -p.draw.fixWinHeightPix p.draw.fixWinWidthPix p.draw.fixWinHeightPix], p.draw.fixWinPenDraw)
     
-
+    
     % depending on trialType, drawstimulus or send microstim command
     if p.trVars.stimIsOn
-        if p.trVars.trialType == 1 % Visual stimulus
-            Screen('DrawTexture', p.draw.window, p.draw.stimTexture, [], repmat(p.draw.stimPointPix, 1, 2) + ...
-            [-p.draw.textureWindowDimensions/2 -p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2]);
 
-        elseif p.trVars.trialType == 2 && p.trData.timing.microstimSent == -1 % Electrode microstimulation
-            
-            disp (append ('microstim @ ', num2str(p.trVars.stimAmplitude), 'uA / ', num2str(p.trVars.stimCurrentSteps), ' steps on channel #', num2str(p.trVars.stimulatedElectrode)));
-            p.trData.timing.microstimSent = timeNow;
-            p.init.strb.strobeNow(p.init.codes.microStimOn);
-            
-            %pds.xippmex ('stimseq', p.trVars.cmd); % Send microstim command
-            
-            
-                        disp (append ('opposite polarity microstim @ ', num2str(p.trVars.stimAmplitude), 'uA / ', num2str(p.trVars.stimCurrentSteps), ' steps on channel #', num2str(p.trVars.stimulatedElectrode2)));
-            pds.xippmex ('stimseq', [p.trVars.cmd, p.trVars.cmd2]); % send microstim command for bipolar
+        switch p.trVars.trialType
+            case 1 % Visual
+                Screen('DrawTexture', p.draw.window, p.draw.stimTexture, [], repmat(p.draw.stimPointPix, 1, 2) + ...
+                    [-p.draw.textureWindowDimensions/2 -p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2]);
 
-        elseif p.trVars.trialType == 3 % No stimulus
-            % do nothing
+            case 2 % Microstim
+
+                Screen('FrameOval',p.draw.window, p.draw.color.predRFCircle, ...
+                    repmat(p.draw.predictedRFCirclePointPix, 1, 2) +  [-p.draw.predRFCircleSizePix/2 -p.draw.predRFCircleSizePix/2 p.draw.predRFCircleSizePix/2 p.draw.predRFCircleSizePix/2], 2);   
+
+                if p.trData.timing.microstimSent == -1
+                    disp (append ('microstim @ ', num2str(p.trVars.stimAmplitude), 'uA / ', num2str(p.trVars.stimCurrentSteps), ' steps on channel #', num2str(p.trVars.stimulatedElectrode)));
+                    p.trData.timing.microstimSent = timeNow;
+                    p.init.strb.strobeNow(p.init.codes.microStimOn);
+
+                    pds.xippmex ('stimseq', p.trVars.cmd); % Send microstim command
+                end
+
+            case 3 % No stim
+                % Do nothing, this is a nostim trial
+
+            case 4 % Bipolar stimulation
+
+                Screen('FrameOval',p.draw.window, p.draw.color.predRFCircle, ...
+                    repmat(p.draw.predictedRFCirclePointPix, 1, 2) +  [-p.draw.predRFCircleSizePix/2 -p.draw.predRFCircleSizePix/2 p.draw.predRFCircleSizePix/2 p.draw.predRFCircleSizePix/2], 2);   
+
+                if p.trData.timing.microstimSent == -1
+                    disp (append ('-/+ microstim @ ', num2str(p.trVars.stimAmplitude), 'uA / ', num2str(p.trVars.stimCurrentSteps), ' steps on channel #', num2str(p.trVars.stimulatedElectrode)));
+                    disp (append ('+/- microstim @ ', num2str(p.trVars.stimAmplitude), 'uA / ', num2str(p.trVars.stimCurrentSteps), ' steps on channel #', num2str(p.trVars.stimulatedElectrode2)));
+                    p.trData.timing.microstimSent = timeNow;
+                    p.init.strb.strobeNow(p.init.codes.microStimOn);
+    
+                    pds.xippmex ('stimseq', [p.trVars.cmd, p.trVars.cmd2]); % send microstim command for bipolar
+                end
+
+            case 5 % Two-channel stimulation
+
+                Screen('FrameOval',p.draw.window, p.draw.color.predRFCircle, ...
+                    repmat(p.draw.predictedRFCirclePointPix, 1, 2) +  [-p.draw.predRFCircleSizePix/2 -p.draw.predRFCircleSizePix/2 p.draw.predRFCircleSizePix/2 p.draw.predRFCircleSizePix/2], 2);   
+
+                if p.trData.timing.microstimSent == -1
+                    disp (append ('microstim @ ', num2str(p.trVars.stimAmplitude), 'uA / ', num2str(p.trVars.stimCurrentSteps), ' steps on channel #', num2str(p.trVars.stimulatedElectrode)));
+                    disp (append ('microstim @ ', num2str(p.trVars.stimAmplitude), 'uA / ', num2str(p.trVars.stimCurrentSteps), ' steps on channel #', num2str(p.trVars.stimulatedElectrode2)));
+                    p.trData.timing.microstimSent = timeNow;
+                    p.init.strb.strobeNow(p.init.codes.microStimOn);
+
+                    pds.xippmex ('stimseq', [p.trVars.cmd, p.trVars.cmd2]); % send microstim command for two-channel stim
+                end
+
         end
+
     end
 
     % draw fixation spot

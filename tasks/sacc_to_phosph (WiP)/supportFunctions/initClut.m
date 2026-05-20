@@ -81,8 +81,7 @@ c.draw.clut.expColors = ...
     oldGreen;           % 13
     visGreen;           % 14
     memMagenta;         % 15
-    0, 1, 1;		% 16
-    yellowISH];		% 17
+    0, 1, 1];		% 16
 
 
 
@@ -115,8 +114,7 @@ c.draw.clut.subColors = ...
     oldGreen;     % 13
     bgRGB;        % 14
     bgRGB;        % 15
-    bgRGB;	  % 16
-    yellowISH];    % 17
+    bgRGB];	  % 16
 
 
 assert(size(c.draw.clut.subColors,1)==size(c.draw.clut.expColors,1), 'ERROR-- exp & sub Colors must have equal length')

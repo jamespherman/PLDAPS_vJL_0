@@ -41,14 +41,16 @@ trialTypeCol = strcmp(p.init.trialArrayColumnNames, 'trialType');
 p.trVars.trialType = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
    trialTypeCol);
 
-if p.trVars.trialType == 1 % Visual stimulus
-    p = createVisualStimulusTexture(p);
-elseif p.trVars.trialType == 2 % Electrode microstimulation
-    p = createMicrostimTrain(p);
-elseif p.trVars.trialType == 3 % No stimulus
-    p = createNoStimulus(p);
-end
+switch p.trVars.trialType
+    case 1 % visual stimulus
+        p = createVisualStimulusTexture(p);
 
+    case {2, 4, 5} % microstim, bipolar stim, or two-channel stim
+        p = createMicrostimTrain(p);
+
+    case 3 % No stim trial
+        p = createNoStimulus(p);
+end
 
 end
 
@@ -114,14 +116,6 @@ p.trVars.targDegX	= p.trVars.stimDegX;
 p.trVars.targDegY	= p.trVars.stimDegY;
 p.draw.targPointPix     =  p.draw.stimPointPix;
 
-% target window width and height in pixels.
-p.trVars.targWinWidthDeg    = p.trVarsInit.visTargWinWidthDeg;
-p.trVars.targWinHeightDeg   = p.trVarsInit.visTargWinHeightDeg;
-p.draw.targWinWidthPix      = pds.deg2pix(p.trVars.targWinWidthDeg, p);
-p.draw.targWinHeightPix     = pds.deg2pix(p.trVars.targWinHeightDeg, p);
-
-p.draw.color.targWin         = p.draw.clutIdx.expVisGreen_subBg;
-
 % Convert target X & Y into radius and theta so that we can strobe:
 % (can't strobe negative values, so r/th solves that)
 
@@ -135,6 +129,17 @@ p.trVars.targTheta_x10  = round(mod(tmpTheta * 180 / pi, 360) * 10);
 % For radius, I multiply by 100 ('_x100') and round. That gives 2 decimlal
 % point precision, goo enough!
 p.trVars.targRadius_x100 = round(tmpRadius * 100);
+
+% Scale target window depending on eccentricity
+eccentricityScaleFactor = tmpRadius/36 + 1;
+
+% target window width and height in pixels.
+p.trVars.targWinWidthDeg    = p.trVars.visTargWinWidthDeg^eccentricityScaleFactor;
+p.trVars.targWinHeightDeg   = p.trVars.visTargWinHeightDeg^eccentricityScaleFactor;
+p.draw.targWinWidthPix      = pds.deg2pix(p.trVars.targWinWidthDeg, p);
+p.draw.targWinHeightPix     = pds.deg2pix(p.trVars.targWinHeightDeg, p);
+
+p.draw.color.targWin         = p.draw.clutIdx.expVisGreen_subBg;
 
 
 
@@ -374,6 +379,8 @@ p.draw.targWinHeightPix     = pds.deg2pix(p.trVars.targWinHeightDeg, p);
 
 p.draw.color.targWin         = p.draw.clutIdx.expMemMagenta_subBg;
 
+
+
 % If we instead want to set target location as predicted RF of stimulated electrode:
 %{
 % Set target location as predicted RF of stimulated electrode
@@ -390,7 +397,6 @@ p.draw.targWinWidthPix      = pds.deg2pix(p.trVars.targWinWidthDeg, p);
 p.draw.targWinHeightPix     = pds.deg2pix(p.trVars.targWinHeightDeg, p);
 %}
 
-
 % Convert target X & Y into radius and theta so that we can strobe:
 % (can't strobe negative values, so r/th solves that)
 
@@ -401,11 +407,30 @@ p.draw.targWinHeightPix     = pds.deg2pix(p.trVars.targWinHeightDeg, p);
 % point precision, good enough!
 p.trVars.targTheta_x10  = round(mod(tmpTheta * 180 / pi, 360) * 10); 
 
-% For radius, I multiply by 100 ('_x100') and round. That gives 2 decimlal
+% For radius, I multiply by 100 ('_x100') and round. That gives 2 decimal
 % point precision, goo enough!
 p.trVars.targRadius_x100 = round(tmpRadius * 100);
 
+% Predicted RF Indicator Circle
+if isfield(p.init.electrodeInfo, 'predictedRFX') && isfield(p.init.electrodeInfo, 'predictedRFY') 
+    if ~isnan(p.init.electrodeInfo.predictedRFX(p.trVars.stimulatedElectrode)) && ~isnan(p.init.electrodeInfo.predictedRFY(p.trVars.stimulatedElectrode))
+        p.trVars.predRFCircleDegX = p.init.electrodeInfo.predictedRFX(p.trVars.stimulatedElectrode);
+        p.trVars.predRFCircleDegY = p.init.electrodeInfo.predictedRFY(p.trVars.stimulatedElectrode);
+        p.draw.color.predRFCircle   = p.draw.clutIdx.expCyan_subBg;
+    else
+        p.trVars.predRFCircleDegX = 30;
+        p.trVars.predRFCircleDegY = 20;
+        p.draw.color.predRFCircle = p.draw.clutIdx.expOrange_subBg;
+    end
+else
+    p.trVars.predRFCircleDegX = 30;
+    p.trVars.predRFCircleDegY = 20;
+    p.draw.color.predRFCircle = p.draw.clutIdx.expOrange_subBg;
+end
 
+p.draw.predictedRFCirclePointPix = p.draw.middleXY + [1, -1] .* ...
+    pds.deg2pix([p.trVars.predRFCircleDegX, p.trVars.predRFCircleDegY], p);
+p.draw.predRFCircleSizePix = pds.deg2pix(p.trVars.predRFCircleSize, p);
 
 % Use channel-mapping to convert to Ripple channel
 p.trVars.rippleStimElectrode = p.init.electrodeInfo.rippleChannel (p.trVars.stimulatedElectrode);
@@ -494,9 +519,6 @@ else
 end
 
 
-
-
-
 % Make stimulation train
 p.trVars.cmd = struct ('elec', p.trVars.rippleStimElectrode, ...
     'period', p.trVars.cmdPeriod, 'repeats', p.trVars.cmdRepeats);
@@ -514,37 +536,55 @@ p.trVars.cmd.seq(3) = struct('length', p.trVars.cmdSeqLength, 'ampl', p.trVars.s
 
 
 
+if p.trVars.trialType == 4 % Bipolar stimulation
+    if p.trVars.stimulatedElectrode == 1
+        p.trVars.stimulatedElectrode2 = 2;
+    else
+        p.trVars.stimulatedElectrode2 = p.trVars.stimulatedElectrode - 1;
+    end
 
-% For bipolar stim
+    p.trVars.rippleStimElectrode2 = p.init.electrodeInfo.rippleChannel (p.trVars.stimulatedElectrode2);
 
-p.trVars.stimulatedElectrode2 = p.trVars.stimulatedElectrode - 1;
-p.trVars.rippleStimElectrode2 = p.init.electrodeInfo.rippleChannel (p.trVars.stimulatedElectrode2);
+    % Make stimulation train
+    p.trVars.cmd2 = struct ('elec', (p.trVars.rippleStimElectrode2), ...
+        'period', p.trVars.cmdPeriod, 'repeats', p.trVars.cmdRepeats);
 
-% Make stimulation train
-p.trVars.cmd2 = struct ('elec', (p.trVars.rippleStimElectrode2), ...
-    'period', p.trVars.cmdPeriod, 'repeats', p.trVars.cmdRepeats);
+    % cmd.seq(1) describes the first phase of the biphasic pulse
+    p.trVars.cmd2.seq(1) = struct('length', p.trVars.cmdSeqLength, 'ampl', p.trVars.stimCurrentSteps, ...
+        'pol', 1, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
 
-% cmd.seq(1) describes the first phase of the biphasic pulse
-p.trVars.cmd2.seq(1) = struct('length', p.trVars.cmdSeqLength, 'ampl', p.trVars.stimCurrentSteps, ...
-    'pol', 1, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
+    % cmd.seq(2) describes the interphase interval of the biphasic pulse
+    p.trVars.cmd2.seq(2) = struct('length', p.trVars.cmdSeqIPI, 'ampl', 0, ...
+        'pol', 0, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
+    % cmd.seq(3) describes the second phase of the biphasic pulse
+    p.trVars.cmd2.seq(3) = struct('length', p.trVars.cmdSeqLength, 'ampl', p.trVars.stimCurrentSteps, ...
+        'pol', 0, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
 
-% cmd.seq(2) describes the interphase interval of the biphasic pulse
-p.trVars.cmd2.seq(2) = struct('length', p.trVars.cmdSeqIPI, 'ampl', 0, ...
-    'pol', 0, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
-% cmd.seq(3) describes the second phase of the biphasic pulse
-p.trVars.cmd2.seq(3) = struct('length', p.trVars.cmdSeqLength, 'ampl', p.trVars.stimCurrentSteps, ...
-    'pol', 0, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
+elseif p.trVars.trialType == 5 % Two-channel stimulation
+    if p.trVars.stimulatedElectrode == 1
+        p.trVars.stimulatedElectrode2 = 2;
+    else
+        p.trVars.stimulatedElectrode2 = p.trVars.stimulatedElectrode - 1;
+    end
 
+    p.trVars.rippleStimElectrode2 = p.init.electrodeInfo.rippleChannel (p.trVars.stimulatedElectrode2);
 
+    % Make stimulation train
+    p.trVars.cmd2 = struct ('elec', (p.trVars.rippleStimElectrode2), ...
+        'period', p.trVars.cmdPeriod, 'repeats', p.trVars.cmdRepeats);
 
+    % cmd.seq(1) describes the first phase of the biphasic pulse
+    p.trVars.cmd2.seq(1) = struct('length', p.trVars.cmdSeqLength, 'ampl', p.trVars.stimCurrentSteps, ...
+        'pol', 0, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
 
+    % cmd.seq(2) describes the interphase interval of the biphasic pulse
+    p.trVars.cmd2.seq(2) = struct('length', p.trVars.cmdSeqIPI, 'ampl', 0, ...
+        'pol', 0, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
+    % cmd.seq(3) describes the second phase of the biphasic pulse
+    p.trVars.cmd2.seq(3) = struct('length', p.trVars.cmdSeqLength, 'ampl', p.trVars.stimCurrentSteps, ...
+        'pol', 1, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
 
-
-
-
-
-
-
+end
 
 end
 
