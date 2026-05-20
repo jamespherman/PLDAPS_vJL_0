@@ -92,9 +92,13 @@ end
 
 
 function onSavePdf(src, ~)
+% The channel browser is a uifigure; saveas/print don't support it.
+% exportapp is the supported WYSIWYG export for uifigures (R2020a+)
+% and includes the uicontrols, which is what the experimenter wants
+% when archiving an STA browser snapshot.
 fig = ancestor(src, 'figure');
 defaultName = sprintf('sta_browser_%s.pdf', datestr(now, 'yyyymmdd_HHMMSS'));
 [file, path] = uiputfile('*.pdf', 'Save STA browser as PDF', defaultName);
 if isequal(file, 0), return; end
-pds.pdfSave(fullfile(path, file), fig.Position(3:4) / 72, fig);
+exportapp(fig, fullfile(path, file));
 end
