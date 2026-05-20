@@ -22,13 +22,23 @@ function bd = initBarsweepChannelBrowser(rf)
 %                 to decide which reconstruction output to display)
 
 nCh = rf.nChannels;
+% Per-tile dva extent: image spans pathCenter +/- mapExtentDeg in both
+% axes (matches XData/YData set per channel in updateBarsweepChannelBrowser
+% via axisOffset = pathCenterDeg). Pass as 1x4 [xmin xmax ymin ymax] so
+% the axes box matches the grid cell rather than the image's pixel aspect.
+cx = rf.pathCenterDeg(1);
+cy = rf.pathCenterDeg(2);
+E  = rf.mapExtentDeg;
+imgExtentDeg = [cx - E, cx + E, cy - E, cy + E];
+
 opts = struct( ...
     'figName',          sprintf('barsweep RF (%s) - Channel browser', rf.exptType), ...
     'imgXLabel',        'x (dva)', ...
     'imgYLabel',        'y (dva)', ...
     'initialSelection', 1:min(nCh, 16), ...
     'climMode',         'per-channel', ...
-    'figPos',           [60 60 1500 850]);
+    'figPos',           [60 60 1500 850], ...
+    'imgExtentDeg',     imgExtentDeg);
 
 bd = pds.initChannelBrowser(nCh, 'image', opts);
 bd.exptType = rf.exptType;

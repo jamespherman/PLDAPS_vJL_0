@@ -100,9 +100,16 @@ if p.trVarsInit.useRippleSTA
             p.init.staFigData = initSTADisplay(p.trVarsInit.nSTALags, ...
                 p.trVarsInit.nChannels, noiseFrameDurMs, nAxesDisplay);
             isChromatic = strcmp(p.init.stimType, 'denseChromatic');
+            % Per-tile dva extent: the noise grid is centered on screen
+            % and spans nChecks*checkSizeDeg in each axis. Pass as 1x4
+            % [xmin xmax ymin ymax] so non-square grids (typical 16:9)
+            % aren't forced into a symmetric box.
+            halfX = 0.5 * p.init.noiseGridSize(2) * p.trVarsInit.checkSizeDeg;
+            halfY = 0.5 * p.init.noiseGridSize(1) * p.trVarsInit.checkSizeDeg;
+            staImgExtentDeg = [-halfX, halfX, -halfY, halfY];
             p.init.staBrowser = initSTAChannelBrowser( ...
                 p.trVarsInit.nChannels, p.trVarsInit.nSTALags, ...
-                noiseFrameDurMs, isChromatic);
+                noiseFrameDurMs, isChromatic, staImgExtentDeg);
     end
 end
 

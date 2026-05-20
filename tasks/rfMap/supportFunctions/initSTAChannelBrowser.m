@@ -1,7 +1,7 @@
-function bd = initSTAChannelBrowser(nCh, nLags, noiseFrameDurMs, isChromatic)
+function bd = initSTAChannelBrowser(nCh, nLags, noiseFrameDurMs, isChromatic, imgExtentDeg)
 % initSTAChannelBrowser  Per-channel STA browser uifigure for rfMap.
 %
-%   bd = initSTAChannelBrowser(nCh, nLags, noiseFrameDurMs, isChromatic)
+%   bd = initSTAChannelBrowser(nCh, nLags, noiseFrameDurMs, isChromatic, imgExtentDeg)
 %
 %   Wraps pds.initChannelBrowser with the rfMap tile content:
 %     - top axes: peak-lag spatial slice (m x n imagesc)
@@ -16,11 +16,18 @@ function bd = initSTAChannelBrowser(nCh, nLags, noiseFrameDurMs, isChromatic)
 %   initSTADisplay; this browser is meant for cross-channel scanning,
 %   not color-axis dissection.
 %
+%   imgExtentDeg (optional) is forwarded to pds.initChannelBrowser to
+%   pin per-tile axes box to dva (rather than pixel/check aspect).
+%   Accepts a scalar (symmetric [-E, +E]) or a 1x4 vector
+%   [xmin xmax ymin ymax]. Default [] keeps the legacy 'axis image'
+%   behaviour.
+%
 %   bd is the struct returned by pds.initChannelBrowser plus:
 %     .nLags           - cached lag count
 %     .lagAxisMs       - 1 x nLags vector of lag values in ms
 %     .isChromatic     - cached for updateSTAChannelBrowser
 
+if nargin < 5, imgExtentDeg = []; end
 if nargin < 4 || isempty(isChromatic), isChromatic = false; end
 if nargin < 3 || isempty(noiseFrameDurMs), noiseFrameDurMs = 30; end
 
@@ -32,7 +39,8 @@ opts = struct( ...
     'lineYLabel',       'power', ...
     'initialSelection', 1:min(nCh, 16), ...
     'climMode',         'per-channel', ...
-    'figPos',           [60 60 1500 850]);
+    'figPos',           [60 60 1500 850], ...
+    'imgExtentDeg',     imgExtentDeg);
 
 bd = pds.initChannelBrowser(nCh, 'image+line', opts);
 
