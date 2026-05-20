@@ -1,7 +1,8 @@
-function updateSTAChannelBrowser(bd, staAccum, staSpikeCount)
+function updateSTAChannelBrowser(bd, staAccum, staSpikeCount, rfCentersDeg)
 % updateSTAChannelBrowser  Refresh per-channel STA browser tiles.
 %
 %   updateSTAChannelBrowser(bd, staAccum, staSpikeCount)
+%   updateSTAChannelBrowser(bd, staAccum, staSpikeCount, rfCentersDeg)
 %
 %   For each channel:
 %     - mean STA = staAccum{ch} / staSpikeCount(ch)
@@ -11,6 +12,12 @@ function updateSTAChannelBrowser(bd, staAccum, staSpikeCount)
 %     - lagEnergy(k) = sum(sum(slice(:, :, k).^2))
 %     - peakLag = argmax(lagEnergy); display slice(:,:,peakLag)
 %     - update top imagesc CData, bottom line YData, and the 'x' marker
+%
+%   rfCentersDeg (optional, nCh x 2) is the per-channel RF center
+%   estimate in dva (output of computeRFCenters). When supplied, a 'k+'
+%   marker on each tile's image axes is moved to that location. NaN rows
+%   hide the marker. Omit or pass [] to leave markers at their previous
+%   positions.
 %
 %   CLim policy:
 %     - 'per-channel' (default): each visible tile uses symmetric
@@ -24,6 +31,8 @@ function updateSTAChannelBrowser(bd, staAccum, staSpikeCount)
 %
 %   This routine never adds or removes graphics objects -- only CData /
 %   XData / YData / CLim / Text are mutated.
+
+if nargin < 4, rfCentersDeg = []; end
 
 if ~isstruct(bd) || ~isfield(bd, 'fig') || ~isvalid(bd.fig)
     return;
@@ -130,6 +139,17 @@ for ch = 1:nCh
 
     set(bd.titleObj(ch), 'Text', sprintf('ch %d  N=%d  peak %d ms', ...
         ch, staSpikeCount(ch), bd.lagAxisMs(peakLag)));
+
+    if ~isempty(rfCentersDeg) && isfield(bd, 'rfCenterMarker') && ...
+            isgraphics(bd.rfCenterMarker(ch))
+        cx = rfCentersDeg(ch, 1);
+        cy = rfCentersDeg(ch, 2);
+        if isnan(cx) || isnan(cy)
+            set(bd.rfCenterMarker(ch), 'XData', NaN, 'YData', NaN);
+        else
+            set(bd.rfCenterMarker(ch), 'XData', cx, 'YData', cy);
+        end
+    end
 end
 
 end

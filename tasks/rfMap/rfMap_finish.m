@@ -304,7 +304,8 @@ if isfield(p.init, 'staFigData') && ...
                     p.init.staAccum);
             otherwise
                 updateSTAChannelBrowser(p.init.staBrowser, ...
-                    p.init.staAccum, p.init.staSpikeCount);
+                    p.init.staAccum, p.init.staSpikeCount, ...
+                    p.init.lastRFCentersDeg);
         end
     end
 end

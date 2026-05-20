@@ -26,6 +26,9 @@ function bd = initSTAChannelBrowser(nCh, nLags, noiseFrameDurMs, isChromatic, im
 %     .nLags           - cached lag count
 %     .lagAxisMs       - 1 x nLags vector of lag values in ms
 %     .isChromatic     - cached for updateSTAChannelBrowser
+%     .rfCenterMarker  - 1 x nCh handles to the per-tile RF center markers
+%                        ('k+'); updateSTAChannelBrowser mutates their
+%                        XData/YData to NaN when no center is available.
 
 if nargin < 5, imgExtentDeg = []; end
 if nargin < 4 || isempty(isChromatic), isChromatic = false; end
@@ -49,7 +52,10 @@ bd.lagAxisMs   = (0:nLags - 1) * noiseFrameDurMs;
 bd.isChromatic = logical(isChromatic);
 
 % Pre-set the line axes x-data so the user sees correct ms ticks even
-% before the first spike arrives.
+% before the first spike arrives. Also pre-allocate the RF center
+% marker per channel (hidden at NaN until updateSTAChannelBrowser
+% receives valid centers from computeRFCenters).
+bd.rfCenterMarker = gobjects(1, nCh);
 for ch = 1:nCh
     if isgraphics(bd.lineObj(ch))
         set(bd.lineObj(ch), 'XData', bd.lagAxisMs, ...
@@ -57,6 +63,14 @@ for ch = 1:nCh
     end
     if isgraphics(bd.lineAx(ch))
         xlim(bd.lineAx(ch), [bd.lagAxisMs(1), bd.lagAxisMs(end) + eps]);
+    end
+    if isgraphics(bd.imgAx(ch))
+        ax = bd.imgAx(ch);
+        prevHold = ishold(ax);
+        hold(ax, 'on');
+        bd.rfCenterMarker(ch) = plot(ax, NaN, NaN, 'k+', ...
+            'MarkerSize', 10, 'LineWidth', 1.5);
+        if ~prevHold, hold(ax, 'off'); end
     end
 end
 

@@ -101,12 +101,18 @@ if p.trVarsInit.useRippleSTA
                 p.trVarsInit.nChannels, noiseFrameDurMs, nAxesDisplay);
             isChromatic = strcmp(p.init.stimType, 'denseChromatic');
             % Per-tile dva extent: the noise grid is centered on screen
-            % and spans nChecks*checkSizeDeg in each axis. Pass as 1x4
-            % [xmin xmax ymin ymax] so non-square grids (typical 16:9)
-            % aren't forced into a symmetric box.
+            % and spans nChecks*checkSizeDeg in each axis. Express the
+            % extent in *fixation-relative* dva so it matches the
+            % convention of computeRFCenters (and therefore aligns with
+            % the RF center markers drawn in updateSTAChannelBrowser).
+            % For the default fixDegX/Y = 0 this is just symmetric;
+            % displaced fixation shifts the extent accordingly.
             halfX = 0.5 * p.init.noiseGridSize(2) * p.trVarsInit.checkSizeDeg;
             halfY = 0.5 * p.init.noiseGridSize(1) * p.trVarsInit.checkSizeDeg;
-            staImgExtentDeg = [-halfX, halfX, -halfY, halfY];
+            fixDx = p.trVarsInit.fixDegX;
+            fixDy = p.trVarsInit.fixDegY;
+            staImgExtentDeg = [-halfX - fixDx, halfX - fixDx, ...
+                               -halfY - fixDy, halfY - fixDy];
             p.init.staBrowser = initSTAChannelBrowser( ...
                 p.trVarsInit.nChannels, p.trVarsInit.nSTALags, ...
                 noiseFrameDurMs, isChromatic, staImgExtentDeg);
