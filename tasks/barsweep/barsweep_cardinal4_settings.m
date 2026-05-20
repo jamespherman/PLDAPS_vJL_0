@@ -203,7 +203,7 @@ p.trVarsInit.barsweepSessionDone = false;   % set true in _next.m when terminati
 % useOnlineSort must be 0 because pds.getRippleData populates spikeClusters
 % with the channel index only when online sort is off; the RF accumulator
 % keys off spikeClusters as channel index. barsweep_init.m enforces this.
-p.trVarsInit.connectRipple       = 1;       % attempt to connect to Ripple NIP
+p.trVarsInit.connectRipple       = 0;       % attempt to connect to Ripple NIP
 p.trVarsInit.useOnlineSort       = 0;       % must be 0 for online RF mapping
 p.trVarsInit.useOnlineRF         = true;    % run online RF estimator
 p.trVarsInit.rfNChannels         = 32;      % number of Ripple channels for RF
