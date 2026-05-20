@@ -236,6 +236,14 @@ p.trVarsInit.useRippleSTA        = 1;
 p.trVarsInit.nSTALags            = 8;
 p.trVarsInit.nChannels           = 64;
 
+% --- Simulation-mode validation harness ---
+% When true, rfMap_init builds a per-channel ground-truth LNP kernel
+% bank and rfMap_finish substitutes simulated spike data for the live
+% Ripple read (see supportFunctions/simulateRippleData.m,
+% simInitKernelBank.m, simLNPSpikes.m). Leave false for real recording
+% sessions. Production behavior with this flag off is bit-identical.
+p.trVarsInit.useSimulatedSpikes  = false;
+
 % Online-plot throttling. Plotter renders only on schedule; accumulators
 % update every trial regardless.
 p.trVarsInit.staPlotEveryNTrials = 5;

@@ -11,8 +11,13 @@ function p = rfMap_finish(p)
 % Post-trial processing: retrieve Ripple data, accumulate STA on
 % successful trials, update display, strobe data, save, close textures.
 
-%% (0) Retrieve spike data from Ripple
-if isfield(p.rig, 'ripple') && isfield(p.rig.ripple, 'recChans') && ...
+%% (0) Retrieve spike data from Ripple (or simulator under sim mode)
+if isfield(p.trVars, 'useSimulatedSpikes') && p.trVars.useSimulatedSpikes
+    % Simulation-mode validation harness: ground-truth LNP spikes from
+    % p.init.simKernelBank instead of live Ripple. Field layout matches
+    % pds.getRippleData (spikeTimes/spikeClusters/eventTimes/eventValues).
+    p = simulateRippleData(p);
+elseif isfield(p.rig, 'ripple') && isfield(p.rig.ripple, 'recChans') && ...
         p.rig.ripple.status && ~isempty(p.rig.ripple.recChans)
     p = pds.getRippleData(p);
 end
@@ -55,7 +60,9 @@ if ~p.trData.trialRepeatFlag
     end
 
     % (4b) Accumulate STA from Ripple data (if enabled and data available)
-    if p.trVars.useRippleSTA && p.rig.ripple.status && ...
+    useSim = isfield(p.trVars, 'useSimulatedSpikes') && ...
+        p.trVars.useSimulatedSpikes;
+    if ((p.trVars.useRippleSTA && p.rig.ripple.status) || useSim) && ...
             ~isempty(p.trData.spikeTimes)
         p = accumulateSTA(p);
 

@@ -126,6 +126,16 @@ p.init.strb = pds.classyStrobe;
 % global stream here does not affect the saved movie.
 RandStream.setGlobalStream(RandStream('mt19937ar', 'Seed', 0));
 
+%% (15) simulation-mode validation harness (off by default)
+% When useSimulatedSpikes is true, build a per-channel ground-truth LNP
+% kernel bank. rfMap_finish then synthesizes spike data from this bank
+% per trial in place of the live Ripple read. The bank construction
+% relies on rig geometry (frameDuration) and stim-type grid params from
+% step 7, so it must run after both.
+if isfield(p.trVarsInit, 'useSimulatedSpikes') && p.trVarsInit.useSimulatedSpikes
+    p = simInitKernelBank(p);
+end
+
 end
 
 %% ---- Local functions ----
