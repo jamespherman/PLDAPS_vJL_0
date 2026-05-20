@@ -118,7 +118,29 @@ clippedDur = min(frameEnd, visibleEnd) - frameStart;
 clippedDur(~visMask) = 0;
 clippedDur(clippedDur < 0) = 0;
 
-valid = ~isnan(posBins_perFrame) & visMask & clippedDur > 0;
+% On-screen mask: PsychToolbox silently clips DrawTexture beyond
+% p.draw.screenRect, so a frame whose bar center is off-screen never
+% stimulates the cell. Counting those frames inflates dwellTime at the
+% sweep extremes (deflating their rate denominator) and lets baseline-
+% only spikes at off-screen positions bias the noise floor. Skip them
+% in both dwell and spike accumulation. Bar center is the right anchor
+% because that's what the projection coordinate s_perFrame represents;
+% partial visibility of the bar's long-axis tail doesn't change which
+% position bin the spike maps to. Guarded so the synthetic-spike unit
+% tests in testBarsweepRF (which build a minimal p without rendering
+% geometry) continue to run.
+if isfield(p.trVars, 'sweepCenterPix') && ~isempty(p.trVars.sweepCenterPix) ...
+        && isfield(p, 'draw') && isfield(p.draw, 'screenRect') ...
+        && ~isempty(p.draw.screenRect)
+    sweepPix = p.trVars.sweepCenterPix(:, 1:nFramesAccum);
+    sR       = p.draw.screenRect;
+    onScreen = sweepPix(1, :) >= sR(1) & sweepPix(1, :) <= sR(3) & ...
+               sweepPix(2, :) >= sR(2) & sweepPix(2, :) <= sR(4);
+else
+    onScreen = true(1, nFramesAccum);
+end
+
+valid = ~isnan(posBins_perFrame) & visMask & clippedDur > 0 & onScreen;
 if any(valid)
     rf.dwellTime(oriIdx, :) = rf.dwellTime(oriIdx, :) + ...
         accumarray(posBins_perFrame(valid)', clippedDur(valid)', ...
@@ -158,7 +180,13 @@ if ~isempty(spikeT)
         ok     = ~isnan(frIdx) & chs >= 1 & chs <= rf.nChannels;
         if any(ok)
             posBins = discretize(s_perFrame(frIdx(ok)), rf.positionEdges);
-            ok2     = ~isnan(posBins);
+            % Same off-screen exclusion as the dwell-time path above:
+            % spikes during off-screen frames are not stimulus-driven.
+            % Force column shape so the elementwise & never broadcasts
+            % into a matrix (frIdx is a column, s_perFrame is a row, so
+            % posBins / onScrK end up with different orientations).
+            onScrK  = onScreen(frIdx(ok));
+            ok2     = ~isnan(posBins(:)) & onScrK(:);
             if any(ok2)
                 chsK = chs(ok); chsK = chsK(ok2);
                 posK = posBins(ok2);

@@ -103,9 +103,23 @@ for ch = 1:nCh
     if rf.spikeCount(ch) < 1, continue; end
     out = reconstructBarsweepRF(rf, ch, rf.exptType);
     snr(ch) = out.peakStats.snr;
-    if out.peakStats.detected
-        centers(ch, 1) = out.gaussFit.x0 + pathOff(1);
-        centers(ch, 2) = out.gaussFit.y0 + pathOff(2);
+    if ~out.peakStats.detected, continue; end
+    switch rf.exptType
+        case 'barsweep_cardinal4'
+            % Parabolic peaks of the 1-D marginals. gaussFit on the
+            % outer-product sep2 thumbnail is biased toward path center
+            % because the spontaneous baseline makes the 0.25*peak mask
+            % cover most of the grid, pulling the centroid toward 0.
+            centers(ch, 1) = out.xCenter + pathOff(1);
+            centers(ch, 2) = out.yCenter + pathOff(2);
+        case 'barsweep_rfmap12'
+            % Moment fit of the iradon image restricted to a small disc
+            % around the argmax -- localized, no baseline-bias issue.
+            centers(ch, 1) = out.gaussFit.x0 + pathOff(1);
+            centers(ch, 2) = out.gaussFit.y0 + pathOff(2);
+        otherwise
+            error('exportBarsweepRFCentersCSV:exptType', ...
+                'Unknown exptType "%s".', rf.exptType);
     end
 end
 

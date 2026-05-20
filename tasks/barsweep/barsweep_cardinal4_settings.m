@@ -159,7 +159,7 @@ p.trVarsInit.flipIdx             = 1;
 % --- sweep schedule and geometry (matches source defaults) ---
 p.trVarsInit.setRepeats          = 50;      % rewarded sweeps per angle (frozen on first _next.m call)
 p.trVarsInit.pathAngleDeg        = 0;       % resolved per trial from the schedule
-p.trVarsInit.pathCenterXDeg      = 10;
+p.trVarsInit.pathCenterXDeg      = 0;       % fixation-centered by default
 p.trVarsInit.pathCenterYDeg      = 0;
 p.trVarsInit.pathLengthDeg       = 40;
 p.trVarsInit.speedDegPerSec      = 70;
