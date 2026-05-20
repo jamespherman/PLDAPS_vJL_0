@@ -92,13 +92,79 @@ end
 
 
 function onSavePdf(src, ~)
-% The channel browser is a uifigure; saveas/print don't support it.
-% exportapp is the supported WYSIWYG export for uifigures (R2020a+)
-% and includes the uicontrols, which is what the experimenter wants
-% when archiving an STA browser snapshot.
+% The channel browser is a uifigure; saveas/print/pds.pdfSave do not
+% support uifigures directly, and exportapp produces a raster PDF. To
+% get a *vector* PDF we copy the currently-visible image (+ line) axes
+% into an off-screen classic figure -- copyobj brings each axes'
+% children (image, lag-energy line, peak marker, RF center marker)
+% across -- and then call pds.pdfSave on that classic figure to get
+% Painters-rendered vector output.
 fig = ancestor(src, 'figure');
+bd  = fig.UserData;
+sel = bd.selectedChannels;
+
+if isempty(sel)
+    uialert(fig, ...
+        'No channels selected. Select at least one channel before saving.', ...
+        'Save PDF');
+    return;
+end
+
 defaultName = sprintf('sta_browser_%s.pdf', datestr(now, 'yyyymmdd_HHMMSS'));
 [file, path] = uiputfile('*.pdf', 'Save STA browser as PDF', defaultName);
 if isequal(file, 0), return; end
-exportapp(fig, fullfile(path, file));
+
+n = numel(sel);
+if n <= 2
+    nCols = 1;
+elseif n <= 4
+    nCols = 2;
+else
+    nCols = ceil(sqrt(n));
+end
+nRows = ceil(n / nCols);
+isImgLine = strcmp(bd.tileKind, 'image+line');
+
+exportFig = figure('Visible', 'off', 'Color', 'w', ...
+    'Position', fig.Position, 'PaperPositionMode', 'auto');
+cleanupObj = onCleanup(@() delete(exportFig)); %#ok<NASGU>
+
+margin   = 0.03;
+cellW    = (1 - 2 * margin) / nCols;
+cellH    = (1 - 2 * margin) / nRows;
+imgFrac  = 0.78;     % image axes share of the cell (image+line tiles)
+lineFrac = 0.20;
+gapFrac  = 0.02;     % gap between image and line axes (cell-relative)
+
+for i = 1:n
+    ch = sel(i);
+    [r, c] = ind2sub([nRows, nCols], i);
+    cellL = margin + (c - 1) * cellW;
+    cellT = 1 - margin - (r - 1) * cellH;
+
+    if isImgLine
+        imgH  = imgFrac * cellH;
+        lineH = lineFrac * cellH;
+        imgB  = cellT - imgH;
+        lineB = cellT - imgH - gapFrac * cellH - lineH;
+
+        axImg = copyobj(bd.imgAx(ch), exportFig);
+        axImg.Units    = 'normalized';
+        axImg.Position = [cellL, imgB, cellW, imgH];
+        title(axImg, get(bd.titleObj(ch), 'Text'), ...
+            'FontSize', 8, 'Interpreter', 'none');
+
+        axLn = copyobj(bd.lineAx(ch), exportFig);
+        axLn.Units    = 'normalized';
+        axLn.Position = [cellL, lineB, cellW, lineH];
+    else
+        axImg = copyobj(bd.imgAx(ch), exportFig);
+        axImg.Units    = 'normalized';
+        axImg.Position = [cellL, cellT - cellH, cellW, cellH];
+        title(axImg, get(bd.titleObj(ch), 'Text'), ...
+            'FontSize', 8, 'Interpreter', 'none');
+    end
+end
+
+pds.pdfSave(fullfile(path, file), exportFig.Position(3:4) / 72, exportFig);
 end
