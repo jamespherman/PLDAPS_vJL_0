@@ -418,13 +418,13 @@ if isfield(p.init.electrodeInfo, 'predictedRFX') && isfield(p.init.electrodeInfo
         p.trVars.predRFCircleDegY = p.init.electrodeInfo.predictedRFY(p.trVars.stimulatedElectrode);
         p.draw.color.predRFCircle   = p.draw.clutIdx.expCyan_subBg;
     else
-        p.trVars.predRFCircleDegX = 30;
-        p.trVars.predRFCircleDegY = 20;
+        p.trVars.predRFCircleDegX = 0;
+        p.trVars.predRFCircleDegY = 0;
         p.draw.color.predRFCircle = p.draw.clutIdx.expOrange_subBg;
     end
 else
-    p.trVars.predRFCircleDegX = 30;
-    p.trVars.predRFCircleDegY = 20;
+    p.trVars.predRFCircleDegX = 0;
+    p.trVars.predRFCircleDegY = 0;
     p.draw.color.predRFCircle = p.draw.clutIdx.expOrange_subBg;
 end
 
@@ -536,7 +536,7 @@ p.trVars.cmd.seq(3) = struct('length', p.trVars.cmdSeqLength, 'ampl', p.trVars.s
 
 
 
-if p.trVars.trialType == 4 % Bipolar stimulation
+if p.trVars.trialType == 4 % Two-channel opposite polarity stimulation
     if p.trVars.stimulatedElectrode == 1
         p.trVars.stimulatedElectrode2 = 2;
     else

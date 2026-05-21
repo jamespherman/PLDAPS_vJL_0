@@ -210,7 +210,7 @@ p.trVarsInit.stimRangeXmin	 = -24.0; % Alternate method of randomly positioning 
 p.trVarsInit.stimRangeXmax	 = 24.0;
 p.trVarsInit.stimRangeYmin	 = -14; % Together with previous lines, randomly position stimuli between Ymin and Ymax
 p.trVarsInit.stimRangeYmax	 = 14;
-p.trVarsInit.stimSizeMin	 = 0.3; % create stimuli of what size? (randomly chosen between min and max, in dva)
+p.trVarsInit.stimSizeMin	 = 0.1; % create stimuli of what size? (randomly chosen between min and max, in dva)
 p.trVarsInit.stimSizeMax	 = 0.5;
 p.trVarsInit.oneStimRotationRange= 360; % Range within which individual stimuli are rotated
 p.trVarsInit.twoStimRotationRange= 360; % Range within which stimuli are rotated relative to each other
@@ -237,17 +237,17 @@ p.trVarsInit.targetFlashDuration     = 0.2;      % Duration target stays on for 
 % p.trVarsInit.postFlashFixMax       = 1.5;  % maximum post-flash fixation-duration
 p.trVarsInit.targHoldDurationMin     = 0.15;  % minimum duration to maintain fixation on the target post-saccade 
 p.trVarsInit.targHoldDurationMax     = 0.15;      % maximum duration to maintain fixation on the target post-saccade 
-p.trVarsInit.maxSacDurationToAccept  = 0.1; % this is the max duration of a saccades that we're willing to wait for. 
+p.trVarsInit.maxSacDurationToAccept  = 0.15; % this is the max duration of a saccades that we're willing to wait for. 
 p.trVarsInit.targetReillumDelay      = 0.15; % the delay (s) between saccadeOffset (ie entry into target window) and target reillumination
 p.trVarsInit.goLatencyMin            = 0.05;  % minimum saccade-latency criterion
-p.trVarsInit.goLatencyMax            = 1;  % maximum saccade-latency criterion
+p.trVarsInit.goLatencyMax            = 0.3;  % maximum saccade-latency criterion
 % p.trVarsInit.preTargMin            = 0.75; % minimum fixation-only time before target onset
 % p.trVarsInit.preTargMax            = 1;    % maximum fixation-only time before target onset
 
 
 % Visual stimulus variables
-p.trVarsInit.stimOnsetMin	     = 0.45; % Time after fixation before stim comes on
-p.trVarsInit.stimOnsetMax	     = 0.55; % Once trained, should be 0.3 to 0.7
+p.trVarsInit.stimOnsetMin	     = 0.3; % Time after fixation before stim comes on
+p.trVarsInit.stimOnsetMax	     = 0.8; % Once trained, should be 0.3 to 0.7
 p.trVarsInit.stimDurMin		     = 0.12; % Time stim stays on
 p.trVarsInit.stimDurMax		     = 0.20;
 p.trVarsInit.totalFixDur         = 1.5; % Total time from fixAcq to "heldFix" state
@@ -280,7 +280,7 @@ p.trVarsInit.ampVals = [1, 2, 3, 4, 5, 6, 7, 9, 12, 14, 18, ...
 p.trVarsInit.staircaseStartingIndex = 1;
 
 % Predicted RF circle size, in dva
-p.trVarsInit.predRFCircleSize = 1;
+p.trVarsInit.predRFCircleSize = 5;
 
 % Status variables for this task. Normally should be above but certain 
 % variables aren't initialized yet so it's down here instead.
@@ -320,15 +320,15 @@ p.trVarsInit.minTargAmp              = 3;    % minimum target amplitude
 p.trVarsInit.maxTargAmp              = 18;   % maximum target amplitude
 p.trVarsInit.staticTargAmp           = 12;  % fixed target amplitude
 
-p.trVarsInit.fixWinWidthDeg       = 1.2;        % fixation window width in degrees
-p.trVarsInit.fixWinHeightDeg      = 1.2;        % fixation window height in degrees
+p.trVarsInit.fixWinWidthDeg       = 1.5;        % fixation window width in degrees
+p.trVarsInit.fixWinHeightDeg      = 1.5;        % fixation window height in degrees
 p.trVarsInit.visTargWinWidthDeg      = 3;        % target window width in degrees, for visual stimuli
 p.trVarsInit.visTargWinHeightDeg     = 3;        % target window height in degrees, for visual stimuli
-p.trVarsInit.microstimTargWinWidthDeg      = 8;        % target window width in degrees, for microstim
-p.trVarsInit.microstimTargWinHeightDeg     = 8;        % target window height in degrees, for microstim
+%p.trVarsInit.microstimTargWinWidthDeg      = 8;        % target window width in degrees, for microstim
+%p.trVarsInit.microstimTargWinHeightDeg     = 8;        % target window height in degrees, for microstim
 
 p.trVarsInit.targWinWidthDeg         = 0;       % These are the variables that are actually used in eyeInWindow
-p.trVarsInit.targWinHeightDeg        = 0;       % They are changed to the above depending on trial type
+p.trVarsInit.targWinHeightDeg        = 0;       % They are changed to different values depending on trial type
 
 
 % I don't think I need to carry these around in 'p'....
