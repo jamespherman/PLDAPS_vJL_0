@@ -266,6 +266,8 @@ p.trVarsInit.stimOnsetMin	         = 0.2; % Minimum time after fixation before s
 p.trVarsInit.targOnsetMin            = 0.1; % Minimum time after stim goes off before target onset
 p.trVarsInit.goTimePostTarg          = 0.15; % Time from targ onset to the 'go' signal to saccade (which is fixation offset)
 
+p.trVarsInit.screenshotFlag      = 0; % Flag used to determine when to screenshot for visual trials
+
 %{
 p.trVarsInit.stimOnsetMin	     = 0.25; % Time after fixation before stim comes on
 p.trVarsInit.stimOnsetMax	     = 0.4;

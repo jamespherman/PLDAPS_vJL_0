@@ -219,7 +219,7 @@ p.trVarsInit.stimShape		 = 0;
 p.trVarsInit.targsSameColor	 = false;
 
 % times/latencies/durations:
-p.trVarsInit.rewardDurationMs        = 180; % reward duration
+p.trVarsInit.rewardDurationMs        = 140; % reward duration
 p.trVarsInit.rewardDelay             = 0;        % delay between cued change and reward delivery for hits.
 p.trVarsInit.timeoutAfterFa          = 2;        % timeout duration following false alarm.
 p.trVarsInit.joyWaitDur              = 5;        % how long to wait for the subject to press the joystick at the beginning of a trial?
@@ -252,6 +252,7 @@ p.trVarsInit.stimDurMin		     = 0.12; % Time stim stays on
 p.trVarsInit.stimDurMax		     = 0.20;
 p.trVarsInit.totalFixDur         = 1.5; % Total time from fixAcq to "heldFix" state
 
+p.trVarsInit.screenshotFlag      = 0; % Flag used to determine when to screenshot for visual trials
 
 % Microstim variables
 

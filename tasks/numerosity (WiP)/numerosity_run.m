@@ -465,6 +465,7 @@ if p.trData.timing.fixAq > 0
             
             if p.trVars.trialType == 1 % if visual trial, send strobe
                 p.init.strb.addValue(p.init.codes.stimOn);
+                p.trVars.screenshotFlag = 1; % Screenshot on next flip
             end
 
     elseif (p.trData.timing.stimOneOn ~= -1 && p.trData.timing.stimOneOff == -1 && ...
@@ -485,6 +486,7 @@ if p.trData.timing.fixAq > 0
             
             if p.trVars.trialType == 1 % if visual trial, send strobe
                 p.init.strb.addValue(p.init.codes.stimOn);
+                p.trVars.screenshotFlag = 2; % Screenshot on next flip
             end
 
     elseif (p.trData.timing.stimTwoOn ~= -1 && p.trData.timing.stimTwoOff == -1 && ...
@@ -675,6 +677,17 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     p.trData.timing.lastFrameTime = ...
         p.trData.timing.flipTime(p.trVars.flipIdx);
     
+    % Take a screenshot if we just flipped one (or both) of the stimuli.
+    % Note that for the spatial task, only stimTwoScreenshot will be saved
+    % but will contain both, as they flip at the same time.
+    if p.trVars.screenshotFlag == 1
+        p.trData.stimOneScreenshot = Screen('GetImage', p.draw.window);
+        p.trVars.screenshotFlag = 3;
+    elseif p.trVars.screenshotFlag == 2
+        p.trData.stimTwoScreenshot = Screen('GetImage', p.draw.window);
+        p.trVars.screenshotFlag = 3;
+    end
+
     % strobe all values that are in the strobe list with the
     % classyStrobe class:
     if p.init.strb.armedToStrobe

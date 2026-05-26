@@ -60,7 +60,6 @@ end
 function p = createVisualStimulusTexture(p)
 
 % Timing Info:
-
 % time of stim onset and offset wrt fixAcq:
 p.trVars.timeStimOnset		= unifrnd (p.trVars.stimOnsetMin, p.trVars.stimOnsetMax);
 p.trVars.stimDur             = unifrnd (p.trVars.stimDurMin, p.trVars.stimDurMax);
@@ -141,6 +140,9 @@ p.draw.targWinHeightPix     = pds.deg2pix(p.trVars.targWinHeightDeg, p);
 
 p.draw.color.targWin         = p.draw.clutIdx.expVisGreen_subBg;
 
+
+% Scale reward with eccentricity
+p.trVars.rewardDurationMs = round(p.trVars.rewardDurationMs*(eccentricityScaleFactor));
 
 
 %%%%%%%%%%%%%%%%%
@@ -323,7 +325,10 @@ stim_color(stim_color >= 149) = 149;
 % Create texture %
 %%%%%%%%%%%%%%%%%%%
 
-p.draw.stimTexture = Screen ('MakeTexture', p.draw.window, stim_color);
+% Save a copy of the final matrix used to make the texture
+p.trVars.stimTextureMatrix = stim_color;
+
+p.draw.stimTexture = Screen ('MakeTexture', p.draw.window, p.trVars.stimTextureMatrix);
 
 end
 

@@ -567,29 +567,36 @@ stim2_color (stim2_color >= 249) = 249;
 % Create textures %
 %%%%%%%%%%%%%%%%%%%
 
-    % Make textures of the individual stims before they're adjusted for combining
-    p.draw.stimOneTexture = Screen ('MakeTexture', p.draw.window, stim1_color);
-    p.draw.stimTwoTexture = Screen ('MakeTexture', p.draw.window, stim2_color);
+% Save a copy of the final matrices used to make the texture
+p.trVars.stimOneTextureMatrix = stim1_color;
+p.trVars.stimTwoTextureMatrix = stim2_color;
 
-    % for temporal, if interStimInterval is greater than 0, 50% of the time make stimTwo the same as stimOne
-	if strcmp(p.init.exptType, 'temporal') && p.trVars.interStimInterval > 0 && rand > 0.5
-   	    p.draw.stimTwoTexture = p.draw.stimOneTexture;
-	end
+% Make textures of the individual stims before they're adjusted for combining
+p.draw.stimOneTexture = Screen ('MakeTexture', p.draw.window, p.trVars.stimOneTextureMatrix);
+p.draw.stimTwoTexture = Screen ('MakeTexture', p.draw.window, p.trVars.stimTwoTextureMatrix);
+
+% for temporal, if interStimInterval is greater than 0, 50% of the time make stimTwo the same as stimOne
+if strcmp(p.init.exptType, 'temporal') && p.trVars.interStimInterval > 0 && rand > 0.5
+	    p.draw.stimTwoTexture = p.draw.stimOneTexture;
+end
 
 
-    % Set anything that is currently at background grey to 0 so we
-    % don't add 50 or 150 to values inappropriately
-    stim1_color (stim1_color == 50) = 0;
-    stim2_color (stim2_color == 150) = 0;
+% Set anything that is currently at background grey to 0 so we
+% don't add 50 or 150 to values inappropriately
+stim1_color (stim1_color == 50) = 0;
+stim2_color (stim2_color == 150) = 0;
 
-    % Add stim1 and stim2 to make combined texture
-    combinedStims = stim1_color + stim2_color;
+% Add stim1 and stim2 to make combined texture
+combinedStims = stim1_color + stim2_color;
 
-    % Reapply grey background to texture
-    combinedStims (combinedStims == 0) = 50;
+% Reapply grey background to texture
+combinedStims (combinedStims == 0) = 50;
 
-    % Make Textures of the stims combined
-    p.draw.combinedStimTexture = Screen ('MakeTexture', p.draw.window, combinedStims);
+% Save a copy of this as well
+p.trVars.combinedStimTextureMatrix = combinedStims;
+
+% Make Textures of the stims combined
+p.draw.combinedStimTexture = Screen ('MakeTexture', p.draw.window, p.trVars.combinedStimTextureMatrix);
 
 
 % Timing stuff

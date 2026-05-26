@@ -27,7 +27,6 @@ function p = sacc_to_phosph_run(p)
 %   (2) TIME-DEPENDENT section: sets variables as a function of time 
 %   (3) DRAW section: PTB-based drawing
 
-
 while ~p.trVars.exitWhileLoop
     
     % Update eye / joystick & Mouse position:
@@ -99,7 +98,7 @@ switch p.trVars.currentState
     case p.state.trialBegun
         %% STATE 1:
         %   TRIAL HAS BEGUN!
-        
+
         % strobing trial start time and onward to state 0.1.
         p.init.strb.strobeNow(p.init.codes.trialBegin);
         p.trData.timing.trialBegin      = timeNow;
@@ -328,6 +327,7 @@ switch p.trVars.currentState
                 p = pds.deliverReward(p);
                 
             disp ('reward');
+            disp(num2str(p.trVars.rewardDurationMs));
 
         % if reward delivery has been triggered and the interval to wait
         % after reward delivery has elapsed, it's time to exit the
@@ -469,6 +469,7 @@ if p.trData.timing.fixAq > 0
             
             if p.trVars.trialType == 1 % if visual trial, send strobe on next flip
                 p.init.strb.addValueOnce(p.init.codes.stimOn);
+                p.trVars.screenshotFlag = 1; % Screenshot on next flip
             end
 
     elseif (p.trData.timing.stimOn ~= -1 && p.trData.timing.stimOff == -1 && ...
@@ -609,6 +610,12 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     p.trData.timing.lastFrameTime = ...
         p.trData.timing.flipTime(p.trVars.flipIdx);
     
+    % Take screenshot if visual stimulus just flipped
+    if p.trVars.screenshotFlag == 1
+        p.trData.stimScreenshot = Screen('GetImage', p.draw.window);
+        p.trVars.screenshotFlag = 3;
+    end
+
     % strobe all values that are in the strobe list with the
     % classyStrobe class:
     if p.init.strb.armedToStrobe
