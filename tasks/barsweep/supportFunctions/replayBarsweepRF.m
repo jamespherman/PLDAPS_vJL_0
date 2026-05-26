@@ -1,5 +1,5 @@
-function rfPost = replayBarsweepRF(trial, rfPre)
-% rfPost = replayBarsweepRF(trial, rfPre)
+function rfPost = replayBarsweepRF(trial, rfPre, draw)
+% rfPost = replayBarsweepRF(trial, rfPre, draw)
 %
 % Pure offline replay of one trial's RF accumulation. Reconstructs the
 % minimal p struct that accumulateBarsweepRF needs from a saved
@@ -19,6 +19,13 @@ function rfPost = replayBarsweepRF(trial, rfPre)
 %   rfPre   pre-trial snapshot of p.init.barsweepRF (the rf struct
 %           returned by initBarsweepRF, with the post-prior-trial state
 %           of spikeHist/dwellTime/spikeCount/trialsByDirection).
+%   draw    (optional) p.draw struct from the session-level p.mat. When
+%           provided, the accumulator's on-screen mask uses
+%           draw.screenRect to skip frames whose bar center was outside
+%           the rendered viewport. When omitted, the on-screen mask is
+%           a no-op (frames not filtered) -- matches pre-fix behavior so
+%           old replay callers (validateBarsweepSession) keep agreeing
+%           against the live accumulator output.
 %
 % Output:
 %   rfPost  the post-trial rf struct. For nonStart trials (which the
@@ -57,6 +64,9 @@ p.init                = struct();
 p.init.codes          = trial.init.codes;
 p.init.barsweepRF     = rfPre;
 p.init.exptType       = trial.init.exptType;
+if nargin >= 3 && ~isempty(draw)
+    p.draw = draw;
+end
 % accumulateBarsweepRF also references p.init.barsweepRF.enabled. If the
 % caller passed a pre-init snapshot with enabled=false (e.g. Ripple was
 % unavailable on the original session), preserve that and short-circuit.

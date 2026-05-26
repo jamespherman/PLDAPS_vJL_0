@@ -24,7 +24,7 @@ p           = pds.readDatapixxBuffers(p);
 % **Turning off trial repeats for this task
 % Was the previous trial aborted?
 p.trData.trialRepeatFlag = ismember(p.trData.trialEndState, ...
-    [p.state.fixBreak, p.state.nonStart]);
+    [p.state.fixBreak, p.state.nonStart, p.state.lateSaccade, p.state.failedToHoldTarg]);
 
 % update status variables
 p           = updateStatusVariables(p);
@@ -66,7 +66,13 @@ p           = pds.waitForJoystickRelease(p);
 % monkey has held the joystick down for a "long time" since the end of the
 % last trial, the "time-out" window has passed and there won't be an
 % ADDITIONAL time out.
-postTrialTimeOut(p);
+
+% 0.5 second pause if trial was aborted
+% Main reason for this is to let whatever stimulation train may be
+% ongoing to complete before we move on to the next trial
+if p.trData.trialRepeatFlag
+    pause(0.5); 
+end
 
 % retreive data from omniplex PC if desired.
 if p.rig.connectToOmniplex

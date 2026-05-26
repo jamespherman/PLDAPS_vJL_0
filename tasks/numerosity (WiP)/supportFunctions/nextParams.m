@@ -10,6 +10,12 @@ if p.trVars.setTargLocViaTrialArray
     p = chooseRow(p);
 end
 
+% Check if Ripple recording is on, and send error or warning if not
+xippmexStatus = pds.xippmex('trial');
+if strcmp(xippmexStatus.status, 'stopped') && p.trVars.stopIfNotRecording == true
+    error('Ripple recording is not active. Please start recording before proceeding.');
+end
+
 
 trialTypeCol = strcmp(p.init.trialArrayColumnNames, 'trialType');
 p.trVars.trialType = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
@@ -65,6 +71,8 @@ p.draw.targTwoPointPix     =  p.draw.middleXY + [1, -1] .* ...
 % target window width and height in pixels.
 p.draw.targWinWidthPix      = pds.deg2pix(p.trVars.targWinWidthDeg, p);
 p.draw.targWinHeightPix     = pds.deg2pix(p.trVars.targWinHeightDeg, p);
+
+p.draw.color.targWin = p.draw.clutIdx.expVisGreen_subBg;
 
 % what is the separation between the two dots (when there are two dots
 % shown) in pixels?
@@ -133,7 +141,8 @@ p.trVars.stimRotation1 = deg2rad(unifrnd(-p.trVars.oneStimRotationRange/2, p.trV
 p.trVars.stimRotation2 = deg2rad(unifrnd(-p.trVars.oneStimRotationRange/2, p.trVars.oneStimRotationRange/2));
 
 % For two-stim trials, how separated should they be (edge to edge)?
-p.draw.twoStimSepPix = pds.deg2pix(unifrnd(p.trVars.twoStimSepDegMin, p.trVars.twoStimSepDegMax), p);
+p.trVars.twoStimSepDeg = unifrnd(p.trVars.twoStimSepDegMin, p.trVars.twoStimSepDegMax);
+p.draw.twoStimSepPix = pds.deg2pix(p.trVars.twoStimSepDeg, p);
 
 % Now randomly rotate the stimuli relative to each other by between 0 and twoStimRotationRange degrees
 p.trVars.twoStimRotation = deg2rad(unifrnd(-p.trVars.twoStimRotationRange/2, p.trVars.twoStimRotationRange/2));
@@ -558,29 +567,36 @@ stim2_color (stim2_color >= 249) = 249;
 % Create textures %
 %%%%%%%%%%%%%%%%%%%
 
-    % Make textures of the individual stims before they're adjusted for combining
-    p.draw.stimOneTexture = Screen ('MakeTexture', p.draw.window, stim1_color);
-    p.draw.stimTwoTexture = Screen ('MakeTexture', p.draw.window, stim2_color);
+% Save a copy of the final matrices used to make the texture
+p.trVars.stimOneTextureMatrix = stim1_color;
+p.trVars.stimTwoTextureMatrix = stim2_color;
 
-    % for temporal, if interStimInterval is greater than 0, 50% of the time make stimTwo the same as stimOne
-	if strcmp(p.init.exptType, 'temporal') && p.trVars.interStimInterval > 0 && rand > 0.5
-   	    p.draw.stimTwoTexture = p.draw.stimOneTexture;
-	end
+% Make textures of the individual stims before they're adjusted for combining
+p.draw.stimOneTexture = Screen ('MakeTexture', p.draw.window, p.trVars.stimOneTextureMatrix);
+p.draw.stimTwoTexture = Screen ('MakeTexture', p.draw.window, p.trVars.stimTwoTextureMatrix);
+
+% for temporal, if interStimInterval is greater than 0, 50% of the time make stimTwo the same as stimOne
+if strcmp(p.init.exptType, 'temporal') && p.trVars.interStimInterval > 0 && rand > 0.5
+	    p.draw.stimTwoTexture = p.draw.stimOneTexture;
+end
 
 
-    % Set anything that is currently at background grey to 0 so we
-    % don't add 50 or 150 to values inappropriately
-    stim1_color (stim1_color == 50) = 0;
-    stim2_color (stim2_color == 150) = 0;
+% Set anything that is currently at background grey to 0 so we
+% don't add 50 or 150 to values inappropriately
+stim1_color (stim1_color == 50) = 0;
+stim2_color (stim2_color == 150) = 0;
 
-    % Add stim1 and stim2 to make combined texture
-    combinedStims = stim1_color + stim2_color;
+% Add stim1 and stim2 to make combined texture
+combinedStims = stim1_color + stim2_color;
 
-    % Reapply grey background to texture
-    combinedStims (combinedStims == 0) = 50;
+% Reapply grey background to texture
+combinedStims (combinedStims == 0) = 50;
 
-    % Make Textures of the stims combined
-    p.draw.combinedStimTexture = Screen ('MakeTexture', p.draw.window, combinedStims);
+% Save a copy of this as well
+p.trVars.combinedStimTextureMatrix = combinedStims;
+
+% Make Textures of the stims combined
+p.draw.combinedStimTexture = Screen ('MakeTexture', p.draw.window, p.trVars.combinedStimTextureMatrix);
 
 
 % Timing stuff
@@ -722,6 +738,8 @@ p.draw.targTwoPointPix     =  p.draw.middleXY + [1, -1] .* ...
 p.draw.targWinWidthPix      = pds.deg2pix(p.trVars.targWinWidthDeg, p);
 p.draw.targWinHeightPix     = pds.deg2pix(p.trVars.targWinHeightDeg, p);
 
+p.draw.color.targWin = p.draw.clutIdx.expMemMagenta_subBg;
+
 % what is the separation between the two dots (when there are two dots
 % shown) in pixels?
 p.draw.twoTargSepPix = pds.deg2pix(p.trVars.twoTargSepDeg, p);
@@ -736,7 +754,7 @@ p.draw.twoTargSepPix = pds.deg2pix(p.trVars.twoTargSepDeg, p);
 % point precision, good enough!
 p.trVars.targTheta_x10  = round(mod(tmpTheta * 180 / pi, 360) * 10); 
 
-% For radius, I multiply by 100 ('_x100') and round. That gives 2 decimlal
+% For radius, I multiply by 100 ('_x100') and round. That gives 2 decimal
 % point precision, goo enough!
 p.trVars.targRadius_x100 = round(tmpRadius * 100);
 
@@ -774,12 +792,12 @@ p.trVars.rippleStimElectrode2 = p.init.electrodeInfo.rippleChannel (p.trVars.sti
 % Check if the chosen ripple channel is a valid stim channel, based on info
 % pulled using xippmex in initRipple
 if ~ismember (p.trVars.rippleStimElectrode1, p.rig.ripple.stimChans)
-    errorMessage = append('Ripple channel ', p.trVars.rippleStimElectrode1, ' is not a valid stim channel');
+    errorMessage = append('Ripple channel ', num2str(p.trVars.rippleStimElectrode1), ' is not a valid stim channel');
     error (errorMessage);
 end
 
 if ~ismember (p.trVars.rippleStimElectrode2, p.rig.ripple.stimChans)
-    errorMessage = append('Ripple channel ', p.trVars.rippleStimElectrode2, ' is not a valid stim channel');
+    errorMessage = append('Ripple channel ', num2str(p.trVars.rippleStimElectrode2), ' is not a valid stim channel');
     error (errorMessage);
 end
 

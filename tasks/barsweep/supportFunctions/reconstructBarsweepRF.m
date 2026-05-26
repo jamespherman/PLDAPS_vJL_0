@@ -98,24 +98,48 @@ switch exptType
         [ry, rx]       = ind2sub(size(out.rfImage), idx);
         peakX          = out.axisDeg(rx);
         peakY          = out.axisDeg(ry);
-        % Off-peak noise floor: MAD over pixels outside an exclusion disc
-        % around the argmax. Use absolute value because FBP ringing has
-        % both signs and we want the magnitude of the noise envelope.
+        % Off-peak noise floor: combine MAD (outlier-robust) and std
+        % (handles sparse-spike FBP images where most off-peak pixels
+        % are near zero and median = MAD = 0) over pixels that are
+        % (a) outside the exclusion disc around the argmax and
+        % (b) inside the coverage region. The coverage region is the
+        % union of the bar paths at orientations where dwell > 0;
+        % including the uncovered surround would deflate the noise
+        % estimate because those pixels are dominated by interpolation
+        % zeros, not by spike statistics.
         [Xg, Yg] = meshgrid(out.axisDeg, out.axisDeg);
-        offMask = hypot(Xg - peakX, Yg - peakY) > opts.exclusionDeg;
-        if any(offMask(:))
-            offVals = out.rfImage(offMask);
-            noise = 1.4826 * mad(offVals, 1);   % MAD scaled to sigma-equivalent
-        else
-            noise = NaN;
+        covMask = false(size(Xg));
+        for kk = 1:numel(orientationsDeg)
+            th = deg2rad(orientationsDeg(kk));
+            sProj = Xg * cos(th) + Yg * sin(th);
+            iBin = interp1(rf.positionCenters, ...
+                1:numel(rf.positionCenters), sProj, 'nearest', NaN);
+            inRange = isfinite(iBin);
+            iBin(~inRange) = 1;
+            dwellPix = rf.dwellTime(kk, iBin);
+            covMask = covMask | (inRange & reshape(dwellPix > 0, size(Xg)));
         end
-        if isnan(noise) || noise <= 0, noise = eps; end
+        offMask = (hypot(Xg - peakX, Yg - peakY) > opts.exclusionDeg) & covMask;
+        if any(offMask(:))
+            offVals  = out.rfImage(offMask);
+            medOff   = median(offVals);
+            noiseMAD = 1.4826 * mad(offVals, 1);
+            noiseStd = std(offVals);
+            noise    = max(noiseMAD, noiseStd);
+            if noise <= 0
+                snrVal = 0;
+            else
+                snrVal = (peakVal - medOff) / noise;
+            end
+        else
+            medOff = 0; noise = eps; snrVal = 0;
+        end
         out.peakStats = struct( ...
             'peakValue', peakVal, ...
             'peakXY',    [peakX, peakY], ...
             'noiseLevel', noise, ...
-            'snr',       peakVal / noise, ...
-            'detected',  (peakVal / noise) >= opts.detectThresh);
+            'snr',       snrVal, ...
+            'detected',  snrVal >= opts.detectThresh);
         % 2D moment fit on the positive part of the image. Threshold at
         % opts.fitFloorFrac * peak so off-peak ringing doesn't pollute
         % the centroid; restrict to the local peak component via a
@@ -158,12 +182,16 @@ switch exptType
         out.rateMatrix  = rateMatrix;
 
         % --- Per-axis SNR (cardinal4) ---
-        % For each 1D profile compute the off-peak noise as 1.4826 * MAD
-        % of bins more than exclusionDeg from the argmax. SNR is
-        % min(peak_x / noise_x, peak_y / noise_y) -- both axes must
-        % clear threshold for the (x_c, y_c) readout to be trusted.
-        snrX = profileSNR(out.axisX, out.rateX, opts.exclusionDeg);
-        snrY = profileSNR(out.axisY, out.rateY, opts.exclusionDeg);
+        % For each 1D profile compute the off-peak noise from bins more
+        % than exclusionDeg from the argmax. SNR is min(snr_x, snr_y) --
+        % both axes must clear threshold for the (x_c, y_c) readout to
+        % be trusted. Pass dwell so profileSNR can drop zero-dwell bins
+        % (which would otherwise dominate the off-peak set with the
+        % row-mean fill applied above, collapsing MAD to 0).
+        snrX = profileSNR(out.axisX, out.rateX, rf.dwellTime(xIdx, :), ...
+            opts.exclusionDeg);
+        snrY = profileSNR(out.axisY, out.rateY, rf.dwellTime(yIdx, :), ...
+            opts.exclusionDeg);
         snr  = min(snrX, snrY);
         peakXVal = max(out.rateX); peakYVal = max(out.rateY);
         out.peakStats = struct( ...
@@ -223,20 +251,45 @@ xPeak = xAxis(i) + delta * (xAxis(2) - xAxis(1));
 
 end
 
-function s = profileSNR(axisDeg, rate, exclusionDeg)
-% Peak-to-MAD SNR for a 1D rate profile. Excludes a +/- exclusionDeg
-% window around the argmax when computing the noise floor.
-[peakVal, ip] = max(rate);
-peakX = axisDeg(ip);
-offMask = abs(axisDeg - peakX) > exclusionDeg;
+function s = profileSNR(axisDeg, rate, dwell, exclusionDeg)
+% Peak-to-noise SNR for a 1D rate profile. Excludes a +/- exclusionDeg
+% window around the argmax AND bins with zero dwell (the row-mean fill
+% applied upstream collapses MAD to 0 if those are kept). Noise floor
+% is max(1.4826*MAD, sqrt(baseline/dwell)) so sparse-spike profiles
+% don't underestimate noise via MAD = 0.
+axisDeg = axisDeg(:).';
+rate    = rate(:).';
+dwell   = dwell(:).';
+valid = dwell > 0 & isfinite(rate);
+if sum(valid) < 5
+    s = 0; return;
+end
+r = rate(valid);
+p = axisDeg(valid);
+d = dwell(valid);
+[peakVal, ip] = max(r);
+peakX = p(ip);
+offMask = abs(p - peakX) > exclusionDeg;
 if ~any(offMask)
     s = 0; return;
 end
-offVals = rate(offMask);
-medOff = median(offVals);
-noise  = 1.4826 * mad(offVals, 1);
+offVals = r(offMask);
+offDwell = d(offMask);
+medOff   = median(offVals);     % robust baseline for peak-above-baseline
+meanOff  = mean(offVals);       % mean rate as Poisson rate estimate
+noiseMAD = 1.4826 * mad(offVals, 1);
+% Poisson shot-noise floor for a single-bin rate estimate at the
+% off-peak baseline: rate = k/t with k ~ Poisson(lambda*t) has
+% std sqrt(lambda/t). Use the mean off-peak rate as the lambda
+% estimate -- median collapses to 0 on sparse profiles where most
+% bins have zero spikes, even when valid (non-zero-dwell) bins are
+% selected.
+medDwell = median(offDwell);
+if medDwell <= 0, medDwell = eps; end
+poissonFloor = sqrt(max(meanOff, 0) / medDwell);
+noise = max(noiseMAD, poissonFloor);
 if noise <= 0, noise = eps; end
-s = (peakVal - medOff) / noise;     % subtract baseline so a flat profile -> 0
+s = (peakVal - medOff) / noise;
 end
 
 function fit = momentFit2D(img, Xg, Yg, mask)

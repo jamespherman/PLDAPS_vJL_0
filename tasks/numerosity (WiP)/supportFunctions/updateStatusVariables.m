@@ -3,13 +3,71 @@ function p = updateStatusVariables(p)
 % p = updateStatusVariables(p)
 %
 
-% iterate "good trial" count
-p.status.iGoodTrial = p.status.iGoodTrial + double(~p.trData.trialRepeatFlag);
+% For visual trials
+p.status.visTrials = p.status.visTrials + ...
+    (p.trVars.trialType == 1);
+
+p.status.visTrialsOneStimNumHits = p.status.visTrialsOneStimNumHits + ...
+    (p.trVars.trialType == 1 && p.trVars.numStim == 1 && p.trData.trialEndState == p.state.correctTarget);
+p.status.visTrialsOneStimNumMisses = p.status.visTrialsOneStimNumMisses + ...
+    (p.trVars.trialType == 1 && p.trVars.numStim == 1 && p.trData.trialEndState == p.state.wrongTarget);
+
+p.status.visTrialsTwoStimNumHits = p.status.visTrialsTwoStimNumHits + ...
+    (p.trVars.trialType == 1 && p.trVars.numStim == 2 && p.trData.trialEndState == p.state.correctTarget);
+p.status.visTrialsTwoStimNumMisses = p.status.visTrialsTwoStimNumMisses + ...
+    (p.trVars.trialType == 1 && p.trVars.numStim == 2 && p.trData.trialEndState == p.state.wrongTarget);
 
 
+% For microstim trials
+
+p.status.microstimTrials = p.status.microstimTrials + (p.trVars.trialType == 2);
+
+p.status.microstimTrialsOneStimNumHits = ...
+    p.status.microstimTrialsOneStimNumHits + ...
+    (p.trVars.trialType == 2 && p.trVars.numStim == 1 && p.trData.trialEndState == p.state.correctTarget);
+p.status.microstimTrialsOneStimNumMisses = ...
+    p.status.microstimTrialsOneStimNumMisses + ...
+    (p.trVars.trialType == 2 && p.trVars.numStim == 1 && p.trData.trialEndState == p.state.wrongTarget);
+
+p.status.microstimTrialsTwoStimNumHits = ...
+    p.status.microstimTrialsTwoStimNumHits + ...
+    (p.trVars.trialType == 2 && p.trVars.numStim == 2 && p.trData.trialEndState == p.state.correctTarget);
+p.status.microstimTrialsTwoStimNumMisses = ...
+    p.status.microstimTrialsTwoStimNumMisses + ...
+    (p.trVars.trialType == 2 && p.trVars.numStim == 2 && p.trData.trialEndState == p.state.wrongTarget);
 
 
+% If we want to track based on spacing/ITI and current threshold multiplier
+%{
+if p.trVars.trialType == 2
+    
+    p.status.microstimTrials = p.status.microstimTrials + (p.trVars.trialType == 2);
+    
+    % Spatial
+    if p.init.exptType == 'spatial'
+        p.status.microstimTrialsOneStimNumHits (p.currentThresholdMultiplier) = ...
+            p.status.microstimTrialsOneStimNumHits (p.currentThresholdMultiplier) + ...
+            (p.trVars.numStim == 1 && p.trData.trialEndState == p.state.correctTarget);
+        p.status.microstimTrialsOneStimNumMisses (p.currentThresholdMultiplier) = ...
+            p.status.microstimTrialsOneStimNumMisses (p.currentThresholdMultiplier) + ...
+            (p.trVars.numStim == 1 && p.trData.trialEndState == p.state.wrongTarget);
+        
+        p.status.microstimTrialsTwoStimNumHits (p.trVars.interElectrodeSpacing, p.currentThresholdMultiplier) = ...
+            p.status.microstimTrialsTwoStimNumHits (p.trVars.interElectrodeSpacing, p.currentThresholdMultiplier) + ...
+            (p.trVars.numStim == 2 && p.trData.trialEndState == p.state.correctTarget);
+        p.status.microstimTrialsTwoStimNumMisses (p.trVars.interElectrodeSpacing, p.currentThresholdMultiplier) = ...
+            p.status.microstimTrialsTwoStimNumMisses (p.trVars.interElectrodeSpacing, p.currentThresholdMultiplier) + ...
+            (p.trVars.numStim == 2 && p.trData.trialEndState == p.state.wrongTarget);
+    end
+    
+    
+    % Temporal
+    if p.init.exptType == 'temporal'
+        
+    end
 
+end
+%}
 
 
 p.status.trialsLeftInBlock  = nnz(p.status.trialsArrayRowsPossible);

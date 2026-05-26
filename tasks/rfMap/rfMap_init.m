@@ -100,9 +100,22 @@ if p.trVarsInit.useRippleSTA
             p.init.staFigData = initSTADisplay(p.trVarsInit.nSTALags, ...
                 p.trVarsInit.nChannels, noiseFrameDurMs, nAxesDisplay);
             isChromatic = strcmp(p.init.stimType, 'denseChromatic');
+            % Per-tile dva extent: the noise grid is centered on screen
+            % and spans nChecks*checkSizeDeg in each axis. Express the
+            % extent in *fixation-relative* dva so it matches the
+            % convention of computeRFCenters (and therefore aligns with
+            % the RF center markers drawn in updateSTAChannelBrowser).
+            % For the default fixDegX/Y = 0 this is just symmetric;
+            % displaced fixation shifts the extent accordingly.
+            halfX = 0.5 * p.init.noiseGridSize(2) * p.trVarsInit.checkSizeDeg;
+            halfY = 0.5 * p.init.noiseGridSize(1) * p.trVarsInit.checkSizeDeg;
+            fixDx = p.trVarsInit.fixDegX;
+            fixDy = p.trVarsInit.fixDegY;
+            staImgExtentDeg = [-halfX - fixDx, halfX - fixDx, ...
+                               -halfY - fixDy, halfY - fixDy];
             p.init.staBrowser = initSTAChannelBrowser( ...
                 p.trVarsInit.nChannels, p.trVarsInit.nSTALags, ...
-                noiseFrameDurMs, isChromatic);
+                noiseFrameDurMs, isChromatic, staImgExtentDeg);
     end
 end
 
@@ -125,6 +138,16 @@ p.init.strb = pds.classyStrobe;
 % earlier and pins its own seed via p.init.noiseRngSeed; resetting the
 % global stream here does not affect the saved movie.
 RandStream.setGlobalStream(RandStream('mt19937ar', 'Seed', 0));
+
+%% (15) simulation-mode validation harness (off by default)
+% When useSimulatedSpikes is true, build a per-channel ground-truth LNP
+% kernel bank. rfMap_finish then synthesizes spike data from this bank
+% per trial in place of the live Ripple read. The bank construction
+% relies on rig geometry (frameDuration) and stim-type grid params from
+% step 7, so it must run after both.
+if isfield(p.trVarsInit, 'useSimulatedSpikes') && p.trVarsInit.useSimulatedSpikes
+    p = simInitKernelBank(p);
+end
 
 end
 

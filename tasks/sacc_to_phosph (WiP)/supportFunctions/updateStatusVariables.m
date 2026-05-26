@@ -4,7 +4,6 @@ function p = updateStatusVariables(p)
 %
 
 
-
 % For visual trials
 p.status.visTrials = p.status.visTrials + (p.trVars.trialType == 1);
 
@@ -17,15 +16,15 @@ p.status.visNumMisses = p.status.visNumMisses + (p.trVars.trialType == 1 && ...
 p.status.propVisHits = p.status.visNumHits/p.status.visNumMisses;
 
 % For microstim trials
-p.status.microstimTrials = p.status.microstimTrials + (p.trVars.trialType == 2);
+p.status.microstimTrials = p.status.microstimTrials + (ismember(p.trVars.trialType, [2 4 5]));
 
 p.status.microstimNumHits (p.trVars.stimulatedElectrode, p.status.staircaseCurrentIndex) = ...
     p.status.microstimNumHits (p.trVars.stimulatedElectrode, p.status.staircaseCurrentIndex) + ...
-    (p.trVars.trialType == 2 && p.trData.trialEndState == p.state.sacComplete);
+    (ismember(p.trVars.trialType, [2 4 5]) && p.trData.trialEndState == p.state.sacComplete);
 
 p.status.microstimNumMisses (p.trVars.stimulatedElectrode, p.status.staircaseCurrentIndex) = ...
     p.status.microstimNumMisses (p.trVars.stimulatedElectrode, p.status.staircaseCurrentIndex) + ...
-    (p.trVars.trialType == 2 && p.trData.trialEndState == p.state.heldFix);
+    (ismember(p.trVars.trialType, [2 4 5]) && p.trData.trialEndState == p.state.heldFix);
 
 p.status.mstimHitsCurrent = sum (p.status.microstimNumHits (p.trVars.stimulatedElectrode, :));
 p.status.mstimMissCurrent = sum (p.status.microstimNumMisses (p.trVars.stimulatedElectrode, :));
@@ -34,9 +33,9 @@ p.status.propMstimHitsCurrent = p.status.mstimHitsCurrent/p.status.mstimMissCurr
 
 % For staircase procedure
 p.status.staircaseHits = p.status.staircaseHits + ...
-    (p.trVars.trialType == 2 && p.trData.trialEndState == p.state.sacComplete);
+    (ismember(p.trVars.trialType, [2 4 5]) && p.trData.trialEndState == p.state.sacComplete);
 p.status.staircaseMisses = p.status.staircaseMisses + ...
-    (p.trVars.trialType == 2 && p.trData.trialEndState == p.state.heldFix);
+    (ismember(p.trVars.trialType, [2 4 5]) && p.trData.trialEndState == p.state.heldFix);
 
 
 % For nostim trials

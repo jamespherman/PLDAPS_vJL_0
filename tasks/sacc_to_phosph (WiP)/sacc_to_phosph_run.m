@@ -27,7 +27,6 @@ function p = sacc_to_phosph_run(p)
 %   (2) TIME-DEPENDENT section: sets variables as a function of time 
 %   (3) DRAW section: PTB-based drawing
 
-
 while ~p.trVars.exitWhileLoop
     
     % Update eye / joystick & Mouse position:
@@ -99,7 +98,7 @@ switch p.trVars.currentState
     case p.state.trialBegun
         %% STATE 1:
         %   TRIAL HAS BEGUN!
-        
+
         % strobing trial start time and onward to state 0.1.
         p.init.strb.strobeNow(p.init.codes.trialBegin);
         p.trData.timing.trialBegin      = timeNow;
@@ -124,7 +123,7 @@ switch p.trVars.currentState
             p.trData.timing.fixOn          = timeNow;
         end
         
-        % If fixation is aquired within alotted time, onwards to p.state.dontMove:
+        % If fixation is acquired within allotted time, onward to p.state.dontMove:
         if pds.eyeInWindow(p) && ...
                 timeNow < (p.trData.timing.fixOn + p.trVars.fixWaitDur)
                 
@@ -142,17 +141,14 @@ switch p.trVars.currentState
         %% STATE 4:
         %   "DON'T MOVE" - SUBJECT HOLDS FIXATION
         %   STUFF HAPPENS ON SCREEN (eg cue flashes, target appears,
-        %   but these are determined in the time-dependant section,
+        %   but these are determined in the time-dependent section,
         %   below). HERE, THE KEY THING IS THAT THE SUSBJECT SHOULD NOT
         %   DO A SINGLE THING.
         %
         %   The next state is money time, where subject is to either 
-        %   respond or not, and the outcome of the trial is determiend.
+        %   respond or not, and the outcome of the trial is determined.
         
         % show target window to experimenter
-
-        p.draw.color.targWin                = p.draw.clutIdx.expVisGreen_subBg;
-
         
         % increase the thickness of the fixation window to inform
         % the experimenter that the subject has acquired fixation.
@@ -160,9 +156,7 @@ switch p.trVars.currentState
         
         timeFromFixation = timeNow - p.trData.timing.fixAq;
         
-        if timeFromFixation > p.trVars.timeFixOffset
-            p.init.strb.addValue(p.init.codes.fixOff);
-            p.trData.timing.fixOff    = timeNow;
+        if timeFromFixation > p.trVars.timeStimOnset
             p.trVars.currentState     = p.state.makeSaccade;
         
         elseif ~pds.eyeInWindow(p)
@@ -180,11 +174,11 @@ switch p.trVars.currentState
         % land in the target window.
         
         % turn off fixation point "go signal"
-        p.draw.color.fix = p.draw.clutIdx.expBg_subBg;
+        %p.draw.color.fix = p.draw.clutIdx.expBg_subBg;
 
         
         % if sub left window before goTime + minLatency, that's a breakFix:
-        if ~pds.eyeInWindow(p) && timeNow < (p.trData.timing.fixOff + p.trVars.goLatencyMin)
+        if ~pds.eyeInWindow(p) && timeNow < (p.trData.timing.stimOn + p.trVars.goLatencyMin)
             p.init.strb.strobeNow(p.init.codes.fixBreak);
             p.trData.timing.fixBreak    = timeNow;
             p.trVars.currentState       = p.state.fixBreak;
@@ -193,8 +187,8 @@ switch p.trVars.currentState
         % note that as the real-time estimate of saccade onset.
         % strobe/note saccade onset and move to next state
         elseif (~pds.eyeInWindow(p)...
-                && timeNow > (p.trData.timing.fixOff + p.trVars.goLatencyMin)...
-                && timeNow < (p.trData.timing.fixOff + p.trVars.goLatencyMax)) || p.trVars.passEye;
+                && timeNow > (p.trData.timing.stimOn + p.trVars.goLatencyMin)...
+                && timeNow < (p.trData.timing.stimOn + p.trVars.goLatencyMax)) || p.trVars.passEye
             p.init.strb.strobeNow(p.init.codes.saccadeOnset);
             p.trData.timing.saccadeOnset    = timeNow;
             p.trVars.currentState           = p.state.checkLanding;
@@ -203,9 +197,15 @@ switch p.trVars.currentState
             % the experimenter that the subject has acquired fixation.
             p.draw.fixWinPenDraw = p.draw.fixWinPenThin;
             
-        % and if neither has happened and the goLatencyMax is elapsed, move
-        % to heldFix
-        elseif timeNow > (p.trData.timing.fixOff + p.trVars.goLatencyMax)
+        % If he made a saccade after goLatencyMax, it was a late saccade
+        elseif (~pds.eyeInWindow(p)...
+                && timeNow > (p.trData.timing.stimOn + p.trVars.goLatencyMax))
+            p.init.strb.strobeNow(p.init.codes.saccadeOnset);
+            p.trData.timing.saccadeOnset    = timeNow;
+            p.trVars.currentState       = p.state.lateSaccade;
+
+        % If the totalFixDur has elapsed, move to heldFix
+        elseif timeNow > p.trVars.timeFixOffset
             p.trVars.currentState       = p.state.heldFix;
         end
         
@@ -227,23 +227,40 @@ switch p.trVars.currentState
 %             p.trVars.currentState       = p.state.fixBreak;
 %       
 	elseif (eyeInTargetWin && (timeNow < p.trData.timing.saccadeOnset + p.trVars.maxSacDurationToAccept)) || p.trVars.passEye
-	    % if the eyes entered target window 1 we onsider that the real-time estimate of saccade offset
+        % if the eyes entered target window 1 we consider that the real-time estimate of saccade offset
             p.init.strb.strobeNow(p.init.codes.saccadeOffset);
             p.trData.timing.saccadeOffset    = timeNow;
             % and 'target acquired':
             p.init.strb.strobeNow(p.init.codes.targetAq);
             p.trData.timing.targetAq        = timeNow;
 
-	    % strobe to indicate we looked at target 1
-	    p.init.strb.strobeNow(p.init.codes.saccToTargetOne);
-		
-	    % Switch state to holdTarg
+	
+        
+%{
+        % Move target window to landing point of saccade
+        % ***Couldn't quite get this to work. It updates the target window
+        % to the edge of the fixation window, as that is the moment it
+        % registers as having made a saccade into the target window
+
+        p.trVars.targDegX = p.trVars.eyeDegX;
+        p.trVars.targDegY = p.trVars.eyeDegY;
+        p.draw.targPointPix = p.draw.middleXY + [1, -1] .* ...
+            pds.deg2pix([p.trVars.targDegX, p.trVars.targDegY], p);
+
+        p.trVars.targWinWidthDeg    = p.trVars.microstimTargWinWidthDeg;
+        p.trVars.targWinHeightDeg   = p.trVars.microstimTargWinHeightDeg;
+        p.draw.targWinWidthPix      = pds.deg2pix(p.trVars.targWinWidthDeg, p);
+        p.draw.targWinHeightPix     = pds.deg2pix(p.trVars.targWinHeightDeg, p);
+%}
+
+
+	            % Switch state to holdTarg
                 p.trVars.currentState           = p.state.holdTarg;
                 % and thicken up that targWin:
             	p.draw.targWinPenDraw = p.draw.targWinPenThick;
 
 	    
-        else %if (eyeInTargetWin && (timeNow > p.trData.timing.saccadeOnset + p.trVars.maxSacDurationToAccept)) %|| ~p.trVars.passEye
+        else %if (eyeInTargetWin && (timeNow >= p.trData.timing.saccadeOnset + p.trVars.maxSacDurationToAccept)) %|| ~p.trVars.passEye
             % this means subject got into the target win too late. Likely
             % performed an intermediate saccade. This is unacceptable. 
             p.init.strb.strobeNow(p.init.codes.fixBreak);
@@ -302,7 +319,7 @@ switch p.trVars.currentState
         % STATE 21 = get reward delivery if not nostim trial
 
         % If this was visual or microstim, this means he did it correctly
-        if p.trVars.trialType == 1 || p.trVars.trialType == 2
+        if ismember(p.trVars.trialType, [1 2 4 5])
 
         % if the delay for reward delivery has elapsed and reward delivery
         % hasn't yet been triggered, deliver the reward.
@@ -310,6 +327,7 @@ switch p.trVars.currentState
                 p = pds.deliverReward(p);
                 
             disp ('reward');
+            disp(num2str(p.trVars.rewardDurationMs));
 
         % if reward delivery has been triggered and the interval to wait
         % after reward delivery has elapsed, it's time to exit the
@@ -331,7 +349,7 @@ switch p.trVars.currentState
         % STATE 22 
 
         % If this was visual or microstim, this means he did it incorrectly
-        if p.trVars.trialType == 1 || p.trVars.trialType == 2
+        if ismember(p.trVars.trialType, [1 2 4 5])
             % p = playTone(p, 'low');
             p.trVars.exitWhileLoop = true;
 
@@ -379,6 +397,13 @@ switch p.trVars.currentState
     case p.state.failedToHoldTarg
         %% FAILED TO HOLD TARGET
         % Subject looked away after looking at target location
+
+        % p = playTone(p, 'low');
+        p.trVars.exitWhileLoop = true;
+
+    case p.state.lateSaccade
+        %% LATE SACCADE
+        % Subject made saccade after goLatencyMax expired
 
         % p = playTone(p, 'low');
         p.trVars.exitWhileLoop = true;
@@ -444,12 +469,13 @@ if p.trData.timing.fixAq > 0
             
             if p.trVars.trialType == 1 % if visual trial, send strobe on next flip
                 p.init.strb.addValueOnce(p.init.codes.stimOn);
+                p.trVars.screenshotFlag = 1; % Screenshot on next flip
             end
 
     elseif (p.trData.timing.stimOn ~= -1 && p.trData.timing.stimOff == -1 && ...
         timeFromFixAq >= p.trVars.timeStimOffset)
             p.trVars.stimIsOn   = false;
-            p.trVars.timing.stimOff  = timeNow;
+            p.trData.timing.stimOff  = timeNow;
 
             if p.trVars.trialType == 1 % if visual trial, send strobe on next flip
                 p.init.strb.addValueOnce(p.init.codes.stimOff);
@@ -467,7 +493,7 @@ if p.trData.timing.fixAq > 0
         p.trData.timing.targetOn  = timeNow;
         % p.init.strb.addValueOnce(p.init.codes.targetOn);
     
-    % if this is memSac, and target is on but it's time to turn it off, then turn it off:
+    % if target is on but it's time to turn it off, then turn it off:
     elseif (p.trData.timing.targetOn~=-1 && p.trData.timing.targetOff==-1 && ...
             timeFromFixAq >= p.trVars.timeTargOffset)
             p.trVars.targetIsOn       = false;
@@ -510,31 +536,66 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     
     Screen('FrameRect',p.draw.window, p.draw.color.targWin, ...
                 repmat(p.draw.targPointPix, 1, 2) +  [-p.draw.targWinWidthPix -p.draw.targWinHeightPix p.draw.targWinWidthPix p.draw.targWinHeightPix], p.draw.targWinPenDraw)   
-    	
 
     % draw fixation window
     Screen('FrameRect',p.draw.window, p.draw.color.fixWin, repmat(p.draw.fixPointPix, 1, 2) +  [-p.draw.fixWinWidthPix -p.draw.fixWinHeightPix p.draw.fixWinWidthPix p.draw.fixWinHeightPix], p.draw.fixWinPenDraw)
     
-
+    
     % depending on trialType, drawstimulus or send microstim command
     if p.trVars.stimIsOn
-        if p.trVars.trialType == 1 % Visual stimulus
-            Screen('DrawTexture', p.draw.window, p.draw.stimTexture, [], repmat(p.draw.stimPointPix, 1, 2) + ...
-            [-p.draw.textureWindowDimensions/2 -p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2]);
 
-        elseif p.trVars.trialType == 2 && p.trData.timing.microstimSent == -1 % Electrode microstimulation
-            
-            disp (append ('microstim @ ', num2str(p.trVars.stimAmplitude), 'uA / ', num2str(p.trVars.stimCurrentSteps), ' steps on channel #', num2str(p.trVars.stimulatedElectrode)));
-            p.trData.timing.microstimSent = timeNow;
-            p.init.strb.strobeNow(p.init.codes.microStimOn);
-            
-            pds.xippmex ('stimseq', p.trVars.cmd); % Send microstim command
+        switch p.trVars.trialType
+            case 1 % Visual
+                Screen('DrawTexture', p.draw.window, p.draw.stimTexture, [], repmat(p.draw.stimPointPix, 1, 2) + ...
+                    [-p.draw.textureWindowDimensions/2 -p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2]);
 
-        elseif p.trVars.trialType == 3 % No stimulus
-            % do nothing
+            case 2 % Microstim
+
+                Screen('FrameOval',p.draw.window, p.draw.color.predRFCircle, ...
+                    repmat(p.draw.predictedRFCirclePointPix, 1, 2) +  [-p.draw.predRFCircleSizePix/2 -p.draw.predRFCircleSizePix/2 p.draw.predRFCircleSizePix/2 p.draw.predRFCircleSizePix/2], 2);   
+
+                if p.trData.timing.microstimSent == -1
+                    disp (append ('microstim @ ', num2str(p.trVars.stimAmplitude), 'uA / ', num2str(p.trVars.stimCurrentSteps), ' steps on channel #', num2str(p.trVars.stimulatedElectrode)));
+                    p.trData.timing.microstimSent = timeNow;
+                    p.init.strb.strobeNow(p.init.codes.microStimOn);
+
+                    pds.xippmex ('stimseq', p.trVars.cmd); % Send microstim command
+                end
+
+            case 3 % No stim
+                % Do nothing, this is a nostim trial
+
+            case 4 % Bipolar stimulation
+
+                Screen('FrameOval',p.draw.window, p.draw.color.predRFCircle, ...
+                    repmat(p.draw.predictedRFCirclePointPix, 1, 2) +  [-p.draw.predRFCircleSizePix/2 -p.draw.predRFCircleSizePix/2 p.draw.predRFCircleSizePix/2 p.draw.predRFCircleSizePix/2], 2);   
+
+                if p.trData.timing.microstimSent == -1
+                    disp (append ('-/+ microstim @ ', num2str(p.trVars.stimAmplitude), 'uA / ', num2str(p.trVars.stimCurrentSteps), ' steps on channel #', num2str(p.trVars.stimulatedElectrode)));
+                    disp (append ('+/- microstim @ ', num2str(p.trVars.stimAmplitude), 'uA / ', num2str(p.trVars.stimCurrentSteps), ' steps on channel #', num2str(p.trVars.stimulatedElectrode2)));
+                    p.trData.timing.microstimSent = timeNow;
+                    p.init.strb.strobeNow(p.init.codes.microStimOn);
+    
+                    pds.xippmex ('stimseq', [p.trVars.cmd, p.trVars.cmd2]); % send microstim command for bipolar
+                end
+
+            case 5 % Two-channel stimulation
+
+                Screen('FrameOval',p.draw.window, p.draw.color.predRFCircle, ...
+                    repmat(p.draw.predictedRFCirclePointPix, 1, 2) +  [-p.draw.predRFCircleSizePix/2 -p.draw.predRFCircleSizePix/2 p.draw.predRFCircleSizePix/2 p.draw.predRFCircleSizePix/2], 2);   
+
+                if p.trData.timing.microstimSent == -1
+                    disp (append ('microstim @ ', num2str(p.trVars.stimAmplitude), 'uA / ', num2str(p.trVars.stimCurrentSteps), ' steps on channel #', num2str(p.trVars.stimulatedElectrode)));
+                    disp (append ('microstim @ ', num2str(p.trVars.stimAmplitude), 'uA / ', num2str(p.trVars.stimCurrentSteps), ' steps on channel #', num2str(p.trVars.stimulatedElectrode2)));
+                    p.trData.timing.microstimSent = timeNow;
+                    p.init.strb.strobeNow(p.init.codes.microStimOn);
+
+                    pds.xippmex ('stimseq', [p.trVars.cmd, p.trVars.cmd2]); % send microstim command for two-channel stim
+                end
+
         end
-    end
 
+    end
 
     % draw fixation spot
     Screen('FrameRect',p.draw.window, p.draw.color.fix, repmat(p.draw.fixPointPix, 1, 2) + p.draw.fixPointRadius*[-1 -1 1 1], p.draw.fixPointWidth);
@@ -549,6 +610,12 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     p.trData.timing.lastFrameTime = ...
         p.trData.timing.flipTime(p.trVars.flipIdx);
     
+    % Take screenshot if visual stimulus just flipped
+    if p.trVars.screenshotFlag == 1
+        p.trData.stimScreenshot = Screen('GetImage', p.draw.window);
+        p.trVars.screenshotFlag = 3;
+    end
+
     % strobe all values that are in the strobe list with the
     % classyStrobe class:
     if p.init.strb.armedToStrobe

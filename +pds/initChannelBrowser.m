@@ -31,6 +31,12 @@ function bd = initChannelBrowser(nCh, tileKind, opts)
 %       .initialSelection - vector of channels to show initially (default 1:nCh)
 %       .climMode      - 'per-channel' (default) or 'global'
 %       .figPos        - 1x4 figure Position
+%       .imgExtentDeg  - image-axes data extent in dva. [] (default) keeps
+%                        the legacy 'axis image' behaviour. Scalar E means
+%                        symmetric [-E, +E] on both axes. 1x4 vector
+%                        [xmin xmax ymin ymax] specifies explicit limits
+%                        (used by callers whose image is offset, e.g.
+%                        barsweep's path-centered RF).
 %
 %   Returns bd struct (the "browser data") with handle bookkeeping:
 %     .fig, .mainGl, .leftPanel, .rightGl
@@ -64,6 +70,10 @@ opts = setDefault(opts, 'colormap',         bluewhitered(256));
 opts = setDefault(opts, 'initialSelection', 1:min(nCh, 16));
 opts = setDefault(opts, 'climMode',         'per-channel');
 opts = setDefault(opts, 'figPos',           [60 60 1500 850]);
+opts = setDefault(opts, 'imgExtentDeg',     []);
+
+% Normalise imgExtentDeg to either [] or a 1x4 [xmin xmax ymin ymax].
+imgLim = resolveImgExtent(opts.imgExtentDeg);
 
 validKinds = {'image+line', 'image'};
 if ~ismember(tileKind, validKinds)
@@ -204,7 +214,20 @@ for ch = 1:nCh
     if ~isempty(opts.imgYLabel), ylabel(ax1, opts.imgYLabel, 'FontSize', 7); end
 
     img = imagesc(ax1, zeros(2));
-    axis(ax1, 'image');
+    if isempty(imgLim)
+        % Legacy behaviour: tight to image data, square aspect.
+        axis(ax1, 'image');
+    else
+        % Fill the grid cell while preserving 1:1 data aspect; pin the
+        % axes box to the caller-supplied extent so the box matches the
+        % cell rather than the image's pixel aspect. Also stretch the
+        % initial 2x2 zeros image across the full extent so the data is
+        % visible immediately even before per-channel updaters run.
+        axis(ax1, 'equal');
+        xlim(ax1, imgLim(1:2));
+        ylim(ax1, imgLim(3:4));
+        set(img, 'XData', imgLim(1:2), 'YData', imgLim(3:4));
+    end
     axis(ax1, 'xy');
     imgAx(ch)  = ax1;
     imgObj(ch) = img;
@@ -232,6 +255,7 @@ end
 bd.fig             = fig;
 bd.mainGl          = mainGl;
 bd.leftPanel       = leftPanel;
+bd.leftGl          = leftGl;
 bd.rightGl         = rightGl;
 bd.listbox         = listbox;
 bd.rangeEdit       = rangeEdit;
@@ -277,6 +301,25 @@ end
 function opts = setDefault(opts, name, value)
 if ~isfield(opts, name) || isempty(opts.(name))
     opts.(name) = value;
+end
+end
+
+
+function lim = resolveImgExtent(spec)
+% Normalise opts.imgExtentDeg to either [] (legacy axis image) or a 1x4
+% [xmin xmax ymin ymax] vector for explicit xlim/ylim.
+if isempty(spec)
+    lim = [];
+    return;
+end
+if isscalar(spec)
+    lim = [-spec, spec, -spec, spec];
+elseif numel(spec) == 4
+    lim = spec(:)';
+else
+    error('pds:initChannelBrowser:badImgExtent', ...
+        ['imgExtentDeg must be [], a scalar (symmetric [-E, +E]), or a ' ...
+         '1x4 vector [xmin xmax ymin ymax]; got numel=%d.'], numel(spec));
 end
 end
 

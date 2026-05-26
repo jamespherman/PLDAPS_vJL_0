@@ -17,9 +17,11 @@ function p = exportBarsweepRFCentersCSV(p)
 %       prompt.
 %
 %   (2) Post-session: otherwise, prompts the user (uigetdir) to select a
-%       barsweep session folder, loads the latest trial*.mat, pulls the
-%       saved init.barsweepRF, reconstructs, and writes the CSV into
-%       that same folder.
+%       barsweep session folder, loads the <sessionId>_barsweepRF.mat
+%       sidecar (written every trial by barsweep_finish.m), reconstructs,
+%       and writes the CSV into that same folder. The per-trial trialNNNN
+%       files have init.barsweepRF with spikeHist/dwellTime stripped, so
+%       the sidecar is the only on-disk source of the full accumulator.
 %
 %   The CSV is consumed manually by sacc_to_phosph for online RF
 %   targeting (same format as +pdsActions/exportRFCentersCSV).
@@ -52,27 +54,28 @@ else
         return;
     end
 
-    fileList = dir(fullfile(sessionDir, 'trial*.mat'));
-    if isempty(fileList)
-        error('exportBarsweepRFCentersCSV:noTrialFiles', ...
-            'No trial*.mat files found in %s', sessionDir);
-    end
-    [~, sortIdx] = sort([fileList.datenum], 'descend');
-    latestFile = fullfile(sessionDir, fileList(sortIdx(1)).name);
-
-    fprintf('exportBarsweepRFCentersCSV: loading %s\n', latestFile);
-    tmp = load(latestFile);
-    if ~isfield(tmp, 'init') || ~isfield(tmp.init, 'barsweepRF') || ...
-            ~isfield(tmp.init.barsweepRF, 'spikeHist') || ...
-            isempty(tmp.init.barsweepRF.spikeHist)
-        error('exportBarsweepRFCentersCSV:noAccumulator', ...
-            ['Latest trial file %s has no init.barsweepRF accumulator. ' ...
-             'Was this a barsweep session with useOnlineRF=true?'], ...
-            latestFile);
-    end
-    rf = tmp.init.barsweepRF;
-    outDir = sessionDir;
+    % The full accumulator lives in the sidecar
+    % <sessionId>_barsweepRF.mat (barsweep_finish.m strips spikeHist /
+    % dwellTime from p.init.barsweepRF before writing trialNNNN.mat, so
+    % the trial files cannot be used here).
     [~, sessionId] = fileparts(sessionDir);
+    sidecarPath = fullfile(sessionDir, [sessionId '_barsweepRF.mat']);
+    if ~exist(sidecarPath, 'file')
+        error('exportBarsweepRFCentersCSV:noSidecar', ...
+            ['No barsweepRF sidecar found at %s. Was this a barsweep ' ...
+             'session with useOnlineRF=true?'], sidecarPath);
+    end
+    fprintf('exportBarsweepRFCentersCSV: loading %s\n', sidecarPath);
+    tmp = load(sidecarPath, 'barsweepRF');
+    if ~isfield(tmp, 'barsweepRF') || ~isstruct(tmp.barsweepRF) || ...
+            ~isfield(tmp.barsweepRF, 'spikeHist') || ...
+            isempty(tmp.barsweepRF.spikeHist)
+        error('exportBarsweepRFCentersCSV:badSidecar', ...
+            'Sidecar %s does not contain a populated barsweepRF struct.', ...
+            sidecarPath);
+    end
+    rf = tmp.barsweepRF;
+    outDir = sessionDir;
     csvName = sprintf('rfCenters_%s_final.csv', sessionId);
 end
 
@@ -90,17 +93,33 @@ if isempty(which('reconstructBarsweepRF'))
     end
 end
 
-% Reconstruct per-channel centers.
+% Reconstruct per-channel centers + SNR.
 nCh     = rf.nChannels;
 centers = nan(nCh, 2);
+snr     = nan(nCh, 1);
 pathOff = rf.pathCenterDeg(:).';   % [xOff, yOff] in dva
 
 for ch = 1:nCh
     if rf.spikeCount(ch) < 1, continue; end
     out = reconstructBarsweepRF(rf, ch, rf.exptType);
-    if out.peakStats.detected
-        centers(ch, 1) = out.gaussFit.x0 + pathOff(1);
-        centers(ch, 2) = out.gaussFit.y0 + pathOff(2);
+    snr(ch) = out.peakStats.snr;
+    if ~out.peakStats.detected, continue; end
+    switch rf.exptType
+        case 'barsweep_cardinal4'
+            % Parabolic peaks of the 1-D marginals. gaussFit on the
+            % outer-product sep2 thumbnail is biased toward path center
+            % because the spontaneous baseline makes the 0.25*peak mask
+            % cover most of the grid, pulling the centroid toward 0.
+            centers(ch, 1) = out.xCenter + pathOff(1);
+            centers(ch, 2) = out.yCenter + pathOff(2);
+        case 'barsweep_rfmap12'
+            % Moment fit of the iradon image restricted to a small disc
+            % around the argmax -- localized, no baseline-bias issue.
+            centers(ch, 1) = out.gaussFit.x0 + pathOff(1);
+            centers(ch, 2) = out.gaussFit.y0 + pathOff(2);
+        otherwise
+            error('exportBarsweepRFCentersCSV:exptType', ...
+                'Unknown exptType "%s".', rf.exptType);
     end
 end
 
@@ -111,9 +130,9 @@ if fid < 0
         'Could not open %s for writing.', csvPath);
 end
 cleanup = onCleanup(@() fclose(fid));
-fprintf(fid, 'channel,x_deg,y_deg\n');
+fprintf(fid, 'channel,x_deg,y_deg,snr\n');
 for ch = 1:nCh
-    fprintf(fid, '%d,%.4f,%.4f\n', ch, centers(ch, 1), centers(ch, 2));
+    fprintf(fid, '%d,%.4f,%.4f,%.4g\n', ch, centers(ch, 1), centers(ch, 2), snr(ch));
 end
 
 nDet = sum(~isnan(centers(:, 1)));
