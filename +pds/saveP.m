@@ -21,6 +21,7 @@ end
 % on trial 1, save the 'p' struct into 'pFile'.
 if p.status.iTrial == 1
     save(fullfile(p.init.sessionFolder, 'p.mat'), '-struct', 'p'); % saving only substructs so I may load directly into 'p', see pds.loadP.
+    zip(append(p.init.sessionFolder, '/', p.init.taskName), append(p.init.pldapsFolder, '/tasks/', p.init.taskName)); % Save a zipped copy of the task folder used in this task
 end
 
 % on all trials, save trVars & trData IFF subject actually started trial:
