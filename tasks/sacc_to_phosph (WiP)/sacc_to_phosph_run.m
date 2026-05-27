@@ -555,6 +555,11 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
                     repmat(p.draw.predictedRFCirclePointPix, 1, 2) +  [-p.draw.predRFCircleSizePix/2 -p.draw.predRFCircleSizePix/2 p.draw.predRFCircleSizePix/2 p.draw.predRFCircleSizePix/2], 2);   
 
                 if p.trData.timing.microstimSent == -1
+
+                    % Apply Ripple's fast settle function to all recording channels
+                    % for 1 ms when we stimulate on any electrode
+                    [index, source_list, duration] = pds.xippmex ('fastsettle', 'stim', p.rig.ripple.recChans, 2, 1);
+
                     disp (append ('microstim @ ', num2str(p.trVars.stimAmplitude), 'uA / ', num2str(p.trVars.stimCurrentSteps), ' steps on channel #', num2str(p.trVars.stimulatedElectrode)));
                     p.trData.timing.microstimSent = timeNow;
                     p.init.strb.strobeNow(p.init.codes.microStimOn);
@@ -571,6 +576,11 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
                     repmat(p.draw.predictedRFCirclePointPix, 1, 2) +  [-p.draw.predRFCircleSizePix/2 -p.draw.predRFCircleSizePix/2 p.draw.predRFCircleSizePix/2 p.draw.predRFCircleSizePix/2], 2);   
 
                 if p.trData.timing.microstimSent == -1
+
+                    % Apply Ripple's fast settle function to all recording channels
+                    % for 1 ms when we stimulate on any electrode
+                    [index, source_list, duration] = pds.xippmex ('fastsettle', 'stim', p.rig.ripple.recChans, 2, 1);
+
                     disp (append ('-/+ microstim @ ', num2str(p.trVars.stimAmplitude), 'uA / ', num2str(p.trVars.stimCurrentSteps), ' steps on channel #', num2str(p.trVars.stimulatedElectrode)));
                     disp (append ('+/- microstim @ ', num2str(p.trVars.stimAmplitude), 'uA / ', num2str(p.trVars.stimCurrentSteps), ' steps on channel #', num2str(p.trVars.stimulatedElectrode2)));
                     p.trData.timing.microstimSent = timeNow;
@@ -585,6 +595,11 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
                     repmat(p.draw.predictedRFCirclePointPix, 1, 2) +  [-p.draw.predRFCircleSizePix/2 -p.draw.predRFCircleSizePix/2 p.draw.predRFCircleSizePix/2 p.draw.predRFCircleSizePix/2], 2);   
 
                 if p.trData.timing.microstimSent == -1
+
+                    % Apply Ripple's fast settle function to all recording channels
+                    % for 1 ms when we stimulate on any electrode
+                    [index, source_list, duration] = pds.xippmex ('fastsettle', 'stim', p.rig.ripple.recChans, 2, 1);
+                    
                     disp (append ('microstim @ ', num2str(p.trVars.stimAmplitude), 'uA / ', num2str(p.trVars.stimCurrentSteps), ' steps on channel #', num2str(p.trVars.stimulatedElectrode)));
                     disp (append ('microstim @ ', num2str(p.trVars.stimAmplitude), 'uA / ', num2str(p.trVars.stimCurrentSteps), ' steps on channel #', num2str(p.trVars.stimulatedElectrode2)));
                     p.trData.timing.microstimSent = timeNow;
@@ -609,17 +624,17 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     end
     p.trData.timing.lastFrameTime = ...
         p.trData.timing.flipTime(p.trVars.flipIdx);
-    
-    % Take screenshot if visual stimulus just flipped
-    if p.trVars.screenshotFlag == 1
-        p.trData.stimScreenshot = Screen('GetImage', p.draw.window);
-        p.trVars.screenshotFlag = 3;
-    end
 
     % strobe all values that are in the strobe list with the
     % classyStrobe class:
     if p.init.strb.armedToStrobe
         p.init.strb.strobeList;
+    end
+    
+    % Take screenshot if visual stimulus just flipped
+    if p.trVars.screenshotFlag == 1
+        p.trData.stimScreenshot = Screen('GetImage', p.draw.window);
+        p.trVars.screenshotFlag = 3;
     end
     
     % increment flip index

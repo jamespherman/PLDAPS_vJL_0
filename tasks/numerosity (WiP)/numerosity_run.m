@@ -601,12 +601,13 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     % If microstim trial
     elseif p.trVars.trialType == 2
 
-        % Apply Ripple's fast settle function to all recording channels
-        % for 1 ms when we stimulate on any electrode
-        [index, source_list, duration] = pds.xippmex ('fastsettle', 'stim', p.rig.ripple.recChans, 2, 1);
-
         if p.trVars.stimOneIsOn && p.trVars.stimTwoIsOn && ...
                 p.trData.timing.microstimOneSent == -1 && p.trData.timing.microstimTwoSent == -1
+
+            % Apply Ripple's fast settle function to all recording channels
+            % for 1 ms when we stimulate on any electrode
+            [index, source_list, duration] = pds.xippmex ('fastsettle', 'stim', p.rig.ripple.recChans, 2, 1);
+
 
             disp (append ('microstim @ ', num2str(p.trVars.stimAmplitude1), 'uA / ', ...
                 num2str(p.trVars.stimCurrentSteps1), ' steps on channel #', num2str(p.trVars.stimElectrode1)));
@@ -621,6 +622,11 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
         elseif p.trVars.stimOneIsOn && ~p.trVars.stimTwoIsOn && ...
                 p.trData.timing.microstimOneSent == -1
 
+            % Apply Ripple's fast settle function to all recording channels
+            % for 1 ms when we stimulate on any electrode
+            [index, source_list, duration] = pds.xippmex ('fastsettle', 'stim', p.rig.ripple.recChans, 2, 1);
+
+
             disp (append ('microstim @ ', num2str(p.trVars.stimAmplitude1), 'uA / ', ...
                 num2str(p.trVars.stimCurrentSteps1), ' steps on channel #', num2str(p.trVars.stimElectrode1)));
             p.trData.timing.microstimOneSent = timeNow;
@@ -630,6 +636,11 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
 
         elseif ~p.trVars.stimOneIsOn && p.trVars.stimTwoIsOn && ...
                 p.trData.timing.microstimTwoSent == -1
+
+            % Apply Ripple's fast settle function to all recording channels
+            % for 1 ms when we stimulate on any electrode
+            [index, source_list, duration] = pds.xippmex ('fastsettle', 'stim', p.rig.ripple.recChans, 2, 1);
+
 
             disp (append ('microstim @ ', num2str(p.trVars.stimAmplitude2), 'uA / ', ...
                 num2str(p.trVars.stimCurrentSteps2), ' steps on channel #', num2str(p.trVars.stimElectrode2)));
@@ -676,6 +687,12 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     end
     p.trData.timing.lastFrameTime = ...
         p.trData.timing.flipTime(p.trVars.flipIdx);
+   
+    % strobe all values that are in the strobe list with the
+    % classyStrobe class:
+    if p.init.strb.armedToStrobe
+        p.init.strb.strobeList;
+    end
     
     % Take a screenshot if we just flipped one (or both) of the stimuli.
     % Note that for the spatial task, only stimTwoScreenshot will be saved
@@ -686,12 +703,6 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     elseif p.trVars.screenshotFlag == 2
         p.trData.stimTwoScreenshot = Screen('GetImage', p.draw.window);
         p.trVars.screenshotFlag = 3;
-    end
-
-    % strobe all values that are in the strobe list with the
-    % classyStrobe class:
-    if p.init.strb.armedToStrobe
-        p.init.strb.strobeList;
     end
     
     % increment flip index
