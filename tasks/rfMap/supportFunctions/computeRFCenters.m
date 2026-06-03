@@ -46,9 +46,15 @@ nX = p.init.noiseGridSize(2);
 checkSizePix = pds.deg2pix(p.trVars.checkSizeDeg, p);
 if checkSizePix < 1, checkSizePix = 1; end
 
-% Grid is centered on screen at middleXY (see nextParams.m:86-87).
-midX  = p.draw.middleXY(1);
-midY  = p.draw.middleXY(2);
+% Grid is centered at noiseGridCenterPix (defaults to middleXY for
+% full-screen; shifted for hemifield modes — see rfMap_init.m).
+if isfield(p.init, 'noiseGridCenterPix')
+    midX = p.init.noiseGridCenterPix(1);
+    midY = p.init.noiseGridCenterPix(2);
+else
+    midX = p.draw.middleXY(1);
+    midY = p.draw.middleXY(2);
+end
 fixPx = p.draw.fixPointPix(1);
 fixPy = p.draw.fixPointPix(2);
 
@@ -56,15 +62,20 @@ fixPy = p.draw.fixPointPix(2);
 [colGrid, rowGrid] = meshgrid(1:nX, 1:nY);
 
 for ch = 1:nCh
-    if p.init.staSpikeCount(ch) < 1, continue; end
+    if max(p.init.staSpikeCount(ch, :)) < 1, continue; end
 
-    sta = p.init.staAccum{ch} / p.init.staSpikeCount(ch);
+    counts = max(p.init.staSpikeCount(ch, :), 1);
+    nd = ndims(p.init.staAccum{ch});
+    shp = ones(1, nd);
+    shp(nd) = numel(counts);
+    sta = p.init.staAccum{ch} ./ reshape(counts, shp);
     if isChromatic
         % [nY, nX, 3, nLags] -> [nY, nX, nLags] color-blind RF magnitude.
         sta = squeeze(sqrt(sum(sta.^2, 3)));
     end
 
     energy = squeeze(sum(sum(sta.^2, 1), 2));
+    energy = energy(:)' .* counts;
     [eMax, peakLag] = max(energy(:));
     if eMax <= 0, continue; end
 

@@ -39,12 +39,12 @@ for ch = 1:nChannels
             continue
         end
 
-        globalIdx         = trialStartFrame + noiseFrameIdx - 1;
-        staSpikeCount(ch) = staSpikeCount(ch) + 1;
+        globalIdx = trialStartFrame + noiseFrameIdx - 1;
 
         for lagIdx = 1:nLags
             stimIdx = globalIdx - lagIdx + 1;
             if stimIdx >= 1 && stimIdx <= nTotalFrames
+                staSpikeCount(ch, lagIdx) = staSpikeCount(ch, lagIdx) + 1;
                 stimFrame = double(dklDriveTensor(:, :, :, stimIdx));
                 staAccum{ch}(:, :, :, lagIdx) = ...
                     staAccum{ch}(:, :, :, lagIdx) + stimFrame;

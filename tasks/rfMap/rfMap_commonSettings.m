@@ -257,6 +257,13 @@ p.trVarsInit.staPlotChannels     = [];      % [] = all channels
 % grid).
 p.trVarsInit.rfCenterThreshFrac  = 0.5;
 
+% Hemifield restriction. 'full' = full-screen grid (default).
+% 'left' or 'right' = grid covers only that half of the screen.
+% Right LGN recordings should use 'left' (contralateral hemifield).
+% Halves nChecksX, reducing the noise pixel count and improving the
+% max-of-noise detection threshold by ~sqrt(2).
+p.trVarsInit.stimHemifield       = 'full';
+
 % --- state machine ---
 p.trVarsInit.currentState        = p.state.trialBegun;
 p.trVarsInit.exitWhileLoop       = false;
@@ -384,6 +391,7 @@ p.init.strobeList = { ...
     'noiseGridW',               'p.init.noiseGridSize(2)'; ...
     'noiseGridH',               'p.init.noiseGridSize(1)'; ...
     'rfMapNoiseCycleCount',     'min(p.init.noiseCycleCount, 32767)'; ...
+    'rfMapStimHemifield',       'p.init.stimHemifieldInt'; ...
     };
 
 % Note: p.trVarsGuiComm assignment is left to the per-stim-type settings

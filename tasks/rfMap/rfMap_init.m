@@ -100,19 +100,27 @@ if p.trVarsInit.useRippleSTA
             p.init.staFigData = initSTADisplay(p.trVarsInit.nSTALags, ...
                 p.trVarsInit.nChannels, noiseFrameDurMs, nAxesDisplay);
             isChromatic = strcmp(p.init.stimType, 'denseChromatic');
-            % Per-tile dva extent: the noise grid is centered on screen
-            % and spans nChecks*checkSizeDeg in each axis. Express the
-            % extent in *fixation-relative* dva so it matches the
-            % convention of computeRFCenters (and therefore aligns with
-            % the RF center markers drawn in updateSTAChannelBrowser).
-            % For the default fixDegX/Y = 0 this is just symmetric;
-            % displaced fixation shifts the extent accordingly.
+            % Per-tile dva extent: the noise grid is centered at
+            % noiseGridCenterPix and spans nChecks*checkSizeDeg in each
+            % axis. Express the extent in *fixation-relative* dva so it
+            % matches the convention of computeRFCenters (and therefore
+            % aligns with the RF center markers drawn in
+            % updateSTAChannelBrowser). For hemifield modes the grid
+            % center is offset from screen center, shifting the extent.
             halfX = 0.5 * p.init.noiseGridSize(2) * p.trVarsInit.checkSizeDeg;
             halfY = 0.5 * p.init.noiseGridSize(1) * p.trVarsInit.checkSizeDeg;
-            fixDx = p.trVarsInit.fixDegX;
-            fixDy = p.trVarsInit.fixDegY;
-            staImgExtentDeg = [-halfX - fixDx, halfX - fixDx, ...
-                               -halfY - fixDy, halfY - fixDy];
+            % Grid center relative to fixation in dva. fixPointPix is
+            % not yet computed (done per-trial in nextParams), so derive
+            % from trVarsInit directly.
+            fixPx = p.draw.middleXY(1) + pds.deg2pix(p.trVarsInit.fixDegX, p);
+            fixPy = p.draw.middleXY(2) - pds.deg2pix(p.trVarsInit.fixDegY, p);
+            gridCenterDegX = pds.pix2deg( ...
+                p.init.noiseGridCenterPix(1) - fixPx, p);
+            gridCenterDegY = pds.pix2deg( ...
+                fixPy - p.init.noiseGridCenterPix(2), p);
+            staImgExtentDeg = [ ...
+                gridCenterDegX - halfX,  gridCenterDegX + halfX, ...
+                gridCenterDegY - halfY,  gridCenterDegY + halfY];
             p.init.staBrowser = initSTAChannelBrowser( ...
                 p.trVarsInit.nChannels, p.trVarsInit.nSTALags, ...
                 noiseFrameDurMs, isChromatic, staImgExtentDeg);
@@ -145,8 +153,17 @@ RandStream.setGlobalStream(RandStream('mt19937ar', 'Seed', 0));
 % per trial in place of the live Ripple read. The bank construction
 % relies on rig geometry (frameDuration) and stim-type grid params from
 % step 7, so it must run after both.
+%
+% If simPopulationFile is set, load the shared population spec instead of
+% building a fresh kernel bank. This enables multi-task simulation against
+% the same ground-truth neurons.
 if isfield(p.trVarsInit, 'useSimulatedSpikes') && p.trVarsInit.useSimulatedSpikes
-    p = simInitKernelBank(p);
+    if isfield(p.trVarsInit, 'simPopulationFile') && ...
+            ~isempty(p.trVarsInit.simPopulationFile)
+        p = simLoadPopulation(p, p.trVarsInit.simPopulationFile);
+    else
+        p = simInitKernelBank(p);
+    end
 end
 
 end
@@ -162,7 +179,26 @@ checkSizePix    = pds.deg2pix(p.trVarsInit.checkSizeDeg, p);
 if checkSizePix < 1, checkSizePix = 1; end
 screenWidthPix  = p.draw.screenRect(3);
 screenHeightPix = p.draw.screenRect(4);
-nChecksX        = ceil(screenWidthPix  / checkSizePix);
+
+% Hemifield restriction: halve the horizontal extent and shift the grid
+% center to the appropriate side. 'full' keeps the grid centered on
+% middleXY spanning the whole screen.
+hemi = p.trVarsInit.stimHemifield;
+switch hemi
+    case 'full'
+        gridWidthPix = screenWidthPix;
+        gridCenterX  = p.draw.middleXY(1);
+    case 'left'
+        gridWidthPix = screenWidthPix / 2;
+        gridCenterX  = screenWidthPix / 4;
+    case 'right'
+        gridWidthPix = screenWidthPix / 2;
+        gridCenterX  = 3 * screenWidthPix / 4;
+    otherwise
+        error('rfMap_init:badHemifield', ...
+            'stimHemifield must be ''full'', ''left'', or ''right'' (got ''%s'').', hemi);
+end
+nChecksX        = ceil(gridWidthPix   / checkSizePix);
 nChecksY        = ceil(screenHeightPix / checkSizePix);
 
 % Compute total noise frames
@@ -224,13 +260,17 @@ switch p.init.stimType
 end
 
 % Store metadata
-p.init.noiseGridSize   = [nChecksY, nChecksX];
-p.init.nNoiseFrames    = nNoiseFrames;
-p.init.noiseFrameIdx   = 1;
-p.init.noiseCycleCount = 0;   % # times the cursor has wrapped (movie modes)
+p.init.noiseGridSize      = [nChecksY, nChecksX];
+p.init.noiseGridCenterPix = [gridCenterX, p.draw.middleXY(2)];
+p.init.stimHemifield      = hemi;
+hemiMap = struct('full', 0, 'left', 1, 'right', 2);
+p.init.stimHemifieldInt   = hemiMap.(hemi);
+p.init.nNoiseFrames       = nNoiseFrames;
+p.init.noiseFrameIdx      = 1;
+p.init.noiseCycleCount    = 0;   % # times the cursor has wrapped (movie modes)
 
-fprintf('rfMap stimType=%s: %d x %d checks, %d total frames\n', ...
-    p.init.stimType, nChecksY, nChecksX, nNoiseFrames);
+fprintf('rfMap stimType=%s: %d x %d checks, %d total frames (hemifield=%s)\n', ...
+    p.init.stimType, nChecksY, nChecksX, nNoiseFrames, hemi);
 
 end
 
@@ -277,7 +317,7 @@ switch p.init.stimType
         for ch = 1:nCh
             p.init.staAccum{ch} = zeros(nY, nX, nLags);
         end
-        p.init.staSpikeCount = zeros(nCh, 1);
+        p.init.staSpikeCount = zeros(nCh, nLags);
 
     case 'denseChromatic'
         nY = p.init.noiseGridSize(1);
@@ -286,7 +326,7 @@ switch p.init.stimType
         for ch = 1:nCh
             p.init.staAccum{ch} = zeros(nY, nX, 3, nLags);
         end
-        p.init.staSpikeCount = zeros(nCh, 1);
+        p.init.staSpikeCount = zeros(nCh, nLags);
 
     case 'checkerboard'
         nCkSz = p.init.checkInfo.nCheckSize;
@@ -298,7 +338,7 @@ switch p.init.stimType
             'f1f2TrialCount',       zeros(nCkSz, nCt));
         % staSpikeCount kept for code-path compatibility (rfMap_finish
         % reads it for the run-summary print and status display).
-        p.init.staSpikeCount = zeros(nCh, 1);
+        p.init.staSpikeCount = zeros(nCh, nLags);
 
     otherwise
         error('rfMap_init:initSTAAccumulators:badStimType', ...

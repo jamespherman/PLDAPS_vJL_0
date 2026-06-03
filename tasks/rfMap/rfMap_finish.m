@@ -22,6 +22,32 @@ elseif isfield(p.rig, 'ripple') && isfield(p.rig.ripple, 'recChans') && ...
     p = pds.getRippleData(p);
 end
 
+%% (0b) Trim spikes to stimulus presentation window.
+% The first pds.getRippleData call each session reads the entire Ripple
+% spike buffer, which may contain thousands of pre-session threshold
+% crossings. Inter-trial crossings also accumulate during ITIs. Discard
+% everything outside the stimulus window so saved p.trData is clean and
+% the per-spike accumulation loop is faster. The per-stim-type updateSTA
+% function applies its own precise per-frame filter; this is a coarse
+% upstream pass.
+if ~isempty(p.trData.spikeTimes) && ~isempty(p.trData.eventValues)
+    stimOnCode_ = p.init.codes.stimOn;
+    evIdx_      = find(p.trData.eventValues == stimOnCode_, 1, 'last');
+    if ~isempty(evIdx_)
+        stimOnRipple_ = p.trData.eventTimes(evIdx_);
+        trialDurS_    = p.trVars.nFramesThisTrial * p.trVars.noiseFrameDurS;
+        inWindow_     = p.trData.spikeTimes >= stimOnRipple_ & ...
+                        p.trData.spikeTimes <  stimOnRipple_ + trialDurS_;
+        nDiscarded_   = numel(p.trData.spikeTimes) - nnz(inWindow_);
+        if nDiscarded_ > 0
+            fprintf('  Spike filter: kept %d of %d (discarded %d out-of-window).\n', ...
+                nnz(inWindow_), numel(p.trData.spikeTimes), nDiscarded_);
+            p.trData.spikeTimes    = p.trData.spikeTimes(inWindow_);
+            p.trData.spikeClusters = p.trData.spikeClusters(inWindow_);
+        end
+    end
+end
+
 %% (1) Fill screen with background and flip
 Screen('FillRect', p.draw.window, p.draw.color.background);
 Screen('Flip', p.draw.window);
@@ -84,6 +110,13 @@ end
 % If trial was aborted: noise-movie modes re-present the same frames
 % next trial; checkerboard leaves the row in trialsArrayRowsPossible
 % so it gets retried.
+
+%% (4d) Monitor spike threshold drift (passive rate tracking).
+if ~p.trData.trialRepeatFlag && ...
+        isfield(p.rig, 'ripple') && p.rig.ripple.status && ...
+        ~(isfield(p.trVars, 'useSimulatedSpikes') && p.trVars.useSimulatedSpikes)
+    p = pds.monitorSpikeThresholds(p);
+end
 
 %% (5) Strobe trial data
 p = pds.strobeTrialData(p);
@@ -172,7 +205,7 @@ else
     p.status.moviePctComplete = round( ...
         100 * p.init.noiseFrameIdx / p.init.nNoiseFrames);
 end
-p.status.totalSpikesAccum = sum(p.init.staSpikeCount);
+p.status.totalSpikesAccum = sum(p.init.staSpikeCount(:, 1));
 p.status.iAbortedTrial    = p.status.iTrial - p.status.iGoodTrial;
 
 if p.trData.trialEndState == p.state.fixBreak
@@ -258,7 +291,7 @@ if strcmp(p.init.stimType, 'checkerboard')
         spk = spikeTimesPerChan{ch};
         if ~isempty(spk)
             n = sum(spk >= stimOnTimeRipple & spk < trialEndTime);
-            p.init.staSpikeCount(ch) = p.init.staSpikeCount(ch) + n;
+            p.init.staSpikeCount(ch, :) = p.init.staSpikeCount(ch, :) + n;
         end
     end
 else
@@ -310,6 +343,6 @@ if isfield(p.init, 'staFigData') && ...
     end
 end
 
-fprintf('  STA: %d total spikes accumulated\n', p.init.staSpikeCount(1));
+fprintf('  STA: %d total spikes accumulated\n', p.init.staSpikeCount(1, 1));
 
 end

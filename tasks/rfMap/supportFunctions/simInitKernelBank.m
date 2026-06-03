@@ -63,6 +63,16 @@ switch stimType
 
         isChrom = strcmp(stimType, 'denseChromatic');
 
+        % Grid center offset from fixation in dva. For hemifield
+        % restriction the grid is no longer centered on fixation;
+        % template coordinates must account for this shift.
+        fixPxX = p.draw.middleXY(1) + pds.deg2pix(p.trVarsInit.fixDegX, p);
+        fixPxY = p.draw.middleXY(2) - pds.deg2pix(p.trVarsInit.fixDegY, p);
+        gridCenterDegX = pds.pix2deg( ...
+            p.init.noiseGridCenterPix(1) - fixPxX, p);
+        gridCenterDegY = pds.pix2deg( ...
+            fixPxY - p.init.noiseGridCenterPix(2), p);
+
         % Per-axis contrast magnitude vector (1=L-M, 2=S, 3=Achro). Used
         % both for DKL projection and for analytic gStd.
         if isChrom
@@ -79,10 +89,11 @@ switch stimType
 
         for tmplIdx = 1:nTemplates
             cFix = templateCenters(tmplIdx, :);
-            % Y-flip from fixation frame (+y up) to grid frame (+y down,
-            % origin at top-left of grid). See header.
-            cGrid = [ cFix(1) + nX * checkSizeDeg / 2, ...
-                     -cFix(2) + nY * checkSizeDeg / 2 ];
+            % Convert from fixation frame (+y up) to grid frame (+y
+            % down, origin at top-left of grid). Accounts for hemifield
+            % offset via gridCenterDeg.
+            cGrid = [ cFix(1) - gridCenterDegX + nX * checkSizeDeg / 2, ...
+                     -(cFix(2) - gridCenterDegY) + nY * checkSizeDeg / 2 ];
 
             for repIdx = 1:chPerTemplate
                 ch = (tmplIdx - 1) * chPerTemplate + repIdx;
@@ -157,14 +168,12 @@ switch stimType
                     wDKL = [];
                 end
 
-                % Per-channel base/peak rate (jittered +/-20%). Plan
-                % target was peakRate=50; bumped to 150 so total spike
-                % count per 20-trial session reliably puts the signal
-                % at the kernel peak above the per-pixel max-of-noise
-                % floor (set by frame count, not spike count: spikes in
-                % the same frame share a stimulus sample).
-                baseRate = 5   * (1 + 0.4 * (rand(rs) - 0.5));
-                peakRate = 150 * (1 + 0.4 * (rand(rs) - 0.5));
+                % Per-channel base/peak rate (jittered +/-20%).
+                % Calibrated to real LGN threshold-crossing statistics
+                % (2026-06-01 64ch probe): ~3-7 spk/s per channel,
+                % ~5-10 spk/ch/trial at 1.5s trial duration.
+                baseRate = 2  * (1 + 0.4 * (rand(rs) - 0.5));
+                peakRate = 20 * (1 + 0.4 * (rand(rs) - 0.5));
 
                 % Analytic gStd. Variance of the generator g(t) is
                 %   var(g) = sum(K_t.^2) * var(proj(t))
@@ -247,8 +256,8 @@ switch stimType
                     end
                 end
 
-                baseRate = 5  * (1 + 0.4 * (rand(rs) - 0.5));
-                peakRate = 50 * (1 + 0.4 * (rand(rs) - 0.5));
+                baseRate = 2  * (1 + 0.4 * (rand(rs) - 0.5));
+                peakRate = 20 * (1 + 0.4 * (rand(rs) - 0.5));
 
                 % gStd: polarity sequence has unit amplitude. Normalize
                 % by the *max* gain across conditions so the highest
@@ -276,9 +285,22 @@ switch stimType
              'denseAchromatic, denseChromatic, sparse, checkerboard.'], stimType);
 end
 
+% Noise channels: all remaining channels beyond nSimCh fire at a low
+% spontaneous rate with no stimulus drive, matching the observation that
+% ~46/64 real probe channels show threshold crossings but most have no RF.
+nNoiseCh = 0;
+for ch = (nSimCh + 1):nTotalCh
+    noiseRate = 2 + 2 * rand(rs);   % 2-4 spk/s uniform
+    bank.kernels{ch} = struct('isNoise', true, ...
+        'baseRate', noiseRate, 'peakRate', 0);
+    nNoiseCh = nNoiseCh + 1;
+end
+bank.nNoiseChannels = nNoiseCh;
+
 p.init.simKernelBank = bank;
 
-fprintf(['simInitKernelBank: %d/%d simulated channels (stimType=%s, ' ...
-         'baseSeed=%d)\n'], nSimCh, nTotalCh, stimType, bank.baseSeed);
+fprintf(['simInitKernelBank: %d RF + %d noise / %d total channels ' ...
+         '(stimType=%s, baseSeed=%d)\n'], ...
+    nSimCh, nNoiseCh, nTotalCh, stimType, bank.baseSeed);
 
 end

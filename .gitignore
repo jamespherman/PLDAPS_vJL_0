@@ -17,3 +17,7 @@ output/
 .claude/
 .codex
 AGENTS.md
+
+# Validation generated data (populations, intermediate .mat) #
+##############################################################
+tasks/rfMap/_validation/figs_*/*.mat

@@ -29,9 +29,13 @@ if nAxes ~= 1 && nAxes ~= 3
 end
 
 %% ---- Primary figure: selected channel, all lags ----
-if isvalid(figData.fig) && staSpikeCount(selectedChannel) >= 1
+if isvalid(figData.fig) && max(staSpikeCount(selectedChannel, :)) >= 1
     ch = selectedChannel;
-    sta = staAccum{ch} / staSpikeCount(ch);    % [nY, nX, nLags] or [nY, nX, 3, nLags]
+    counts = max(staSpikeCount(ch, :), 1);
+    nd = ndims(staAccum{ch});
+    shp = ones(1, nd);
+    shp(nd) = numel(counts);
+    sta = staAccum{ch} ./ reshape(counts, shp);
 
     if nAxes == 1
         cMax = max(abs(sta(:)));
@@ -54,7 +58,7 @@ if isvalid(figData.fig) && staSpikeCount(selectedChannel) >= 1
         end
     end
     set(figData.hChanText,  'String', sprintf('Channel: %d', ch));
-    set(figData.hSpikeText, 'String', sprintf('Spikes: %d', staSpikeCount(ch)));
+    set(figData.hSpikeText, 'String', sprintf('Spikes: %d', staSpikeCount(ch, 1)));
 end
 
 drawnow;

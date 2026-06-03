@@ -78,13 +78,18 @@ end
 %% Fixation point + window in pixels (shared)
 p = setupFixationGeometry(p);
 
-%% Noise texture destination rect (full screen, centered)
+%% Noise texture destination rect (centered on grid center)
 checkSizePix = pds.deg2pix(p.trVars.checkSizeDeg, p);
 if checkSizePix < 1, checkSizePix = 1; end
 destW = p.init.noiseGridSize(2) * checkSizePix;
 destH = p.init.noiseGridSize(1) * checkSizePix;
+if isfield(p.init, 'noiseGridCenterPix')
+    gcPix = p.init.noiseGridCenterPix;
+else
+    gcPix = p.draw.middleXY;
+end
 p.draw.noiseDestRect = CenterRectOnPoint([0 0 destW destH], ...
-    p.draw.middleXY(1), p.draw.middleXY(2));
+    gcPix(1), gcPix(2));
 
 %% Reset noise presentation state
 p.trVars.currentNoiseIdx   = 1;

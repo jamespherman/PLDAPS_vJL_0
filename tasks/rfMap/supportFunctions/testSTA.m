@@ -182,7 +182,7 @@ staAccum = cell(params.nChannels, 1);
 for ch = 1:params.nChannels
     staAccum{ch} = zeros(params.nChecksY, params.nChecksX, params.nSTALags);
 end
-staSpikeCount = zeros(params.nChannels, 1);
+staSpikeCount = zeros(params.nChannels, params.nSTALags);
 
 % Convergence tracking
 convergenceNSpikes = [];
