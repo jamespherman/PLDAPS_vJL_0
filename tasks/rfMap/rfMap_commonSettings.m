@@ -98,6 +98,8 @@ p.init.taskActions{5} = 'pdsActions.rewardDrain';
 p.init.taskActions{6} = 'pdsActions.singleReward';
 p.init.taskActions{7} = 'pdsActions.catOldOutput';
 p.init.taskActions{8} = 'pdsActions.exportRFCentersCSV';
+p.init.taskActions{9} = 'pdsActions.evaluateRFQuality';
+p.init.taskActions{10} = 'pdsActions.recheckThresholds';
 
 %% audio:
 p.audio.audsplfq        = 48000;
