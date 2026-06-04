@@ -54,12 +54,17 @@ p.trData.eventTimes  = double(stimOnTimeSim);
 
 bank      = p.init.simKernelBank;
 stimType  = p.init.stimType;
-frameDurS = p.trVars.noiseFrameDurS;
 nFrames   = p.trVars.nFramesThisTrial;
 iTrial    = p.status.iTrial;
 
 if nFrames <= 0
     return;
+end
+
+if strcmp(stimType, 'checkerboard')
+    frameDurS = p.rig.frameDuration;
+else
+    frameDurS = p.trVars.noiseFrameDurS;
 end
 
 % --- Build a stimulus-tensor reference for this trial. ---
