@@ -60,7 +60,7 @@ end
 p = calcSacParams(p);
 
 % (5) auto save backup
-% pds.saveP(p);
+pds.saveP(p);
 
 % (6) update status variables
 p           = updateStatusVariables(p);
@@ -158,9 +158,17 @@ if p.trData.trialEndState == p.state.sacComplete
         % assign "tempSAE" to p.rig.guiData.spikesAndEvents:
         p.rig.guiData.spikesAndEvents = tempSAE;
 
-        % make sure that the full version of "p" is populated into the
-        % saccade gui:
-        p.rig.guiData.pldapsData.p = p;
+        % Populate the saccade gui with ONLY the fields it actually reads
+        % (p.init for strobe codes, p.rig.ripple for ripple status). Do
+        % NOT assign the whole "p" here: "p" contains p.rig.guiData (this
+        % gui object), so "p.rig.guiData.pldapsData.p = p" nests a full
+        % trData snapshot one level deeper every trial, which bloated saved
+        % output to hundreds of MB. Storing the minimal subset breaks that
+        % self-reference.
+        guiP        = struct;
+        guiP.init   = p.init;
+        guiP.rig.ripple = p.rig.ripple;
+        p.rig.guiData.pldapsData.p = guiP;
     end
 
 end
