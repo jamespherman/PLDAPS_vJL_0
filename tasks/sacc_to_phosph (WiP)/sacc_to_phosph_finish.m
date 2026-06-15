@@ -49,8 +49,8 @@ p.trData.strobed = p.init.strb.strobedList;
 p.init.strb.flushVetoList;
 p.init.strb.flushStrobedList;
 
-% copy p.draw variables into p.trVars.draw so they get saved
-p.trVars.draw = p.draw;
+% If we want this, copy p.draw variables into p.trVars.draw so they get saved
+% p.trVars.draw = p.draw;
 
 %%
 
@@ -88,6 +88,12 @@ pds.saveP(p);
 if p.trVars.setTargLocViaTrialArray
     p           = updateTrialsList(p); % Comment out this to remove drumming
 end
+
+% (8) if we're using online plots, update them now:
+if isfield(p.trVars, 'wantOnlinePlots') && p.trVars.wantOnlinePlots
+    p       = updateOnlinePlots(p);
+end
+
 
 % keyboard
 

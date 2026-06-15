@@ -159,17 +159,17 @@ p.trVarsInit.flipIdx             = 1;
 % --- sweep schedule and geometry (matches source defaults) ---
 p.trVarsInit.setRepeats          = 50;      % rewarded sweeps per angle (frozen on first _next.m call)
 p.trVarsInit.pathAngleDeg        = 0;       % resolved per trial from the schedule
-p.trVarsInit.pathCenterXDeg      = 0;       % fixation-centered by default
+p.trVarsInit.pathCenterXDeg      = -17;     % fixation-centered by default
 p.trVarsInit.pathCenterYDeg      = 0;
 p.trVarsInit.pathLengthDeg       = 40;
-p.trVarsInit.speedDegPerSec      = 35;
-p.trVarsInit.barWidthDeg         = 0.4;     % thickness (perpendicular to motion)
+p.trVarsInit.speedDegPerSec      = 20;
+p.trVarsInit.barWidthDeg         = 1;       % thickness (perpendicular to motion)
 p.trVarsInit.barLengthDeg        = 80;      % total end-to-end length (1:1 mapping)
 
 % --- stimulus appearance ---
-p.trVarsInit.stimulusMode        = 1;       % 1 = noise, 2 = solid
+p.trVarsInit.stimulusMode        = 2;       % 1 = noise, 2 = solid
 p.trVarsInit.backgroundLumIdx    = 2;       % palette index
-p.trVarsInit.barLumIdx           = 1;       % palette index (solid mode)
+p.trVarsInit.barLumIdx           = 3;       % palette index (solid mode)
 p.trVarsInit.noiseLumLowIdx      = 1;       % palette index (noise mode)
 p.trVarsInit.noiseLumHighIdx     = 3;       % palette index (noise mode)
 p.trVarsInit.noiseCheckSizeDeg   = 0.25;    % matches Stm.BarNoiseGrain_dva

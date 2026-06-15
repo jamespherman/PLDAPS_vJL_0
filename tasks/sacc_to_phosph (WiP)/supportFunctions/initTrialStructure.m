@@ -13,7 +13,12 @@ function p = initTrialStructure(p)
 p.init.trialArrayColumnNames = {'trialType', 'no of trials', 'trialCode'};
 
 % table definition
-table = step1;
+switch p.init.exptType
+    case 'pick_one_channel'
+        table = pick_one_channel_table;
+    case 'pick_all_channels'
+        table = pick_all_channels_table;
+end    
          
 
 % Make "n" copies of each row in the table, where n is in the "no of trials" column.
@@ -52,22 +57,30 @@ p.init.blockLength = size(p.init.trialsArray, 1);
 end
 
 
-function table = step1
+function table = pick_one_channel_table
 table = [
-    1 90 24001; ... % visual stimulus, 24001 trial code
+    1 0 24001; ... % visual stimulus, 24001 trial code
 
-    2 0 24002; ... % microstimulation, 24002 trial code
+    2 1 24002; ... % One-channel microstimulation, 24002 trial code
 
-    3 10 24003; ... % no stimulus, 24003 trial code
+    3 0 24003; ... % no stimulus, 24003 trial code
 
     4 0 24004; ... % Two-channel microstimulation, opposite polarity, 24004 trial code
 
-    5 0 24005; ... % Two-channel microstimulation, same polarity, 24005 trial code
+    5 0 24005; ... % N-channel microstimulation, same polarity, 24005 trial code
     ];
 end
 
 
+function table = pick_all_channels_table
+table = [
+    1 0 24001; ... % visual stimulus, 24001 trial code
 
+    3 0 24003; ... % no stimulus, 24003 trial code
+
+    6 2 24006; ... % microstimulation, 24006 trial code
+    ];
+end
 
 
 

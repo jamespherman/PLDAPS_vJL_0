@@ -67,9 +67,42 @@ p.init.rigConfigFile     = which(['rigConfigFiles.rigConfig_rig' ...
 
 % define task name and related files:
 p.init.taskName     = 'numerosity';
-p                   = pds.initTaskMetadata(p); % ye ye I know, shouldn't this be in init? well it's here. For now...
+
+p.init.exptType     = 'spatial';
+
+%% Task Code
+codes           = pds.initCodes;
+p.init.taskCode = codes.(['uniqueTaskCode_' p.init.taskName]);
+
+%% Meta Data:
+
+p.init.pldapsFolder     = pwd;                          % pldaps gui takes us to taks folder automatically once we choose a settings file
+p.init.protocol_title   = [p.init.taskName '_task'];    % Define Banner text to identify the experimental protocol
+p.init.date_1yyyy       = str2double(['1' datestr(now,'yyyy')]); % gotta add a '1' otherwise date/times starting with zero lose that zero in conversion to double.
+p.init.date_1mmdd       = str2double(['1' datestr(now,'mmdd')]);
+p.init.time_1hhmm       = str2double(['1' datestr(now,'HHMM')]);
+
+% output files:
+p.init.outputFolder     = fullfile(p.init.pldapsFolder, 'output');
+p.init.figureFolder     = fullfile(p.init.pldapsFolder, 'output', 'figures');
+p.init.sessionId        = [datestr(now,'yyyymmdd_tHHMM') '_' p.init.taskName '_' p.init.exptType];     % Define the prefix for the Output File
+p.init.sessionFolder    = fullfile(p.init.outputFolder, p.init.sessionId);
+
+% Define the "init", "next", "run", and "finish" ".m" files.
+p.init.taskFiles.init   = [p.init.taskName '_init.m'];
+p.init.taskFiles.next   = [p.init.taskName '_next.m'];
+p.init.taskFiles.run    = [p.init.taskName '_run.m'];
+p.init.taskFiles.finish = [p.init.taskName '_finish.m'];
 
 
+% Define the Action M-files
+% User-defined actions that are either within the task folder under
+% "actions" or within the +pds package under "actions":
+p.init.taskActions{1} = 'pdsActions.dataToWorkspace';
+p.init.taskActions{2} = 'pdsActions.blackScreen';
+p.init.taskActions{3} = 'pdsActions.alphaBinauralBeats';
+p.init.taskActions{4} = 'pdsActions.stopAudioSchedule';
+p.init.taskActions{5} = 'pdsActions.rewardDrain';
 % Define the Action M-files
 % User-defined actions that are either within the task folder under
 % "actions" or within the +pds package under "actions":
@@ -165,15 +198,6 @@ p.rig.guiVars = {...
     'fixDegY'; ...        % 6
     'fixDegX'; ...
     'fixDegY'};              % 12
-
-
-
-%% INIT VARIABLES 
-% vars that are only set once
-
-% Which experiment are we running? The full version with all trial types? 
-% The single-stimulus-only version? Something else?
-p.init.exptType         = 'spatial';
 
 %% TRIAL VARIABLES
 % vars that may change throughout an experimental session and are therefore

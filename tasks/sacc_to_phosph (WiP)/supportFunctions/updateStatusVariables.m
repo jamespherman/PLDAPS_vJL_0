@@ -16,26 +16,44 @@ p.status.visNumMisses = p.status.visNumMisses + (p.trVars.trialType == 1 && ...
 p.status.propVisHits = p.status.visNumHits/p.status.visNumMisses;
 
 % For microstim trials
-p.status.microstimTrials = p.status.microstimTrials + (ismember(p.trVars.trialType, [2 4 5]));
+p.status.microstimTrials = p.status.microstimTrials + (ismember(p.trVars.trialType, [2 4 5 6]));
 
-p.status.microstimNumHits (p.trVars.stimulatedElectrode, p.status.staircaseCurrentIndex) = ...
-    p.status.microstimNumHits (p.trVars.stimulatedElectrode, p.status.staircaseCurrentIndex) + ...
-    (ismember(p.trVars.trialType, [2 4 5]) && p.trData.trialEndState == p.state.sacComplete);
+if strcmp(p.init.exptType, 'pick_one_channel')
+    
+    p.status.microstimNumHits (p.trVars.stimulatedElectrode, p.status.staircaseCurrentIndex) = ...
+        p.status.microstimNumHits (p.trVars.stimulatedElectrode, p.status.staircaseCurrentIndex) + ...
+        (ismember(p.trVars.trialType, [2 4 5]) && p.trData.trialEndState == p.state.sacComplete);
+    
+    p.status.microstimNumMisses (p.trVars.stimulatedElectrode, p.status.staircaseCurrentIndex) = ...
+        p.status.microstimNumMisses (p.trVars.stimulatedElectrode, p.status.staircaseCurrentIndex) + ...
+        (ismember(p.trVars.trialType, [2 4 5]) && p.trData.trialEndState == p.state.heldFix);
+    
+    p.status.mstimHitsCurrent = sum (p.status.microstimNumHits (p.trVars.stimulatedElectrode, :));
+    p.status.mstimMissCurrent = sum (p.status.microstimNumMisses (p.trVars.stimulatedElectrode, :));
+    p.status.propMstimHitsCurrent = p.status.mstimHitsCurrent/p.status.mstimMissCurrent;
 
-p.status.microstimNumMisses (p.trVars.stimulatedElectrode, p.status.staircaseCurrentIndex) = ...
-    p.status.microstimNumMisses (p.trVars.stimulatedElectrode, p.status.staircaseCurrentIndex) + ...
-    (ismember(p.trVars.trialType, [2 4 5]) && p.trData.trialEndState == p.state.heldFix);
+elseif strcmp(p.init.exptType, 'pick_all_channels')
 
-p.status.mstimHitsCurrent = sum (p.status.microstimNumHits (p.trVars.stimulatedElectrode, :));
-p.status.mstimMissCurrent = sum (p.status.microstimNumMisses (p.trVars.stimulatedElectrode, :));
-p.status.propMstimHitsCurrent = p.status.mstimHitsCurrent/p.status.mstimMissCurrent;
+    p.status.microstimNumHits (p.trVars.stimListIndex, p.status.staircaseCurrentIndex) = ...
+        p.status.microstimNumHits (p.trVars.stimListIndex, p.status.staircaseCurrentIndex) + ...
+        (p.trVars.trialType == 6 && p.trData.trialEndState == p.state.sacComplete);
+
+    p.status.microstimNumMisses (p.trVars.stimListIndex, p.status.staircaseCurrentIndex) = ...
+        p.status.microstimNumMisses (p.trVars.stimListIndex, p.status.staircaseCurrentIndex) + ...
+        (p.trVars.trialType == 6 && p.trData.trialEndState == p.state.heldFix);
+
+    p.status.mstimHitsCurrent = sum (p.status.microstimNumHits (p.trVars.stimListIndex, :));
+    p.status.mstimMissCurrent = sum (p.status.microstimNumMisses (p.trVars.stimListIndex, :));
+    p.status.propMstimHitsCurrent = p.status.mstimHitsCurrent/p.status.mstimMissCurrent;
+
+end
 
 
 % For staircase procedure
 p.status.staircaseHits = p.status.staircaseHits + ...
-    (ismember(p.trVars.trialType, [2 4 5]) && p.trData.trialEndState == p.state.sacComplete);
+    (ismember(p.trVars.trialType, [2 4 5 6]) && p.trData.trialEndState == p.state.sacComplete && p.trVars.overrideStaircase == 0);
 p.status.staircaseMisses = p.status.staircaseMisses + ...
-    (ismember(p.trVars.trialType, [2 4 5]) && p.trData.trialEndState == p.state.heldFix);
+    (ismember(p.trVars.trialType, [2 4 5 6]) && p.trData.trialEndState == p.state.heldFix && p.trVars.overrideStaircase == 0);
 
 
 % For nostim trials

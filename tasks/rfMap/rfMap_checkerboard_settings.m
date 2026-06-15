@@ -32,6 +32,7 @@ p.trVarsInit.checkSizesDva   = [0.5 1.0 2.0];
 
 % Michelson contrasts in (0, 1]. Each contrast reserves 2 CLUT slots
 % (low/high gray pair, gamma-corrected via dkl2rgb at install time).
+%p.trVarsInit.checkContrasts  = [0.25 0.5 1.0];
 p.trVarsInit.checkContrasts  = [0.25 0.5 1.0];
 
 % Polarity reversal frequency. MUST divide refresh rate evenly AND

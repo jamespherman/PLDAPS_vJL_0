@@ -207,6 +207,7 @@ codes.rewardDuration    = 18000;
 codes.microStimOn       = 7001;
 codes.microStimChannel  = 17101;
 codes.microStimCurrAmp  = 17102;
+codes.microStimPolarity = 17103;
 
 % audio codes
 codes.audioFBKon        = 9000;

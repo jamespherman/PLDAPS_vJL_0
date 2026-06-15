@@ -4,23 +4,46 @@ function p = nextParams(p)
 %
 % Define parameters for upcoming trial.
 
-% Before anything, check if the "stimulatedElectrode" has been changed, and
-% reset staircase values if it has been
-if ~(p.status.previousElectrode == p.trVars.stimulatedElectrode)
-    p.status.staircaseCurrentIndex = p.trVars.staircaseStartingIndex;
-    p.status.staircaseHits = 0;
-    p.status.staircaseMisses = 0;
-    p.status.previousElectrode = p.trVars.stimulatedElectrode;
-    p.status.badElectrodeWarningFlag = true;
+% Before anything, depending on expt type, check if stimulated electrode(s)
+% have been changed, reset staircase values if they have been
+% Also check if electrodes have been chosen properly
+
+if strcmp (p.init.exptType, 'pick_one_channel')
+    if ~(p.status.previousElectrode == p.trVars.stimulatedElectrode)
+        p.status.staircaseCurrentIndex = p.trVars.staircaseStartingIndex;
+        p.status.staircaseHits = 0;
+        p.status.staircaseMisses = 0;
+        p.status.previousElectrode = p.trVars.stimulatedElectrode;
+        p.status.badElectrodeWarningFlag = true;
+    end
+
+    if p.trVars.stimulatedElectrode == -1
+        error ('Need to set stimulated electrode');totalFixDur
+    elseif ~any(p.trVars.stimulatedElectrode == p.init.electrodeInfo.goodElectrodes) && p.status.badElectrodeWarningFlag
+        warning ('Chosen electrode is not on good electrodes list!');
+        p.status.badElectrodeWarningFlag = false;
+    end
+
+elseif strcmp (p.init.exptType, 'pick_all_channels')
+    if ~(p.status.previousIndex == p.trVars.stimListIndex)
+        p.status.staircaseCurrentIndex = p.trVars.staircaseStartingIndex;
+        p.status.staircaseHits = 0;
+        p.status.staircaseMisses = 0;
+        p.status.previousIndex = p.trVars.stimListIndex;
+        p.status.badElectrodeWarningFlag = true;
+    end
+
+    if p.trVars.stimListIndex == -1
+        error ('Need to set stimListIndex');
+    elseif all(ismember(p.trVars.stimList{p.trVars.stimListIndex}(1,:), p.init.electrodeInfo.goodElectrodes)) && p.status.badElectrodeWarningFlag
+        warning ('Some chosen electrode(s) are not on good electrodes list!');
+        p.status.badElectrodeWarningFlag = false;
+    end
+
 end
 
 % and check for whether the stimulated electrode is chosen appropriately
-if p.trVars.stimulatedElectrode == -1
-    error ('Need to set stimulated electrode');
-elseif ~any(p.trVars.stimulatedElectrode == p.init.electrodeInfo.goodElectrodes) && p.status.badElectrodeWarningFlag
-    warning ('Chosen electrode is not on good electrodes list!');
-    p.status.badElectrodeWarningFlag = false;
-end
+
 
 % Check if Ripple recording is on, and send error if not
 %{
@@ -45,7 +68,7 @@ switch p.trVars.trialType
     case 1 % visual stimulus
         p = createVisualStimulusTexture(p);
 
-    case {2, 4, 5} % microstim, bipolar stim, or two-channel stim
+    case {2, 4, 5, 6} % microstim, bipolar stim, or two-channel stim
         p = createMicrostimTrain(p);
 
     case 3 % No stim trial
@@ -130,7 +153,8 @@ p.trVars.targTheta_x10  = round(mod(tmpTheta * 180 / pi, 360) * 10);
 p.trVars.targRadius_x100 = round(tmpRadius * 100);
 
 % Scale target window depending on eccentricity
-eccentricityScaleFactor = tmpRadius/36 + 1;
+distance = sqrt((p.trVars.targDegX - p.trVars.fixDegX)^2 + (p.trVars.targDegY - p.trVars.fixDegY)^2);
+eccentricityScaleFactor = distance/36 + 1;
 
 % target window width and height in pixels.
 p.trVars.targWinWidthDeg    = p.trVars.visTargWinWidthDeg^eccentricityScaleFactor;
@@ -255,13 +279,12 @@ end
 % Add color to the stims %
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 
-p.trVars.stimColor = rand (1, 3);
+p.trVars.stimColor = rand(1, 3);
 
 % On 2% of trials, make stim color white instead
 if rand > 0.98
     p.trVars.stimColor = [1, 1, 1];
 end
-
 
 % Check if color is too close to background grey (i.e. all 3 RGB values are between 0.4 and 0.5)
 isGrey = 1;
@@ -274,6 +297,24 @@ while isGrey
 		isGrey = 1;
     end
 end
+
+
+% Use this code to make very low contrast stimuli:
+%{
+%p.trVars.stimColor = unifrnd(0.45, 0.55, 1, 3); 
+
+% Check if color is too close to background grey (i.e. all 3 RGB values are between 0.4 and 0.5)
+isGrey = 1;
+while isGrey
+    isGrey = 0;
+    if ((p.trVars.stimColor (1) > 0.44 && p.trVars.stimColor (1) < 0.46) && ...
+        	(p.trVars.stimColor (2) > 0.44 && p.trVars.stimColor (1) < 0.46) && ...
+        	(p.trVars.stimColor (3) > 0.44 && p.trVars.stimColor (1) < 0.46))
+        p.trVars.stimColor = unifrnd(0.45, 0.55, 1, 3);%rand (1, 3);
+        isGrey = 1;
+    end
+end
+%}
 
 
 % Create color gradients between the stim color and background grey across 100 values.
@@ -359,6 +400,8 @@ p.trVars.timeFixOffset          = p.trVars.totalFixDur;
 p.trVars.targHoldDuration         = unifrnd(p.trVars.targHoldDurationMin, p.trVars.targHoldDurationMax);
 
 
+% Locations:
+
 % fixation location in pixels relative to the center of the screen!
 % (Y is flipped because positive is down in psychophysics toolbox).
 p.draw.fixPointPix      =  p.draw.middleXY + [1, -1] .* ...
@@ -383,7 +426,6 @@ p.draw.targWinWidthPix      = pds.deg2pix(p.trVars.targWinWidthDeg, p);
 p.draw.targWinHeightPix     = pds.deg2pix(p.trVars.targWinHeightDeg, p);
 
 p.draw.color.targWin         = p.draw.clutIdx.expMemMagenta_subBg;
-
 
 
 % If we instead want to set target location as predicted RF of stimulated electrode:
@@ -417,7 +459,7 @@ p.trVars.targTheta_x10  = round(mod(tmpTheta * 180 / pi, 360) * 10);
 p.trVars.targRadius_x100 = round(tmpRadius * 100);
 
 % Predicted RF Indicator Circle
-if isfield(p.init.electrodeInfo, 'predictedRFX') && isfield(p.init.electrodeInfo, 'predictedRFY') 
+if strcmp(p.init.exptType, 'pick_one_channel') && isfield(p.init.electrodeInfo, 'predictedRFX') && isfield(p.init.electrodeInfo, 'predictedRFY') 
     if ~isnan(p.init.electrodeInfo.predictedRFX(p.trVars.stimulatedElectrode)) && ~isnan(p.init.electrodeInfo.predictedRFY(p.trVars.stimulatedElectrode))
         p.trVars.predRFCircleDegX = p.init.electrodeInfo.predictedRFX(p.trVars.stimulatedElectrode);
         p.trVars.predRFCircleDegY = p.init.electrodeInfo.predictedRFY(p.trVars.stimulatedElectrode);
@@ -437,29 +479,86 @@ p.draw.predictedRFCirclePointPix = p.draw.middleXY + [1, -1] .* ...
     pds.deg2pix([p.trVars.predRFCircleDegX, p.trVars.predRFCircleDegY], p);
 p.draw.predRFCircleSizePix = pds.deg2pix(p.trVars.predRFCircleSize, p);
 
-% Use channel-mapping to convert to Ripple channel
-p.trVars.rippleStimElectrode = p.init.electrodeInfo.rippleChannel (p.trVars.stimulatedElectrode);
 
-% Record the electrode to strobe
-p.trVars.stimulatedElectrodeStrobe = p.trVars.stimulatedElectrode;
+% Depending on trial type, pick electrodes and polarities
+
+switch p.init.exptType
+    case 'pick_one_channel'
+        if p.trVars.stimulatedElectrode < 1 || p.trVars.stimulatedElectrode > 64
+            error ('Chosen stimulated electrode is out of bounds');
+        elseif p.trVars.trialType == 2
+            p.trVars.stimElectrodeList = p.trVars.stimulatedElectrode;
+            p.trVars.stimPolarities = 0;
+        elseif p.trVars.trialType == 4
+            if p.trVars.stimulatedElectrode == 1
+                p.trVars.stimElectrodeList = [1 2];
+                p.trVars.stimPolarities = [0 1];
+            else
+                p.trVars.stimElectrodeList = [p.trVars.stimulatedElectrode, p.trVars.stimulatedElectrode-1];
+                p.trVars.stimPolarities = [0 1];
+            end
+        elseif p.trVars.trialType == 5 
+            if p.trVars.stimulatedElectrode - floor((p.trVars.numStimElectrodes)/2) < 1
+                p.trVars.stimElectrodeList = 1:p.trVars.numStimElectrodes;
+                p.trVars.stimPolarities = zeros(1, p.trVars.numStimElectrodes);
+            elseif p.trVars.stimulatedElectrode + floor((p.trVars.numStimElectrodes - 1)/2) > 64
+                p.trVars.stimElectrodeList = (65 - p.trVars.numStimElectrodes):64;
+                p.trVars.stimPolarities = zeros(1, p.trVars.numStimElectrodes);
+            else
+                minRange = p.trVars.stimulatedElectrode - floor((p.trVars.numStimElectrodes)/2);
+                maxRange = p.trVars.stimulatedElectrode + floor((p.trVars.numStimElectrodes - 1)/2);
+                p.trVars.stimElectrodeList = minRange:maxRange;
+                p.trVars.stimPolarities = zeros(1, p.trVars.numStimElectrodes);
+            end
+        end   
+
+
+    case 'pick_all_channels'
+
+        if any(p.trVars.stimList{p.trVars.stimListIndex}(1,:) < 1) || any(p.trVars.stimList{p.trVars.stimListIndex}(1,:) > 64)
+            error ('One of the chosen electrodes are out of bounds');
+        else
+            p.trVars.stimElectrodeList = p.trVars.stimList{p.trVars.stimListIndex}(1,:);
+            p.trVars.stimPolarities = p.trVars.stimList{p.trVars.stimListIndex}(2,:);
+        end
+end
+
+% Use channel-mapping to convert to Ripple channel
+p.trVars.rippleStimElectrodes = p.init.electrodeInfo.rippleChannel (p.trVars.stimElectrodeList);
+
+
+
+
+
+
+
+
+
+
 
 
 % Determine current based on where we are in the staircase procedure
 
-if p.status.staircaseHits >= 2 && p.status.staircaseCurrentIndex > 1 
+if p.status.staircaseHits >= 2 && p.status.staircaseCurrentIndex > 1  && p.trVars.overrideStaircase <= 0
     p.status.staircaseCurrentIndex = p.status.staircaseCurrentIndex - 1;
     p.status.staircaseHits = 0;
     p.status.staircaseMisses = 0;
 
-elseif p.status.staircaseMisses >= 2 && p.status.staircaseCurrentIndex < numel(p.trVars.ampVals)
+elseif p.status.staircaseMisses >= 2 && p.status.staircaseCurrentIndex < numel(p.trVars.ampVals) && p.trVars.overrideStaircase <= 0
     p.status.staircaseCurrentIndex = p.status.staircaseCurrentIndex + 1;
     p.status.staircaseHits = 0;
     p.status.staircaseMisses = 0;
 
 end
 
-p.trVars.stimAmplitude = p.trVars.ampVals (p.status.staircaseCurrentIndex);
+% If overrideStaircase is not 0, use it as the stimAmplitude instead
+if p.trVars.overrideStaircase > 0
+    p.trVars.stimAmplitude = p.trVars.overrideStaircase;
+else
+    p.trVars.stimAmplitude = p.trVars.ampVals (p.status.staircaseCurrentIndex);
+end
 % ***********
+
 
 
 
@@ -478,6 +577,10 @@ p.trVars.stimAmplitude = p.trVars.stimCurrentSteps*2;
 %}
 
 
+% Turn off stimulation in case it's still on for some reason, as we can't
+% change the step size if stimulation is ongoing
+pds.xippmex ('stim', 'enable', 0);
+
 % If adjusting step size depending on current being delivered:
 if p.trVars.stimAmplitude > 210
     % We've set a limit on not going above 210 uA, so this error will catch
@@ -487,7 +590,7 @@ if p.trVars.stimAmplitude > 210
 elseif p.trVars.stimAmplitude <= 100
 
     % send command to change step size to 1
-    pds.xippmex('stim', 'res', p.trVars.rippleStimElectrode, 1);
+    pds.xippmex('stim', 'res', p.trVars.rippleStimElectrodes, 1);
 
     % # steps = stim amplitude
     p.trVars.stimCurrentSteps = p.trVars.stimAmplitude;
@@ -496,7 +599,7 @@ elseif p.trVars.stimAmplitude <= 100
 elseif p.trVars.stimAmplitude > 100 && p.trVars.stimAmplitude <= 200
 
     % send command to change step size to 2
-    pds.xippmex('stim', 'res', p.trVars.rippleStimElectrode, 2);
+    pds.xippmex('stim', 'res', p.trVars.rippleStimElectrodes, 2);
 
     % # steps = stim amplitude / 2. Steps must be whole number, so
     % stimAmplitude must be an even number. We must overwrite stimAmplitude
@@ -508,7 +611,7 @@ elseif p.trVars.stimAmplitude > 100 && p.trVars.stimAmplitude <= 200
 elseif p.trVars.stimAmplitude > 200 && p.trVars.stimAmplitude <= 500
 
     % send command to change step size to 5
-    pds.xippmex('stim', 'res', p.trVars.rippleStimElectrode, 3);
+    pds.xippmex('stim', 'res', p.trVars.rippleStimElectrodes, 3);
 
     % # steps = stim amplitude / 5. Steps must be whole number, so
     % stimAmplitude must be divisible by 5. We must overwrite stimAmplitude
@@ -523,7 +626,64 @@ else
 
 end
 
+% For this task, we are always using the same stimAmplitude, but
+% to stay consistent with other tasks, we are strobing the value
+% for every electrode
+p.trVars.stimAmplitudeStrobes = repmat(p.trVars.stimAmplitude, 1, numel(p.trVars.stimElectrodeList));
 
+
+% Message we will display while microstimming
+if p.trVars.trialType == 4
+    p.trVars.microstimDispMessage = ['Opposite polarity microstim @ ', num2str(p.trVars.stimAmplitude), ' uA / ', num2str(p.trVars.stimCurrentSteps), ' steps on channel(s) '];
+else
+    p.trVars.microstimDispMessage = ['Microstim @ ', num2str(p.trVars.stimAmplitude), ' uA / ', num2str(p.trVars.stimCurrentSteps), ' steps on channel(s) '];
+end
+
+% Make stimulation trains
+for i = 1:numel(p.trVars.rippleStimElectrodes)
+    
+    %Make stimulation train
+    cmdTemp = struct ('elec', p.trVars.rippleStimElectrodes(i), ...
+    'period', p.trVars.cmdPeriod, 'repeats', p.trVars.cmdRepeats);
+
+    % cmd.seq(1) describes the first phase of the biphasic pulse
+    cmdTemp.seq(1) = struct('length', p.trVars.cmdSeqLength, 'ampl', p.trVars.stimCurrentSteps, ...
+        'pol', p.trVars.stimPolarities(i), 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
+
+    % cmd.seq(2) describes the interphase interval of the biphasic pulse
+    cmdTemp.seq(2) = struct('length', p.trVars.cmdSeqIPI, 'ampl', 0, ...
+        'pol', 0, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
+
+    % cmd.seq(3) describes the second phase of the biphasic pulse. It
+    % should always be opposite polarity to the first phase
+    if cmdTemp.seq(1).pol == 0
+        cmdTemp.seq(3) = struct('length', p.trVars.cmdSeqLength, 'ampl', p.trVars.stimCurrentSteps, ...
+            'pol', 1, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
+    elseif cmdTemp.seq(1).pol == 1
+        cmdTemp.seq(3) = struct('length', p.trVars.cmdSeqLength, 'ampl', p.trVars.stimCurrentSteps, ...
+            'pol', 0, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);  
+    else
+        error ('Microstim polarity was not set correctly');
+    end
+
+
+    % Add this electrode's command to the list of commands to send
+    p.trVars.stimCommands(i) = cmdTemp;
+
+    % While we're looping, also build the message we will display while
+    % stimulating
+    p.trVars.microstimDispMessage = [p.trVars.microstimDispMessage, num2str(p.trVars.stimElectrodeList(i)), ', '];
+
+end
+
+% Remove the last ', ' from the display message
+p.trVars.microstimDispMessage = p.trVars.microstimDispMessage(1:end-2);
+
+
+
+
+
+%{
 % Make stimulation train
 p.trVars.cmd = struct ('elec', p.trVars.rippleStimElectrode, ...
     'period', p.trVars.cmdPeriod, 'repeats', p.trVars.cmdRepeats);
@@ -590,6 +750,7 @@ elseif p.trVars.trialType == 5 % Two-channel stimulation
         'pol', 1, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
 
 end
+%}
 
 end
 

@@ -1,7 +1,7 @@
-function p = numerosity_settings_temporal
-%  p = numerosity_settings_temporal
+function p = sacc_to_phosph_settings
+%  p = seansFirstTask_settings
 %
-%   numerosity task
+%   seansFirstTask task
 % =============
 % gSac - guided saccades. 
 % This is your stock visually- or memory-guided saccade task.
@@ -25,6 +25,7 @@ function p = numerosity_settings_temporal
 % All settings are set here.
 %   s struct has status values that change within the trial
 %   p struct has control parameters that are defined once
+
 
 %%
 % p.init;           % all things that are saved once except for trialVarsInit
@@ -66,9 +67,9 @@ p.init.rigConfigFile     = which(['rigConfigFiles.rigConfig_rig' ...
     p.init.pcName(end-1)]);
 
 % define task name and related files:
-p.init.taskName     = 'numerosity';
+p.init.taskName     = 'sacc_to_phosph';
 
-p.init.exptType     = 'temporal';
+p.init.exptType     = 'pick_one_channel';
 
 %% Task Code
 codes           = pds.initCodes;
@@ -105,16 +106,6 @@ p.init.taskActions{4} = 'pdsActions.stopAudioSchedule';
 p.init.taskActions{5} = 'pdsActions.rewardDrain';
 
 
-% Define the Action M-files
-% User-defined actions that are either within the task folder under
-% "actions" or within the +pds package under "actions":
-p.init.taskActions{1} = 'pdsActions.dataToWorkspace';
-p.init.taskActions{2} = 'pdsActions.blackScreen';
-p.init.taskActions{3} = 'pdsActions.alphaBinauralBeats';
-p.init.taskActions{4} = 'pdsActions.stopAudioSchedule';
-p.init.taskActions{5} = 'pdsActions.rewardDrain';
-
-
 %% audio:
 p.audio.audsplfq    = 48000;
 p.audio.Hitfq       = 600;
@@ -131,18 +122,17 @@ p.state.dontMove            = 4;
 p.state.makeSaccade         = 5;
 p.state.checkLanding        = 6;
 p.state.holdTarg            = 7;
-p.state.sacComplete	    = 8;
 
 % end states - success:
-p.state.correctTarget       = 21;
-p.state.wrongTarget         = 22;
+p.state.sacComplete         = 21;
 p.state.heldFix             = 23;
 
 % end states - aborted:
 p.state.fixBreak            = 31;
-%p.state.joyBreak            = 32;
+% p.state.joyBreak            = 32;
 p.state.nonStart            = 33;
 p.state.failedToHoldTarg    = 34;
+p.state.lateSaccade         = 35;
 
 %% STATUS VALUES
 
@@ -155,32 +145,22 @@ p.status.pGoodMem                   = 0; % proportion good (ie successfuly compl
 p.status.iTarget                    = 1; % iterator into the list of target locations (defined in _init). Used when multiple locations are predeteremined (e.g. a grid of targets).  
 p.status.trialsLeftInBlock          = 0; % how many trials remain in the current block?
 
-p.status.visTrials                  = 0;
-p.status.visTrialsOneStimNumHits    = 0;
-p.status.visTrialsOneStimNumMisses  = 0;
-p.status.visTrialsTwoStimNumHits    = 0;
-p.status.visTrialsTwoStimNumMisses  = 0;
 
-p.status.microstimTrials                    = 0;
-p.status.microstimTrialsOneStimNumHits      = 0;
-p.status.microstimTrialsOneStimNumMisses    = 0;
-p.status.microstimTrialsTwoStimNumHits      = 0;
-p.status.microstimTrialsTwoStimNumMisses    = 0;
 
 p.rig.guiStatVals = {...   
-    'iTrial'; ...
+    'staircaseCurrentIndex'; ...
+    'staircaseHits'; ...
+    'staircaseMisses'; ...
     'visTrials'; ...
-    'visTrialsOneStimNumHits'; ...
-    'visTrialsOneStimNumMisses'; ...
-    'visTrialsTwoStimNumHits'; ...
-    'visTrialsTwoStimNumMisses'; ...
+    'visNumHits'; ...
+    'visNumMisses'; ...
     'microstimTrials'; ...
-    'microstimTrialsOneStimNumHits'; ...
-    'microstimTrialsOneStimNumMisses'; ...
-    'microstimTrialsTwoStimNumHits'; ...
-    'microstimTrialsTwoStimNumMisses'; ...
-    'trialsLeftInBlock'; ...   
-};              
+    'mstimHitsCurrent'; ...
+    'mstimMissCurrent'; ...
+    'noStimTrials'; ...
+    'correctRejects'; ...
+    'falseAlarms'; ...
+    };              
 
 %% user determines the 12 variables are shown in gui upon init
 % here you just list the vars you want to see. You do not set them, yet.
@@ -189,17 +169,28 @@ p.rig.guiStatVals = {...
 
 p.rig.guiVars = {...
     'mouseEyeSim';...
-    'passJoy'; ...          
-    'passEye'; ...
-    'rewardDurationMs'; ...       
-    'stimRangeXmin'; ...
-    'stimRangeXmax'; ...
-    'stimRangeYmin'; ...
-    'stimRangeYmax'; ...
-    'stimDurMin'; ...
-    'stimDurMax'; ...        % 6
-    'fixDegX'; ...
-    'fixDegY'};              % 12
+    'stimulatedElectrode'; ...          
+    'numStimElectrodes'; ...
+    'rewardDurationMs';...
+    'cmdPeriod'; ...       
+    'cmdRepeats'; ...
+    'cmdSeqLength'; ...
+    'cmdSeqIPI'; ...
+    'visTargWinWidthDeg'; ...
+    'visTargWinHeightDeg'; ...
+    'staircaseStartingIndex';...
+    'overrideStaircase'; ...  
+    };              
+
+
+
+%% INIT VARIABLES 
+% vars that are only set once
+
+% Which experiment are we running? The full version with all trial types? 
+% The single-stimulus-only version? Something else?
+
+
 
 %% TRIAL VARIABLES
 % vars that may change throughout an experimental session and are therefore
@@ -239,23 +230,19 @@ p.trVarsInit.setTargLocViaTrialArray    = false;
 p.trVarsInit.propVis             = 1;  % proportion of visually-guided saccades out of the total (i.e. propMem would equal 1 - pVis )
 p.trVarsInit.fixDegX             = 0;    % fixation X location in degrees 
 p.trVarsInit.fixDegY             = 0;    % fixation Y location in degrees
-p.trVarsInit.targOneDegX         = 0;
-p.trVarsInit.targOneDegY         = 10.0;
-p.trVarsInit.targTwoDegX         = 0;
-p.trVarsInit.targTwoDegY         = -10.0;
-p.trVarsInit.targDegX		 = [p.trVarsInit.targOneDegX p.trVarsInit.targTwoDegX];
-p.trVarsInit.targDegY		 = [p.trVarsInit.targOneDegY p.trVarsInit.targTwoDegY];
+p.trVarsInit.targDegX		     = 0;
+p.trVarsInit.targDegY		     = 0;
 p.trVarsInit.numDots             = 0; % how many dots does the target stimulus have on this trial?
 p.trVarsInit.twoTargSepDeg       = 1; % how far apart should the two target dots be? (in dva?)
 p.trVarsInit.twoStimSepDegMin    = 0.05; % how far apart should the two stim dots be? (in dva?)
 p.trVarsInit.twoStimSepDegMax    = 1.5;
-p.trVarsInit.stimRangeRadius	 = 13.0; % create stimuli randomly within radius of __? (in pixels?)
-p.trVarsInit.stimRangeXmin	 = -28.0; % Alternate method of randomly positioning stimuli, between Xmin and Xmax
-p.trVarsInit.stimRangeXmax	 = 28.0;
-p.trVarsInit.stimRangeYmin	 = -17.5; % Together with previous lines, randomly position stimuli between Ymin and Ymax
-p.trVarsInit.stimRangeYmax	 = 17.5;
+%p.trVarsInit.stimRangeRadius	 = 13.0; % create stimuli randomly within radius of __? (in pixels?)
+p.trVarsInit.stimRangeXmin	 = -24.0; % Alternate method of randomly positioning stimuli, between Xmin and Xmax
+p.trVarsInit.stimRangeXmax	 = 24.0;
+p.trVarsInit.stimRangeYmin	 = -14; % Together with previous lines, randomly position stimuli between Ymin and Ymax
+p.trVarsInit.stimRangeYmax	 = 14;
 p.trVarsInit.stimSizeMin	 = 0.1; % create stimuli of what size? (randomly chosen between min and max, in dva)
-p.trVarsInit.stimSizeMax	 = 0.3;
+p.trVarsInit.stimSizeMax	 = 0.5;
 p.trVarsInit.oneStimRotationRange= 360; % Range within which individual stimuli are rotated
 p.trVarsInit.twoStimRotationRange= 360; % Range within which stimuli are rotated relative to each other
 
@@ -263,7 +250,7 @@ p.trVarsInit.stimShape		 = 0;
 p.trVarsInit.targsSameColor	 = false;
 
 % times/latencies/durations:
-p.trVarsInit.rewardDurationMs        = 180; % reward duration
+p.trVarsInit.rewardDurationMs        = 140; % reward duration
 p.trVarsInit.rewardDelay             = 0;        % delay between cued change and reward delivery for hits.
 p.trVarsInit.timeoutAfterFa          = 2;        % timeout duration following false alarm.
 p.trVarsInit.joyWaitDur              = 5;        % how long to wait for the subject to press the joystick at the beginning of a trial?
@@ -279,60 +266,84 @@ p.trVarsInit.postRewardDuration      = 0.25;     % how long should the trial las
 p.trVarsInit.targetFlashDuration     = 0.2;      % Duration target stays on for the memory-guided trials.
 % p.trVarsInit.postFlashFixMin       = 1;    % minimum post-flash fixation-duration
 % p.trVarsInit.postFlashFixMax       = 1.5;  % maximum post-flash fixation-duration
-p.trVarsInit.targHoldDuration        = 0.3;  % duration to maintain fixation on the target post-saccade 
-p.trVarsInit.maxSacDurationToAccept  = 0.1; % this is the max duration of a saccades that we're willing to wait for. 
+p.trVarsInit.targHoldDurationMin     = 0.15;  % minimum duration to maintain fixation on the target post-saccade 
+p.trVarsInit.targHoldDurationMax     = 0.15;      % maximum duration to maintain fixation on the target post-saccade 
+p.trVarsInit.maxSacDurationToAccept  = 0.15; % this is the max duration of a saccades that we're willing to wait for. 
 p.trVarsInit.targetReillumDelay      = 0.15; % the delay (s) between saccadeOffset (ie entry into target window) and target reillumination
-p.trVarsInit.goLatencyMin            = 0.1;  % minimum saccade-latency criterion
-p.trVarsInit.goLatencyMax            = 0.5;  % maximum saccade-latency criterion
+p.trVarsInit.goLatencyMin            = 0.05;  % minimum saccade-latency criterion
+p.trVarsInit.goLatencyMax            = 0.3;  % maximum saccade-latency criterion
 % p.trVarsInit.preTargMin            = 0.75; % minimum fixation-only time before target onset
 % p.trVarsInit.preTargMax            = 1;    % maximum fixation-only time before target onset
 
-p.trVarsInit.totalFixDur             = 1.3; % Total duration from FixAq to FixOff (go cue)
-p.trVarsInit.stimOnsetMin	         = 0.2; % Minimum time after fixation before stim comes on
-p.trVarsInit.targOnsetMin            = 0.1; % Minimum time after stim goes off before target onset
-p.trVarsInit.goTimePostTarg          = 0.15; % Time from targ onset to the 'go' signal to saccade (which is fixation offset)
+
+% Visual stimulus variables
+p.trVarsInit.stimOnsetMin	     = 0.3; % Time after fixation before stim comes on
+p.trVarsInit.stimOnsetMax	     = 0.8; % Once trained, should be 0.3 to 0.7
+p.trVarsInit.stimDurMin		     = 0.12; % Time stim stays on
+p.trVarsInit.stimDurMax		     = 0.20;
+p.trVarsInit.totalFixDur         = 1.5; % Total time from fixAcq to "heldFix" state
 
 p.trVarsInit.screenshotFlag      = 0; % Flag used to determine when to screenshot for visual trials
 
-%{
-p.trVarsInit.stimOnsetMin	     = 0.25; % Time after fixation before stim comes on
-p.trVarsInit.stimOnsetMax	     = 0.4;
-p.trVarsInit.stimDurMin		     = 0.12; % Time stim stays on
-p.trVarsInit.stimDurMax		     = 0.20;
-p.trVarsInit.targOnsetMin            = 0.15; % Time after stim goes off before target onset
-p.trVarsInit.targOnsetMax            = 0.2;
-p.trVarsInit.goTimePostTargMin       = 0.25; % min duration from targ onset to the 'go' signal to saccade p.draw.clutIdx.expRed_subRed(which is fixation offset)
-p.trVarsInit.goTimePostTargMax       = 0.4; % max duration from targ onset to the 'go' signal to saccade (which is fixation offset)
-
-p.trVarsInit.interStimIntervalMin    = 0.03; % For temporal task; time between stims
-p.trVarsInit.interStimIntervalMax    = 0.12; 
-%}
-
-% Microstim variables
+%%%%%%%%%%%%%%%%%%%%%%%
+% Microstim variables %
+%%%%%%%%%%%%%%%%%%%%%%%
 
 p.trVarsInit.connectRipple           = true;
-p.trVarsInit.stopIfNotRecording      = true;
+%p.trVarsInit.stopIfNotRecording      = false;
 
-% Load in data about the electrode (Channel mapping, RFs, SNR, etc.)
-p.init.electrodeInfo = load ('electrodeInfo.mat'); % make sure to make the address correct
+% Flag to notify only once if we're stimulating on an electrode that is not 
+% on the good electrode list. Reset when switching to a new electrode
+p.status.badElectrodeWarningFlag            = true;
 
-% p.init.electrodeInfo.rippleChannel = [1:2:31 ...
-%                                2:2:32 ...
-%                                129:2:159, ...
-%                                130:2:160];
+% Load in data about the electrode (RFs, SNR, etc.)
+p.init.electrodeInfo = load ('electrodeInfo.mat'); % Load in data about the electrodes from RF mapping
 
-p.trVarsInit.cmdPeriod              = 100; % duration between two pulses, in 33.333 us clock cycles, calculated as 30,000/stimFrequency
-p.trVarsInit.cmdRepeats             = 50; % number of pulses
+p.trVarsInit.stimulatedElectrode = -1; % initialized to -1 to force user to set it when starting
+p.status.previousElectrode = p.trVarsInit.stimulatedElectrode; % Used to check when the stimulated electrode has been switched
+p.trVarsInit.numStimElectrodes = 1; % Used for N-channel stimulation
+p.trVarsInit.cmdPeriod = 100; % In 33.333 us clock cycles, calculated as 30,000/stimFrequency
+p.trVarsInit.cmdRepeats = 50; % Number of pulses
+p.trVarsInit.cmdSeqLength = 5; % Duration of single phase of pulse, in 33.333 us clock cycles
+p.trVarsInit.cmdSeqIPI = 2; % Duration of interphase interval, in 33.333 us clock cycles
 
-p.trVarsInit.cmdSeqLength           = 5; % Duration of single phase of pulse, in 33.333 us clock cycles
-p.trVarsInit.cmdSeqIPI              = 2; % Duration of interphase interval, in 33.333 us clock cycles
+% For staircase procedure
+%p.trVarsInit.ampVals = [1, 2, 3, 4, 5, 6, 7, 9, 12, 14, 18, ...
+%                            23, 28, 35, 44, 55, 69, 86, 108, 134, 168, 210];
+                            
+p.trVarsInit.ampVals = [1, 5, 12, 18, 23, 35, 44, 55, 69, 86, 108, 134, 168, 210];                     
+                            
+p.trVarsInit.staircaseStartingIndex = 1;
 
-%p.trVarsInit.refStimElectrode       = -1; % Initialized to -1 to force user to set it
+p.trVarsInit.overrideStaircase = 0; % When not 0, ignore staircase and use this value instead
 
-p.trVarsInit.stimElectrode1         = 0; % Initialized to 0;
-p.trVarsInit.stimElectrode2         = 0; 
-p.trVarsInit.stimAmplitude1         = 0; % Initialized to 0;
-p.trVarsInit.stimAmplitude2         = 0; 
+% Predicted RF circle size, in dva
+p.trVarsInit.predRFCircleSize = 5;
+
+% Status variables for this task. Normally should be above but certain 
+% variables aren't initialized yet so it's down here instead.
+p.status.visTrials = 0;
+p.status.visNumHits = 0;
+p.status.visNumMisses = 0;
+p.status.propVisHits = 0;
+
+p.status.microstimTrials = 0;
+p.status.microstimNumHits = zeros (64, numel(p.trVarsInit.ampVals));
+p.status.microstimNumMisses = zeros (64, numel(p.trVarsInit.ampVals));
+
+p.status.mstimHitsCurrent = 0;
+p.status.mstimMissCurrent = 0;
+p.status.propMstimHitsCurrent = 0;
+
+p.status.staircaseCurrentIndex = p.trVarsInit.staircaseStartingIndex;
+p.status.staircaseHits = 0;
+p.status.staircaseMisses = 0;
+
+p.status.noStimTrials = 0;
+p.status.correctRejects = 0;
+p.status.falseAlarms = 0;
+p.status.propNoStimRejects = 0;
+
 
 p.trVarsInit.maxFixWait              = 5;    % maximum time to wait for fixation-acquisition
 p.trVarsInit.targOnSacOnly           = 1;    % condition target reappearance on saccade?
@@ -347,10 +358,15 @@ p.trVarsInit.minTargAmp              = 3;    % minimum target amplitude
 p.trVarsInit.maxTargAmp              = 18;   % maximum target amplitude
 p.trVarsInit.staticTargAmp           = 12;  % fixed target amplitude
 
-p.trVarsInit.fixWinWidthDeg       = 2;        % fixation window width in degrees
-p.trVarsInit.fixWinHeightDeg      = 2;        % fixation window height in degrees
-p.trVarsInit.targWinWidthDeg      = 4;        % target window width in degrees
-p.trVarsInit.targWinHeightDeg     = 4;        % target window height in degrees
+p.trVarsInit.fixWinWidthDeg       = 1.5;        % fixation window width in degrees
+p.trVarsInit.fixWinHeightDeg      = 1.5;        % fixation window height in degrees
+p.trVarsInit.visTargWinWidthDeg      = 3.5;        % target window width in degrees, for visual stimuli
+p.trVarsInit.visTargWinHeightDeg     = 3.5;        % target window height in degrees, for visual stimuli
+%p.trVarsInit.microstimTargWinWidthDeg      = 8;        % target window width in degrees, for microstim
+%p.trVarsInit.microstimTargWinHeightDeg     = 8;        % target window height in degrees, for microstim
+
+p.trVarsInit.targWinWidthDeg         = 0;       % These are the variables that are actually used in eyeInWindow
+p.trVarsInit.targWinHeightDeg        = 0;       % They are changed to different values depending on trial type
 
 
 % I don't think I need to carry these around in 'p'....
@@ -497,8 +513,8 @@ p.draw.clutIdx.expBlack_subBlack         = 0;
 p.draw.clutIdx.expGrey25_subBg           = 1;
 p.draw.clutIdx.expBg_subBg               = 2;
 p.draw.clutIdx.expGrey70_subBg           = 3;
-p.draw.clutIdx.expRed_subRed             = 4;
-p.draw.clutIdx.expGreen_subGreen         = 5;
+p.draw.clutIdx.expWhite_subWhite         = 4;
+p.draw.clutIdx.expRed_subBg              = 5;
 p.draw.clutIdx.expOrange_subBg           = 6;
 p.draw.clutIdx.expBlue_subBg             = 7;
 p.draw.clutIdx.expCyan_subCyan           = 8;
@@ -518,10 +534,9 @@ p.draw.clutIdx.expCyan_subBg             = 16;
 % CLUT section above.
 p.draw.color.background     = p.draw.clutIdx.expBg_subBg;                   % background CLUT index
 p.draw.color.cursor         = p.draw.clutIdx.expOrange_subBg;               % cursor CLUT index
-p.draw.color.fixWhenOn      = p.draw.clutIdx.expGreen_subGreen;             % fixation CLUT index
 p.draw.color.fix            = p.draw.clutIdx.expBg_subBg;                   % fixation CLUT index
 p.draw.color.fixWin         = p.draw.clutIdx.expBg_subBg;                   % fixation window CLUT index
-p.draw.color.targ           = p.draw.clutIdx.expBlack_subBlack;             % fixation CLUT index
+p.draw.color.targ           = p.draw.clutIdx.expWhite_subWhite;             % fixation CLUT index
 p.draw.color.targWin        = p.draw.clutIdx.expBg_subBg;                   % fixation window CLUT index
 p.draw.color.eyePos         = p.draw.clutIdx.expBlue_subBg;                 % eye position indicator CLUT index
 p.draw.color.gridMajor      = p.draw.clutIdx.expGrey90_subBg;               % grid line CLUT index
@@ -529,6 +544,7 @@ p.draw.color.gridMinor      = p.draw.clutIdx.expGrey70_subBg;               % gr
 p.draw.color.cueRing        = p.draw.clutIdx.expOldGreen_subOldGreen;       % fixation window CLUT index
 p.draw.color.joyInd         = p.draw.clutIdx.expGrey90_subBg;               % joy position indicator CLUT index
 p.draw.color.mouseCursor    = p.draw.clutIdx.expCyan_subBg;                % mouse cursor
+p.draw.color.predRFCircle   = p.draw.clutIdx.expCyan_subBg;                  % Predicted RF location
 
 %% draw - these are paramters used for drawing
 % the boring stuff, like width and height of stuff that gets drawn.
@@ -577,13 +593,12 @@ p.draw.cursorW              = 6;        % cursor width in pixels
 %   pds.str2code.m, pds.code2str.m
 
 p.init.strobeList = {...
-    'taskCode',         'p.init.taskCode'; ...
-    'trialCode',        'p.init.trialsArray(p.trVars.currentTrialsArrayRow, strcmp(p.init.trialArrayColumnNames, ''trialCode''))';
+    'taskCode',         'p.init.codes.uniqueTaskCode_sacc_to_phosph'; ...
+    'trialCode',        'p.init.trialsArray(p.trVars.currentTrialsArrayRow, strcmp(p.init.trialArrayColumnNames, ''trialCode''))'; ...
     'trialEndState'     'p.trData.trialEndState'; ...
-    'microStimChannel', 'p.trVars.stimElectrode1'; ...
-    'microStimCurrAmp', 'p.trVars.stimAmplitude1'; ...
-    'microStimChanne;', 'p.trVars.stimElectrode2'; ...
-    'microStimCurrAmp', 'p.trVars.stimAmplitude2'; ...
+    'microStimChannel', 'p.trVars.stimElectrodeList'; ...
+    'microStimCurrAmp', 'p.trVars.stimAmplitudeStrobes'; ...
+    'microStimPolarity', 'p.trVars.stimPolarities'; ...
     };
 
 

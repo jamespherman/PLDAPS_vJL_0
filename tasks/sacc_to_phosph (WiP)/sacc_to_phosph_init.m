@@ -34,7 +34,7 @@ Datapixx('EnableDoutDinLoopback');
 % define audio waveforms and load to VIEWPixx
 p   = pds.initAudio(p);
 
-% define online-plotting windows (and reposition others).
+% define online-plotting windows
 p   = plotWindowSetup(p);
 
 % define grid line locations:

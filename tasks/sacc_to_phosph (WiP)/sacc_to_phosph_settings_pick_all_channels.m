@@ -68,7 +68,32 @@ p.init.rigConfigFile     = which(['rigConfigFiles.rigConfig_rig' ...
 
 % define task name and related files:
 p.init.taskName     = 'sacc_to_phosph';
-p                   = pds.initTaskMetadata(p); % ye ye I know, shouldn't this be in init? well it's here. For now...
+
+p.init.exptType     = 'pick_all_channels';
+
+%% Task Code
+codes           = pds.initCodes;
+p.init.taskCode = codes.(['uniqueTaskCode_' p.init.taskName]);
+
+%% Meta Data:
+
+p.init.pldapsFolder     = pwd;                          % pldaps gui takes us to taks folder automatically once we choose a settings file
+p.init.protocol_title   = [p.init.taskName '_task'];    % Define Banner text to identify the experimental protocol
+p.init.date_1yyyy       = str2double(['1' datestr(now,'yyyy')]); % gotta add a '1' otherwise date/times starting with zero lose that zero in conversion to double.
+p.init.date_1mmdd       = str2double(['1' datestr(now,'mmdd')]);
+p.init.time_1hhmm       = str2double(['1' datestr(now,'HHMM')]);
+
+% output files:
+p.init.outputFolder     = fullfile(p.init.pldapsFolder, 'output');
+p.init.figureFolder     = fullfile(p.init.pldapsFolder, 'output', 'figures');
+p.init.sessionId        = [datestr(now,'yyyymmdd_tHHMM') '_' p.init.taskName '_' p.init.exptType];     % Define the prefix for the Output File
+p.init.sessionFolder    = fullfile(p.init.outputFolder, p.init.sessionId);
+
+% Define the "init", "next", "run", and "finish" ".m" files.
+p.init.taskFiles.init   = [p.init.taskName '_init.m'];
+p.init.taskFiles.next   = [p.init.taskName '_next.m'];
+p.init.taskFiles.run    = [p.init.taskName '_run.m'];
+p.init.taskFiles.finish = [p.init.taskName '_finish.m'];
 
 
 % Define the Action M-files
@@ -135,7 +160,7 @@ p.rig.guiStatVals = {...
     'noStimTrials'; ...
     'correctRejects'; ...
     'falseAlarms'; ...
-};              
+    };              
 
 %% user determines the 12 variables are shown in gui upon init
 % here you just list the vars you want to see. You do not set them, yet.
@@ -144,22 +169,28 @@ p.rig.guiStatVals = {...
 
 p.rig.guiVars = {...
     'mouseEyeSim';...
-    'stimulatedElectrode'; ...          
-    'passEye'; ...
-    'rewardDurationMs'; ...       
-    'stimRangeXmin'; ...
-    'stimRangeXmax'; ...
-    'stimRangeYmin'; ...
-    'stimRangeYmax'; ...
-    'stimDurMin'; ...
-    'stimDurMax'; ...        % 6
-    'fixDegX'; ...
-    'fixDegY'};              % 12
+    'stimListIndex'; ...          
+    'rewardDurationMs';...
+    'cmdPeriod'; ...       
+    'cmdRepeats'; ...
+    'cmdSeqLength'; ...
+    'cmdSeqIPI'; ...
+    'visTargWinWidthDeg'; ...
+    'visTargWinHeightDeg'; ...
+    'totalFixDur';...
+    'staircaseStartingIndex';...
+    'overrideStaircase'; ...  
+    };              
 
 
 
 %% INIT VARIABLES 
 % vars that are only set once
+
+% Which experiment are we running? The full version with all trial types? 
+% The single-stimulus-only version? Something else?
+
+
 
 %% TRIAL VARIABLES
 % vars that may change throughout an experimental session and are therefore
@@ -254,7 +285,9 @@ p.trVarsInit.totalFixDur         = 1.5; % Total time from fixAcq to "heldFix" st
 
 p.trVarsInit.screenshotFlag      = 0; % Flag used to determine when to screenshot for visual trials
 
-% Microstim variables
+%%%%%%%%%%%%%%%%%%%%%%%
+% Microstim variables %
+%%%%%%%%%%%%%%%%%%%%%%%
 
 p.trVarsInit.connectRipple           = true;
 %p.trVarsInit.stopIfNotRecording      = false;
@@ -266,33 +299,46 @@ p.status.badElectrodeWarningFlag            = true;
 % Load in data about the electrode (RFs, SNR, etc.)
 p.init.electrodeInfo = load ('electrodeInfo.mat'); % Load in data about the electrodes from RF mapping
 
-p.trVarsInit.stimulatedElectrode = -1; % initialized to -1 to force user to set it when starting
-p.trVarsInit.stimulatedElectrodeStrobe = 0; % Value we strobe. Separate from "stimulatedElectrode" because we want to strobe 0 on visual trials
-p.status.previousElectrode = p.trVarsInit.stimulatedElectrode; % Used to check when the stimulated electrode has been switched
+p.trVarsInit.stimList = {[1 2 3 4;... % 1
+                          0 1 0 1];...
+
+                         [6 20 37 44;... % 2
+                          0 0  0  0];...
+
+                         [0 60;... % 3
+                          1 1]; 
+                        };
+
+% Which of the above sets of electrodes do you want to stimulate on? 
+% Initialized to -1 to force user to set it when starting
+p.trVarsInit.stimListIndex = -1; 
+p.status.previousIndex = p.trVarsInit.stimListIndex; % Used to check when the stimulated electrodes have been switched
+
 p.trVarsInit.cmdPeriod = 100; % In 33.333 us clock cycles, calculated as 30,000/stimFrequency
 p.trVarsInit.cmdRepeats = 50; % Number of pulses
 p.trVarsInit.cmdSeqLength = 5; % Duration of single phase of pulse, in 33.333 us clock cycles
 p.trVarsInit.cmdSeqIPI = 2; % Duration of interphase interval, in 33.333 us clock cycles
-p.trVarsInit.stimAmplitude = 0; % Initialized to 0; on non-microstim trials it should strobe 0
 
 % For staircase procedure
 p.trVarsInit.ampVals = [1, 2, 3, 4, 5, 6, 7, 9, 12, 14, 18, ...
                             23, 28, 35, 44, 55, 69, 86, 108, 134, 168, 210];
 p.trVarsInit.staircaseStartingIndex = 1;
 
+p.trVarsInit.overrideStaircase = 0; % When not 0, ignore staircase and use this value instead
+
 % Predicted RF circle size, in dva
 p.trVarsInit.predRFCircleSize = 5;
 
 % Status variables for this task. Normally should be above but certain 
-% variables aren't initialized yet so it's down here instead.
+% relevant variables aren't initialized yet so it's down here instead.
 p.status.visTrials = 0;
 p.status.visNumHits = 0;
 p.status.visNumMisses = 0;
 p.status.propVisHits = 0;
 
 p.status.microstimTrials = 0;
-p.status.microstimNumHits = zeros (64, numel(p.trVarsInit.ampVals));
-p.status.microstimNumMisses = zeros (64, numel(p.trVarsInit.ampVals));
+p.status.microstimNumHits = zeros (numel(p.trVarsInit.stimList), numel(p.trVarsInit.ampVals));
+p.status.microstimNumMisses = zeros (numel(p.trVarsInit.stimList), numel(p.trVarsInit.ampVals));
 
 p.status.mstimHitsCurrent = 0;
 p.status.mstimMissCurrent = 0;
@@ -323,8 +369,8 @@ p.trVarsInit.staticTargAmp           = 12;  % fixed target amplitude
 
 p.trVarsInit.fixWinWidthDeg       = 1.5;        % fixation window width in degrees
 p.trVarsInit.fixWinHeightDeg      = 1.5;        % fixation window height in degrees
-p.trVarsInit.visTargWinWidthDeg      = 3;        % target window width in degrees, for visual stimuli
-p.trVarsInit.visTargWinHeightDeg     = 3;        % target window height in degrees, for visual stimuli
+p.trVarsInit.visTargWinWidthDeg      = 3.5;        % target window width in degrees, for visual stimuli
+p.trVarsInit.visTargWinHeightDeg     = 3.5;        % target window height in degrees, for visual stimuli
 %p.trVarsInit.microstimTargWinWidthDeg      = 8;        % target window width in degrees, for microstim
 %p.trVarsInit.microstimTargWinHeightDeg     = 8;        % target window height in degrees, for microstim
 
@@ -559,8 +605,9 @@ p.init.strobeList = {...
     'taskCode',         'p.init.codes.uniqueTaskCode_sacc_to_phosph'; ...
     'trialCode',        'p.init.trialsArray(p.trVars.currentTrialsArrayRow, strcmp(p.init.trialArrayColumnNames, ''trialCode''))'; ...
     'trialEndState'     'p.trData.trialEndState'; ...
-    'microStimChannel', 'p.trVars.stimulatedElectrodeStrobe'; ...
-    'microStimCurrAmp', 'p.trVars.stimAmplitude'; ...
+    'microStimChannel', 'p.trVars.stimElectrodeList'; ...
+    'microStimCurrAmp', 'p.trVars.stimAmplitudeStrobes'; ...
+    'microStimPolarity', 'p.trVars.stimPolarities'; ...
     };
 
 
