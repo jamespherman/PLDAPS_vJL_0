@@ -53,14 +53,18 @@ p.trData.eventValues = double(p.init.codes.stimOn);
 p.trData.eventTimes  = double(stimOnTimeSim);
 
 bank      = p.init.simKernelBank;
-nSimCh    = bank.nSimulated;
 stimType  = p.init.stimType;
-frameDurS = p.trVars.noiseFrameDurS;
 nFrames   = p.trVars.nFramesThisTrial;
 iTrial    = p.status.iTrial;
 
 if nFrames <= 0
     return;
+end
+
+if strcmp(stimType, 'checkerboard')
+    frameDurS = p.rig.frameDuration;
+else
+    frameDurS = p.trVars.noiseFrameDurS;
 end
 
 % --- Build a stimulus-tensor reference for this trial. ---
@@ -95,46 +99,52 @@ end
 baseSeed = bank.baseSeed;
 
 % --- Per-channel LNP loop. ---
-allSpkAbs    = cell(nSimCh, 1);
-allSpkClust  = cell(nSimCh, 1);
+nTotalCh     = bank.nChannels;
+allSpkAbs    = cell(nTotalCh, 1);
+allSpkClust  = cell(nTotalCh, 1);
 
-for ch = 1:nSimCh
+for ch = 1:nTotalCh
     k = bank.kernels{ch};
     if isempty(k), continue; end
-
-    switch stimType
-        case {'denseAchromatic', 'sparse'}
-            sk = k.spatialKernel;                  % [nY, nX]
-            % proj(t) = sum_{y,x} K_s(y,x) * S(y,x,t)
-            sFlat = double(reshape(S, [], nFrames));   % [nY*nX, nFrames]
-            proj  = sk(:)' * sFlat;                    % [1, nFrames]
-
-        case 'denseChromatic'
-            sk   = k.spatialKernel;                % [nY, nX]
-            wDKL = k.wDKL;                         % [1, 3]
-            % Collapse DKL axes first: c(y,x,t) = sum_c wDKL_c * D(y,x,c,t)
-            Dcollapsed = squeeze( ...
-                wDKL(1) * D(:, :, 1, :) + ...
-                wDKL(2) * D(:, :, 2, :) + ...
-                wDKL(3) * D(:, :, 3, :));          % [nY, nX, nFrames]
-            sFlat = double(reshape(Dcollapsed, [], nFrames));
-            proj  = sk(:)' * sFlat;                % [1, nFrames]
-
-        case 'checkerboard'
-            g0 = k.gainTable(szIdx, ctIdx);
-            proj = g0 * polarity;                  % [1, nFrames]
-    end
-
-    % Temporal filter and variance normalization (analytic, not per-trial).
-    tk = k.temporalKernel;
-    g  = filter(tk, 1, proj(:));
-    g  = g / k.gStd;
 
     % Per-(channel, trial) reproducible RNG.
     seed = mod(baseSeed + ch + 10000 * iTrial, 2^32 - 1);
     rs   = RandStream('mt19937ar', 'Seed', uint32(seed));
 
-    spkRel = simLNPSpikes(g, k.baseRate, k.peakRate, frameDurS, rs);
+    if isfield(k, 'isNoise') && k.isNoise
+        % Noise channel: Poisson at baseRate, no stimulus drive.
+        g = zeros(nFrames, 1);
+        spkRel = simLNPSpikes(g, k.baseRate, 0, frameDurS, rs);
+    else
+        % RF-bearing channel: full LNP pipeline.
+        switch stimType
+            case {'denseAchromatic', 'sparse'}
+                sk = k.spatialKernel;                  % [nY, nX]
+                sFlat = double(reshape(S, [], nFrames));
+                proj  = sk(:)' * sFlat;
+
+            case 'denseChromatic'
+                sk   = k.spatialKernel;                % [nY, nX]
+                wDKL = k.wDKL;                         % [1, 3]
+                Dcollapsed = squeeze( ...
+                    wDKL(1) * D(:, :, 1, :) + ...
+                    wDKL(2) * D(:, :, 2, :) + ...
+                    wDKL(3) * D(:, :, 3, :));          % [nY, nX, nFrames]
+                sFlat = double(reshape(Dcollapsed, [], nFrames));
+                proj  = sk(:)' * sFlat;
+
+            case 'checkerboard'
+                g0 = k.gainTable(szIdx, ctIdx);
+                proj = g0 * polarity;
+        end
+
+        tk = k.temporalKernel;
+        g  = filter(tk, 1, proj(:));
+        g  = g / k.gStd;
+
+        spkRel = simLNPSpikes(g, k.baseRate, k.peakRate, frameDurS, rs);
+    end
+
     if isempty(spkRel), continue; end
 
     spkAbs = stimOnTimeSim + spkRel;

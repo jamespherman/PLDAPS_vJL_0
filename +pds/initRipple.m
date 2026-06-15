@@ -5,6 +5,14 @@ function p = initRipple(p)
 %
 %
 
+% Skip entirely if connectRipple is disabled (sim mode).
+if isfield(p.trVarsInit, 'connectRipple') && ~p.trVarsInit.connectRipple
+    p.rig.ripple.status   = false;
+    p.rig.ripple.recChans = [];
+    p.rig.ripple.stimChans = [];
+    return;
+end
+
 % Initialize connection to ripple NIP.
 p.rig.ripple.status = pds.xippmex;
 

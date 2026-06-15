@@ -50,6 +50,30 @@ if isfield(p.rig, 'ripple') && isfield(p.rig.ripple, 'recChans') && ...
     end
 end
 
+%% (1a) Trim spikes to stimulus presentation window.
+% Same rationale as rfMap_finish.m §(0b): the first getRippleData call
+% reads the entire Ripple buffer (pre-session crossings), and inter-trial
+% crossings accumulate during ITIs. Discard everything outside a generous
+% window around stimulus presentation; the accumulator applies its own
+% precise latency-corrected filter internally.
+if ~isempty(p.trData.spikeTimes) && ~isempty(p.trData.eventValues)
+    stimOnCode_ = p.init.codes.stimOn;
+    evMask_     = p.trData.eventValues == stimOnCode_;
+    if any(evMask_)
+        stimOnRipple_ = p.trData.eventTimes(find(evMask_, 1, 'last'));
+        sweepDurS_    = p.trVars.sweepFrames * p.rig.frameDuration;
+        inWindow_     = p.trData.spikeTimes >= stimOnRipple_ & ...
+                        p.trData.spikeTimes <  stimOnRipple_ + sweepDurS_ + 1.0;
+        nDiscarded_   = numel(p.trData.spikeTimes) - nnz(inWindow_);
+        if nDiscarded_ > 0
+            fprintf('  Spike filter: kept %d of %d (discarded %d out-of-window).\n', ...
+                nnz(inWindow_), numel(p.trData.spikeTimes), nDiscarded_);
+            p.trData.spikeTimes    = p.trData.spikeTimes(inWindow_);
+            p.trData.spikeClusters = p.trData.spikeClusters(inWindow_);
+        end
+    end
+end
+
 %% (1b) Online RF: detect spatial-knob changes and reset if needed.
 % Compares live trVars (which already reflects mid-session GUI edits via
 % trVarsGuiComm) against the snapshot in p.init.barsweepRF. Sub-bin

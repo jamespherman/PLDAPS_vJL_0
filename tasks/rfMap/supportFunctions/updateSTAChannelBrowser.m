@@ -57,7 +57,7 @@ energyByCh  = cell(1, nCh);
 peakLagByCh = nan(1, nCh);
 
 for ch = 1:nCh
-    if staSpikeCount(ch) < 1
+    if max(staSpikeCount(ch, :)) < 1
         % No spikes: display a zero slice / flat curve.
         sliceByCh{ch}   = zeros(2);
         energyByCh{ch}  = zeros(1, nLags);
@@ -65,7 +65,11 @@ for ch = 1:nCh
         continue;
     end
 
-    sta = staAccum{ch} / staSpikeCount(ch);
+    counts = max(staSpikeCount(ch, :), 1);
+    nd = ndims(staAccum{ch});
+    shp = ones(1, nd);
+    shp(nd) = numel(counts);
+    sta = staAccum{ch} ./ reshape(counts, shp);
     if bd.isChromatic
         % Sanity: 4D expected.
         if ndims(sta) ~= 4 %#ok<ISMAT>
@@ -79,6 +83,9 @@ for ch = 1:nCh
 
     energy = squeeze(sum(sum(sta.^2, 1), 2));
     energy = energy(:)';   % [1 x nLags]
+    % Multiply by N_k to flatten the noise floor: mean_sta^2 has noise
+    % variance ~1/N_k, so energy * N_k gives constant noise across lags.
+    energy = energy .* counts;
     [~, peakLag] = max(energy);
     sliceByCh{ch}   = sta(:, :, peakLag);
     energyByCh{ch}  = energy;
@@ -138,7 +145,7 @@ for ch = 1:nCh
     end
 
     set(bd.titleObj(ch), 'Text', sprintf('ch %d  N=%d  peak %d ms', ...
-        ch, staSpikeCount(ch), bd.lagAxisMs(peakLag)));
+        ch, staSpikeCount(ch, 1), bd.lagAxisMs(peakLag)));
 
     if ~isempty(rfCentersDeg) && isfield(bd, 'rfCenterMarker') && ...
             isgraphics(bd.rfCenterMarker(ch))

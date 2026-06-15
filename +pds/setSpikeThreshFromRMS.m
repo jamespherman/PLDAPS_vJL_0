@@ -57,15 +57,16 @@ function p = setSpikeThreshFromRMS(p, chans, mult)
 
 % ---- arg defaults
 if nargin < 3 || isempty(mult);  mult  = 4;                       end
-if nargin < 2 || isempty(chans); chans = p.rig.ripple.recChans;   end
 
-% ---- guards
+% ---- guards (before accessing p.rig.ripple fields for defaults)
 if ~isfield(p, 'rig') || ~isfield(p.rig, 'ripple') || ...
         ~isfield(p.rig.ripple, 'status') || ~p.rig.ripple.status
     warning('pds:setSpikeThreshFromRMS:noRipple', ...
         'Ripple/NIP not connected; skipping spike-thresh setting.');
     return;
 end
+
+if nargin < 2 || isempty(chans); chans = p.rig.ripple.recChans;   end
 if isempty(chans)
     warning('pds:setSpikeThreshFromRMS:noChans', ...
         'No recording channels supplied; skipping spike-thresh setting.');
