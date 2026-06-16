@@ -145,14 +145,17 @@ end
 
 %% (6) Strobe end-of-trial parameter values.
 p = pds.strobeTrialData(p);
-p.trData.strobed = p.init.strb.strobedList;
-p.init.strb.flushVetoList;
-p.init.strb.flushStrobedList;
 
 %% (7) Strobe trialEnd (exactly once, after parameter strobes,
 % before any post-trial WaitSecs).
 p.trData.timing.trialEnd = GetSecs - p.trData.timing.trialStartPTB;
 p.init.strb.strobeNow(p.init.codes.trialEnd);
+
+% Add list of strobed values to trData to be saved, then flush the strobedList
+% for the next trial
+p.trData.strobed = p.init.strb.strobedList;
+p.init.strb.flushVetoList;
+p.init.strb.flushStrobedList;
 
 %% (8) Save trial data.
 % Strip the large RF accumulators from p.init before saveP (pds.saveP

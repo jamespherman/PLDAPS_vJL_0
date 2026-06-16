@@ -120,16 +120,19 @@ end
 
 %% (5) Strobe trial data
 p = pds.strobeTrialData(p);
+
+%% (5b) Strobe trialEnd (exactly once, after the paired info strobes,
+% before any post-trial WaitSecs). Mirrors barsweep_finish.m:128-131.
+p.trData.timing.trialEnd = GetSecs - p.trData.timing.trialStartPTB;
+p.init.strb.strobeNow(p.init.codes.trialEnd);
+
+% Add the list of strobes to trData to be saved
 p.trData.strobed = p.init.strb.strobedList;
 
 % Flush strobe veto & strobed lists
 p.init.strb.flushVetoList;
 p.init.strb.flushStrobedList;
 
-%% (5b) Strobe trialEnd (exactly once, after the paired info strobes,
-% before any post-trial WaitSecs). Mirrors barsweep_finish.m:128-131.
-p.trData.timing.trialEnd = GetSecs - p.trData.timing.trialStartPTB;
-p.init.strb.strobeNow(p.init.codes.trialEnd);
 
 %% (6) Post-trial timeout (for fixation breaks)
 if p.trData.trialRepeatFlag
