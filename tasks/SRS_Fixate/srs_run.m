@@ -41,6 +41,15 @@ while ~p.trVars.exitWhileLoop
 
     % Update eye / joystick position:
     p = pds.getEyeJoy(p);
+    
+    %% Mouse based gaze
+    p = pds.getMouse(p);
+    if isfield(p.trVars, 'mouseEyeSim') && p.trVars.mouseEyeSim == 1
+    p.trVars.eyePixX = p.trVars.mouseCursorX - p.draw.middleXY(1);
+    p.trVars.eyePixY = p.trVars.mouseCursorY - p.draw.middleXY(2);
+    p.trVars.eyeDegX = pds.pix2deg(p.trVars.eyePixX, p);
+    p.trVars.eyeDegY = pds.pix2deg(-p.trVars.eyePixY, p);
+    end
 
     p.trData.onlineEyeX(p.trVars.whileLoopIdx) = p.trVars.eyeDegX;
     p.trData.onlineEyeY(p.trVars.whileLoopIdx) = p.trVars.eyeDegY;
@@ -199,6 +208,8 @@ switch p.trVars.currentState
         p.trVars.T2_visible = true;
         p.draw.color.fix = p.draw.color.background;
      
+
+        timeSinceGo = -1;
         % Calculate time since Go :
         if p.trData.timing.fixOff > 0 || p.trVars.passEye
             timeSinceGo = timeNow - p.trData.timing.fixOff;         %Time since go doesnt exist if not fixOff or passeye
@@ -253,9 +264,9 @@ switch p.trVars.currentState
         blinkDetected = ...
             any(any(abs(p.trData.onlineGaze(sinceFixOffLogical, 1:2)) > 35));
 
-        % Check if gaze is within either target window (left or right)
-        gazeInLeftTarget = eyeInTargetWindow(p, 'left');
-        gazeInRightTarget = eyeInTargetWindow(p, 'right');
+        % Check if gaze is within either target window (T2_left or T1_right)
+        gazeInT2_leftTarget = eyeInTargetWindow(p, 'T2');
+        gazeInT1_rightTarget = eyeInTargetWindow(p, 'T1');
 
         if sacInFlight
             % Saccade still in flight - continue waiting
@@ -266,23 +277,23 @@ switch p.trVars.currentState
             p.trData.timing.fixBreak = timeNow;
             p.trVars.currentState = p.state.fixBreak;
 
-        elseif gazeInLeftTarget || p.trVars.passEye
-            % Saccade landed in LEFT target window
+        elseif gazeInT2_leftTarget || p.trVars.passEye
+            % Saccade landed in T2_left target window
             p.init.strb.strobeNow(p.init.codes.saccadeOffset);
             p.trData.timing.saccadeOffset = timeNow;
-            p.trData.chosenSide = 1;  % left
-            p.trVars.currentState = p.state.holdTarg;           %state for left tqrg
+            p.trData.chosenSide = 1;  % T2_left
+            p.trVars.currentState = p.state.holdTarg;           %state for T2_left tqrg
             p.init.strb.strobeNow(p.init.codes.targetAq);
             p.trData.timing.targetAq = timeNow;
             p.draw.targWinPenDraw = p.draw.targWinPenThick;
-            disp('targHold - LEFT target')
+            disp('targHold - T2_left target')
 
-        elseif gazeInRightTarget
-            % Saccade landed in RIGHT target window
+        elseif gazeInT1_rightTarget
+            % Saccade landed in T1_right target window
             p.init.strb.strobeNow(p.init.codes.saccadeOffset);
             p.trData.timing.saccadeOffset = timeNow;
-            p.trData.chosenSide = 2;  % right
-            p.trVars.currentState = p.state.holdTarg; % State for right tqrg
+            p.trData.chosenSide = 2;  % T1_right
+            p.trVars.currentState = p.state.holdTarg; % State for T1_right tqrg
             p.init.strb.strobeNow(p.init.codes.targetAq);
             p.trData.timing.targetAq = timeNow;
             p.draw.targWinPenDraw = p.draw.targWinPenThick;
@@ -546,5 +557,28 @@ function logOut = gazeVelThreshCheck(p, timeNow)
 
 logOut = ...
     p.trData.onlineGaze(p.trVars.whileLoopIdx, 4) > p.trVars.eyeVelThresh;
+
+end
+
+
+%% -------------------- EYE IN TARGET WINDOW --------------------
+function inWindow = eyeInTargetWindow(p, targetID)
+% Check if eye position is within specified target window.
+% targetID: 'T1' or 'T2'
+
+if strcmp(targetID, 'T1')
+    targX = p.trVars.T1_locdegX;
+    targY = p.trVars.T1_locdegY;
+else
+    targX = p.trVars.T2_locdegX;
+    targY = p.trVars.T2_locdegY;
+end
+
+% Check if gaze is within target window (using half-widths)
+halfWidth = p.trVars.targWinWidthDeg;
+halfHeight = p.trVars.targWinHeightDeg;
+
+inWindow = abs(p.trVars.eyeDegX - targX) < halfWidth && ...
+           abs(p.trVars.eyeDegY - targY) < halfHeight;
 
 end

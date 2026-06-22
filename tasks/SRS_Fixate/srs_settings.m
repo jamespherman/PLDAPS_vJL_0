@@ -202,7 +202,7 @@ p.rig.guiVars = {...
     'fixDegY'; ...
     'fixPointLinePix'; ...
     'fixPointRadPix'; ...
-    'passJoy'; ...          
+    'mouseEyeSim'; ...          
     'passEye'};              % 12
 
 
@@ -221,8 +221,9 @@ p.init.exptType         = 'joystickPress';  % Which experiment are we running? T
 % 'trVars' is the key strcutarray that gets saved on every trial.
 
 %% general vars:
+p.trVarsInit.mouseEyeSim         = 1;        % Mouse bqsed eye track
 p.trVarsInit.passJoy             = 1;       % pass = 1; simulate correct trials (for debugging)
-p.trVarsInit.passEye             = 1;       % pass = 1; simulate correct trials (for debugging)
+p.trVarsInit.passEye             = 0;       % pass = 1; simulate correct trials (for debugging)
 p.trVarsInit.blockNumber         = 0;       % block number
 p.trVarsInit.repeat              = 0;       % repeat trial if true
 p.trVarsInit.rwdJoyPR            = 0;       % 0 = Give reward if Joy is pressed; 1 = Give reward if Joystick released
@@ -292,8 +293,7 @@ p.trVarsInit.eyeVelThreshOffline    = 100;
 
 p.trVarsInit.connectRipple          = true;
 p.trVarsInit.rippleChanSelect       = 1;
-p.trVarsInit.useOnlineSort  	    = 1;
-
+p.trVarsInit.useOnlineSort  	    = 1;  
 %% times/latencies/durations:
 p.trVarsInit.rewardDurationMs        = 300;     % reward duration %% Remove this
 
@@ -427,6 +427,8 @@ p.draw.gridSpacing          = 2;        % experimenter display grid spacing (in 
 p.draw.gridW                = 2;        % grid spacing in degrees
 p.draw.joyRect              = [1705 900 1735 1100]; % experimenter-display joystick indicator rectangle.
 p.draw.cursorW              = 6; % cursor width in pixels
+
+p.draw.fixWinPenThin        =1;
 
 %% datapixx - vars related to datapixx schedule settings
 
