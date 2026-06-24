@@ -281,7 +281,7 @@ switch p.trVars.currentState
             % Saccade landed in T2_left target window
             p.init.strb.strobeNow(p.init.codes.saccadeOffset);
             p.trData.timing.saccadeOffset = timeNow;
-            p.trData.chosenSide = 1;  % T2_left
+            p.trData.chosenSide = 2;  % T2_left
             p.trVars.currentState = p.state.holdTarg;           %state for T2_left tqrg
             p.init.strb.strobeNow(p.init.codes.targetAq);
             p.trData.timing.targetAq = timeNow;
@@ -292,7 +292,7 @@ switch p.trVars.currentState
             % Saccade landed in T1_right target window
             p.init.strb.strobeNow(p.init.codes.saccadeOffset);
             p.trData.timing.saccadeOffset = timeNow;
-            p.trData.chosenSide = 2;  % T1_right
+            p.trData.chosenSide = 1;  % T1_right
             p.trVars.currentState = p.state.holdTarg; % State for T1_right tqrg
             p.init.strb.strobeNow(p.init.codes.targetAq);
             p.trData.timing.targetAq = timeNow;
@@ -312,7 +312,39 @@ switch p.trVars.currentState
 
     case p.state.holdTarg
         %% State On tqrget
-        %p.trData.chosenSide to know which target was selected
+        %p.trData.chosenSide to know which target was selected (1 =
+        %T1_Right and 2=T2_left)
+
+         % Check if gaze is still in the chosen target window
+        if p.trData.chosenSide == 2
+            eyeInChosenTarget = eyeInTargetWindow(p, 'T2');
+        else
+            eyeInChosenTarget = eyeInTargetWindow(p, 'T1');
+        end
+
+        disp("Chosen Target ;");
+        disp(eyeInChosenTarget)
+
+        % Check if target hold duration has been met
+        holdTimeElapsed = ...
+            timeNow > p.trData.timing.saccadeOffset + p.trVars.targHoldDuration;
+    
+        disp('Hold Time elapsed ;');
+        disp(holdTimeElapsed)
+
+        if eyeInChosenTarget && holdTimeElapsed
+            % Successfully held target - proceed to reward/outcome
+            p.trVars.currentState = p.state.sacComplete;
+            p.draw.targWinPenDraw = p.draw.targWinPenThick;
+        elseif ~eyeInChosenTarget
+            % Gaze left target window before hold complete
+            p.init.strb.strobeNow(p.init.codes.fixBreak);
+            p.trData.timing.fixBreak = timeNow;
+            p.trVars.currentState = p.state.fixBreak;
+            p.draw.targWinPenDraw = p.draw.targWinPenThin;
+            disp('target break');
+        end
+
 
     case p.state.noResponse
         %% State noResponse
@@ -330,6 +362,55 @@ switch p.trVars.currentState
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%% end states: trial COMPLETED %%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    case p.state.sacComplete
+        % Trial completed - determine outcome and deliver reward
+
+        disp('Enter in state SacComplete');
+
+        % Classify outcome based on chosen side and high salience location
+        if p.trData.chosenSide == p.trVars.highSalienceSide
+            % Chose high-salience target
+            p.trData.choseHighSalience = true;
+            p.trData.outcome = 'CHOSE_HIGH_SAL';
+            p.trData.outcomeCode = 1;
+        else
+            % Chose low-salience target
+            p.trData.choseHighSalience = false;
+            p.trData.outcome = 'CHOSE_LOW_SAL';
+            p.trData.outcomeCode = 2;
+        end
+
+        % Give the reward corresponding
+        % Determine reward based on chosen SIDE (left or right)
+        if p.trData.chosenSide == 1
+            % Chose LEFT target
+            p.trVars.currentRewardDuration = p.trVars.rewardDurationLeft;
+        else
+            % Chose RIGHT target
+            p.trVars.currentRewardDuration = p.trVars.rewardDurationRight;
+        end
+
+
+         % Check if reward given & delay  ; exit loop
+         
+        if p.trData.timing.reward < 0
+            % Reward not yet delivered - deliver it now
+            % Temporarily set rewardDurationMs for the pds.deliverReward function
+            p.trVars.rewardDurationMs = p.trVars.currentRewardDuration;
+            p = pds.deliverReward(p);
+        elseif p.trData.timing.reward > 0
+            % Check if post-reward delay has elapsed
+            rewardEndTime = p.trData.timing.reward + ...
+                p.trVars.postRewardDuration + ...
+                p.rig.dp.dacPadDur + ...
+                p.trVars.currentRewardDuration/1000;
+            if timeNow > rewardEndTime
+                p.trVars.exitWhileLoop = true;
+            end
+        end
+
+
     case p.state.hit
         %% HIT!
         % STATE 21 = reward delivery
@@ -567,11 +648,11 @@ function inWindow = eyeInTargetWindow(p, targetID)
 % targetID: 'T1' or 'T2'
 
 if strcmp(targetID, 'T1')
-    targX = p.trVars.T1_locdegX;
-    targY = p.trVars.T1_locdegY;
+    targX = p.trVars.T1_locDegX;
+    targY = p.trVars.T1_locDegY;
 else
-    targX = p.trVars.T2_locdegX;
-    targY = p.trVars.T2_locdegY;
+    targX = p.trVars.T2_locDegX;
+    targY = p.trVars.T2_locDegY;
 end
 
 % Check if gaze is within target window (using half-widths)

@@ -26,7 +26,7 @@ p = locationInfo(p);
 p = setLocations(p);
 % Timing info:
 % - cue / foil change times, reward timing, dot duration
-% p = timingInfo(p);
+p = timingInfo(p);
 
 end
 
@@ -294,6 +294,15 @@ p.trVars.stimFrames     = sum(p.stim.epochFrames);
 % how many epochs?
 p.trVars.nEpochs          = length(p.stim.epochFrames);
     
+
+
+
+
+%% Target hold duration (after saccade lands)
+p.trVars.targHoldDuration = unifrnd(...
+    p.trVars.targHoldDurationMin, p.trVars.targHoldDurationMax);
+
+
 end
 
 
@@ -336,3 +345,4 @@ end
 function y = shuff(x)
     y = x(randperm(length(x)));
 end
+
