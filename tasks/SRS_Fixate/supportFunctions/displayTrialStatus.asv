@@ -4,18 +4,17 @@ function displayTrialStatus(p)
 fprintf('\n');
 fprintf('============================================================\n');
 fprintf('           TASK STATUS SUMMARY                              \n');
-printField('        Good Trial ',     p.status.iGoodTrial);
+printField('            Good Trial ',p.status.iGoodTrial);
 fprintf('============================================================\n');
 
 fprintf('\n');
 fprintf('------------------------- BLOCK ----------------------------\n');
 
 
-
-p.status.CurrentBlockType
-blocktype =
-1 = T1 Rich ; 2 = T2 Rich
-
+if p.status.CurrentBlockType == 1, blocktype = 'T1 Rich' ;
+else,    blocktype = 'T2 Rich'; end
+if p.status.ActualTrialType == 1, trialtype = 'Congruent' ;
+else,    trialtype = 'Conflict'; end
 
 printField('Current block type',      blocktype);
 printField('Current block number',    p.status.CurrentBlockNumber);
@@ -24,13 +23,12 @@ printField('Remaining blocks',        p.status.RemainingBlock);
 fprintf('\n');
 fprintf('---------------------- BLOCK CONTENT -----------------------\n');
 printField('Total trials per block',  p.status.TotalTrialsPerBlock);
-printField('Current trial type',      p.status.CurrentTrialType);
 printField('Remaining conflict',      p.status.RemainingConflict);
 printField('Remaining congruent',     p.status.RemainingCongruent);
 
 fprintf('\n');
 fprintf('-------------------------- TRIAL ---------------------------\n');
-printField('Actual trial type',       p.status.ActualTrialType);
+printField('Actual trial type',       trialtype);
 printField('Actual rich reward',      p.status.ActualRichReward);
 printField('Actual poor reward',      p.status.ActualPoorReward);
 

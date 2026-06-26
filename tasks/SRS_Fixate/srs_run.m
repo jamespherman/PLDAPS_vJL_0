@@ -207,7 +207,7 @@ switch p.trVars.currentState
         p.trVars.T1_visible = true;
         p.trVars.T2_visible = true;
         p.draw.color.fix = p.draw.color.background;
-        
+
         % Ensure go-signal (fixation offset) is timestamped once on a real flip
         if p.trData.timing.fixOff < 0 && ...
                 ~ismember('fixOff', p.trVars.postFlip.varNames)
@@ -397,12 +397,12 @@ switch p.trVars.currentState
 
         % Give the reward corresponding
         % Determine reward based on chosen SIDE (left or right)
-        if p.trData.chosenSide == 1
+        if p.trData.chosenSide == 2
             % Chose LEFT target
-            p.trVars.currentRewardDuration = p.trVars.rewardDurationLeft;
+            p.trVars.currentRewardDuration = round(p.trVars.rewardDurationLeft);
         else
             % Chose RIGHT target
-            p.trVars.currentRewardDuration = p.trVars.rewardDurationRight;
+            p.trVars.currentRewardDuration = round(p.trVars.rewardDurationRight);
         end
 
 
@@ -617,7 +617,26 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
         p.draw.T2_locPixY + targHalfHpix];
     Screen('FrameRect', p.draw.window, targWinColor, T2_winRect, targWinPen);
 
-
+    %% Draw high-reward indicator (green frame around big-reward target)
+    % Uses per-trial rewardBigSide: 1=big-left, 2=big-right
+    if p.trVars.highRewardSide == 2
+        % Big reward on LEFT - show indicator unless single-right trial
+            rewardRect = repmat(p.draw.leftTargPointPix, 1, 2) + ...
+                fix(1.1 * [-p.draw.targWinWidthPix -p.draw.targWinHeightPix ...
+                p.draw.targWinWidthPix p.draw.targWinHeightPix]);
+            Screen('FrameRect', p.draw.window, p.draw.clutIdx.expGreen_subBg, ...
+                rewardRect, p.draw.targWinPenDraw);
+       
+    elseif p.trVars.highRewardSide == 1
+        % Big reward on RIGHT - show indicator unless single-left trial
+    
+            rewardRect = repmat(p.draw.rightTargPointPix, 1, 2) + ...
+                fix(1.1 * [-p.draw.targWinWidthPix -p.draw.targWinHeightPix ...
+                p.draw.targWinWidthPix p.draw.targWinHeightPix]);
+            Screen('FrameRect', p.draw.window, p.draw.clutIdx.expGreen_subBg, ...
+                rewardRect, p.draw.targWinPenDraw);
+        
+    end
 
     % flip and store time of flip.
     [p.trData.timing.flipTime(p.trVars.flipIdx), ~, ~, frMs] = Screen('Flip', p.draw.window);
