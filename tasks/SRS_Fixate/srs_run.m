@@ -231,8 +231,8 @@ switch p.trVars.currentState
         eyeLeftFixWin = ~pds.eyeInWindow(p);
         velocityExceedsThresh = gazeVelThreshCheck(p, timeNow) || p.trVars.passEye;
         
-        if eyeLeftFixWin && velocityExceedsThresh && ...
-                timeSinceGo < p.trVars.responseWindow
+        if (eyeLeftFixWin && velocityExceedsThresh && ...
+                timeSinceGo < p.trVars.responseWindow) || p.trVars.passEye
         % Valid saccade initiation
             p.init.strb.strobeNow(p.init.codes.saccadeOnset);
             p.trData.timing.saccadeOnset = timeNow;
@@ -346,7 +346,7 @@ switch p.trVars.currentState
         disp('Hold Time elapsed ;');
         disp(holdTimeElapsed)
 
-        if eyeInChosenTarget && holdTimeElapsed
+        if eyeInChosenTarget && holdTimeElapsed || p.trVars.passEye
             % Successfully held target - proceed to reward/outcome
             p.trVars.currentState = p.state.sacComplete;
             p.draw.targWinPenDraw = p.draw.targWinPenThick;
@@ -383,7 +383,8 @@ switch p.trVars.currentState
         disp('Enter in state SacComplete');
 
         % Classify outcome based on chosen side and high salience location
-        if p.trData.chosenSide == p.trVars.highSalienceSide
+        if p.trData.chosenSide == p.status.highSalienceSide
+       
             % Chose high-salience target
             p.trData.choseHighSalience = true;
             p.trData.outcome = 'CHOSE_HIGH_SAL';
@@ -512,36 +513,7 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
         [-1 -1 1 1]*p.draw.eyePosWidth + repmat(p.draw.middleXY, 1, 2);
     Screen('FillRect', p.draw.window, p.draw.color.eyePos, gazePosition);
     
-    % draw the cue-ring (if desired)
-    % if p.trVars.cueIsOn
-        % Screen('FrameOval', p.draw.window, p.draw.color.cueRing, p.draw.cueRingRect, ...
-            % p.draw.ringThickPix);
-    % end
-    
-    % calculate which stimulus frame we're in based on time since
-    % stimulus onset - stimuli should be drawn in the frame that their
-    % onset time is defined ("p.trData.timing.stimOn") for this reason,
-    % we force "stimFrameIdx" to a value of "1" until the stimulus
-    % onset time has been defined.
-    % p.trVars.stimFrameIdx  = ...
-        % (fix((timeNow - p.trData.timing.stimOn) / ...
-        % p.rig.frameDuration)) * (p.trData.timing.stimOn > 0) + 1;
-    
-    % if stimuli should be drawn (based on time in trial), draw them.
-    % if (p.trVars.cueStimIsOn || p.trVars.foilStimIsOn) && ...
-            % (p.trVars.stimFrameIdx <= p.trVars.stimFrames)
-
-        % Push (possibly new) color look-up table to ViewPIXX based on
-        % current frame (frame determined based on time in trial).
-        % Datapixx('SetVideoClut', p.draw.myCLUTs(:, : , p.trVars.stimFrameIdx));
-        
-        % draw FIXED textures to screen (one per stimulus)
-        % for i = 1:p.stim.nStim
-            % Screen('DrawTexture', p.draw.window, p.draw.stimTex{i}, [], ...
-                % p.trVars.stimRects(i,:));
-        % end
-    % end
-    
+  
     % draw fixation spot
     Screen('FrameRect',p.draw.window, p.draw.color.fix, repmat(p.draw.fixPointPix, 1, 2) + ...
         p.draw.fixPointRadius*[-1 -1 1 1], p.draw.fixPointWidth);
@@ -617,26 +589,38 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
         p.draw.T2_locPixY + targHalfHpix];
     Screen('FrameRect', p.draw.window, targWinColor, T2_winRect, targWinPen);
 
-    %% Draw high-reward indicator (green frame around big-reward target)
-    % Uses per-trial rewardBigSide: 1=big-left, 2=big-right
-    if p.trVars.highRewardSide == 2
-        % Big reward on LEFT - show indicator unless single-right trial
-            rewardRect = repmat(p.draw.leftTargPointPix, 1, 2) + ...
-                fix(1.1 * [-p.draw.targWinWidthPix -p.draw.targWinHeightPix ...
-                p.draw.targWinWidthPix p.draw.targWinHeightPix]);
-            Screen('FrameRect', p.draw.window, p.draw.clutIdx.expGreen_subBg, ...
-                rewardRect, p.draw.targWinPenDraw);
-       
-    elseif p.trVars.highRewardSide == 1
-        % Big reward on RIGHT - show indicator unless single-left trial
-    
-            rewardRect = repmat(p.draw.rightTargPointPix, 1, 2) + ...
-                fix(1.1 * [-p.draw.targWinWidthPix -p.draw.targWinHeightPix ...
-                p.draw.targWinWidthPix p.draw.targWinHeightPix]);
-            Screen('FrameRect', p.draw.window, p.draw.clutIdx.expGreen_subBg, ...
-                rewardRect, p.draw.targWinPenDraw);
-        
+%   %% Draw high-reward indicator (green frame around high-reward target)
+% % Convention in this task:
+% %   chosenSide==1 -> T1 (right)
+% %   chosenSide==2 -> T2 (left)
+    % disp(p.status.highRewardSide)
+     if isfield(p.status,'highRewardSide') && any(p.status.highRewardSide == [1 2]) && ...
+            (p.trVars.T1_visible || p.trVars.T2_visible)
+
+        % use same geometry as acceptance window, slightly expanded
+        s = 1.15;
+        hw = s * pds.deg2pix(p.trVars.targWinWidthDeg, p);
+        hh = s * pds.deg2pix(p.trVars.targWinHeightDeg, p);
+
+        if p.status.highRewardSide == 1   % T1/right
+            cx = p.draw.T1_locPixX; cy = p.draw.T1_locPixY;
+        else                               % T2/left
+            cx = p.draw.T2_locPixX; cy = p.draw.T2_locPixY;
+        end
+
+        rewardRect = [cx-hw cy-hh cx+hw cy+hh];
+        Screen('FrameRect', p.draw.window, p.draw.clutIdx.expGreen_subBg, rewardRect, 4);
     end
+
+    % if p.status.ActualTrialType == 1, trialtype = 'Congruent' ;
+    % else,    trialtype = 'Conflict'; end        
+    % disp('Actual trial type');
+    % disp(trialtype);
+    % disp('Salience Side ;');
+    % disp(p.status.highSalienceSide);
+    % disp('Reward Side ;');
+    % disp(p.status.highRewardSide);
+
 
     % flip and store time of flip.
     [p.trData.timing.flipTime(p.trVars.flipIdx), ~, ~, frMs] = Screen('Flip', p.draw.window);

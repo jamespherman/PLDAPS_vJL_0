@@ -32,17 +32,17 @@ if p.trData.GoodTrial
     
     % p.trData.chosenSide
     
-    if p.status.ActualTrialType == 1                                        %(Congruent)
+    if p.status.ActualTrialType == 1        %(Congruent)
          
-        if p.trData.chosenSide == p.status.highRewardSide                       % RICH-HIGH
+        if p.trData.chosenSide == p.status.HighRewardSide % RICH-HIGH
                 p.status.iTrial_Rich_High = p.status.iTrial_Rich_High +1;
-        else                                                                    % POOR-LOW
+        else                                % POOR-LOW
                 p.status.iTrial_Poor_low = p.status.iTrial_Poor_low +1;
         end
     else                                                                    %(Conflict)
-        if p.trData.chosenSide == p.status.highRewardSide                       % RICH-LOW
+        if p.trData.chosenSide == p.status.HighRewardSide                   % RICH-LOW
                 p.status.iTrial_Rich_low = p.status.iTrial_Rich_low +1;
-        else                                                                    % POOR-HIGH
+        else                                                                % POOR-HIGH
                 p.status.iTrial_Poor_High = p.status.iTrial_Poor_High+1;
         end
    end

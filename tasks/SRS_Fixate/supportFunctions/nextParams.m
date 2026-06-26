@@ -114,43 +114,48 @@ elseif p.status.RemainingCongruent == 0
     p.status.ActualTrialType = 2;
 else
     p.status.ActualTrialType = randi([1, 2]); % Randomly choose trial type
+end 
+
 
 p = AssignTrialType(p);
 
-end 
 end
 
 function p = AssignTrialType(p)
 %% Assign the ActualRichReward and ActualPoorReward to the targets corresponding depending on the block
 %% Assign the good visual cues for exp
+disp('Before Assignement')
+
+disp(p.status.iTrial);
+disp(p.status.CurrentBlockType);
+disp(p.status.ActualTrialType);
+disp(p.status.highSalienceSide);
 
 if p.status.CurrentBlockType == 1
     % Assign Reward
     p.trVars.rewardDurationLeft = double(p.status.ActualPoorReward) ;
     p.trVars.rewardDurationRight = double(p.status.ActualRichReward) ;
-    %Assign Target Properties
-    % High SalienceSide; 1 = T1 & 2 = T2
-    if p.status.ActualTrialType == 1
-        p.trVars.highSalienceSide = 1;
-    else
-        p.trVars.highSalienceSide = 2;
-    end
-
+   
 else    %if Block Type = 2
     % Assign Reward
     p.trVars.rewardDurationLeft = double(p.status.ActualRichReward) ;
     p.trVars.rewardDurationRight = double(p.status.ActualPoorReward) ;
+end
+
     %Assign Target Properties
-    % High SalienceSide; 1 = T1 & 2 = T2
-    if p.status.ActualTrialType == 1
-        p.trVars.highSalienceSide = 1;
-    else
-        p.trVars.highSalienceSide = 2;
-    end
+if p.status.ActualTrialType == 1    % If Congruent
+    p.status.highSalienceSide = p.status.highRewardSide;
+else                                % If Conflict
+    p.status.highSalienceSide =  3- p.status.highRewardSide;
 end
 
 
+disp('After Assignement')
 
+disp(p.status.iTrial);
+disp(p.status.CurrentBlockType);
+disp(p.status.ActualTrialType);
+disp(p.status.highSalienceSide);
 
 % Display all information for the trial and block ; 
 displayTrialStatus(p)
@@ -171,9 +176,9 @@ p.status.RemainingBlock = p.status.RemainingBlock - 1;
 
 
 if p.status.CurrentBlockType == 1
-    p.trVars.highRewardSide = 1;
+    p.status.highRewardSide = 1;
 else
-    p.trVars.highRewardSide = 2;
+    p.status.highRewardSide = 2;
 end
 
 p = ChooseBlockReward(p);
