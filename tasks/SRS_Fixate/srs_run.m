@@ -207,7 +207,19 @@ switch p.trVars.currentState
         p.trVars.T1_visible = true;
         p.trVars.T2_visible = true;
         p.draw.color.fix = p.draw.color.background;
-     
+        
+        % Ensure go-signal (fixation offset) is timestamped once on a real flip
+        if p.trData.timing.fixOff < 0 && ...
+                ~ismember('fixOff', p.trVars.postFlip.varNames)
+            p.trVars.postFlip.logical = true;
+            p.trVars.postFlip.varNames{end + 1} = 'fixOff';
+
+            % Strobe fixOff once, if code exists
+            if isfield(p.init.codes, 'fixOff')
+                p.init.strb.addValueOnce(p.init.codes.fixOff);
+            end
+        end
+
 
         timeSinceGo = -1;
         % Calculate time since Go :
@@ -228,7 +240,9 @@ switch p.trVars.currentState
             p.draw.fixWinPenDraw = p.draw.fixWinPenThin;
             disp('saccadeMade')
 
-        elseif timeSinceGo > p.trVars.responseWindow  
+        elseif p.trData.timing.fixOff > 0 && ...
+                timeSinceGo > p.trVars.responseWindow
+
             % No saccade within response window
             p.init.strb.strobeNow(p.init.codes.noResponse);
             p.trData.timing.fixBreak = timeNow;
@@ -541,7 +555,8 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     Screen('FrameRect', p.draw.window, p.draw.color.joyInd, p.draw.joyRect);
     Screen('FillRect',  p.draw.window, p.draw.color.joyInd, joyRectNow);
 
-
+    %% Draw T1 and T2
+    
         % Draw T1 rectangle (3:1 ratio, long axis = 2°)
     if p.trVars.T1_visible
     % Create rectangle centered at T1 position
@@ -571,6 +586,36 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     Screen('FrameRect', p.draw.window, p.draw.clutIdx.expBlack_subBg, ...
     T2_rect, 2); % 2-pixel border
     end
+
+    %% Draw target acceptance windows (same geometry as eyeInTargetWindow)
+    % Convert half-width/half-height from deg -> pix
+    targHalfWpix = pds.deg2pix(p.trVars.targWinWidthDeg, p);
+    targHalfHpix = pds.deg2pix(p.trVars.targWinHeightDeg, p);
+    % Choose color/pen (reuse existing style vars if present)
+    if isfield(p.draw, 'targWinColor')
+        targWinColor = p.draw.targWinColor;
+    else
+        targWinColor = p.draw.clutIdx.expGrey70_subBg;
+    end
+    if isfield(p.draw, 'targWinPenDraw')
+        targWinPen = p.draw.targWinPenDraw;
+    else
+        targWinPen = 2;
+    end
+    % T1 acceptance window
+    T1_winRect = [ ...
+        p.draw.T1_locPixX - targHalfWpix, ...
+        p.draw.T1_locPixY - targHalfHpix, ...
+        p.draw.T1_locPixX + targHalfWpix, ...
+        p.draw.T1_locPixY + targHalfHpix];
+    Screen('FrameRect', p.draw.window, targWinColor, T1_winRect, targWinPen);
+    % T2 acceptance window
+    T2_winRect = [ ...
+        p.draw.T2_locPixX - targHalfWpix, ...
+        p.draw.T2_locPixY - targHalfHpix, ...
+        p.draw.T2_locPixX + targHalfWpix, ...
+        p.draw.T2_locPixY + targHalfHpix];
+    Screen('FrameRect', p.draw.window, targWinColor, T2_winRect, targWinPen);
 
 
 

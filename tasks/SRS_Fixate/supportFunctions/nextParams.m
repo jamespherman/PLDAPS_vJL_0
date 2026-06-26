@@ -5,12 +5,12 @@ function p = nextParams(p)
 % Define parameters for upcoming trial.
 
 % choose how long the joystick hold duration required for the upcoming
-% trial will be:
-p.trVars.fixDurReq = p.trVars.fixDurReqMin + ...
-    (p.trVars.fixDurReqMax - p.trVars.fixDurReqMin)*rand;
+% % trial will be:
+% p.trVars.fixDurReq = p.trVars.fixDurReqMin + ...
+%     (p.trVars.fixDurReqMax - p.trVars.fixDurReqMin)*rand;
 
 % log joyPressReq as a status variable:
-p.status.fixDurReq = p.trVars.fixDurReq;
+% p.status.fixDurReq = p.trVars.fixDurReq;
 
 % Choose a row of "p.init.trialsArray" for the upcoming trial.
 % p = chooseRow(p);
@@ -22,8 +22,11 @@ p.status.fixDurReq = p.trVars.fixDurReq;
 
 % Cue / foil locations in cartesian coordinates and rectangle outlining the
 % cue-ring.
+
+p = trialTypeInfo(p)
 p = locationInfo(p);
 p = setLocations(p);
+
 % Timing info:
 % - cue / foil change times, reward timing, dot duration
 p = timingInfo(p);
@@ -79,142 +82,83 @@ end
 
 %%
 function p = trialTypeInfo(p)
+%% Choosing Block, and type of trial
 
-% June 19th, 2019
-% retreive random seed values ("trialSeed" and "stimSeed" from trials
-% array.
-p.trVars.stimSeed   = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
-    strcmp(p.init.trialArrayColumnNames, 'stim seed'));
-p.trVars.trialSeed  = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
-    strcmp(p.init.trialArrayColumnNames, 'trial seed'));
+%% If new block         
+if p.status.CurrentBlockNumber == 0
+    % If First Block ; Choose randomly the type of the block
+    p.status.CurrentBlockType = randi([1 2]);
+    p = ChangeBlock(p);
 
-% use trialSeed to determine following pseudorandom number sequence
-rng(p.trVars.trialSeed);
+elseif p.status.RemainingCongruent + p.status.RemainingConflict == 0
+    % If Block is finished and we need to start a new block ;
+    % So RemainingCong + RemainingConf = 0 ;
+    % Switch to the other block type 1-> 2 & 2 -> 1
 
-% how many stimuli will be shown on this trial?
-p.stim.nStim = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
-    strcmp(p.init.trialArrayColumnNames, 'n stim'));
-
-% randomize gabor orientation
-p.trVars.orientInit = randi(360);
-
-% Define stimulus arrays for all features EXCEPT hue which has to be
-% handled slightly differently.
-arrayEvalString = ...
-    'p.stim.FEATUREArray = p.trVars.FEATUREInit * ones(p.trVars.nPatches, p.trVars.nEpochs);';
-varArrayEvalString = ...
-    'p.stim.FEATUREVarArray = p.trVars.FEATUREVar * ones(p.trVars.nPatches, p.trVars.nEpochs);';
-patternString = 'FEATURE';
-varArrayFeatures = {'orient', 'hue', 'lum', 'sat'};
-
-% loop over features and use "regexprep.m" to modify "arrayEvalString" and
-% / or "varArrayEvalString" as needed for each feature.
-for i = 1:p.stim.nFeatures
-    
-    % don't evaluate the arrayEvalString if the currently considered feature is "hue"
-    if ~strcmp(p.stim.featureValueNames{i}, 'hue')
-        eval(regexprep(arrayEvalString, patternString, p.stim.featureValueNames{i}));
-    end
-    
-    % evaluate the varArrayEvalString if the currently considered feature
-    % is "orientation", "hue", "luminance", or "saturation"
-    if any(strcmp(varArrayFeatures, p.stim.featureValueNames{i}))
-        eval(regexprep(varArrayEvalString, patternString, p.stim.featureValueNames{i}));
-    end
+    p.status.CurrentBlockType = 3 - p.status.CurrentBlockType; % Switch block type
+    p = ChangeBlock(p);
 end
 
-% assign stimulus 1 or stimulus 2 an initial color of purple or green
-% depending on trialsarray
-p.stim.primStim     = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
-    strcmp(p.init.trialArrayColumnNames, 'primary'));
+%% If within a block:
+%Draw a reward noise value from Gaussian SD 0.015ml =(14ms)
 
-if p.stim.primStim == 1
-    p.stim.hueArray     = repmat(...
-        [p.trVars.hueInit; p.trVars.hueInit + 180], 1, p.trVars.nEpochs);
+x = randn * 14;
+% Calculate the actual reward durations for the upcoming trial
+p.status.ActualRichReward = p.status.BlockRichMeanDuration + x;
+p.status.ActualPoorReward = p.status.BlockPoorMeanDuration + x;
+
+% Choose the Trial type ; Congruent (1) or Conflict (2) within the remaining  
+if p.status.RemainingConflict == 0 
+    p.status.ActualTrialType = 1;
+elseif p.status.RemainingCongruent == 0
+    p.status.ActualTrialType = 2;
 else
-    p.stim.hueArray     = repmat(...
-        [p.trVars.hueInit + 180; p.trVars.hueInit], 1, p.trVars.nEpochs);
-end
-if p.trVars.nPatches == 1
-        p.stim.hueArray(2, :) = [];
-end
+    p.status.ActualTrialType = randi([1, 2]); % Randomly choose trial type
 
-% which side will the cue ring be presented on?
-p.stim.cueSide  = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
-    strcmp(p.init.trialArrayColumnNames, 'cue side'));
+p = AssignTrialType(p);
 
-% depending on the info present in the current row of the trials array
-% ("p.init.trialsArray"), define the "stimulus feature value arrays."
-% These have one entry for each stimulus patch (one row per patch) and
-% each "epoch" (one column per epoch).
-
-% First, which stimulus is changing on the current trial?
-stimChgIdx = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
-    strcmp(p.init.trialArrayColumnNames, 'stim chg'));
-
-% loop over stimulus features
-for i = 1:p.stim.nFeatures
-    
-    % does the presently considered feature change on this trial?
-    tempDelta = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
-        ~cellfun(@isempty, strfind(p.init.trialArrayColumnNames, ...
-        p.stim.featureValueNames{i})));
-    
-    % if saturation is going to change, it should go radially outward for
-    % increase and inward for decrease, so we need to check what the
-    % initial hue angle is before assigning a saturation delta.
-%     if strcmp(p.stim.featureValueNames{i}, 'sat') && stimChgIdx ~= 0
-%         signMult = sign(sind(p.stim.hueArray(stimChgIdx, 1)))
-%     else
-%         signMult = 1;
-%     end
-    
-    % if "tempDelta" is non-zero, add the corresponding feature delta
-    % to the appropriate entry of the feature array
-    if tempDelta ~= 0
-        % find the right delta, and multiply by "tempDelta" to allow
-        % for "increases" and "decreases" of various features.
-        featureDelta = tempDelta * ...
-            p.trVars.([p.stim.featureValueNames{i} 'Delta']);
-        
-        % add to stim array
-        p.stim.([p.stim.featureValueNames{i} ...
-            'Array'])(stimChgIdx, 2) = ...
-            p.stim.([p.stim.featureValueNames{i} ...
-            'Array'])(stimChgIdx, 2) + featureDelta;
-    end
+end 
 end
 
-% which stimuli are shown in the current trial?
-p.trVars.cueOn      = logical(...
-    p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
-    strcmp(p.init.trialArrayColumnNames, 'cue on')));
+function p = AssignTrialType(p)
+%% Assign the ActualRichReward and ActualPoorReward to the targets corresponding depending on the block
+%% Assign the good visual cues for exp
 
-p.trVars.foilOn     = logical(...
-    p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
-    strcmp(p.init.trialArrayColumnNames, 'foil on')));
+% Display all information for the trial and block ; 
 
-% set a couple simple variable that will be helpful during "run"
-p.trVars.isCueChangeTrial    = stimChgIdx == p.stim.cueSide;
-p.trVars.isFoilChangeTrial   = stimChgIdx ~= p.stim.cueSide && ...
-    stimChgIdx ~= 0;
-p.trVars.isNoChangeTrial     = stimChgIdx == 0;
-
-% define a variable indicating if this is a contrast change trial
-p.trVars.isContrastChangeTrial = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
-    strcmp(p.init.trialArrayColumnNames, 'contrast')) == 1;
-
-% if we're using QUEST run "getQuestSuggestedDelta" - this both gets a
-% suggested signal strength AND initializes the QUEST object if it doesn't
-% yet exist (though it only stores the suggested signal strength if this is
-% a cue change trial).
-if isfield(p.trVars, 'useQuest') && p.trVars.useQuest
-    p = getQuestSuggestedDelta(p);
-end
-    
+displayTrialStatus(p)
 end
 
-%%
+
+function p = ChangeBlock(p)
+%% Choose the number of trial for this block ; between 60 and 100 and mod 4. Normal distrib + 80.
+% And update Block numbers
+x = Inf; while x < 60 || x > 100 || mod(x, 4) ~=0, x = 80+ round(5* randn); end
+p.status.TotalTrialsPerBlock = x;
+p.status.RemainingConflict = x/2;
+p.status.RemainingCongruent = x/2;
+
+% Update block
+p.status.CurrentBlockNumber =+ 1 ;
+p.status.RemainingBlock =- 1;
+
+p = ChooseBlockReward(p);
+end 
+
+function p = ChooseBlockReward(p)
+%% Choose the reward given for High and poor target
+% Range of mean : reward  0.04ml =(37ms) to 0.21ml =(191ms) with  minimum
+% 0.044ml difference =(40ms)
+% We chose a mean reward for rich and poor per block, and we add (LATER) a Gaussian
+% noise with SD = 0.015ml =(14ms)
+x = [0 0]
+while x(1)-x(2) < 40, x = unifrnd(37, 191, [1, 2]); end
+p.status.BlockRichMeanDuration = max(x);
+p.status.BlockPoorMeanDuration = min(x);
+
+end
+
+
 function p = locationInfo(p)
 
 % fixation location in pixels relative to the center of the screen!
@@ -295,7 +239,9 @@ p.trVars.stimFrames     = sum(p.stim.epochFrames);
 p.trVars.nEpochs          = length(p.stim.epochFrames);
     
 
-
+%% Target hold duration (To allow Go Signal)
+p.trVars.fixDurReq = unifrnd(...
+    p.trVars.fixDurReqMin, p.trVars.fixDurReqMax);
 
 
 %% Target hold duration (after saccade lands)

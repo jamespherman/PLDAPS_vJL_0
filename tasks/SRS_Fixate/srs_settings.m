@@ -142,6 +142,40 @@ p.status.iGoodTrial                 = 0; % count of all trials that have ended i
 p.status.trialsLeftInBlock          = 0; % how many trials remain in the current block?
 p.status.blockNumber                = 0; % what block are we in?
 
+%% T1
+%Congruent trial 
+p.status.iTrial_Rich_High_T1         = 0; % count number of trial where congruent choice rich-high (T1) has been chosen while T1 was rich
+p.status.iTrial_Poor_low_T1          = 0; % count number of trial where poor-low target (T2) has been chosen while congruent trial in T1 was rich
+%Conflict
+p.status.iTrial_Rich_low_T1          = 0; % count number of trial where rich-low T1 was chosen while conflict trial in T1 rich
+p.status.iTrial_Poor_High_T1         = 0; % count number of trial where poor-high target T2 has been chosen while conflict trial in T1 was rich
+
+%% T2
+%Congruent trial
+p.status.iTrial_Rich_High_T2         = 0; % count number of trial where congruent choice rich-high (T1) has been chosen while T1 was rich
+p.status.iTrial_Poor_low_T2          = 0; % count number of trial where poor-low target (T2) has been chosen while congruent trial in T1 was rich
+%Conflict
+p.status.iTrial_Rich_low_T2          = 0; % count number of trial where rich-low T2 was chosen while conflict trial in T2 rich
+p.status.iTrial_Poor_High_T2         = 0; % count number of trial where poor-high target T1 has been chosen while conflict trial in T2 was rich
+
+%% Block Organization ;
+
+% Per session;
+p.status.CurrentBlockType           = 0;    % 1 = T1 Rich ; 2 = T2 Rich
+p.status.CurrentBlockNumber         = 0;       % Count number of block done and in progress
+p.status.RemainingBlock             = 8;       % Number of Remaining blocks to reach the minimum number of trial
+
+% Per Block;
+p.status.TotalTrialsPerBlock        = -1;      % Random number of trial from 60 to 100
+p.status.CurrentTrialType           =  0;    % Chosen trial type ; Congruent or Conflict
+p.status.RemainingConflict          = -1;      % Number of Conflict trials remaining to complete the block requirement
+p.status.RemainingCongruent         = -1;      % Number of Congruent trials remaining to complete the block requirement
+
+% Per Trial
+p.status.ActualTrialType            = 0;
+p.status.ActualRichReward           = 0;
+p.status.ActualPoorReward           = 0;
+
 p.status.fixDurReq                  = 0; % how long was the monkey required to hold down the joystick on the last trial?
 
 p.status.hr1Loc1                    = 0; % hit rate for single patch at location 1
@@ -235,7 +269,7 @@ p.trVarsInit.rwdJoyPR            = 0;       % 0 = Give reward if Joy is pressed;
 p.trVarsInit.isCueChangeTrial    = 0;       % change (1) or no change trial (0)
 p.trVarsInit.isFoilChangeTrial   = -1;      % no change(0); change(1); foil not present (-1)
 p.trVarsInit.isNoChangeTrial     = -1;
-p.trVarsInit.finish              = 5000;
+p.trVarsInit.finish              = 1400;  % MAX DELAY PER TRIAL
 p.trVarsInit.filesufix           = 1;       % save to file sufix
 p.trVarsInit.joyVolt             = 0;
 p.trVarsInit.eyeDegX             = 0;
@@ -270,7 +304,7 @@ p.trVarsInit.outcome              = '';     % CHOSE_HIGH_SAL, CHOSE_LOW_SAL, FIX
 
 %% Target settings
 
-p.trVarsInit.responseWindow              = 0.45;     % 600ms response window from go signal
+p.trVarsInit.responseWindow          = 0.45;     % 600ms response window from go signal
 p.trVarsInit.targHoldDurationMin     = 0.2;
 p.trVarsInit.targHoldDurationMax     = 0.3;
 p.trVarsInit.maxSacDurationToAccept  = 0.1;
@@ -322,8 +356,9 @@ p.trVarsInit.useOnlineSort  	    = 1;
 %% times/latencies/durations:
 p.trVarsInit.rewardDurationMs        = 300;     % reward duration %% Remove this
 
-p.trVarsInit.fixDurReqMin            = 0.2;      % minimum possible duration of joystick press required
-p.trVarsInit.fixDurReqMax            = 0.4;      % maximum possible duration of joystick press required
+% p.trVarsInit.fixDurReq               =0.8; % how long was the monkey required to fixate the fixation target
+p.trVarsInit.fixDurReqMin            = 0.5;      % minimum possible duration required to fixate the fixation target (Computed in next param)
+p.trVarsInit.fixDurReqMax            = 0.8;      % maximum possible duration required to fixate the fixation target (Computed in next param)
 p.trVarsInit.fix2CueIntvl            = 0.25;     % Time delay between acquiring fixation and cue ring onset.
 p.trVarsInit.cueDur                  = 0.133;    % Duration of ring presentaiton.
 p.trVarsInit.cue2StimItvl            = 0.567;    % time between ring offset and motion onset (stimulus onset asynchrony).
@@ -337,7 +372,7 @@ p.trVarsInit.timeoutAfterFoilFa      = 3;        % timeout duration following fa
 p.trVarsInit.timeoutAfterMiss        = 1;        % timeout duration following miss
 p.trVarsInit.timeoutAfterFixBreak    = 0.1;      % timeout duration following fixation break
 p.trVarsInit.joyWaitDur              = 5;        % how long to wait for the subject to press the joystick at the beginning of a trial?
-p.trVarsInit.fixWaitDur              = 5;        % how long to wait after initial joystick press for the subject to acquire fixation?
+p.trVarsInit.fixWaitDur              = 0.3 ;        % how long to wait after initial joystick press for the subject to acquire fixation?
 p.trVarsInit.freeDur                 = 0;        % time before start of joystick press check
 
 p.trVarsInit.trialMax                = 15;       % max length of the trial
