@@ -4,7 +4,7 @@ function p = updateStatusVariables(p)
 %
 
 % iterate "good trial" count
-p.status.iGoodTrial = p.status.iGoodTrial + double(~p.trData.trialRepeatFlag);
+p.status.iGoodTrial = p.status.iGoodTrial + double(p.trData.GoodTrial);
 
 % % was the last trial a "two patch" trial?
 % twoPatch    = p.trVars.cueOn & p.trVars.foilOn;

@@ -102,6 +102,12 @@ p.audio.lineOutLevel    = 0.4;   % datapixx line out audio level [0 - 1].
 p.audio.pcPlayback      = false;  % do we want audio playback from psychtoolbox PC?
 
 %% STATES
+
+
+% % % % Was the previous trial aborted? state in 10:20 = ABORTED
+% % % p.trData.trialRepeatFlag = (p.trData.trialEndState > 10) & ...
+% % %     (p.trData.trialEndState < 20);  
+
 % transition states:
 p.state.trialBegun      = 1;
 p.state.showFix         = 2;
@@ -467,6 +473,7 @@ p.init.trDataInitList = {...
     'p.trData.timing.reward',           '-1'; ...   % time of reward delivery
     'p.trData.timing.tone',             '-1'; ...   % time of audio feedback delivery
     'p.trData.timing.joyPress',         '-1'; ...   % time of joystick press
+    'p.trData.GoodTrial',               '0';...
     };
 
 % since the list above is fixed, count its rows now for looping over later.
@@ -576,6 +583,7 @@ p.init.strobeList = fliplr({...
     % SRS Task ;
     'hueType',              'p.trVars.backgroundHueIdx'; ...    % 1=Hue A, 2=Hue B
     'highSalienceLocation', 'p.trVars.highSalienceSide'; ...    % 1=T1_Right, 2= T2_left
+    'highRewardSide','p.trVars.highRewardSide';...              % 1=T1_Right, 2= T2_left
     'chosenTarget',         'p.trData.chosenSide'; ...          % 1=T1_Right, 2=T2_left, 0=neither
     'choseHighSalience',    'p.trData.choseHighSalience'; ...   % 0 or 1
 

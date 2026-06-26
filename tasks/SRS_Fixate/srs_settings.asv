@@ -102,6 +102,12 @@ p.audio.lineOutLevel    = 0.4;   % datapixx line out audio level [0 - 1].
 p.audio.pcPlayback      = false;  % do we want audio playback from psychtoolbox PC?
 
 %% STATES
+
+
+% % % % Was the previous trial aborted? state in 10:20 = ABORTED
+% % % p.trData.trialRepeatFlag = (p.trData.trialEndState > 10) & ...
+% % %     (p.trData.trialEndState < 20);  
+
 % transition states:
 p.state.trialBegun      = 1;
 p.state.showFix         = 2;
@@ -357,8 +363,8 @@ p.trVarsInit.useOnlineSort  	    = 1;
 p.trVarsInit.rewardDurationMs        = 300;     % reward duration %% Remove this
 
 % p.trVarsInit.fixDurReq               =0.8; % how long was the monkey required to fixate the fixation target
-p.trVarsInit.fixDurReqMin            = 0.2;      % minimum possible duration of joystick press required
-p.trVarsInit.fixDurReqMax            = 0.4;      % maximum possible duration of joystick press required
+p.trVarsInit.fixDurReqMin            = 0.5;      % minimum possible duration required to fixate the fixation target (Computed in next param)
+p.trVarsInit.fixDurReqMax            = 0.8;      % maximum possible duration required to fixate the fixation target (Computed in next param)
 p.trVarsInit.fix2CueIntvl            = 0.25;     % Time delay between acquiring fixation and cue ring onset.
 p.trVarsInit.cueDur                  = 0.133;    % Duration of ring presentaiton.
 p.trVarsInit.cue2StimItvl            = 0.567;    % time between ring offset and motion onset (stimulus onset asynchrony).
@@ -467,6 +473,7 @@ p.init.trDataInitList = {...
     'p.trData.timing.reward',           '-1'; ...   % time of reward delivery
     'p.trData.timing.tone',             '-1'; ...   % time of audio feedback delivery
     'p.trData.timing.joyPress',         '-1'; ...   % time of joystick press
+    
     };
 
 % since the list above is fixed, count its rows now for looping over later.

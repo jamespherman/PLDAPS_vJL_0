@@ -3,11 +3,21 @@ function displayTrialStatus(p)
 
 fprintf('\n');
 fprintf('============================================================\n');
-printField('           TASK STATUS SUMMARY | Trial ' p.status.iTrial '| Good Trial 'p.status.iGoodTrial'  \n');
+fprintf('           TASK STATUS SUMMARY                              \n');
+printField('        Good Trial ',     p.status.iGoodTrial);
 fprintf('============================================================\n');
+
 fprintf('\n');
 fprintf('------------------------- BLOCK ----------------------------\n');
-printField('Current block type',      p.status.CurrentBlockType);
+
+
+
+p.status.CurrentBlockType
+blocktype =
+1 = T1 Rich ; 2 = T2 Rich
+
+
+printField('Current block type',      blocktype);
 printField('Current block number',    p.status.CurrentBlockNumber);
 printField('Remaining blocks',        p.status.RemainingBlock);
 

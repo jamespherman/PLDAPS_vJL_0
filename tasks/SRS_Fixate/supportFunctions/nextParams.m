@@ -124,8 +124,35 @@ function p = AssignTrialType(p)
 %% Assign the ActualRichReward and ActualPoorReward to the targets corresponding depending on the block
 %% Assign the good visual cues for exp
 
-% Display all information for the trial and block ; 
+if p.status.CurrentBlockType == 1
+    % Assign Reward
+    p.trVars.rewardDurationLeft = double(p.status.ActualPoorReward) ;
+    p.trVars.rewardDurationRight = double(p.status.ActualRichReward) ;
+    %Assign Target Properties
+    % High SalienceSide; 1 = T1 & 2 = T2
+    if p.status.ActualTrialType == 1
+        p.trVars.highSalienceSide = 1;
+    else
+        p.trVars.highSalienceSide = 2;
+    end
 
+else    %if Block Type = 2
+    % Assign Reward
+    p.trVars.rewardDurationLeft = double(p.status.ActualRichReward) ;
+    p.trVars.rewardDurationRight = double(p.status.ActualPoorReward) ;
+    %Assign Target Properties
+    % High SalienceSide; 1 = T1 & 2 = T2
+    if p.status.ActualTrialType == 1
+        p.trVars.highSalienceSide = 1;
+    else
+        p.trVars.highSalienceSide = 2;
+    end
+end
+
+
+
+
+% Display all information for the trial and block ; 
 displayTrialStatus(p)
 end
 
@@ -139,8 +166,15 @@ p.status.RemainingConflict = x/2;
 p.status.RemainingCongruent = x/2;
 
 % Update block
-p.status.CurrentBlockNumber =+ 1 ;
-p.status.RemainingBlock =- 1;
+p.status.CurrentBlockNumber = p.status.CurrentBlockNumber+ 1 ;
+p.status.RemainingBlock = p.status.RemainingBlock - 1;
+
+
+if p.status.CurrentBlockType == 1
+    p.trVars.highRewardSide = 1;
+else
+    p.trVars.highRewardSide = 2;
+end
 
 p = ChooseBlockReward(p);
 end 

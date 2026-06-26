@@ -33,10 +33,10 @@ end
 % read buffered ADC and DIN data from DATAPixx
 p           = pds.readDatapixxBuffers(p);
 
-% Was the previous trial completed?
-% True (1) if 455 ; False if not 455
-p.trData.GoodTrial = p.trData.trialEndState == 455;
-
+% Was the previous trial aborted?
+% p.trData.trialRepeatFlag = (p.trData.trialEndState > 10) & ...
+%     (p.trData.trialEndState < 20);                                                       
+p.trData.trialRepeatFlag = 
 %% strobes:
 % strobe trial data:
 p           = pds.strobeTrialData(p);

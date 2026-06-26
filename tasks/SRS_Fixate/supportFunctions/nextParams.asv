@@ -23,7 +23,7 @@ function p = nextParams(p)
 % Cue / foil locations in cartesian coordinates and rectangle outlining the
 % cue-ring.
 
-
+p = trialTypeInfo(p)
 p = locationInfo(p);
 p = setLocations(p);
 
@@ -117,12 +117,43 @@ else
 
 p = AssignTrialType(p);
 
+end 
 end
 
 function p = AssignTrialType(p)
-%% Assign the ActualRichReward and ActualPoorReward
+%% Assign the ActualRichReward and ActualPoorReward to the targets corresponding depending on the block
+%% Assign the good visual cues for exp
+
+if p.status.CurrentBlockType == 1
+    % Assign Reward
+    p.trVars.rewardDurationLeft = double(p.status.ActualPoorReward ;
+    p.trVars.rewardDurationRight = double(p.status.ActualRichReward ;
+    %Assign Target Properties
+    % High SalienceSide; 1 = T1 & 2 = T2
+    if p.status.ActualTrialType == 1
+        p.trVars.highSalienceSide = 1;
+    else
+        p.trVars.highSalienceSide = 2;
+    end
+
+else    %if Block Type = 2
+    % Assign Reward
+    p.trVars.rewardDurationLeft = p.status.ActualRichReward ;
+    p.trVars.rewardDurationRight = p.status.ActualPoorReward ;
+    %Assign Target Properties
+    % High SalienceSide; 1 = T1 & 2 = T2
+    if p.status.ActualTrialType == 1
+        p.trVars.highSalienceSide = 1;
+    else
+        p.trVars.highSalienceSide = 2;
+    end
+end
 
 
+
+
+% Display all information for the trial and block ; 
+displayTrialStatus(p)
 end
 
 
@@ -135,8 +166,15 @@ p.status.RemainingConflict = x/2;
 p.status.RemainingCongruent = x/2;
 
 % Update block
-p.status.CurrentBlockNumber =+ 1 ;
-p.status.RemainingBlock =- 1;
+p.status.CurrentBlockNumber = p.status.CurrentBlockNumber+ 1 ;
+p.status.RemainingBlock = p.status.RemainingBlock - 1;
+
+
+if p.status.CurrentBlockType == 1
+    p.trVars.highRewardSide = 1;
+else
+    p.trVars.highRewardSide = 2;
+end
 
 p = ChooseBlockReward(p);
 end 
@@ -147,7 +185,7 @@ function p = ChooseBlockReward(p)
 % 0.044ml difference =(40ms)
 % We chose a mean reward for rich and poor per block, and we add (LATER) a Gaussian
 % noise with SD = 0.015ml =(14ms)
-
+x = [0 0]
 while x(1)-x(2) < 40, x = unifrnd(37, 191, [1, 2]); end
 p.status.BlockRichMeanDuration = max(x);
 p.status.BlockPoorMeanDuration = min(x);
@@ -235,7 +273,9 @@ p.trVars.stimFrames     = sum(p.stim.epochFrames);
 p.trVars.nEpochs          = length(p.stim.epochFrames);
     
 
-
+%% Target hold duration (To allow Go Signal)
+p.trVars.fixDurReq = unifrnd(...
+    p.trVars.fixDurReqMin, p.trVars.fixDurReqMax);
 
 
 %% Target hold duration (after saccade lands)
