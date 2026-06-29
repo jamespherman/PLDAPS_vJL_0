@@ -414,9 +414,7 @@ switch p.trVars.currentState
             % Temporarily set rewardDurationMs for the pds.deliverReward function
             p.trVars.rewardDurationMs = p.trVars.currentRewardDuration;
             % disp(p.trVars.rewardDurationMs)
-            p = playTone(p, 'high');
             p = pds.deliverReward(p);
-            
         elseif p.trData.timing.reward > 0
             % Check if post-reward delay has elapsed
             rewardEndTime = p.trData.timing.reward + ...

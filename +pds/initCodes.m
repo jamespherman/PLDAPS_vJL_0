@@ -46,6 +46,7 @@ codes.uniqueTaskCode_numerosity         = 32017;
 codes.uniqueTaskCode_sacc_to_phosph     = 32019;
 codes.uniqueTaskCode_rfMap              = 32020;
 codes.uniqueTaskCode_barsweep           = 32022;
+codes.uniqueTaskCode_SRS_task           = 32023;
 
 %% unique codes that are internal to the 'classyStrobe' function class
 % (see pds.classyStrobe.m for more details)

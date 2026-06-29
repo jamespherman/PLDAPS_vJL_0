@@ -23,7 +23,7 @@ function p = nextParams(p)
 % Cue / foil locations in cartesian coordinates and rectangle outlining the
 % cue-ring.
 
-p = trialTypeInfo(p)
+p = trialTypeInfo(p);
 p = locationInfo(p);
 p = setLocations(p);
 
@@ -86,8 +86,11 @@ function p = trialTypeInfo(p)
 
 %% If new block         
 if p.status.CurrentBlockNumber == 0
+    disp('Choose randm FirstBlock');
     % If First Block ; Choose randomly the type of the block
-    p.status.CurrentBlockType = randi([1 2]);
+    x = randi(2);
+    disp(x)
+    p.status.CurrentBlockType = x;
     p = ChangeBlock(p);
 
 elseif p.status.RemainingCongruent + p.status.RemainingConflict == 0
@@ -97,6 +100,7 @@ elseif p.status.RemainingCongruent + p.status.RemainingConflict == 0
 
     p.status.CurrentBlockType = 3 - p.status.CurrentBlockType; % Switch block type
     p = ChangeBlock(p);
+
 end
 
 %% If within a block:
@@ -124,12 +128,6 @@ end
 function p = AssignTrialType(p)
 %% Assign the ActualRichReward and ActualPoorReward to the targets corresponding depending on the block
 %% Assign the good visual cues for exp
-disp('Before Assignement')
-
-disp(p.status.iTrial);
-disp(p.status.CurrentBlockType);
-disp(p.status.ActualTrialType);
-disp(p.status.highSalienceSide);
 
 if p.status.CurrentBlockType == 1
     % Assign Reward
@@ -147,15 +145,7 @@ if p.status.ActualTrialType == 1    % If Congruent
     p.status.highSalienceSide = p.status.highRewardSide;
 else                                % If Conflict
     p.status.highSalienceSide =  3- p.status.highRewardSide;
-    end
-
-
-disp('After Assignement')
-
-disp(p.status.iTrial);
-disp(p.status.CurrentBlockType);
-disp(p.status.ActualTrialType);
-disp(p.status.highSalienceSide);
+end
 
 % Display all information for the trial and block ; 
 displayTrialStatus(p)
@@ -298,10 +288,8 @@ p.trVars.T1_colorIdx         = p.draw.clutIdx.expRed_subRed;
 
 % NEW: Convert T1 position from degrees to pixels
 
-p.draw.T1_locPixX = p.draw.middleXY(1) + ...
-pds.deg2pix(p.trVars.T1_locDegX, p);
-p.draw.T1_locPixY = p.draw.middleXY(2) - ...
-pds.deg2pix(p.trVars.T1_locDegY, p); % negative because screen Y is inverted
+p.draw.T1_locPixX = p.draw.middleXY(1) + pds.deg2pix(p.trVars.T1_locDegX, p);
+p.draw.T1_locPixY = p.draw.middleXY(2) - pds.deg2pix(p.trVars.T1_locDegY, p);            % negative because screen Y is inverted
 
 % Convert T1 dimensions from degrees to pixels
 
@@ -314,10 +302,8 @@ p.trVars.T2_colorIdx         = p.draw.clutIdx.expRed_subRed;
 
 % NEW: Convert T1 position from degrees to pixels
 
-p.draw.T2_locPixX = p.draw.middleXY(1) + ...
-pds.deg2pix(p.trVars.T2_locDegX, p);
-p.draw.T2_locPixY = p.draw.middleXY(2) - ...
-pds.deg2pix(p.trVars.T2_locDegY, p); % negative because screen Y is inverted
+p.draw.T2_locPixX = p.draw.middleXY(1) + pds.deg2pix(p.trVars.T2_locDegX, p);
+p.draw.T2_locPixY = p.draw.middleXY(2) - pds.deg2pix(p.trVars.T2_locDegY, p); % negative because screen Y is inverted
 
 % Convert T2 dimensions from degrees to pixels
 

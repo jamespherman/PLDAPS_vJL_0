@@ -323,14 +323,14 @@ p.trVarsInit.goLatencyMin            = 0.0;     % minimum allowed RT (0 for this
 p.trVarsInit.goLatencyMax            = 0.45;     % 600ms max response time = responsewindow
 
 p.trVarsInit.T1_visible          = false;       % T1 stimulus should not be visible until GoSignal state is current state
-p.trVarsInit.T1_locDegX          =10;           % Locqtion of T1 ; Must change to be random ?
+p.trVarsInit.T1_locDegX          =10;           % Locqtion of T1 ; 
 p.trVarsInit.T1_locDegY          =0;
 p.trVarsInit.T1_longAxisDeg      =2.0;          % Size in Deg of Long axis
 p.trVarsInit.T1_shortAxisDeg      =2.0/3.0;
 
 p.trVarsInit.T2_visible          = false;       % T2 stimulus should not be visible until GoSignal state is current state
 p.trVarsInit.T2_locDegX          =-10;           % Locqtion of T2 ; Must change to be random ?
-p.trVarsInit.T2_locDegY          =0;
+p.trVarsInit.T2_locDegY          =00;
 p.trVarsInit.T2_longAxisDeg      =2.0;          % Size in Deg of Long axis
 p.trVarsInit.T2_shortAxisDeg     =2.0/3.0;
 
@@ -585,6 +585,15 @@ p.init.strobeList = fliplr({...
     'p.init.date_1mmdd',                                                                                        'date_1mmdd';  ...      
     'p.init.time_1hhmm',                                                                                        'time_1hhmm';
     ...
+
+    % --- Core Trial Information ---
+    'trialCount',           'p.status.iTrial'; ...
+    'goodTrialCount',       'p.status.iGoodTrial'; ...
+    'phaseNumber',          'p.trVars.phaseNumber'; ...
+    'rewardDurationLeft',   'p.trVars.rewardDurationLeft'; ...
+    'rewardDurationRight',  'p.trVars.rewardDurationRight'; ...
+
+    
     % SRS Task ;
     'hueType',              'p.trVars.backgroundHueIdx'; ...    % 1=Hue A, 2=Hue B
     % 'highSalienceLocation', 'p.trVars.highSalienceSide'; ...    % 1=T1_Right, 2= T2_left
