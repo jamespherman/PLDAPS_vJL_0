@@ -411,7 +411,7 @@ p.trVarsInit.fixPointLinePix      = 12;       % fixation point line weight in pi
 p.trVarsInit.useCellsForDraw        = false;
 p.trVarsInit.wantEndFlicker         = false;    % have screen flicker / low tone play repeatedly while waiting for joystick release?
 %% PLOTS TURN TO TRUE   
-p.trVarsInit.wantOnlinePlots        = false;     % use online plotting window? 
+p.trVarsInit.wantOnlinePlots        = true;     % use online plotting window? 
 
 % initial / base values for each stimulus feature. Variables that hold
 % the magnitude of change (delta) for each feature are defined above under
@@ -593,7 +593,7 @@ p.init.strobeList = fliplr({...
     'rewardDurationLeft',   'p.trVars.rewardDurationLeft'; ...
     'rewardDurationRight',  'p.trVars.rewardDurationRight'; ...
 
-    
+
     % SRS Task ;
     'hueType',              'p.trVars.backgroundHueIdx'; ...    % 1=Hue A, 2=Hue B
     % 'highSalienceLocation', 'p.trVars.highSalienceSide'; ...    % 1=T1_Right, 2= T2_left
