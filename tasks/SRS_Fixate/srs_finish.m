@@ -60,7 +60,7 @@ p.init.strb.flushStrobedList;
 pds.stopOmniPlex;
 
 % wait for joystick release
-p           = pds.waitForJoystickRelease(p);
+% p           = pds.waitForJoystickRelease(p);
 
 % if a "time-out" is desired, make it happen here. Note: the way this works
 % at present is: we only advance from here if the desired interval of time
@@ -96,6 +96,10 @@ p           = updateQuest(p);
 
 % (7) update status variables
 p           = updateStatusVariables(p);
+
+
+% disp(p.trData.timing.saccadeOnset)
+% disp(p.trData.timing.fixOff)
 
 % (8) if we're using online plots, update them now:
 if isfield(p.trVars, 'wantOnlinePlots') && p.trVars.wantOnlinePlots

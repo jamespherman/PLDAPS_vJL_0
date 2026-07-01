@@ -163,7 +163,9 @@ switch p.trVars.currentState
                 timeFromFixAq > p.trVars.fixDurReq
             % p.init.strb.strobeNow(p.init.codes.hit); % Must change to fixation completed
             p.trData.timing.fixHoldReqMet = timeNow;
-            
+
+     
+          
             p.trVars.currentState = p.state.MakeSaccade;
 
             % p.trVars.currentState      = p.state.hit; %Will go on end
@@ -203,12 +205,9 @@ switch p.trVars.currentState
         %   show T1 now
         %   show T2 now
         %   erase Fixation
-        p.trVars.fixationVisible = false; 
         p.trVars.T1_visible = true;
         p.trVars.T2_visible = true;
         p.draw.color.fix = p.draw.color.background;
-
-        %Strobe Go signal
 
         % Ensure go-signal (fixation offset) is timestamped once on a real flip
         if p.trData.timing.fixOff < 0 && ...
@@ -222,7 +221,7 @@ switch p.trVars.currentState
             end
         end
 
-        
+
         timeSinceGo = -1;
         % Calculate time since Go :
         if p.trData.timing.fixOff > 0 || p.trVars.passEye

@@ -270,9 +270,9 @@ p.init.exptType         = 'joystickPress';  % Which experiment are we running? T
 % 'trVars' is the key strcutarray that gets saved on every trial.
 
 %% general vars:
-p.trVarsInit.mouseEyeSim         = 1;        % Mouse bqsed eye track
+p.trVarsInit.mouseEyeSim         = 0;        % Mouse bqsed eye track
 p.trVarsInit.passJoy             = 1;       % pass = 1; simulate correct trials (for debugging)
-p.trVarsInit.passEye             = 0;       % pass = 1; simulate correct trials (for debugging)
+p.trVarsInit.passEye             = 1;       % pass = 1; simulate correct trials (for debugging)
 p.trVarsInit.blockNumber         = 0;       % block number
 p.trVarsInit.repeat              = 0;       % repeat trial if true
 p.trVarsInit.rwdJoyPR            = 0;       % 0 = Give reward if Joy is pressed; 1 = Give reward if Joystick released

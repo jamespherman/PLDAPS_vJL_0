@@ -108,9 +108,10 @@ end
 %Draw a reward noise value from Gaussian SD 0.015ml =(14ms)
 
 x = randn * 14;
+y = randn * 14;
 % Calculate the actual reward durations for the upcoming trial
 p.status.ActualRichReward = p.status.BlockRichMeanDuration + x;
-p.status.ActualPoorReward = p.status.BlockPoorMeanDuration + x;
+p.status.ActualPoorReward = p.status.BlockPoorMeanDuration + y;
 
 % Choose the Trial type ; Congruent (1) or Conflict (2) within the remaining  
 if p.status.RemainingConflict == 0 
