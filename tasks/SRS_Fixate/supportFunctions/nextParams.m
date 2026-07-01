@@ -182,7 +182,7 @@ function p = ChooseBlockReward(p)
 % 0.044ml difference =(40ms)
 % We chose a mean reward for rich and poor per block, and we add (LATER) a Gaussian
 % noise with SD = 0.015ml =(14ms)
-x = [0 0]
+x = [0 0];
 while x(1)-x(2) < 40, x = unifrnd(37, 191, [1, 2]); end
 p.status.BlockRichMeanDuration = max(x);
 p.status.BlockPoorMeanDuration = min(x);

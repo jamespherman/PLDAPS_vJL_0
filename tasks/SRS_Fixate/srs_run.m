@@ -503,7 +503,7 @@ end
 % now calculate size of joystick-fill rectangle
 joyRectNow = pds.joyRectFillCalc(p);
 
-% if we're close enouframegh in time to the next screen flip, start drawing.
+% if we're close enough in time to the next screen flip, start drawing.
 if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNumber
 
     % Fill the window with the background color.

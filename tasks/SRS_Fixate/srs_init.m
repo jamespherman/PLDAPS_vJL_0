@@ -58,7 +58,7 @@ p   = inLineDefs(p);
 p.init.codes = pds.initCodes;
 
 % initialize the random seed:
-RandStream.setGlobalStream(RandStream('mt19937ar','Seed', 0));
+%RandStream.setGlobalStream(RandStream('mt19937ar','Seed', 0));
 
 %% define 'strb' as classyStrboe
 % this is a class.
