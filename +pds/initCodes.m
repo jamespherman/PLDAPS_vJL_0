@@ -322,6 +322,18 @@ codes.rfMapStimHemifield              = 16161;  % 0=full, 1=left, 2=right
 % 16162-16169 reserved for future per-stim-type params
 % 16170-16175 reserved as headroom
 
+
+
+
+%% Codes for SRS_Task
+
+codes.CurrentBlockNumber            = 20000; % Current Block Number
+codes.CurrentBlockType              = 20001; % 1 = T1 Rich ; 2 = T2 Rich
+codes.ActualTrialType               = 20002; % 1 = Congruent ; 2 = Conflict
+codes.ActualRichReward              = 20003; % Actual Reward with the gaussian noise for Rich target (depends on the blocktype and TrialType)
+codes.ActualPoorReward              = 20004; % Actual Reward with the gaussian noise for Poor target (depends on the blocktype and TrialType)
+
+
 %% validation
 
 % making sure that every code is listed once (i.e. unique)

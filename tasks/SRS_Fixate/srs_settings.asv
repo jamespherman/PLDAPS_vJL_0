@@ -184,7 +184,7 @@ p.status.RemainingConflict          = -1;      % Number of Conflict trials remai
 p.status.RemainingCongruent         = -1;      % Number of Congruent trials remaining to complete the block requirement
 
 % Per Trial
-p.status.ActualTrialType            = 0;    % 1 = Congruent ; 2 = Conflict
+p.status.ActualTrialType            = 0;
 p.status.ActualRichReward           = 0;
 p.status.ActualPoorReward           = 0;
 
@@ -599,9 +599,12 @@ p.init.strobeList = {...
     'choseHighSalience',    'p.trData.choseHighSalience'; ...   % 0 or 1
     'outcomeCode',          'p.trData.outcomeCode'; ...         % 1=high sal, 2=low sal, 3+=error
     
-    'CurrentBlockType',     'p.status.CurrentBlockType'; ...    % 1 = T1 Rich ; 2 = T2 Rich
-    'ActualTrialType',      'p.status.ActualTrialType'; ...     % 1 = Congruent ; 2 = Conflict
-    'ActualRichReward',     'p.status.ActualRichReward'; ...
-    'ActualPoorReward',     'p.status.ActualPoorReward'; ...
-    };
+    
+    
+    'rewardDuration',   'p.status.ActualRichReward'; ...
+    'rewardDurationRight',  'p.status.ActualRichReward'; ...
+
+
+
+    });
 end
