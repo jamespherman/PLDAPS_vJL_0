@@ -304,7 +304,7 @@ p.trVarsInit.motionDir           = 30;          % Motion direction in degrees
 p.trVarsInit.fixDegX             = 0;           % fixation X location in degrees
 p.trVarsInit.fixDegY             = 0;           % fixation Y location in degrees
 
-%% SRS tqsk specific vqriqble ;
+%% SRS task specific variable ;
 
 p.trVarsInit.backgroundHueIdx     = 1;      % 1=Hue A (0 deg DKL), 2=Hue B (180 deg DKL)
 p.status.highSalienceSide     = 0;      % 1=right, 2=left
@@ -312,6 +312,37 @@ p.status.highRewardSide       = 0;      % 1=right, 2=left
 p.trVarsInit.chosenSide           = 0;      % 1=right, 2=left, 0=neither
 p.trVarsInit.choseHighSalience    = false;  % true if chose high salience target
 p.trVarsInit.outcome              = '';     % CHOSE_HIGH_SAL, CHOSE_LOW_SAL, FIX_BREAK, etc.
+
+
+%% Salience mode
+p.trVarsInit.salienceType = 2; % 1 = hue, 2 = luminance
+
+%% Luminance mode parameters
+% Pesaran-like luminance values.
+% We keep the pair mean at 6 cd/m2.
+p.trVarsInit.luminanceMeanCdM2 = 6;
+p.trVarsInit.luminanceMinCdM2  = 0.01;
+p.trVarsInit.luminanceMaxCdM2  = 12.15;
+
+% Practical display maximum used to convert cd/m2 into RGB intensity.
+p.trVarsInit.luminanceDisplayMaxCdM2 = 12;
+
+% Base hue for luminance mode Same hue, different intensity.
+p.trVarsInit.luminanceBaseRGB = [1 0 0];
+
+%% Trial-specific luminance values
+p.trVarsInit.ActualLuminanceT1 = 6;
+p.trVarsInit.ActualLuminanceT2 = 6;
+p.trVarsInit.ActualLuminanceT1_x1000 = 6000;
+p.trVarsInit.ActualLuminanceT2_x1000 = 6000;
+p.trVarsInit.LuminanceDifferenceT1MinusT2 = 0;
+p.trVarsInit.LuminanceDifferenceT1MinusT2_x1000 = 0;
+
+%% Target colors actually used by drawMachine
+p.trVarsInit.T1_color = [1 0 0];
+p.trVarsInit.T2_color = [1 0 0];
+
+
 
 %% Target settings
 
@@ -598,7 +629,9 @@ p.init.strobeList = {...
     
     'ActualLuminanceT1',    'p.trVars.ActualLuminanceT1'; ...   % TO ADD ; Luminance Value for T1
     'ActualLuminanceT2',    'p.trVars.ActualLuminanceT2'; ...   % TO ADD ; Luminance Value for T2
+    'LuminanceDifferenceT1MinusT2_x1000','p.trVars.LuminanceDifferenceT1MinusT2_x1000'; ...
 
+    
     'hueType',              'p.trVars.backgroundHueIdx'; ...    % 1=Hue A, 2=Hue B
     
     % Targets

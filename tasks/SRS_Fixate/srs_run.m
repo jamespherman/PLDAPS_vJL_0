@@ -542,9 +542,10 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     T1_rect = CenterRectOnPoint(...
     [0 0 p.draw.T1_longAxisPix p.draw.T1_shortAxisPix], ...
     p.draw.T1_locPixX, p.draw.T1_locPixY);
+   
     % Draw filled rectangle
+    Screen('FillRect', p.draw.window, p.trVars.T1_color, T1_rect);
     
-    Screen('FillRect', p.draw.window, p.trVars.T1_colorIdx, T1_rect);
     % Optionally draw a border
     Screen('FrameRect', p.draw.window, p.draw.clutIdx.expBlack_subBg, ...
     T1_rect, 2); % 2-pixel border
@@ -557,9 +558,10 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     T2_rect = CenterRectOnPoint(...
     [0 0 p.draw.T2_shortAxisPix p.draw.T2_longAxisPix], ...
     p.draw.T2_locPixX, p.draw.T2_locPixY);
-    % Draw filled rectangle
     
-    Screen('FillRect', p.draw.window, p.trVars.T2_colorIdx, T2_rect);
+    % Draw filled rectangle
+    Screen('FillRect', p.draw.window, p.trVars.T2_color, T2_rect);
+
     % Optionally draw a border
     Screen('FrameRect', p.draw.window, p.draw.clutIdx.expBlack_subBg, ...
     T2_rect, 2); % 2-pixel border

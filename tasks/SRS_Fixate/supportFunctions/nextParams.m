@@ -128,22 +128,124 @@ p = AssignTrialType(p);
 end
 
 function p = applySalience(p)
-%% Setup the Saliency
-% Select the saliency type to apply ; Hue or Luminance
-% If luminance ;
-    % Select Randomly (log uniform distribution) ranging from 0.01 cd/m^2
-    % and 12.15 cd/m^2
+%% Apply salience manipulation
+%
+% Current implementation:
+%   salienceType = 2 -> luminance
+%
+% Convention:
+%   T1 = right target = side 1
+%   T2 = left target  = side 2
+%
+% highSalienceSide:
+%   1 = T1/right is high luminance
+%   2 = T2/left is high luminance
 
-    % Assign second target such that mean luminance across both target is
-    % 6cd/m^2
+if ~isfield(p.trVars, 'salienceType')
+    p.trVars.salienceType = 2; % default: luminance
+end
 
-    % Apply the high luminance to HighSalienceSide, low luminance to 3-
-    % HighSalienceSide
+switch p.trVars.salienceType
 
-% If Hue ; Copy Conflict_Task
+    case 2
+        %% ------------------------------------------------------------
+        % LUMINANCE MODE
+        % ------------------------------------------------------------
+        %
+        % Dubey/Pesaran-like rule:
+        %   one luminance value is drawn log-uniformly
+        %   the other is set so that the pair mean is 6 cd/m2
+        %
+        % Here we then assign the larger luminance to highSalienceSide.
 
+        meanLum = p.trVars.luminanceMeanCdM2;
+        minLum  = p.trVars.luminanceMinCdM2;
+        maxLum  = p.trVars.luminanceMaxCdM2;
+
+        % Need a valid pair:
+        % lumA + lumB = 2 * meanLum
+        % both must be positive and within range.
+        validPair = false;
+
+        while ~validPair
+
+            % Log-uniform draw
+            lumA = exp(log(minLum) + rand * (log(maxLum) - log(minLum)));
+
+            % Complementary luminance to keep mean constant
+            lumB = 2 * meanLum - lumA;
+
+            validPair = ...
+                isfinite(lumA) && isfinite(lumB) && ...
+                lumA >= minLum && lumA <= maxLum && ...
+                lumB >= minLum && lumB <= maxLum;
+        end
+
+        highLum = max(lumA, lumB);
+        lowLum  = min(lumA, lumB);
+
+        % Assign high luminance to the high-salience target
+        if p.status.highSalienceSide == 1
+            % T1/right is high salience
+            p.trVars.ActualLuminanceT1 = highLum;
+            p.trVars.ActualLuminanceT2 = lowLum;
+
+        elseif p.status.highSalienceSide == 2
+            % T2/left is high salience
+            p.trVars.ActualLuminanceT1 = lowLum;
+            p.trVars.ActualLuminanceT2 = highLum;
+
+        else
+            warning('highSalienceSide is not 1 or 2. Using equal luminance.');
+            p.trVars.ActualLuminanceT1 = meanLum;
+            p.trVars.ActualLuminanceT2 = meanLum;
+        end
+
+        % Useful signed value:
+        % positive -> T1/right brighter
+        % negative -> T2/left brighter
+        p.trVars.LuminanceDifferenceT1MinusT2 = ...
+            p.trVars.ActualLuminanceT1 - p.trVars.ActualLuminanceT2;
+
+        % Integer versions for strobes
+        p.trVars.ActualLuminanceT1_x1000 = ...
+            round(1000 * p.trVars.ActualLuminanceT1);
+
+        p.trVars.ActualLuminanceT2_x1000 = ...
+            round(1000 * p.trVars.ActualLuminanceT2);
+
+        p.trVars.LuminanceDifferenceT1MinusT2_x1000 = ...
+            round(1000 * p.trVars.LuminanceDifferenceT1MinusT2);
+
+        %% Convert luminance values into RGB colors
+  
+        baseRGB = p.trVars.luminanceBaseRGB;
+        displayMaxLum = p.trVars.luminanceDisplayMaxCdM2;
+
+        T1_scale = p.trVars.ActualLuminanceT1 / displayMaxLum;
+        T2_scale = p.trVars.ActualLuminanceT2 / displayMaxLum;
+
+        T1_scale = min(max(T1_scale, 0), 1);
+        T2_scale = min(max(T2_scale, 0), 1);
+
+        p.trVars.T1_color = min(max(baseRGB * T1_scale, 0), 1);
+        p.trVars.T2_color = min(max(baseRGB * T2_scale, 0), 1);
+
+    case 1
+        %% ------------------------------------------------------------
+        % HUE MODE
+        % ------------------------------------------------------------
+        %
+        
+
+
+    otherwise
+        error('Unknown salienceType. Use 1 for hue or 2 for luminance.');
+end
 
 end
+
+
 
 function p = AssignTrialType(p)
 %% Assign the ActualRichReward and ActualPoorReward to the targets corresponding depending on the block
@@ -305,8 +407,10 @@ end
 
 function p = setLocations(p)
 %% T1
-% Set the color
-p.trVars.T1_colorIdx         = p.draw.clutIdx.expRed_subRed;
+% T1 color safety
+if ~isfield(p.trVars, 'T1_color')
+    p.trVars.T1_color = [1 0 0];
+end
 
 % NEW: Convert T1 position from degrees to pixels
 
@@ -319,8 +423,10 @@ p.draw.T1_longAxisPix = pds.deg2pix(p.trVars.T1_longAxisDeg, p);
 p.draw.T1_shortAxisPix = pds.deg2pix(p.trVars.T1_shortAxisDeg, p);
 
 %% T2
-%Set the color
-p.trVars.T2_colorIdx         = p.draw.clutIdx.expRed_subRed;
+%T2 color safety
+if ~isfield(p.trVars, 'T2_color')
+    p.trVars.T2_color = [1 0 0];
+end
 
 % NEW: Convert T1 position from degrees to pixels
 

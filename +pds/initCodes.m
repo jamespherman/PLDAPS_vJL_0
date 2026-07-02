@@ -332,7 +332,10 @@ codes.CurrentBlockType              = 20001; % 1 = T1 Rich ; 2 = T2 Rich
 codes.ActualTrialType               = 20002; % 1 = Congruent ; 2 = Conflict
 codes.ActualRichReward              = 20003; % Actual Reward with the gaussian noise for Rich target (depends on the blocktype and TrialType)
 codes.ActualPoorReward              = 20004; % Actual Reward with the gaussian noise for Poor target (depends on the blocktype and TrialType)
-
+codes.salienceType                  = 20005; %1 = Hue ; 2 = Luminance
+codes.ActualLuminanceT1             = 20006; %Luminance Value for T1
+codes.ActualLuminanceT2             = 20007; %Luminance Value for T2
+codes.LuminanceDifferenceT1MinusT2_x1000 =20008;
 
 %% validation
 
