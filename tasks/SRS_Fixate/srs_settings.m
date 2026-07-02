@@ -592,7 +592,16 @@ p.init.strobeList = {...
 
 
     % SRS Task ;
+
+    %%%% For Salience
+    'salienceType',         'p.trVars.salienceType' ; ...       % TO ADD ; 1 = Hue ; 2 = Luminance
+    
+    'ActualLuminanceT1',    'p.trVars.ActualLuminanceT1'; ...   % TO ADD ; Luminance Value for T1
+    'ActualLuminanceT2',    'p.trVars.ActualLuminanceT2'; ...   % TO ADD ; Luminance Value for T2
+
     'hueType',              'p.trVars.backgroundHueIdx'; ...    % 1=Hue A, 2=Hue B
+    
+    % Targets
     'highSalienceLocation', 'p.status.highSalienceSide'; ...    % 1=T1_Right, 2= T2_left
     'highRewardLocation',   'p.status.highRewardSide';...       % 1=T1_Right, 2= T2_left
     'chosenTarget',         'p.trData.chosenSide'; ...          % 1=T1_Right, 2=T2_left, 0=neither

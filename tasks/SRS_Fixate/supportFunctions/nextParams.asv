@@ -131,16 +131,7 @@ function p = applySalience(p)
 %% Setup the Saliency
 % Select the saliency type to apply ; Hue or Luminance
 % If luminance ;
-    % Select Randomly (log uniform distribution) ranging from 0.01 cd/m^2
-    % and 12.15 cd/m^2
-
-    % Assign second target such that mean luminance across both target is
-    % 6cd/m^2
-
-    % Apply the high luminance to HighSalienceSide, low luminance to 3-
-    % HighSalienceSide
-
-% If Hue ; Copy Conflict_Task
+    % Select Randomly (log uniform distribution) ranging from 0.01 cd?m
 
 
 end
