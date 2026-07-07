@@ -148,21 +148,21 @@ p.status.iGoodTrial                 = 0; % count of all trials that have ended i
 p.status.trialsLeftInBlock          = 0; % how many trials remain in the current block?
 p.status.blockNumber                = 0; % what block are we in?
 
-%% T1
-%Congruent trial 
-p.status.iTrial_Rich_High_T1         = 0; % count number of trial where congruent choice rich-high (T1) has been chosen while T1 was rich
-p.status.iTrial_Poor_low_T1          = 0; % count number of trial where poor-low target (T2) has been chosen while congruent trial in T1 was rich
-%Conflict
-p.status.iTrial_Rich_low_T1          = 0; % count number of trial where rich-low T1 was chosen while conflict trial in T1 rich
-p.status.iTrial_Poor_High_T1         = 0; % count number of trial where poor-high target T2 has been chosen while conflict trial in T1 was rich
-
-%% T2
-%Congruent trial
-p.status.iTrial_Rich_High_T2         = 0; % count number of trial where congruent choice rich-high (T1) has been chosen while T1 was rich
-p.status.iTrial_Poor_low_T2          = 0; % count number of trial where poor-low target (T2) has been chosen while congruent trial in T1 was rich
-%Conflict
-p.status.iTrial_Rich_low_T2          = 0; % count number of trial where rich-low T2 was chosen while conflict trial in T2 rich
-p.status.iTrial_Poor_High_T2         = 0; % count number of trial where poor-high target T1 has been chosen while conflict trial in T2 was rich
+% %% T1
+% %Congruent trial 
+% p.status.iTrial_Rich_High_T1         = 0; % count number of trial where congruent choice rich-high (T1) has been chosen while T1 was rich
+% p.status.iTrial_Poor_low_T1          = 0; % count number of trial where poor-low target (T2) has been chosen while congruent trial in T1 was rich
+% %Conflict
+% p.status.iTrial_Rich_low_T1          = 0; % count number of trial where rich-low T1 was chosen while conflict trial in T1 rich
+% p.status.iTrial_Poor_High_T1         = 0; % count number of trial where poor-high target T2 has been chosen while conflict trial in T1 was rich
+% 
+% %% T2
+% %Congruent trial
+% p.status.iTrial_Rich_High_T2         = 0; % count number of trial where congruent choice rich-high (T1) has been chosen while T1 was rich
+% p.status.iTrial_Poor_low_T2          = 0; % count number of trial where poor-low target (T2) has been chosen while congruent trial in T1 was rich
+% %Conflict
+% p.status.iTrial_Rich_low_T2          = 0; % count number of trial where rich-low T2 was chosen while conflict trial in T2 rich
+% p.status.iTrial_Poor_High_T2         = 0; % count number of trial where poor-high target T1 has been chosen while conflict trial in T2 was rich
 
 %% Total T1 + T2
 p.status.iTrial_Rich_High        = 0; % count number of trial where congruent choice rich-high 
@@ -345,6 +345,13 @@ p.trVarsInit.T2_color = [1 0 0];
 
 
 %% Target settings
+
+p.trVarsInit.T1_colorIdx = 250;
+p.trVarsInit.T2_colorIdx = 251;
+
+
+
+       
 
 p.trVarsInit.responseWindow          = 0.45;     % 600ms response window from go signal
 p.trVarsInit.targHoldDurationMin     = 0.2;

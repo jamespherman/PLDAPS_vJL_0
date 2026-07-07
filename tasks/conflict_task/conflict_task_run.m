@@ -532,7 +532,7 @@ if timeNow > frameDue
     end
 
     % Draw fixation point (if visible)
-    if p.trVars.fixationVisible
+    if  p.trVars.fixationVisible
         fixRect = repmat(p.draw.fixPointPix, 1, 2) + ...
             p.draw.fixPointRadius*[-1 -1 1 1];
         Screen('FrameRect', p.draw.window, p.draw.color.fix, ...

@@ -503,6 +503,7 @@ end
 % now calculate size of joystick-fill rectangle
 joyRectNow = pds.joyRectFillCalc(p);
 
+
 % if we're close enough in time to the next screen flip, start drawing.
 if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNumber
 
@@ -544,11 +545,11 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     p.draw.T1_locPixX, p.draw.T1_locPixY);
    
     % Draw filled rectangle
-    Screen('FillRect', p.draw.window, p.trVars.T1_color, T1_rect);
+    Screen('FillRect', p.draw.window, p.trVars.T1_colorIdx, T1_rect);
     
-    % Optionally draw a border
-    Screen('FrameRect', p.draw.window, p.draw.clutIdx.expBlack_subBg, ...
-    T1_rect, 2); % 2-pixel border
+    % % Optionally draw a border
+    % Screen('FrameRect', p.draw.window, p.draw.clutIdx.expBlack_subBg, ...
+    % T1_rect, 2); % 2-pixel border
     end
 
         % Draw T2 rectangle (3:1 ratio, long axis = 2°) vertical
@@ -560,11 +561,11 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     p.draw.T2_locPixX, p.draw.T2_locPixY);
     
     % Draw filled rectangle
-    Screen('FillRect', p.draw.window, p.trVars.T2_color, T2_rect);
+    Screen('FillRect', p.draw.window, p.trVars.T2_colorIdx, T2_rect);
 
-    % Optionally draw a border
-    Screen('FrameRect', p.draw.window, p.draw.clutIdx.expBlack_subBg, ...
-    T2_rect, 2); % 2-pixel border
+    % % Optionally draw a border
+    % Screen('FrameRect', p.draw.window, p.draw.clutIdx.expBlack_subBg, ...
+    % T2_rect, 2); % 2-pixel border
     end
 
     %% Draw target acceptance windows (same geometry as eyeInTargetWindow)

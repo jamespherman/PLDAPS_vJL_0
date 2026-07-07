@@ -216,39 +216,46 @@ switch p.trVars.salienceType
 
         p.trVars.LuminanceDifferenceT1MinusT2_x1000 = ...
             round(1000 * p.trVars.LuminanceDifferenceT1MinusT2);
-
-      %% ------------------------------------------------------------
-        % Convert luminance values into precomputed CLUT indices
-        % ------------------------------------------------------------
         
+       %% Convert luminance values into RGB values for dynamic CLUT slots
+
+        baseRGB = p.trVars.luminanceBaseRGB;
         displayMaxLum = p.trVars.luminanceDisplayMaxCdM2;
         
-        redLumStart = p.draw.clutIdx.redLumStart;
-        redLumN     = p.draw.clutIdx.redLumN;
+        if isfield(p.trVars, 'luminanceMinVisibleScale')
+            minVisibleScale = p.trVars.luminanceMinVisibleScale;
+        else
+            minVisibleScale = 0.15;
+        end
         
-        % Convert luminance to scale between 0 and 1
-        T1_scale = p.trVars.ActualLuminanceT1 / displayMaxLum;
+        % Convert physical luminance values into normalized intensity
+        T1_scale = p.trVars.ActualLuminanceT1 / displayMaxLum; % Luminance in a proportion of max RGB  intensity
         T2_scale = p.trVars.ActualLuminanceT2 / displayMaxLum;
         
-        % Clamp to visible range used in initClut
-        minScale = 0.20;
-        maxScale = 1.00;
+        % Clamp into visible range for prototype
+        T1_scale = min(max(T1_scale, minVisibleScale), 1);
+        T2_scale = min(max(T2_scale, minVisibleScale), 1);
         
-        T1_scale = min(max(T1_scale, minScale), maxScale);
-        T2_scale = min(max(T2_scale, minScale), maxScale);
+        % Final RGB values, still normalized between 0 and 1
+        T1_rgb = min(max(baseRGB * T1_scale, 0), 1);
+        T2_rgb = min(max(baseRGB * T2_scale, 0), 1);
         
-        % Convert scale to luminance-level index
-        T1_level = round(1 + (T1_scale - minScale) / (maxScale - minScale) * (redLumN - 1));
-        T2_level = round(1 + (T2_scale - minScale) / (maxScale - minScale) * (redLumN - 1));
+        %% Put those RGB values into two reserved CLUT slots
         
-        % Safety clamp
-        T1_level = min(max(T1_level, 1), redLumN);
-        T2_level = min(max(T2_level, 1), redLumN);
+        p.trVars.T1_colorIdx = p.draw.clutIdx.expT1Lum_subT1Lum;
+        p.trVars.T2_colorIdx = p.draw.clutIdx.expT2Lum_subT2Lum;
         
-        % Assign CLUT indices
-        p.trVars.T1_colorIdx = redLumStart + T1_level - 1;
-        p.trVars.T2_colorIdx = redLumStart + T2_level - 1;
-
+        % Convert 0-based CLUT index to MATLAB row index
+        T1_row = p.trVars.T1_colorIdx + 1;
+        T2_row = p.trVars.T2_colorIdx + 1;
+        
+        % Update experimenter CLUT
+        p.draw.clut.expCLUT(T1_row, :) = T1_rgb;
+        p.draw.clut.expCLUT(T2_row, :) = T2_rgb;
+        
+        % Update subject CLUT
+        p.draw.clut.subCLUT(T1_row, :) = T1_rgb;
+        p.draw.clut.subCLUT(T2_row, :) = T2_rgb;
 
     case 1
         %% ------------------------------------------------------------

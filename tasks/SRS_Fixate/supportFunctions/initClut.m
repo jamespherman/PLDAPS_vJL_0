@@ -96,6 +96,36 @@ p.draw.clut.ffc      = p.draw.nColors + 1;
 p.draw.clut.expCLUT  = p.draw.clut.expColors;
 p.draw.clut.subCLUT  = p.draw.clut.subColors;
 
+%% ------------------------------------------------------------
+% Dynamic-looking luminance range for SRS targets
+% ------------------------------------------------------------
+% We do not update the CLUT during the task.
+% Instead, we precompute several red luminance levels and choose among them.
+
+p.draw.clutIdx.redLumStart = 200;   % 0-based CLUT index
+p.draw.clutIdx.redLumN     = 32;    % number of luminance levels
+
+redLumStart = p.draw.clutIdx.redLumStart;
+redLumN     = p.draw.clutIdx.redLumN;
+
+% Prototype visible range.
+% Avoid values too close to zero, because they become invisible.
+minScale = 0.20;
+maxScale = 1.00;
+
+redScales = linspace(minScale, maxScale, redLumN);
+
+for iLum = 1:redLumN
+
+    clutIdx = redLumStart + iLum - 1;   % 0-based
+    rowIdx  = clutIdx + 1;              % MATLAB row index
+
+    thisRed = [redScales(iLum) 0 0];
+
+    % Visible both for experimenter and subject
+    p.draw.clut.expCLUT(rowIdx, :) = thisRed;
+    p.draw.clut.subCLUT(rowIdx, :) = thisRed;
+end
 
 end
 
