@@ -125,25 +125,14 @@ for iLum = 1:redLumN
     % Visible both for experimenter and subject
     p.draw.clut.expCLUT(rowIdx, :) = thisRed;
     p.draw.clut.subCLUT(rowIdx, :) = thisRed;
-
-    % Also update expColors/subColors for compatibility with display loaders.
-    p.draw.clut.expColors(rowIdx, :) = thisRed;
-    p.draw.clut.subColors(rowIdx, :) = thisRed;
 end
 
 %% Hue Contrast ;
 
-% Keep the same symbolic indices as conflict_task.
-% The second and fourth colors are named 45/225 in conflict_task,
-% although initClut computes them from DKL angles 20/200.
 p.draw.clutIdx.expDkl0_subDkl0     = 20;
-p.draw.clutIdx.expDkl45_subDkl45   = 21;
+p.draw.clutIdx.expDkl20_subDkl20   = 21;
 p.draw.clutIdx.expDkl180_subDkl180 = 22;
-p.draw.clutIdx.expDkl225_subDkl225 = 23;
-
-% Backward-compatible aliases for the actual computed angles.
-p.draw.clutIdx.expDkl20_subDkl20   = p.draw.clutIdx.expDkl45_subDkl45;
-p.draw.clutIdx.expDkl200_subDkl200 = p.draw.clutIdx.expDkl225_subDkl225;
+p.draw.clutIdx.expDkl200_subDkl200 = 23;
 
 %% ------------------------------------------------------------
 % DKL colors for hue / contrast salience
@@ -178,76 +167,29 @@ p.draw.colors.isolumGray = [r_gray, g_gray, b_gray];
 
 %% Insert DKL colors into CLUT
 
-dklIdxList = [ ...
-    p.draw.clutIdx.expDkl0_subDkl0, ...
-    p.draw.clutIdx.expDkl45_subDkl45, ...
-    p.draw.clutIdx.expDkl180_subDkl180, ...
-    p.draw.clutIdx.expDkl225_subDkl225];
+p.draw.clut.expCLUT(p.draw.clutIdx.expDkl0_subDkl0 + 1, :) = ...
+    p.draw.colors.dkl_hues(1, :);
 
-for i = 1:length(dklIdxList)
-    rowIdx = dklIdxList(i) + 1;
+p.draw.clut.expCLUT(p.draw.clutIdx.expDkl20_subDkl20 + 1, :) = ...
+    p.draw.colors.dkl_hues(2, :);
 
-    % Visible and identical on experimenter and subject displays.
-    p.draw.clut.expCLUT(rowIdx, :) = p.draw.colors.dkl_hues(i, :);
-    p.draw.clut.subCLUT(rowIdx, :) = p.draw.colors.dkl_hues(i, :);
+p.draw.clut.expCLUT(p.draw.clutIdx.expDkl180_subDkl180 + 1, :) = ...
+    p.draw.colors.dkl_hues(3, :);
 
-    % Also update expColors/subColors in case another display loader uses
-    % those fields instead of expCLUT/subCLUT.
-    p.draw.clut.expColors(rowIdx, :) = p.draw.colors.dkl_hues(i, :);
-    p.draw.clut.subColors(rowIdx, :) = p.draw.colors.dkl_hues(i, :);
-end
+p.draw.clut.expCLUT(p.draw.clutIdx.expDkl200_subDkl200 + 1, :) = ...
+    p.draw.colors.dkl_hues(4, :);
 
-%% Exp-only overlay colors matched to the current DKL background for subject
-% These keep debug overlays visible on the experimenter display but invisible
-% on the subject display when the background is DKL 0 or DKL 180.
+p.draw.clut.subCLUT(p.draw.clutIdx.expDkl0_subDkl0 + 1, :) = ...
+    p.draw.colors.dkl_hues(1, :);
 
-p.draw.clutIdx.expGrey25_subDkl0   = 30;
-p.draw.clutIdx.expGrey25_subDkl180 = 31;
-p.draw.clutIdx.expGrey70_subDkl0   = 32;
-p.draw.clutIdx.expGrey70_subDkl180 = 33;
-p.draw.clutIdx.expGrey90_subDkl0   = 34;
-p.draw.clutIdx.expGrey90_subDkl180 = 35;
-p.draw.clutIdx.expBlue_subDkl0     = 36;
-p.draw.clutIdx.expBlue_subDkl180   = 37;
-p.draw.clutIdx.expOrange_subDkl0   = 38;
-p.draw.clutIdx.expOrange_subDkl180 = 39;
-p.draw.clutIdx.expGreen_subDkl0    = 40;
-p.draw.clutIdx.expGreen_subDkl180  = 41;
-p.draw.clutIdx.expBlack_subDkl0    = 42;
-p.draw.clutIdx.expBlack_subDkl180  = 43;
+p.draw.clut.subCLUT(p.draw.clutIdx.expDkl20_subDkl20 + 1, :) = ...
+    p.draw.colors.dkl_hues(2, :);
 
-bg0RGB   = p.draw.colors.dkl_hues(1, :);
-bg180RGB = p.draw.colors.dkl_hues(3, :);
+p.draw.clut.subCLUT(p.draw.clutIdx.expDkl180_subDkl180 + 1, :) = ...
+    p.draw.colors.dkl_hues(3, :);
 
-overlayRows = { ...
-    'expGrey25_subDkl0',   [0.25 0.25 0.25], bg0RGB; ...
-    'expGrey25_subDkl180', [0.25 0.25 0.25], bg180RGB; ...
-    'expGrey70_subDkl0',   [0.70 0.70 0.70], bg0RGB; ...
-    'expGrey70_subDkl180', [0.70 0.70 0.70], bg180RGB; ...
-    'expGrey90_subDkl0',   [0.90 0.90 0.90], bg0RGB; ...
-    'expGrey90_subDkl180', [0.90 0.90 0.90], bg180RGB; ...
-    'expBlue_subDkl0',     blueISH,          bg0RGB; ...
-    'expBlue_subDkl180',   blueISH,          bg180RGB; ...
-    'expOrange_subDkl0',   orangeISH,        bg0RGB; ...
-    'expOrange_subDkl180', orangeISH,        bg180RGB; ...
-    'expGreen_subDkl0',    greenISH,         bg0RGB; ...
-    'expGreen_subDkl180',  greenISH,         bg180RGB; ...
-    'expBlack_subDkl0',    [0 0 0],          bg0RGB; ...
-    'expBlack_subDkl180',  [0 0 0],          bg180RGB};
-
-for i = 1:size(overlayRows, 1)
-    idxName = overlayRows{i, 1};
-    expRGB  = overlayRows{i, 2};
-    subRGB  = overlayRows{i, 3};
-
-    rowIdx = p.draw.clutIdx.(idxName) + 1;
-
-    p.draw.clut.expCLUT(rowIdx, :) = expRGB;
-    p.draw.clut.subCLUT(rowIdx, :) = subRGB;
-
-    p.draw.clut.expColors(rowIdx, :) = expRGB;
-    p.draw.clut.subColors(rowIdx, :) = subRGB;
-end
+p.draw.clut.subCLUT(p.draw.clutIdx.expDkl200_subDkl200 + 1, :) = ...
+    p.draw.colors.dkl_hues(4, :);
 end
 
 

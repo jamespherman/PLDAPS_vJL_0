@@ -11,11 +11,11 @@ function p = plotWindowSetup(p)
 % ------------------------------------------------------------
 
 % Left column plots
-RewardPosition          = [0.07 0.80 0.60 0.16];
-LuminancePosition       = [0.07 0.55 0.60 0.16];
-PHighSalPosition        = [0.07 0.34 0.27 0.12];
-MedianRTPosition        = [0.40 0.34 0.27 0.12];
-ChoiceEvolutionPosition = [0.07 0.02 0.60 0.25];
+RewardPosition          = [0.07 0.82 0.60 0.11];
+LuminancePosition       = [0.07 0.66 0.60 0.11];
+PHighSalPosition        = [0.07 0.47 0.27 0.12];
+MedianRTPosition        = [0.40 0.47 0.27 0.12];
+ChoiceEvolutionPosition = [0.07 0.10 0.60 0.25];
 
 % Right column status panel
 StatusPosition          = [0.72 0.10 0.25 0.83];

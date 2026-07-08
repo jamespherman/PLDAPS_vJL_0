@@ -1,4 +1,4 @@
-function [r,g,b]                = dkl2rgb(x,varargin)
+function [r,g,b] = dkl2rgb(x,varargin)
 
 % rgb = dkl2rgb(x,bgRGB)
 
@@ -15,21 +15,21 @@ global M_dkl2rgb
 global Rg Gg Bg
 
 % Convert from DKL to RGB
-rgb         = round((0.5 + M_dkl2rgb*x/2)*255);
+rgb = round((0.5 + M_dkl2rgb*x/2)*255);
 
 % Find "bad" values (out of RGB range).
-bad         = sum(rgb>255 |rgb<0)>0;
+bad = sum(rgb>255 |rgb<0)>0;
 
 % Replace "bad" values with the background color.
-rgb(:,bad)  = bgRGB(ones(nnz(bad),1),:)';
+rgb(:,bad) = bgRGB(ones(nnz(bad),1),:)';
 
 % Gamma correct
-r           = Rg(rgb(1,:)+1);
-g           = Gg(rgb(2,:)+1);
-b           = Bg(rgb(3,:)+1);
+r = Rg(rgb(1,:)+1);
+g = Gg(rgb(2,:)+1);
+b = Bg(rgb(3,:)+1);
 end
 
-function M_dkl2rgb              = getdkl(monxyY)
+function M_dkl2rgb = getdkl(monxyY)
 %------------------------------------------------------------------------------
 % compute dkl2rgb conversion matrix from moncie coordinates
 % (compare function "getdkl" in color.c)
