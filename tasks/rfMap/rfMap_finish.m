@@ -319,6 +319,16 @@ else
         p.trVars.noiseFrameDurS, stimTensor, ...
         stimStartFrame, p.trVars.nFramesThisTrial, ...
         p.trVars.nSTALags);
+
+    % Zero the fixation-occluded checks: the clearing patch / fixation
+    % point are drawn over the noise (rfMap_run.m), so the noise there was
+    % never shown and its STA correlation is a spurious RF pinned at
+    % fixation. Applied every trial so the live RF centres / maps stay
+    % clean. (Cached mask; geometry is fixed within a session.)
+    if ~isfield(p.init, 'occludedMask') || isempty(p.init.occludedMask)
+        p.init.occludedMask = occludedCheckMask(p);
+    end
+    p.init.staAccum = applyOccludedMask(p.init.staAccum, p.init.occludedMask);
 end
 
 % Update online STA display via dispatcher, throttled per
