@@ -39,7 +39,9 @@ function staAccum = updateSTA_checkerboard( ...
 %     polaritySequence  - [1, nFramesTrial] vector of +/-1 recording the
 %                         polarity at each display frame of the trial.
 %     condIdx           - [checkSizeIdx, contrastIdx] for this trial.
-%     reversalHz        - polarity reversal frequency (Hz).
+%     reversalHz        - polarity FLIP rate (flips/s). The contrast
+%                         fundamental is reversalHz/2; F1 is evaluated
+%                         there and F2 at reversalHz.
 %     nLags             - number of temporal lags (in display frames).
 %
 %   Output:
@@ -92,7 +94,15 @@ for ch = 1:nCh
     end
 
     % --- (b) F1/F2 ---
-    z = computeF1F2(spikesRel, reversalHz);
+    % reversalHz is the polarity FLIP rate (flips/s). One full +/- contrast
+    % cycle takes TWO flips, so the stimulus fundamental is reversalHz/2:
+    % the linear (X-like) response F1 lives at reversalHz/2 and the
+    % frequency-doubled (Y-like) response F2 at reversalHz. computeF1F2
+    % evaluates F1 at its argument and F2 at 2x, so pass the FUNDAMENTAL,
+    % not the flip rate. (Passing reversalHz put F1 on an even harmonic
+    % where a symmetric square-wave reversal has no linear power.)
+    f1Hz = reversalHz / 2;
+    z = computeF1F2(spikesRel, f1Hz);
     staAccum.f1f2AmpSum(:, szIdx, ctIdx, ch) = ...
         staAccum.f1f2AmpSum(:, szIdx, ctIdx, ch) + abs(z);
 end

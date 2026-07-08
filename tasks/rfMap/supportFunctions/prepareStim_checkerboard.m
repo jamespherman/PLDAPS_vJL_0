@@ -53,7 +53,10 @@ function checkInfo = prepareStim_checkerboard( ...
 %   Validators (errors fast):
 %     1. framesPerReversal must be a positive integer (else reversals
 %        land between flips).
-%     2. F2 = 2 * checkReversalHz < refreshRate / 2 (Nyquist).
+%     2. 2*checkReversalHz < refreshRate/2 (Nyquist). NB checkReversalHz
+%        is the FLIP rate; the contrast fundamental is reversalHz/2, so
+%        F1 = reversalHz/2 and the true F2 = reversalHz. Guarding
+%        2*checkReversalHz is therefore conservative (2x the real F2).
 %     3. Total texture bytes <= gpuMemCapBytes.
 
 if nargin < 10 || isempty(gpuMemCapBytes)
@@ -93,13 +96,16 @@ if relErr > 0.005
          legalSetForRefreshRate(refreshRate));
 end
 
-f2 = 2 * checkReversalHz;
+% Conservative Nyquist guard. checkReversalHz is the flip rate; the true
+% F2 = checkReversalHz (fundamental F1 = checkReversalHz/2). We guard the
+% stricter 2*checkReversalHz so there is generous headroom below Nyquist.
+f2guard = 2 * checkReversalHz;
 nyquist = refreshRate / 2;
-if f2 >= nyquist
+if f2guard >= nyquist
     error('prepareStim_checkerboard:nyquist', ...
-        ['F2 = 2 * checkReversalHz = %g Hz exceeds Nyquist (%.1f Hz) ' ...
-         'at refresh rate %g Hz. Lower checkReversalHz to keep F2 ' ...
-         'strictly below Nyquist.'], f2, nyquist, refreshRate);
+        ['2*checkReversalHz = %g Hz exceeds Nyquist (%.1f Hz) at refresh ' ...
+         'rate %g Hz. Lower checkReversalHz to keep the analysed ' ...
+         'harmonics strictly below Nyquist.'], f2guard, nyquist, refreshRate);
 end
 
 %% --- Pre-compute conditions and texture-data layout --------------------

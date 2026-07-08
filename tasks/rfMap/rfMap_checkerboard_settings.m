@@ -36,7 +36,8 @@ p.trVarsInit.checkSizesDva   = [0.5 1.0 2.0];
 p.trVarsInit.checkContrasts  = [0.25 0.5 1.0];
 
 % Polarity reversal frequency. MUST divide refresh rate evenly AND
-% F2 = 2 * checkReversalHz must be strictly below Nyquist
+% checkReversalHz is the polarity FLIP rate; contrast fundamental F1 =
+% checkReversalHz/2, F2 = checkReversalHz. Guard 2*checkReversalHz < Nyquist (conservative).
 % (refreshRate / 2). prepareStim_checkerboard validates this and
 % prints the legal set if you pick a bad value. Default 5 Hz works at
 % 100 Hz (20 fpr, F2=10 Hz<50) and 120 Hz (24 fpr, F2=10 Hz<60).
