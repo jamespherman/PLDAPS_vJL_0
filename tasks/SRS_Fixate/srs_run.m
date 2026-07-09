@@ -707,21 +707,15 @@ end
 
 %% -------------------- EXP-ONLY COLOR MAPPING FOR DKL BACKGROUND --------------------
 function outIdx = expOnlyColorForCurrentBg(p, inIdx)
-% In luminance mode, the task uses the original fixed background, so regular
-% _subBg colors are fine.
+% Convert exp-only colors to variants whose subject color matches the
+% current DKL background.
 %
-% In DKL hue mode, the subject background can be DKL 0 or DKL 180. A normal
-% _subBg color uses the old SRS background in the subject CLUT, so debug
-% overlays become visible to the subject. This remaps common exp-only colors
-% to CLUT entries whose subject row matches the current DKL background.
+% Only do this in hue/contrast mode. In luminance mode, the normal SRS
+% background is used, so the original _subBg colors are already correct.
 
 outIdx = inIdx;
 
-if ~isfield(p, 'trVars') || ~isfield(p.trVars, 'salienceType') || p.trVars.salienceType ~= 1
-    return
-end
-
-if ~isfield(p.trVars, 'backgroundHueIdx') || ~ismember(p.trVars.backgroundHueIdx, [1 2])
+if ~isfield(p.trVars, 'salienceType') || p.trVars.salienceType ~= 1
     return
 end
 

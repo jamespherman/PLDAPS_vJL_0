@@ -241,16 +241,16 @@ p.rig.guiStatVals = {...
 % The list of vars should be in string format eg 'p.trVarsInit.cueDelta'
 
 p.rig.guiVars = {...
-    'rewardDurationMs'; ...   %1
+    'salienceType'; ...   %1
     'rewardDelay'; ...
     'fixDurReqMin'; ...
     'fixDurReqMax'; ...
-    'salienceType'; ...
-    'fixWinHeightDeg'; ...
-    'fixDegX'; ...       % 6
-    'fixDegY'; ...
-    'fixPointLinePix'; ...
-    'fixPointRadPix'; ...
+    'MeanrewardDurationMs'; ...
+    'responseWindow'; ...
+    'T1_locDegX'; ...       % 6
+    'T1_locDegY'; ...
+    'T2_locDegX'; ...
+    'T2_locDegY'; ...
     'mouseEyeSim'; ...          
     'passEye'};              % 12
 
@@ -330,6 +330,15 @@ p.trVarsInit.luminanceDisplayMaxCdM2 = 12;
 % Base hue for luminance mode Same hue, different intensity.
 p.trVarsInit.luminanceBaseRGB = [1 0 0];
 
+% DKL red luminance drawing parameters.
+% The logical luminance values above stay cd/m2-like for the task.
+% These fields define how those values are drawn as RED DKL CLUT entries.
+p.trVarsInit.luminanceRedDklMean      = -0.495;
+p.trVarsInit.luminanceRedDklHalfRange = 0.10;
+p.trVarsInit.luminanceRedDklSatRad    = 0.35;
+p.trVarsInit.luminanceRedDklHueDeg    = NaN;          % NaN = auto-match SRS red
+p.trVarsInit.luminanceRedTargetRGB    = [225 0 76]/255;
+
 %% Trial-specific luminance values
 p.trVarsInit.ActualLuminanceT1 = 6;
 p.trVarsInit.ActualLuminanceT2 = 6;
@@ -337,6 +346,13 @@ p.trVarsInit.ActualLuminanceT1_x1000 = 6000;
 p.trVarsInit.ActualLuminanceT2_x1000 = 6000;
 p.trVarsInit.LuminanceDifferenceT1MinusT2 = 0;
 p.trVarsInit.LuminanceDifferenceT1MinusT2_x1000 = 0;
+
+p.trVarsInit.ActualDklRedLuminanceT1 = NaN;
+p.trVarsInit.ActualDklRedLuminanceT2 = NaN;
+p.trVarsInit.DklRedLuminanceDifferenceT1MinusT2 = NaN;
+p.trVarsInit.ActualDklRedLuminanceT1_x1000 = NaN;
+p.trVarsInit.ActualDklRedLuminanceT2_x1000 = NaN;
+p.trVarsInit.DklRedLuminanceDifferenceT1MinusT2_x1000 = NaN;
 
 %% Target colors actually used by drawMachine
 p.trVarsInit.T1_color = [1 0 0];

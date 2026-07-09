@@ -97,10 +97,13 @@ p.draw.clut.expCLUT  = p.draw.clut.expColors;
 p.draw.clut.subCLUT  = p.draw.clut.subColors;
 
 %% ------------------------------------------------------------
-% Dynamic-looking luminance range for SRS targets
+% DKL red luminance range for SRS luminance targets
 % ------------------------------------------------------------
 % We do not update the CLUT during the task.
-% Instead, we precompute several red luminance levels and choose among them.
+% Instead, we precompute several RED DKL luminance levels and choose among them.
+%
+% This changes ONLY the luminance salience mode.
+% The hue/contrast mode below is left unchanged.
 
 p.draw.clutIdx.redLumStart = 200;   % 0-based CLUT index
 p.draw.clutIdx.redLumN     = 32;    % number of luminance levels
@@ -108,42 +111,120 @@ p.draw.clutIdx.redLumN     = 32;    % number of luminance levels
 redLumStart = p.draw.clutIdx.redLumStart;
 redLumN     = p.draw.clutIdx.redLumN;
 
-% Prototype visible range
-% Avoid values too close to zero; invisible
-minScale = 0.20;
-maxScale = 1.00;
+% Settings, with safe defaults if fields are absent.
+redDklMean = -0.495;
+if isfield(p, 'trVarsInit') && isfield(p.trVarsInit, 'luminanceRedDklMean')
+    redDklMean = p.trVarsInit.luminanceRedDklMean;
+end
 
-redScales = linspace(minScale, maxScale, redLumN);
+redDklHalfRange = 0.10;
+if isfield(p, 'trVarsInit') && isfield(p.trVarsInit, 'luminanceRedDklHalfRange')
+    redDklHalfRange = p.trVarsInit.luminanceRedDklHalfRange;
+end
+
+redDklSatRad = 0.35;
+if isfield(p, 'trVarsInit') && isfield(p.trVarsInit, 'luminanceRedDklSatRad')
+    redDklSatRad = p.trVarsInit.luminanceRedDklSatRad;
+end
+
+redDklHueDeg = NaN;
+if isfield(p, 'trVarsInit') && isfield(p.trVarsInit, 'luminanceRedDklHueDeg')
+    redDklHueDeg = p.trVarsInit.luminanceRedDklHueDeg;
+end
+
+% Target red used only to find the closest DKL chromatic direction.
+targetRedRGB = redISH;
+if isfield(p, 'trVarsInit') && isfield(p.trVarsInit, 'luminanceRedTargetRGB')
+    targetRedRGB = p.trVarsInit.luminanceRedTargetRGB;
+end
+
+% If no DKL hue angle is specified, find the DKL hue whose RGB is closest
+% to the existing SRS red. This keeps the luminance mode visually red.
+if ~isfinite(redDklHueDeg)
+    candidateHues = 0:359;
+    candidateErr  = nan(size(candidateHues));
+
+    for iHue = 1:numel(candidateHues)
+        theta = candidateHues(iHue);
+        dkl_color = [redDklMean; ...
+                     redDklSatRad * cosd(theta); ...
+                     redDklSatRad * sind(theta)];
+        [r, g, b] = dkl2rgb(dkl_color);
+        thisRGB = [r, g, b];
+        candidateErr(iHue) = sum((thisRGB - targetRedRGB).^2);
+    end
+
+    [~, bestIdx] = min(candidateErr);
+    redDklHueDeg = candidateHues(bestIdx);
+end
+
+% Create luminance values on the DKL luminance axis.
+% Higher DKL luminance values are mapped to brighter target entries.
+redLumValues = linspace(redDklMean - redDklHalfRange, ...
+                        redDklMean + redDklHalfRange, ...
+                        redLumN);
+
+% Gamut safety. If the selected red direction/range is out of monitor gamut,
+% shrink the chromatic saturation and luminance range until all entries fit.
+global M_dkl2rgb
+maxGamutIter = 25;
+for iTry = 1:maxGamutIter
+    allInGamut = true;
+
+    for iLum = 1:redLumN
+        dkl_color = [redLumValues(iLum); ...
+                     redDklSatRad * cosd(redDklHueDeg); ...
+                     redDklSatRad * sind(redDklHueDeg)];
+
+        rawRGB = round((0.5 + M_dkl2rgb * dkl_color / 2) * 255);
+
+        if any(rawRGB < 0) || any(rawRGB > 255)
+            allInGamut = false;
+            break
+        end
+    end
+
+    if allInGamut
+        break
+    end
+
+    % Shrink gently but keep the same red DKL direction.
+    redDklSatRad = redDklSatRad * 0.90;
+    redDklHalfRange = redDklHalfRange * 0.90;
+    redLumValues = linspace(redDklMean - redDklHalfRange, ...
+                            redDklMean + redDklHalfRange, ...
+                            redLumN);
+end
+
+p.draw.clut.dklRedLumValues = redLumValues;
+p.draw.clut.dklRedLumHueDeg = redDklHueDeg;
+p.draw.clut.dklRedLumSatRad = redDklSatRad;
+p.draw.clut.dklRedLumMean   = redDklMean;
+p.draw.clut.dklRedLumHalfRange = redDklHalfRange;
 
 for iLum = 1:redLumN
 
     clutIdx = redLumStart + iLum - 1;   % 0-based
     rowIdx  = clutIdx + 1;              % MATLAB row index
 
-    thisRed = [redScales(iLum) 0 0];
+    dkl_color = [redLumValues(iLum); ...
+                 redDklSatRad * cosd(redDklHueDeg); ...
+                 redDklSatRad * sind(redDklHueDeg)];
 
-    % Visible both for experimenter and subject
+    [r, g, b] = dkl2rgb(dkl_color, targetRedRGB);
+    thisRed = [r, g, b];
+
+    % Real target color, visible the same way for experimenter and subject.
     p.draw.clut.expCLUT(rowIdx, :) = thisRed;
     p.draw.clut.subCLUT(rowIdx, :) = thisRed;
-
-    % Also update expColors/subColors for compatibility with display loaders.
-    p.draw.clut.expColors(rowIdx, :) = thisRed;
-    p.draw.clut.subColors(rowIdx, :) = thisRed;
 end
 
 %% Hue Contrast ;
 
-% Keep the same symbolic indices as conflict_task.
-% The second and fourth colors are named 45/225 in conflict_task,
-% although initClut computes them from DKL angles 20/200.
 p.draw.clutIdx.expDkl0_subDkl0     = 20;
-p.draw.clutIdx.expDkl45_subDkl45   = 21;
+p.draw.clutIdx.expDkl20_subDkl20   = 21;
 p.draw.clutIdx.expDkl180_subDkl180 = 22;
-p.draw.clutIdx.expDkl225_subDkl225 = 23;
-
-% Backward-compatible aliases for the actual computed angles.
-p.draw.clutIdx.expDkl20_subDkl20   = p.draw.clutIdx.expDkl45_subDkl45;
-p.draw.clutIdx.expDkl200_subDkl200 = p.draw.clutIdx.expDkl225_subDkl225;
+p.draw.clutIdx.expDkl200_subDkl200 = 23;
 
 %% ------------------------------------------------------------
 % DKL colors for hue / contrast salience
@@ -178,28 +259,34 @@ p.draw.colors.isolumGray = [r_gray, g_gray, b_gray];
 
 %% Insert DKL colors into CLUT
 
-dklIdxList = [ ...
-    p.draw.clutIdx.expDkl0_subDkl0, ...
-    p.draw.clutIdx.expDkl45_subDkl45, ...
-    p.draw.clutIdx.expDkl180_subDkl180, ...
-    p.draw.clutIdx.expDkl225_subDkl225];
+p.draw.clut.expCLUT(p.draw.clutIdx.expDkl0_subDkl0 + 1, :) = ...
+    p.draw.colors.dkl_hues(1, :);
 
-for i = 1:length(dklIdxList)
-    rowIdx = dklIdxList(i) + 1;
+p.draw.clut.expCLUT(p.draw.clutIdx.expDkl20_subDkl20 + 1, :) = ...
+    p.draw.colors.dkl_hues(2, :);
 
-    % Visible and identical on experimenter and subject displays.
-    p.draw.clut.expCLUT(rowIdx, :) = p.draw.colors.dkl_hues(i, :);
-    p.draw.clut.subCLUT(rowIdx, :) = p.draw.colors.dkl_hues(i, :);
+p.draw.clut.expCLUT(p.draw.clutIdx.expDkl180_subDkl180 + 1, :) = ...
+    p.draw.colors.dkl_hues(3, :);
 
-    % Also update expColors/subColors in case another display loader uses
-    % those fields instead of expCLUT/subCLUT.
-    p.draw.clut.expColors(rowIdx, :) = p.draw.colors.dkl_hues(i, :);
-    p.draw.clut.subColors(rowIdx, :) = p.draw.colors.dkl_hues(i, :);
-end
+p.draw.clut.expCLUT(p.draw.clutIdx.expDkl200_subDkl200 + 1, :) = ...
+    p.draw.colors.dkl_hues(4, :);
+
+p.draw.clut.subCLUT(p.draw.clutIdx.expDkl0_subDkl0 + 1, :) = ...
+    p.draw.colors.dkl_hues(1, :);
+
+p.draw.clut.subCLUT(p.draw.clutIdx.expDkl20_subDkl20 + 1, :) = ...
+    p.draw.colors.dkl_hues(2, :);
+
+p.draw.clut.subCLUT(p.draw.clutIdx.expDkl180_subDkl180 + 1, :) = ...
+    p.draw.colors.dkl_hues(3, :);
+
+p.draw.clut.subCLUT(p.draw.clutIdx.expDkl200_subDkl200 + 1, :) = ...
+    p.draw.colors.dkl_hues(4, :);
 
 %% Exp-only overlay colors matched to the current DKL background for subject
-% These keep debug overlays visible on the experimenter display but invisible
-% on the subject display when the background is DKL 0 or DKL 180.
+% Keep experimenter overlays visible, but make them background-colored on
+% the subject display in hue/contrast mode. This is required by srs_run.m
+% function expOnlyColorForCurrentBg().
 
 p.draw.clutIdx.expGrey25_subDkl0   = 30;
 p.draw.clutIdx.expGrey25_subDkl180 = 31;
@@ -216,8 +303,8 @@ p.draw.clutIdx.expGreen_subDkl180  = 41;
 p.draw.clutIdx.expBlack_subDkl0    = 42;
 p.draw.clutIdx.expBlack_subDkl180  = 43;
 
-bg0RGB   = p.draw.colors.dkl_hues(1, :);
-bg180RGB = p.draw.colors.dkl_hues(3, :);
+bg0RGB   = p.draw.colors.dkl_hues(1, :);  % DKL 0 background
+bg180RGB = p.draw.colors.dkl_hues(3, :);  % DKL 180 background
 
 overlayRows = { ...
     'expGrey25_subDkl0',   [0.25 0.25 0.25], bg0RGB; ...
@@ -235,19 +322,21 @@ overlayRows = { ...
     'expBlack_subDkl0',    [0 0 0],          bg0RGB; ...
     'expBlack_subDkl180',  [0 0 0],          bg180RGB};
 
-for i = 1:size(overlayRows, 1)
-    idxName = overlayRows{i, 1};
-    expRGB  = overlayRows{i, 2};
-    subRGB  = overlayRows{i, 3};
+for iOverlay = 1:size(overlayRows, 1)
+    idxName = overlayRows{iOverlay, 1};
+    expRGB  = overlayRows{iOverlay, 2};
+    subRGB  = overlayRows{iOverlay, 3};
 
     rowIdx = p.draw.clutIdx.(idxName) + 1;
 
     p.draw.clut.expCLUT(rowIdx, :) = expRGB;
     p.draw.clut.subCLUT(rowIdx, :) = subRGB;
 
+    % Also update these in case the display loader uses expColors/subColors.
     p.draw.clut.expColors(rowIdx, :) = expRGB;
     p.draw.clut.subColors(rowIdx, :) = subRGB;
 end
+
 end
 
 
