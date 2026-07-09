@@ -336,7 +336,6 @@ codes.salienceType                  = 20005; %1 = Hue ; 2 = Luminance
 codes.ActualLuminanceT1             = 20006; %Luminance Value for T1
 codes.ActualLuminanceT2             = 20007; %Luminance Value for T2
 codes.LuminanceDifferenceT1MinusT2_x1000 =20008;
-
 codes.backgroundHueIdx = 20009;              % Background hue condition: 1 = DKL 0 background, 2 = DKL 180 background
 codes.ActualHueT1_x1000 = 20010;             % T1 DKL hue angle in degrees x1000
 codes.ActualHueT2_x1000 = 20011;             % T2 DKL hue angle in degrees x1000
