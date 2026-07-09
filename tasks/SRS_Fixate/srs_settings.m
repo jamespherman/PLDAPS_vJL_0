@@ -417,6 +417,8 @@ p.trVarsInit.T2_luminance        = 6;           % Calculated from Lum of T1 so t
 p.trVarsInit.MeanrewardDurationMs        = 300;     % reward duration
 p.trVarsInit.SD_rewardDuration           = 0.015;     % SD for the Gaussian distributiom ;aking the reward value variable
                                                         % SD is in ml not ms! 
+p.trVarsInit.RewardSdGaussianNoiseMs         = 14;      % SD for the gaussian distrib converted in Ms (0.0011ml/ms => 13.64ms--> 14ms)
+
 p.trVarsInit.rewardDurationLeft      = 163;     % To change
 p.trVarsInit.rewardDurationRight     = 163;     % To change
 p.trVarsInit.rewardDelay             = 0.25;    % delay between target hold and reward

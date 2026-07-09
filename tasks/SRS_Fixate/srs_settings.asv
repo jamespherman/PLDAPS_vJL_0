@@ -248,9 +248,9 @@ p.rig.guiVars = {...
     'MeanrewardDurationMs'; ...
     'responseWindow'; ...
     'T1_locDegX'; ...       % 6
-    'fixDegY'; ...
-    'fixPointLinePix'; ...
-    'fixPointRadPix'; ...
+    'T1_locDegY'; ...
+    'T2_locDegX'; ...
+    'T2_locDegY'; ...
     'mouseEyeSim'; ...          
     'passEye'};              % 12
 
@@ -330,6 +330,15 @@ p.trVarsInit.luminanceDisplayMaxCdM2 = 12;
 % Base hue for luminance mode Same hue, different intensity.
 p.trVarsInit.luminanceBaseRGB = [1 0 0];
 
+% DKL red luminance drawing parameters.
+% The logical luminance values above stay cd/m2-like for the task.
+% These fields define how those values are drawn as RED DKL CLUT entries.
+p.trVarsInit.luminanceRedDklMean      = -0.495;
+p.trVarsInit.luminanceRedDklHalfRange = 0.10;
+p.trVarsInit.luminanceRedDklSatRad    = 0.35;
+p.trVarsInit.luminanceRedDklHueDeg    = NaN;          % NaN = auto-match SRS red
+p.trVarsInit.luminanceRedTargetRGB    = [225 0 76]/255;
+
 %% Trial-specific luminance values
 p.trVarsInit.ActualLuminanceT1 = 6;
 p.trVarsInit.ActualLuminanceT2 = 6;
@@ -337,6 +346,13 @@ p.trVarsInit.ActualLuminanceT1_x1000 = 6000;
 p.trVarsInit.ActualLuminanceT2_x1000 = 6000;
 p.trVarsInit.LuminanceDifferenceT1MinusT2 = 0;
 p.trVarsInit.LuminanceDifferenceT1MinusT2_x1000 = 0;
+
+p.trVarsInit.ActualDklRedLuminanceT1 = NaN;
+p.trVarsInit.ActualDklRedLuminanceT2 = NaN;
+p.trVarsInit.DklRedLuminanceDifferenceT1MinusT2 = NaN;
+p.trVarsInit.ActualDklRedLuminanceT1_x1000 = NaN;
+p.trVarsInit.ActualDklRedLuminanceT2_x1000 = NaN;
+p.trVarsInit.DklRedLuminanceDifferenceT1MinusT2_x1000 = NaN;
 
 %% Target colors actually used by drawMachine
 p.trVarsInit.T1_color = [1 0 0];
@@ -401,6 +417,8 @@ p.trVarsInit.T2_luminance        = 6;           % Calculated from Lum of T1 so t
 p.trVarsInit.MeanrewardDurationMs        = 300;     % reward duration
 p.trVarsInit.SD_rewardDuration           = 0.015;     % SD for the Gaussian distributiom ;aking the reward value variable
                                                         % SD is in ml not ms! 
+p.trVars.RewardSdGaussianNoiseMs         = 14;      % SD for the gaussian distrib converted in Ms (0.0011ml/ms => 13.6)
+
 p.trVarsInit.rewardDurationLeft      = 163;     % To change
 p.trVarsInit.rewardDurationRight     = 163;     % To change
 p.trVarsInit.rewardDelay             = 0.25;    % delay between target hold and reward
