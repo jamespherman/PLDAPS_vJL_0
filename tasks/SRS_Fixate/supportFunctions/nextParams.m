@@ -106,8 +106,13 @@ end
 
 %% If within a block:
 %Draw a reward noise value from Gaussian SD 0.015ml =(14ms)
-x = randn * p.trVarsInit.RewardSdGaussianNoiseMs;
-y = randn * p.trVarsInit.RewardSdGaussianNoiseMs;
+x = p.status.BlockRichMeanDuration +1000;
+y = p.status.BlockRichMeanDuration +1000;
+while (p.status.BlockRichMeanDuration < x || p.status.BlockRichMeanDuration< y) 
+    x = randn * p.trVarsInit.RewardSdGaussianNoiseMs;
+    y = randn * p.trVarsInit.RewardSdGaussianNoiseMs;
+end
+    
 % Calculate the actual reward durations for the upcoming trial
 p.status.ActualRichReward = p.status.BlockRichMeanDuration + x;
 p.status.ActualPoorReward = p.status.BlockPoorMeanDuration + y;

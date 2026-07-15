@@ -92,6 +92,16 @@ p.init.taskActions{4} = 'pdsActions.stopAudioSchedule';
 p.init.taskActions{5} = 'pdsActions.rewardDrain';
 p.init.taskActions{6} = 'pdsActions.singleReward';
 p.init.taskActions{7} = 'pdsActions.catOldOutput';
+p.init.taskActions{8} = 'i1FindGrayBackgroundLum';
+
+
+%% Photometer measurement mode
+p.trVarsInit.measureRedLumRampWithI1 = false;
+p.trVarsInit.i1RampNRepeats = 3;
+p.trVarsInit.i1RampSettleTime = 0.25;
+
+p.trVarsInit.scanDklRedLumWithI1 = false;
+p.trVarsInit.findGrayBgWithI1 = false;
 
 %% audio:
 p.audio.audsplfq        = 48000; % datapixx audio playback sampling rate.
@@ -330,15 +340,21 @@ p.trVarsInit.luminanceDisplayMaxCdM2 = 12;
 % Base hue for luminance mode Same hue, different intensity.
 p.trVarsInit.luminanceBaseRGB = [1 0 0];
 
-% DKL red luminance drawing parameters.
-% The logical luminance values above stay cd/m2-like for the task.
-% These fields define how those values are drawn as RED DKL CLUT entries.
-p.trVarsInit.luminanceRedDklMean      = -0.495;
-p.trVarsInit.luminanceRedDklHalfRange = 0.10;
-p.trVarsInit.luminanceRedDklSatRad    = 0.35;
-p.trVarsInit.luminanceRedDklHueDeg    = NaN;          % NaN = auto-match SRS red
-p.trVarsInit.luminanceRedTargetRGB    = [225 0 76]/255;
+%% DKL red luminance ramp parameters
+% These values are DKL luminance coordinates, NOT cd/m².
+% They define the red luminance ramp used for drawing the targets.
 
+p.trVarsInit.luminanceRedDklLow  = -0.1;
+p.trVarsInit.luminanceRedDklHigh =  0.14;
+
+% Fixed chromatic saturation for the red DKL ramp.
+p.trVarsInit.luminanceRedDklSatRad = 0.35;
+
+% NaN = automatically find the DKL hue direction closest to SRS red.
+p.trVarsInit.luminanceRedDklHueDeg = NaN;
+
+% Target red used to find the closest DKL hue direction.
+p.trVarsInit.luminanceRedTargetRGB = [225 0 76] / 255;
 %% Trial-specific luminance values
 p.trVarsInit.ActualLuminanceT1 = 6;
 p.trVarsInit.ActualLuminanceT2 = 6;
@@ -549,7 +565,12 @@ p.init.trDataInitList = {...
     'p.trData.timing.reward',           '-1'; ...   % time of reward delivery
     'p.trData.timing.tone',             '-1'; ...   % time of audio feedback delivery
     'p.trData.timing.joyPress',         '-1'; ...   % time of joystick press
+    'p.trData.timing.flipTime',         '[]'; ...   % vector of flip times
     'p.trData.GoodTrial',               '0';...
+    'p.trData.chosenSide',              '-1';...
+    'p.trData.choseHighSalience',       '-1';...
+    'p.trData.outcomeCode',             '-1';...
+    'p.trData.trialEndState',           '-1';...
     };
 
 % since the list above is fixed, count its rows now for looping over later.
@@ -668,9 +689,8 @@ p.init.strobeList = {...
     'salienceType',         'p.trVars.salienceType' ; ...       % TO ADD ; 1 = Hue ; 2 = Luminance
     
     %Luminance
-    'ActualLuminanceT1',    'p.trVars.ActualLuminanceT1'; ...   % TO ADD ; Luminance Value for T1
-    'ActualLuminanceT2',    'p.trVars.ActualLuminanceT2'; ...   % TO ADD ; Luminance Value for T2
-    'LuminanceDifferenceT1MinusT2_x1000','p.trVars.LuminanceDifferenceT1MinusT2_x1000'; ...
+    'ActualLuminanceT1',    'p.trVars.ActualLuminanceT1_x1000'; ...   % TO ADD ; Luminance Value for T1
+    'ActualLuminanceT2',    'p.trVars.ActualLuminanceT2_x1000'; ...   % TO ADD ; Luminance Value for T2
 
     % Hue Contrast
     'backgroundHueIdx',        'p.trVars.backgroundHueIdx'; ...

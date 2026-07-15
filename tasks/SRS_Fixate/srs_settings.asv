@@ -417,7 +417,7 @@ p.trVarsInit.T2_luminance        = 6;           % Calculated from Lum of T1 so t
 p.trVarsInit.MeanrewardDurationMs        = 300;     % reward duration
 p.trVarsInit.SD_rewardDuration           = 0.015;     % SD for the Gaussian distributiom ;aking the reward value variable
                                                         % SD is in ml not ms! 
-p.trVars.RewardSdGaussianNoiseMs         = 14;      % SD for the gaussian distrib converted in Ms (0.0011ml/ms => 13.6)
+p.trVarsInit.RewardSdGaussianNoiseMs         = 14;      % SD for the gaussian distrib converted in Ms (0.0011ml/ms => 13.64ms--> 14ms)
 
 p.trVarsInit.rewardDurationLeft      = 163;     % To change
 p.trVarsInit.rewardDurationRight     = 163;     % To change
@@ -550,6 +550,9 @@ p.init.trDataInitList = {...
     'p.trData.timing.tone',             '-1'; ...   % time of audio feedback delivery
     'p.trData.timing.joyPress',         '-1'; ...   % time of joystick press
     'p.trData.GoodTrial',               '0';...
+    'p.trData.chosenSide',              '-1';...
+    'p.trData.choseHighSalience',       '-1';...
+    'p.trData.outcomeCode',             '-1';...
     };
 
 % since the list above is fixed, count its rows now for looping over later.
@@ -668,9 +671,8 @@ p.init.strobeList = {...
     'salienceType',         'p.trVars.salienceType' ; ...       % TO ADD ; 1 = Hue ; 2 = Luminance
     
     %Luminance
-    'ActualLuminanceT1',    'p.trVars.ActualLuminanceT1'; ...   % TO ADD ; Luminance Value for T1
-    'ActualLuminanceT2',    'p.trVars.ActualLuminanceT2'; ...   % TO ADD ; Luminance Value for T2
-    'LuminanceDifferenceT1MinusT2_x1000','p.trVars.LuminanceDifferenceT1MinusT2_x1000'; ...
+    'ActualLuminanceT1',    'p.trVars.ActualLuminanceT1_x1000'; ...   % TO ADD ; Luminance Value for T1
+    'ActualLuminanceT2',    'p.trVars.ActualLuminanceT2_x1000'; ...   % TO ADD ; Luminance Value for T2
 
     % Hue Contrast
     'backgroundHueIdx',        'p.trVars.backgroundHueIdx'; ...

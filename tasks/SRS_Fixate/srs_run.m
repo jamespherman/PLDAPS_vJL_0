@@ -24,6 +24,96 @@ function p = srs_run(p)
 % % % (2c)  Draw.
 % % % (2d)  Wait for joystick relese.
 
+
+
+
+
+
+%% ------------------------------------------------------------
+% Optional i1 measurement mode
+% ------------------------------------------------------------
+% If enabled, measure the SRS red luminance ramp and return immediately.
+% This is meant to be launched from the PLDAPS GUI using the Run button.
+
+if isfield(p.trVars, 'measureRedLumRampWithI1') && ...
+        p.trVars.measureRedLumRampWithI1
+
+    if isfield(p.trVars, 'i1RampNRepeats')
+        nRepeats = p.trVars.i1RampNRepeats;
+    else
+        nRepeats = 3;
+    end
+
+    if isfield(p.trVars, 'i1RampSettleTime')
+        settleTime = p.trVars.i1RampSettleTime;
+    else
+        settleTime = 0.25;
+    end
+
+    p = i1MeasureSrsRedLumRamp(p, ...
+        'nRepeats', nRepeats, ...
+        'settleTime', settleTime);
+
+    p.trVars.measureRedLumRampWithI1 = false;
+
+    return
+end
+
+
+if isfield(p.trVars, 'scanDklRedLumWithI1') && ...
+        p.trVars.scanDklRedLumWithI1
+
+    p = i1ScanDklRedLumAxis(p, ...
+        'nRepeats', 3, ...
+        'settleTime', 0.25, ...
+        'targetLow', 0.01, ...
+        'targetHigh', 12.15, ...
+        'lumGrid', linspace(-1.00, 0.20, 61));
+
+    p.status.i1RampMeasurementDone = true;
+
+    if ~isfield(p, 'trData')
+        p.trData = struct();
+    end
+
+    if ~isfield(p.trData, 'timing')
+        p.trData.timing = struct();
+    end
+
+    p.trData.timing.trialStartPTB = GetSecs;
+
+    return
+end
+
+%% ------------------------------------------------------------
+% Optional i1 gray background measurement mode
+% ------------------------------------------------------------
+if isfield(p.trVars, 'findGrayBgWithI1') && ...
+        p.trVars.findGrayBgWithI1
+
+    p = i1FindGrayBackgroundLum(p, ...
+        'targetCdM2', 47.5, ...
+        'nRepeats', 3, ...
+        'settleTime', 0.25, ...
+        'dklGrid', linspace(-1.00, 0.40, 71));
+
+    p.status.i1GrayBgMeasurementDone = true;
+
+    if ~isfield(p, 'trData')
+        p.trData = struct();
+    end
+
+    if ~isfield(p.trData, 'timing')
+        p.trData.timing = struct();
+    end
+
+    p.trData.timing.trialStartPTB = GetSecs;
+
+    return
+end
+
+
+
 % (1) mark start time in PTB and DP time:
 [p.trData.timing.trialStartPTB, p.trData.timing.trialStartDP] = ...
     pds.getTimes;

@@ -1,8 +1,6 @@
 function p = i1CalibrateAndMeasure(p)
 %   [] = i1CalibrateAndMeasure(p)
 
-Datapixx('SetVideoMode',0)
-
 % check if i1 is connected:
 p.rig.i1Connected = I1('IsConnected');
 

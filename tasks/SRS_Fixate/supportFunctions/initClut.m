@@ -111,22 +111,68 @@ p.draw.clutIdx.redLumN     = 32;    % number of luminance levels
 redLumStart = p.draw.clutIdx.redLumStart;
 redLumN     = p.draw.clutIdx.redLumN;
 
-% Settings, with safe defaults if fields are absent.
-redDklMean = -0.495;
-if isfield(p, 'trVarsInit') && isfield(p.trVarsInit, 'luminanceRedDklMean')
-    redDklMean = p.trVarsInit.luminanceRedDklMean;
+%% ------------------------------------------------------------
+% Settings for DKL red luminance ramp
+% ------------------------------------------------------------
+% New preferred format:
+%   luminanceRedDklLow  = lowest DKL luminance value
+%   luminanceRedDklHigh = highest DKL luminance value
+%
+% These are DKL coordinates, not cd/m².
+%
+% Older format, still supported:
+%   luminanceRedDklMean ± luminanceRedDklHalfRange
+
+% Default values from James discussion / current working hypothesis.
+redDklLow  = -0.64;
+redDklHigh =  0.16;
+
+% Prefer explicit low/high values if present.
+if isfield(p, 'trVarsInit') && isfield(p.trVarsInit, 'luminanceRedDklLow')
+    redDklLow = p.trVarsInit.luminanceRedDklLow;
 end
 
-redDklHalfRange = 0.10;
-if isfield(p, 'trVarsInit') && isfield(p.trVarsInit, 'luminanceRedDklHalfRange')
-    redDklHalfRange = p.trVarsInit.luminanceRedDklHalfRange;
+if isfield(p, 'trVarsInit') && isfield(p.trVarsInit, 'luminanceRedDklHigh')
+    redDklHigh = p.trVarsInit.luminanceRedDklHigh;
 end
 
+% Backward compatibility:
+% if low/high are not explicitly present, allow mean/halfRange.
+if ~(isfield(p, 'trVarsInit') && ...
+        isfield(p.trVarsInit, 'luminanceRedDklLow') && ...
+        isfield(p.trVarsInit, 'luminanceRedDklHigh'))
+
+    redDklMean = -0.495;
+    if isfield(p, 'trVarsInit') && isfield(p.trVarsInit, 'luminanceRedDklMean')
+        redDklMean = p.trVarsInit.luminanceRedDklMean;
+    end
+
+    redDklHalfRange = 0.10;
+    if isfield(p, 'trVarsInit') && isfield(p.trVarsInit, 'luminanceRedDklHalfRange')
+        redDklHalfRange = p.trVarsInit.luminanceRedDklHalfRange;
+    end
+
+    redDklLow  = redDklMean - redDklHalfRange;
+    redDklHigh = redDklMean + redDklHalfRange;
+end
+
+% Safety check
+if redDklHigh <= redDklLow
+    error('luminanceRedDklHigh must be larger than luminanceRedDklLow.');
+end
+
+% Derived values for compatibility / reporting.
+redDklMean      = mean([redDklLow, redDklHigh]);
+redDklHalfRange = (redDklHigh - redDklLow) / 2;
+
+% DKL red saturation.
 redDklSatRad = 0.35;
 if isfield(p, 'trVarsInit') && isfield(p.trVarsInit, 'luminanceRedDklSatRad')
     redDklSatRad = p.trVarsInit.luminanceRedDklSatRad;
 end
 
+% DKL red hue.
+% NaN means: find the DKL hue direction closest to SRS red.
 redDklHueDeg = NaN;
 if isfield(p, 'trVarsInit') && isfield(p.trVarsInit, 'luminanceRedDklHueDeg')
     redDklHueDeg = p.trVarsInit.luminanceRedDklHueDeg;
@@ -138,19 +184,27 @@ if isfield(p, 'trVarsInit') && isfield(p.trVarsInit, 'luminanceRedTargetRGB')
     targetRedRGB = p.trVarsInit.luminanceRedTargetRGB;
 end
 
-% If no DKL hue angle is specified, find the DKL hue whose RGB is closest
-% to the existing SRS red. This keeps the luminance mode visually red.
+%% ------------------------------------------------------------
+% Find DKL hue direction closest to SRS red, if needed
+% ------------------------------------------------------------
+
 if ~isfinite(redDklHueDeg)
+
     candidateHues = 0:359;
     candidateErr  = nan(size(candidateHues));
 
     for iHue = 1:numel(candidateHues)
+
         theta = candidateHues(iHue);
+
         dkl_color = [redDklMean; ...
                      redDklSatRad * cosd(theta); ...
                      redDklSatRad * sind(theta)];
+
         [r, g, b] = dkl2rgb(dkl_color);
+
         thisRGB = [r, g, b];
+
         candidateErr(iHue) = sum((thisRGB - targetRedRGB).^2);
     end
 
@@ -158,20 +212,35 @@ if ~isfinite(redDklHueDeg)
     redDklHueDeg = candidateHues(bestIdx);
 end
 
-% Create luminance values on the DKL luminance axis.
-% Higher DKL luminance values are mapped to brighter target entries.
-redLumValues = linspace(redDklMean - redDklHalfRange, ...
-                        redDklMean + redDklHalfRange, ...
-                        redLumN);
+%% ------------------------------------------------------------
+% Create DKL luminance values
+% ------------------------------------------------------------
 
-% Gamut safety. If the selected red direction/range is out of monitor gamut,
-% shrink the chromatic saturation and luminance range until all entries fit.
+% Higher DKL luminance values are mapped to brighter target entries.
+redLumValues = linspace(redDklLow, redDklHigh, redLumN);
+
+%% ------------------------------------------------------------
+% Gamut safety
+% ------------------------------------------------------------
+% If the selected red direction/range is out of monitor gamut,
+% shrink the saturation and the high endpoint until all entries fit.
+%
+% Important:
+% We preserve the low endpoint as much as possible because low salience
+% should remain close to the background. We shrink the high endpoint toward
+% the low endpoint if needed.
+
 global M_dkl2rgb
+
 maxGamutIter = 25;
+allInGamut = false;
+
 for iTry = 1:maxGamutIter
+
     allInGamut = true;
 
     for iLum = 1:redLumN
+
         dkl_color = [redLumValues(iLum); ...
                      redDklSatRad * cosd(redDklHueDeg); ...
                      redDklSatRad * sind(redDklHueDeg)];
@@ -188,19 +257,32 @@ for iTry = 1:maxGamutIter
         break
     end
 
-    % Shrink gently but keep the same red DKL direction.
+    % Keep the same red DKL direction.
+    % Reduce chromatic saturation and reduce the high-luminance excursion.
     redDklSatRad = redDklSatRad * 0.90;
-    redDklHalfRange = redDklHalfRange * 0.90;
-    redLumValues = linspace(redDklMean - redDklHalfRange, ...
-                            redDklMean + redDklHalfRange, ...
-                            redLumN);
+    redDklHigh   = redDklLow + 0.90 * (redDklHigh - redDklLow);
+
+    redLumValues = linspace(redDklLow, redDklHigh, redLumN);
 end
 
-p.draw.clut.dklRedLumValues = redLumValues;
-p.draw.clut.dklRedLumHueDeg = redDklHueDeg;
-p.draw.clut.dklRedLumSatRad = redDklSatRad;
-p.draw.clut.dklRedLumMean   = redDklMean;
-p.draw.clut.dklRedLumHalfRange = redDklHalfRange;
+if ~allInGamut
+    warning('DKL red luminance ramp may still contain out-of-gamut values.');
+end
+
+%% ------------------------------------------------------------
+% Store final values used by the task
+% ------------------------------------------------------------
+
+p.draw.clut.dklRedLumValues    = redLumValues;
+p.draw.clut.dklRedLumHueDeg    = redDklHueDeg;
+p.draw.clut.dklRedLumSatRad    = redDklSatRad;
+
+p.draw.clut.dklRedLumLow       = redDklLow;
+p.draw.clut.dklRedLumHigh      = redDklHigh;
+p.draw.clut.dklRedLumMean      = mean([redDklLow, redDklHigh]);
+p.draw.clut.dklRedLumHalfRange = (redDklHigh - redDklLow) / 2;
+
+
 
 for iLum = 1:redLumN
 
