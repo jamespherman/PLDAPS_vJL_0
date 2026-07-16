@@ -327,6 +327,24 @@ codes.rfMapStimHemifield              = 16161;  % 0=full, 1=left, 2=right
 
 %% Codes for SRS_Task
 
+% codes.CurrentBlockNumber            = 20000; % Current Block Number
+% codes.CurrentBlockType              = 20001; % 1 = T1 Rich ; 2 = T2 Rich
+% codes.ActualTrialType               = 20002; % 1 = Congruent ; 2 = Conflict
+% codes.ActualRichReward              = 20003; % Actual Reward with the gaussian noise for Rich target (depends on the blocktype and TrialType)
+% codes.ActualPoorReward              = 20004; % Actual Reward with the gaussian noise for Poor target (depends on the blocktype and TrialType)
+% codes.salienceType                  = 20005; %1 = Hue ; 2 = Luminance
+% codes.ActualLuminanceT1             = 20006; %Luminance Value for T1
+% codes.ActualLuminanceT2             = 20007; %Luminance Value for T2
+% codes.LuminanceDifferenceT1MinusT2_x1000 =20008;
+% codes.backgroundHueIdx = 20009;              % Background hue condition: 1 = DKL 0 background, 2 = DKL 180 background
+% codes.ActualHueT1_x1000 = 20010;             % T1 DKL hue angle in degrees x1000
+% codes.ActualHueT2_x1000 = 20011;             % T2 DKL hue angle in degrees x1000
+% codes.BackgroundHue_x1000 = 20012;           % Background DKL hue angle in degrees x1000
+% codes.HueContrastT1_x1000 = 20013;           % T1 hue distance from background in degrees x1000
+% codes.HueContrastT2_x1000 = 20014;           % T2 hue distance from background in degrees x1000
+% codes.T1_colorIdx = 20015;                   % CLUT index used to draw T1
+% codes.T2_colorIdx = 20016;                   % CLUT index used to draw T2
+
 codes.CurrentBlockNumber            = 20000; % Current Block Number
 codes.CurrentBlockType              = 20001; % 1 = T1 Rich ; 2 = T2 Rich
 codes.ActualTrialType               = 20002; % 1 = Congruent ; 2 = Conflict
@@ -344,6 +362,14 @@ codes.HueContrastT1_x1000 = 20013;           % T1 hue distance from background i
 codes.HueContrastT2_x1000 = 20014;           % T2 hue distance from background in degrees x1000
 codes.T1_colorIdx = 20015;                   % CLUT index used to draw T1
 codes.T2_colorIdx = 20016;                   % CLUT index used to draw T2
+codes.nStim = 20017;                         % Number of visible targets: 1 or 2
+codes.singleTargetID = 20018;                % 0=dual, 1=T1 only, 2=T2 only
+codes.T1Side = 20019;                        % Spatial side of T1: 1=right, 2=left
+codes.T2Side = 20020;                        % Spatial side of T2: 1=right, 2=left
+codes.chosenTargetID = 20021;                % Chosen identity: 0=none, 1=T1, 2=T2
+codes.schedulePhase = 20022;                 % 1=instruction, 2=two-target choice
+
+
 
 %% validation
 
