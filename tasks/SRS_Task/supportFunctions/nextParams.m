@@ -60,11 +60,19 @@ p.status.highRewardTargetID = p.status.CurrentBlockType;
 p = chooseBlockReward(p);
 p = buildSrsBlockSchedule(p);
 
-fprintf('\nStarted block %d: T%d rich, %d instruction + %d choice trials.\n', ...
+if p.status.TotalInstructionTrialsPerBlock > 0
+    instructionOrderText = sprintf('T%d then T%d', ...
+        p.status.FirstSingleTargetID, p.status.SecondSingleTargetID);
+else
+    instructionOrderText = 'none';
+end
+fprintf(['\nStarted block %d: T%d rich, %d instruction + %d choice trials ', ...
+    '(instruction order: %s).\n'], ...
     p.status.CurrentBlockNumber, ...
     p.status.CurrentBlockType, ...
     p.status.TotalInstructionTrialsPerBlock, ...
-    p.status.TotalChoiceTrialsPerBlock);
+    p.status.TotalChoiceTrialsPerBlock, ...
+    instructionOrderText);
 
 end
 
@@ -79,12 +87,19 @@ end
 cols = p.init.trialCols;
 phase = p.init.trialsArray(:, cols.schedulePhase);
 
-% Instruction trials must be exhausted before two-target choice trials.
-if any(remaining & phase == 1)
-    eligible = remaining & phase == 1;
-else
-    eligible = remaining & phase == 2;
+% Always exhaust the earliest remaining phase before moving on.
+% Training blocks use:
+%   phase 1 = first single-target identity group
+%   phase 2 = second single-target identity group
+%   phase 3 = two-target choice trials
+% A failed trial remains eligible, so T1-only and T2-only groups cannot
+% interleave and the choice phase cannot start early.
+remainingPhases = phase(remaining);
+if any(~isfinite(remainingPhases)) || any(remainingPhases < 1)
+    error('SRS schedule contains an invalid schedulePhase value.');
 end
+currentPhase = min(remainingPhases);
+eligible = remaining & phase == currentPhase;
 
 possibleRows = find(eligible);
 possibleRows = possibleRows(randperm(numel(possibleRows)));
@@ -285,8 +300,16 @@ switch p.trVars.salienceType
             error('Invalid highSalienceTargetID for luminance mode.');
         end
 
+        % These values are the nominal sampling coordinates inherited from
+        % the Dubey/Pesaran design. They select a position on the measured
+        % red CLUT ramp, but they are not themselves the physical cd/m^2
+        % emitted by this display.
+        p.trVars.NominalLuminanceT1 = p.trVars.ActualLuminanceT1;
+        p.trVars.NominalLuminanceT2 = p.trVars.ActualLuminanceT2;
         p.trVars.LuminanceDifferenceT1MinusT2 = ...
             p.trVars.ActualLuminanceT1 - p.trVars.ActualLuminanceT2;
+        p.trVars.NominalLuminanceDifferenceT1MinusT2 = ...
+            p.trVars.LuminanceDifferenceT1MinusT2;
         p.trVars.LuminanceDifferenceMagnitude = ...
             abs(p.trVars.LuminanceDifferenceT1MinusT2);
         p.trVars.LuminancePairMean = mean([ ...
@@ -327,6 +350,24 @@ switch p.trVars.salienceType
             p.trVars.DklRedLuminanceDifferenceT1MinusT2_x1000 = ...
                 round(1000 * p.trVars.DklRedLuminanceDifferenceT1MinusT2);
         end
+
+        % Recover the physical luminance measured with the i1Pro 3 for the
+        % exact CLUT entries selected on this trial.
+        p.trVars.MeasuredLuminanceT1CdM2 = ...
+            lookupMeasuredRedLuminance(p, p.trVars.T1_colorIdx);
+        p.trVars.MeasuredLuminanceT2CdM2 = ...
+            lookupMeasuredRedLuminance(p, p.trVars.T2_colorIdx);
+        p.trVars.MeasuredLuminanceDifferenceT1MinusT2CdM2 = ...
+            p.trVars.MeasuredLuminanceT1CdM2 - ...
+            p.trVars.MeasuredLuminanceT2CdM2;
+        p.trVars.MeasuredLuminanceT1_x100 = ...
+            round(100 * p.trVars.MeasuredLuminanceT1CdM2);
+        p.trVars.MeasuredLuminanceT2_x100 = ...
+            round(100 * p.trVars.MeasuredLuminanceT2CdM2);
+        p.trVars.BackgroundDklLuminance = ...
+            p.draw.clut.srsBackgroundDklLum;
+        p.trVars.BackgroundMeasuredLuminanceCdM2 = ...
+            p.draw.clut.srsBackgroundMeasuredCdM2;
 
         % Restore the normal achromatic background and clear stale hue data.
         p.draw.color.background = p.draw.clutIdx.expBg_subBg;
@@ -388,14 +429,46 @@ switch p.trVars.salienceType
 
         p.trVars.ActualLuminanceT1 = NaN;
         p.trVars.ActualLuminanceT2 = NaN;
+        p.trVars.NominalLuminanceT1 = NaN;
+        p.trVars.NominalLuminanceT2 = NaN;
+        p.trVars.NominalLuminanceDifferenceT1MinusT2 = NaN;
         p.trVars.ActualLuminanceT1_x1000 = NaN;
         p.trVars.ActualLuminanceT2_x1000 = NaN;
         p.trVars.LuminanceDifferenceT1MinusT2 = NaN;
         p.trVars.LuminanceDifferenceT1MinusT2_x1000 = NaN;
+        p.trVars.ActualDklRedLuminanceT1 = NaN;
+        p.trVars.ActualDklRedLuminanceT2 = NaN;
+        p.trVars.DklRedLuminanceDifferenceT1MinusT2 = NaN;
+        p.trVars.MeasuredLuminanceT1CdM2 = NaN;
+        p.trVars.MeasuredLuminanceT2CdM2 = NaN;
+        p.trVars.MeasuredLuminanceDifferenceT1MinusT2CdM2 = NaN;
+        p.trVars.MeasuredLuminanceT1_x100 = NaN;
+        p.trVars.MeasuredLuminanceT2_x100 = NaN;
+        p.trVars.BackgroundDklLuminance = NaN;
+        p.trVars.BackgroundMeasuredLuminanceCdM2 = NaN;
 
     otherwise
         error('Unknown salienceType. Use 1 for hue or 2 for luminance.');
 end
+
+end
+
+function measuredCdM2 = lookupMeasuredRedLuminance(p, colorIdx)
+%LOOKUPMEASUREDREDLUMINANCE Return the i1Pro 3 value for one CLUT entry.
+
+if ~isfield(p.draw, 'clut') || ...
+        ~isfield(p.draw.clut, 'redLumCalibration') || ...
+        ~isfield(p.draw.clut.redLumCalibration, 'clutIdx')
+    error('SRS red-luminance calibration was not loaded by initClut.');
+end
+
+calibration = p.draw.clut.redLumCalibration;
+matchIdx = find(calibration.clutIdx == double(colorIdx), 1, 'first');
+if isempty(matchIdx)
+    error('No physical luminance calibration exists for CLUT index %d.', colorIdx);
+end
+
+measuredCdM2 = calibration.measuredCdM2(matchIdx);
 
 end
 

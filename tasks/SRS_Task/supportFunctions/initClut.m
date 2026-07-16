@@ -10,10 +10,11 @@ function p                      = initClut(p)
 p.init.initMonFile = ['LUT_VPIXX_rig' p.init.pcName(end-1)];
 initmon(p.init.initMonFile);
 
-% Achromatic gray background for luminance mode. The setting is a DKL
-% luminance coordinate, not a physical cd/m2 value. Hue/contrast mode can
-% still replace the background trial-by-trial later in applySalience().
-srsBackgroundDklLum = 0.12;
+% Achromatic gray background for luminance mode. The DKL coordinate was
+% measured with the i1Pro 3 as approximately 47.4 cd/m^2 on this rig. The
+% hue/contrast mode can still replace the background trial-by-trial later
+% in applySalience().
+srsBackgroundDklLum = -0.085;
 if isfield(p, 'trVarsInit') && ...
         isfield(p.trVarsInit, 'srsLuminanceBackgroundDklLum')
     srsBackgroundDklLum = p.trVarsInit.srsLuminanceBackgroundDklLum;
@@ -312,6 +313,10 @@ for iLum = 1:redLumN
     p.draw.clut.expCLUT(rowIdx, :) = thisRed;
     p.draw.clut.subCLUT(rowIdx, :) = thisRed;
 end
+
+% Load the physical i1Pro 3 measurements corresponding to CLUT 200:231.
+% The loader verifies that the calibration matches the DKL ramp above.
+p = loadSrsRedLumCalibration(p);
 
 %% Hue Contrast ;
 

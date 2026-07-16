@@ -1,9 +1,11 @@
 function p = srs_training_settings
-%SRS_TRAINING_SETTINGS Training variant of SRS_Fixate.
+%SRS_TRAINING_SETTINGS Training variant of SRS_Task.
 %
 % Uses the same init/next/run/finish files as srs_settings.m, but adds
-% 10 T1-only and 10 T2-only instruction trials at the beginning of every
-% reward block. Target identity is counterbalanced across left/right sides.
+% 10 successful trials from one single-target identity are completed as
+% one uninterrupted group, followed by 10 successful trials from the other
+% identity. Group order is randomized once per reward block. Target side is
+% counterbalanced within each group; failed trials remain in the active group.
 
 p = srs_settings;
 

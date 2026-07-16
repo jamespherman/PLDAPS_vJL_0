@@ -1,5 +1,9 @@
 function displayTrialStatus(p)
 %DISPLAYTRIALSTATUS Display current SRS schedule and trial information.
+%
+% Luminance labels distinguish the nominal sampling coordinates from the
+% DKL coordinates sent to the display and the physical i1Pro 3 measurements
+% in cd/m^2.
 
 fprintf('\n');
 fprintf('============================================================\n');
@@ -25,7 +29,11 @@ printField('Completed schedule rows', fractionString( ...
     getField(p.status, 'CurrentBlockTrial', NaN), ...
     getField(p.status, 'TotalTrialsPerBlock', NaN)));
 
-fprintf('\n---------------------- BLOCK CONTENT -----------------------\n');
+fprintf('\n---------------------- BLOCK SCHEDULE ----------------------\n');
+printField('Instruction order', instructionOrderString(p.status));
+printField('Active schedule', activeScheduleString(p.status));
+printField('Active phase remaining', ...
+    getField(p.status, 'RemainingActivePhase', NaN));
 printField('Instruction remaining', fractionString( ...
     getField(p.status, 'RemainingInstructionTrials', NaN), ...
     getField(p.status, 'TotalInstructionTrialsPerBlock', NaN)));
@@ -49,10 +57,13 @@ if nStim == 1
         getField(p.trVars, 'singleTargetID', NaN));
 elseif getField(p.status, 'ActualTrialType', NaN) == 1
     trialType = 'Congruent choice';
-else
+elseif getField(p.status, 'ActualTrialType', NaN) == 2
     trialType = 'Conflict choice';
+else
+    trialType = 'missing';
 end
 printField('Schedule row', getField(p.trVars, 'currentTrialsArrayRow', NaN));
+printField('Schedule phase', getField(p.trVars, 'schedulePhase', NaN));
 printField('Trial type', trialType);
 printField('Number of stimuli', nStim);
 printField('T1 side', sideString(getField(p.trVars, 'T1Side', NaN)));
@@ -67,21 +78,59 @@ printField('Chosen target', targetSideString( ...
     getField(p.trData, 'chosenTargetID', NaN), ...
     getField(p.trData, 'chosenSide', NaN)));
 
-fprintf('\n------------------------- VALUES ---------------------------\n');
+fprintf('\n------------------------- REWARD ---------------------------\n');
 printField('T1 reward (ms)', getField(p.trVars, 'rewardDurationT1', NaN));
 printField('T2 reward (ms)', getField(p.trVars, 'rewardDurationT2', NaN));
-printField('T1 task luminance', getField(p.trVars, 'ActualLuminanceT1', NaN));
-printField('T2 task luminance', getField(p.trVars, 'ActualLuminanceT2', NaN));
-printField('Luminance diff T1-T2', ...
-    getField(p.trVars, 'LuminanceDifferenceT1MinusT2', NaN));
-printField('Background DKL lum', getBackgroundDkl(p));
+printField('Reward diff T1-T2 (ms)', ...
+    getField(p.trVars, 'rewardDurationT1', NaN) - ...
+    getField(p.trVars, 'rewardDurationT2', NaN));
+
+fprintf('\n------------------ MEASURED LUMINANCE ----------------------\n');
+backgroundDkl = getBackgroundDkl(p);
+backgroundCdM2 = getBackgroundCdM2(p);
+printField('Background DKL lum', formatScalar(backgroundDkl, '%.3f'));
+printField('Background measured', formatScalar(backgroundCdM2, '%.1f cd/m^2'));
+printField('T1 measured', formatScalar( ...
+    getField(p.trVars, 'MeasuredLuminanceT1CdM2', NaN), '%.3f cd/m^2'));
+printField('T2 measured', formatScalar( ...
+    getField(p.trVars, 'MeasuredLuminanceT2CdM2', NaN), '%.3f cd/m^2'));
+printField('Measured diff T1-T2', formatScalar( ...
+    getField(p.trVars, ...
+    'MeasuredLuminanceDifferenceT1MinusT2CdM2', NaN), ...
+    '%.3f cd/m^2'));
+[calibrationMin, calibrationMax, calibrationLabel] = ...
+    getCalibrationSummary(p);
+printField('Calibration range', calibrationRangeString( ...
+    calibrationMin, calibrationMax));
+printField('Calibration label', calibrationLabel);
+printField('T1 / T2 colorIdx', sprintf('%s / %s', ...
+    valueToString(getField(p.trVars, 'T1_colorIdx', NaN)), ...
+    valueToString(getField(p.trVars, 'T2_colorIdx', NaN))));
+
+fprintf('\n------------------- LUMINANCE MAPPING ----------------------\n');
+nominalT1 = getField(p.trVars, 'NominalLuminanceT1', ...
+    getField(p.trVars, 'ActualLuminanceT1', NaN));
+nominalT2 = getField(p.trVars, 'NominalLuminanceT2', ...
+    getField(p.trVars, 'ActualLuminanceT2', NaN));
+printField('T1 nominal coordinate', formatScalar(nominalT1, '%.3f'));
+printField('T2 nominal coordinate', formatScalar(nominalT2, '%.3f'));
+printField('Nominal diff T1-T2', formatScalar( ...
+    getField(p.trVars, 'NominalLuminanceDifferenceT1MinusT2', ...
+    nominalT1 - nominalT2), '%.3f'));
+printField('T1 DKL luminance', formatScalar( ...
+    getField(p.trVars, 'ActualDklRedLuminanceT1', NaN), '%.6f'));
+printField('T2 DKL luminance', formatScalar( ...
+    getField(p.trVars, 'ActualDklRedLuminanceT2', NaN), '%.6f'));
+printField('DKL diff T1-T2', formatScalar( ...
+    getField(p.trVars, ...
+    'DklRedLuminanceDifferenceT1MinusT2', NaN), '%.6f'));
 
 fprintf('============================================================\n\n');
 
 end
 
 function printField(label, value)
-fprintf('  %-28s : %s\n', label, valueToString(value));
+fprintf('  %-29s : %s\n', label, valueToString(value));
 end
 
 function value = getField(s, fieldName, defaultValue)
@@ -92,16 +141,89 @@ end
 end
 
 function value = getBackgroundDkl(p)
-value = NaN;
-if isfield(p.draw, 'clut') && isfield(p.draw.clut, 'srsBackgroundDklLum')
-    value = p.draw.clut.srsBackgroundDklLum;
-elseif isfield(p.trVars, 'srsLuminanceBackgroundDklLum')
-    value = p.trVars.srsLuminanceBackgroundDklLum;
+value = getField(p.trVars, 'BackgroundDklLuminance', NaN);
+if ~isfiniteScalar(value) && isfield(p.draw, 'clut')
+    value = getField(p.draw.clut, 'srsBackgroundDklLum', NaN);
+end
+if ~isfiniteScalar(value)
+    value = getField(p.trVars, 'srsLuminanceBackgroundDklLum', NaN);
 end
 end
 
+function value = getBackgroundCdM2(p)
+value = getField(p.trVars, 'BackgroundMeasuredLuminanceCdM2', NaN);
+if ~isfiniteScalar(value) && isfield(p.draw, 'clut')
+    value = getField(p.draw.clut, 'srsBackgroundMeasuredCdM2', NaN);
+end
+if ~isfiniteScalar(value)
+    value = getField(p.trVars, 'srsLuminanceBackgroundMeasuredCdM2', NaN);
+end
+end
+
+function [minimumCdM2, maximumCdM2, label] = getCalibrationSummary(p)
+minimumCdM2 = NaN;
+maximumCdM2 = NaN;
+label = 'not loaded';
+if isfield(p.draw, 'clut') && ...
+        isfield(p.draw.clut, 'redLumCalibration') && ...
+        isstruct(p.draw.clut.redLumCalibration)
+    calibration = p.draw.clut.redLumCalibration;
+    minimumCdM2 = getField(calibration, 'minimumCdM2', NaN);
+    maximumCdM2 = getField(calibration, 'maximumCdM2', NaN);
+    label = getField(calibration, 'label', label);
+end
+end
+
+function txt = instructionOrderString(status)
+firstTarget = getField(status, 'FirstSingleTargetID', NaN);
+secondTarget = getField(status, 'SecondSingleTargetID', NaN);
+if any(firstTarget == [1 2]) && any(secondTarget == [1 2])
+    txt = sprintf('T%d-only -> T%d-only', firstTarget, secondTarget);
+else
+    txt = 'none';
+end
+end
+
+function txt = activeScheduleString(status)
+phase = getField(status, 'ActiveSchedulePhase', NaN);
+targetID = getField(status, 'ActiveSingleTargetID', NaN);
+if phase == 1 || phase == 2
+    if any(targetID == [1 2])
+        txt = sprintf('Phase %.0f: T%d-only', phase, targetID);
+    else
+        txt = sprintf('Phase %.0f: single-target', phase);
+    end
+elseif phase == 3
+    txt = 'Phase 3: two-target choice';
+elseif phase == 0
+    txt = 'complete / not started';
+else
+    txt = 'missing';
+end
+end
+
+function txt = calibrationRangeString(minimumCdM2, maximumCdM2)
+if isfiniteScalar(minimumCdM2) && isfiniteScalar(maximumCdM2)
+    txt = sprintf('%.3f - %.3f cd/m^2', minimumCdM2, maximumCdM2);
+else
+    txt = 'not loaded';
+end
+end
+
+function txt = formatScalar(value, fmt)
+if isfiniteScalar(value)
+    txt = sprintf(fmt, value);
+else
+    txt = 'NaN';
+end
+end
+
+function tf = isfiniteScalar(value)
+tf = isnumeric(value) && isscalar(value) && isfinite(value);
+end
+
 function txt = fractionString(value, total)
-if isnumeric(value) && isnumeric(total) && isfinite(value) && isfinite(total)
+if isfiniteScalar(value) && isfiniteScalar(total)
     txt = sprintf('%.0f / %.0f', value, total);
 else
     txt = 'missing';

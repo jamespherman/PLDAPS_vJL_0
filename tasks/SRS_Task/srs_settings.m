@@ -206,10 +206,15 @@ p.status.RemainingChoiceTrials     = 0;
 p.status.CurrentBlockTrial         = 0;     % Successfully completed schedule rows
 p.status.blockAttemptCount         = 0;     % Includes failed attempts
 p.status.blockScheduleComplete     = true;
+p.status.FirstSingleTargetID        = 0;     % First instruction group: 1=T1, 2=T2
+p.status.SecondSingleTargetID       = 0;     % Second instruction group: 1=T1, 2=T2
+p.status.ActiveSchedulePhase        = 0;     % 1=first single, 2=second single, 3=choice
+p.status.ActiveSingleTargetID       = 0;     % 0 during choice phase
+p.status.RemainingActivePhase       = 0;
 
 % Per trial
 p.status.CurrentTrialType           = 0;     % 0 = instruction, 1 = congruent, 2 = conflict
-p.status.CurrentTrialPhase          = 0;     % 1 = instruction, 2 = choice
+p.status.CurrentTrialPhase          = 0;     % 1=first single, 2=second single, 3=choice
 p.status.CurrentNStim               = 0;
 p.status.CurrentSingleTargetID      = 0;     % 0 = dual, 1 = T1 only, 2 = T2 only
 p.status.ActualTrialType            = 0;
@@ -340,7 +345,9 @@ p.trVarsInit.fixDegY             = 0;           % fixation Y location in degrees
 
 % Training/schedule controls. The standard settings randomize T1/T2 sides
 % but do not include instruction trials. srs_training_settings.m enables
-% 10 T1-only and 10 T2-only trials at the beginning of every block.
+% one uninterrupted group of 10 T1-only trials and one uninterrupted group
+% of 10 T2-only trials at the beginning of every block. Group order is
+% randomized once per block.
 p.trVarsInit.useSingleStimTraining = false;
 p.trVarsInit.nSingleT1PerBlock = 10;
 p.trVarsInit.nSingleT2PerBlock = 10;
@@ -352,7 +359,7 @@ p.trVarsInit.conditionID = 0;
 p.trVarsInit.currentTrialsArrayRow = 0;
 p.trVarsInit.nStim = 2;
 p.trVarsInit.singleTargetID = 0;
-p.trVarsInit.schedulePhase = 2;
+p.trVarsInit.schedulePhase = 3;
 p.trVarsInit.trialSeed = 0;
 p.trVarsInit.T1Side = 1;             % Side convention: 1 = right, 2 = left
 p.trVarsInit.T2Side = 2;
@@ -373,8 +380,11 @@ p.trVarsInit.outcome = '';
 p.trVarsInit.salienceType = 2; % 1 = hue, 2 = luminance
 
 %% Luminance mode parameters
-% Pesaran-like luminance values.
-% We keep the pair mean at 6 cd/m2.
+% NOMINAL sampling coordinates inherited from the Dubey/Pesaran design.
+% These values determine position on the 32-level red DKL ramp; they are
+% not the physical luminance emitted by this rig. Physical cd/m^2 values
+% are recovered from the i1Pro 3 calibration table after a CLUT index is
+% selected.
 p.trVarsInit.luminanceMeanCdM2 = 6;
 p.trVarsInit.luminanceMinCdM2  = 0.01;
 p.trVarsInit.luminanceMaxCdM2  = 12.15;
@@ -388,9 +398,16 @@ p.trVarsInit.luminancePairSamplingMode = 'uniformDifference';
 p.trVarsInit.luminanceDifferenceMinCdM2 = 0.25;
 p.trVarsInit.luminanceDifferenceMaxCdM2 = NaN; % NaN = largest valid value
 
-% Achromatic background used in luminance mode. This is a DKL luminance
-% coordinate, not a physical cd/m2 value.
+% Achromatic background used in luminance mode. The i1Pro 3 measurement
+% for DKL -0.085 is 47.4 cd/m^2 on the current rig.
 p.trVarsInit.srsLuminanceBackgroundDklLum = -0.085;
+p.trVarsInit.srsLuminanceBackgroundMeasuredCdM2 = 47.4;
+
+% Physical calibration for red CLUT entries 200:231.
+p.trVarsInit.redLuminanceCalibrationFile = ...
+    'SRS_red_luminance_calibration_20260716.csv';
+p.trVarsInit.redLuminanceCalibrationLabel = 'i1Pro3_20260716';
+p.trVarsInit.requireRedLuminanceCalibration = true;
 
 % Practical display maximum retained for backwards compatibility.
 p.trVarsInit.luminanceDisplayMaxCdM2 = 12;
@@ -422,6 +439,20 @@ p.trVarsInit.LuminanceDifferenceT1MinusT2 = 0;
 p.trVarsInit.LuminanceDifferenceT1MinusT2_x1000 = 0;
 p.trVarsInit.LuminanceDifferenceMagnitude = 0;
 p.trVarsInit.LuminancePairMean = 6;
+
+% Explicit names distinguish nominal sampling values from physical output.
+p.trVarsInit.NominalLuminanceT1 = 6;
+p.trVarsInit.NominalLuminanceT2 = 6;
+p.trVarsInit.NominalLuminanceDifferenceT1MinusT2 = 0;
+
+% Physical luminance values looked up from the i1Pro 3 calibration table.
+p.trVarsInit.MeasuredLuminanceT1CdM2 = NaN;
+p.trVarsInit.MeasuredLuminanceT2CdM2 = NaN;
+p.trVarsInit.MeasuredLuminanceDifferenceT1MinusT2CdM2 = NaN;
+p.trVarsInit.MeasuredLuminanceT1_x100 = NaN;
+p.trVarsInit.MeasuredLuminanceT2_x100 = NaN;
+p.trVarsInit.BackgroundDklLuminance = -0.085;
+p.trVarsInit.BackgroundMeasuredLuminanceCdM2 = 47.4;
 
 p.trVarsInit.ActualDklRedLuminanceT1 = NaN;
 p.trVarsInit.ActualDklRedLuminanceT2 = NaN;
@@ -470,14 +501,14 @@ p.trVarsInit.goLatencyMax            = 0.45;     % 600ms max response time = res
 p.trVarsInit.T1_visible          = false;       % T1 stimulus should not be visible until GoSignal state is current state
 p.trVarsInit.T1_locDegX          = 10;          % Updated trial-by-trial from T1Side 
 p.trVarsInit.T1_locDegY          =0;
-p.trVarsInit.T1_longAxisDeg      =20.0;          % Size in Deg of Long axis
-p.trVarsInit.T1_shortAxisDeg      =20.0/3.0;
+p.trVarsInit.T1_longAxisDeg      =2.00;          % Size in Deg of Long axis
+p.trVarsInit.T1_shortAxisDeg      =2.00/3.0;
 
 p.trVarsInit.T2_visible          = false;       % T2 stimulus should not be visible until GoSignal state is current state
 p.trVarsInit.T2_locDegX          = -10;         % Updated trial-by-trial from T2Side
 p.trVarsInit.T2_locDegY          =00;
-p.trVarsInit.T2_longAxisDeg      =20.0;          % Size in Deg of Long axis
-p.trVarsInit.T2_shortAxisDeg     =20.0/3.0;
+p.trVarsInit.T2_longAxisDeg      =2.00;          % Size in Deg of Long axis
+p.trVarsInit.T2_shortAxisDeg     =2.00/3.0;
 
 p.trVarsInit.targWinWidthDeg     = 4;
 p.trVarsInit.targWinHeightDeg    = 4;
@@ -768,9 +799,12 @@ p.init.strobeList = {...
     %%%% For Salience
     'salienceType',         'p.trVars.salienceType' ; ...       % TO ADD ; 1 = Hue ; 2 = Luminance
     
-    %Luminance
-    'ActualLuminanceT1',    'p.trVars.ActualLuminanceT1_x1000'; ...   % TO ADD ; Luminance Value for T1
-    'ActualLuminanceT2',    'p.trVars.ActualLuminanceT2_x1000'; ...   % TO ADD ; Luminance Value for T2
+    % Luminance. ActualLuminanceT1/T2 are NOMINAL sampling coordinates.
+    'ActualLuminanceT1',    'p.trVars.ActualLuminanceT1_x1000'; ...
+    'ActualLuminanceT2',    'p.trVars.ActualLuminanceT2_x1000'; ...
+    % Physical i1Pro 3 luminance, encoded at 0.01 cd/m^2 resolution.
+    'MeasuredLuminanceT1_x100', 'p.trVars.MeasuredLuminanceT1_x100'; ...
+    'MeasuredLuminanceT2_x100', 'p.trVars.MeasuredLuminanceT2_x100'; ...
 
     % Hue Contrast
     'backgroundHueIdx',        'p.trVars.backgroundHueIdx'; ...
@@ -787,7 +821,7 @@ p.init.strobeList = {...
     'singleTargetID',          'p.trVars.singleTargetID'; ...     % 0=dual, 1=T1, 2=T2
     'T1Side',                  'p.trVars.T1Side'; ...              % 1=right, 2=left
     'T2Side',                  'p.trVars.T2Side'; ...              % 1=right, 2=left
-    'schedulePhase',           'p.trVars.schedulePhase'; ...       % 1=instruction, 2=choice
+    'schedulePhase',           'p.trVars.schedulePhase'; ...       % 1=first single, 2=second single, 3=choice
     'chosenTargetID',          'p.trData.chosenTargetID'; ...      % 1=T1, 2=T2, 0=none
 
     % Targets

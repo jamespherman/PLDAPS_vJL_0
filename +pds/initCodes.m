@@ -368,7 +368,8 @@ codes.T1Side = 20019;                        % Spatial side of T1: 1=right, 2=le
 codes.T2Side = 20020;                        % Spatial side of T2: 1=right, 2=left
 codes.chosenTargetID = 20021;                % Chosen identity: 0=none, 1=T1, 2=T2
 codes.schedulePhase = 20022;                 % 1=instruction, 2=two-target choice
-
+codes.MeasuredLuminanceT1_x100 = 20023;       % Physical T1 luminance in cd/m^2 * 100
+codes.MeasuredLuminanceT2_x100 = 20024;       % Physical T2 luminance in cd/m^2 * 100
 
 
 %% validation

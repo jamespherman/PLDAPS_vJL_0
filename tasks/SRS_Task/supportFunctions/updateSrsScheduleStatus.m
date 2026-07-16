@@ -11,6 +11,9 @@ if ~isfield(p.init, 'trialsArray') || isempty(p.init.trialsArray) || ...
     p.status.RemainingChoiceTrials = 0;
     p.status.trialsLeftInBlock = 0;
     p.status.CurrentBlockTrial = 0;
+    p.status.ActiveSchedulePhase = 0;
+    p.status.ActiveSingleTargetID = 0;
+    p.status.RemainingActivePhase = 0;
     p.status.blockScheduleComplete = true;
     return
 end
@@ -49,4 +52,36 @@ p.status.trialsLeftInBlock = sum(remaining);
 p.status.CurrentBlockTrial = sum(~remaining);
 p.status.blockScheduleComplete = ~any(remaining);
 
+% Report the earliest unfinished phase. During training this identifies the
+% currently active single-target group and confirms that groups do not
+% overlap. Standard blocks contain only phase 3 choice trials.
+if any(remaining)
+    schedulePhase = trialsArray(:, cols.schedulePhase);
+    activePhase = min(schedulePhase(remaining));
+    p.status.ActiveSchedulePhase = activePhase;
+    p.status.RemainingActivePhase = sum(remaining & schedulePhase == activePhase);
+
+    if activePhase == 1
+        p.status.ActiveSingleTargetID = getStatusScalar( ...
+            p.status, 'FirstSingleTargetID', 0);
+    elseif activePhase == 2
+        p.status.ActiveSingleTargetID = getStatusScalar( ...
+            p.status, 'SecondSingleTargetID', 0);
+    else
+        p.status.ActiveSingleTargetID = 0;
+    end
+else
+    p.status.ActiveSchedulePhase = 0;
+    p.status.ActiveSingleTargetID = 0;
+    p.status.RemainingActivePhase = 0;
+end
+
+end
+
+function value = getStatusScalar(s, fieldName, defaultValue)
+value = defaultValue;
+if isfield(s, fieldName) && isnumeric(s.(fieldName)) && ...
+        isscalar(s.(fieldName)) && isfinite(s.(fieldName))
+    value = s.(fieldName);
+end
 end

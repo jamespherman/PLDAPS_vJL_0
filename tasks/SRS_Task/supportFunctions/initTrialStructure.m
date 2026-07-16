@@ -5,7 +5,7 @@ function p = initTrialStructure(p)
 % buildSrsBlockSchedule.m. This function only defines the column layout and
 % initializes empty holders.
 %
-% Side convention used throughout SRS_Fixate:
+% Side convention used throughout SRS_Task:
 %   1 = right
 %   2 = left
 %
@@ -22,7 +22,7 @@ p.init.trialsTableColumnNames = { ...
     'T1Side', ...            % 1 = right, 2 = left
     'T2Side', ...            % 1 = right, 2 = left
     'trialType', ...         % 0 = instruction, 1 = congruent, 2 = conflict
-    'schedulePhase', ...     % 1 = instruction, 2 = choice
+    'schedulePhase', ...     % 1 = first single group, 2 = second single group, 3 = choice
     'noOfTrials'};           % number of repetitions in the block
 
 p.init.trialsTableCols = makeColumnStruct(p.init.trialsTableColumnNames);

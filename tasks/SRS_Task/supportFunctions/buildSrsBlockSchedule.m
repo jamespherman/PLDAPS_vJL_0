@@ -1,12 +1,15 @@
 function p = buildSrsBlockSchedule(p)
 %BUILDSRSBLOCKSCHEDULE Build the compact table and expanded block schedule.
 %
-% Training blocks contain, in this order of priority:
-%   1. Single-target instruction trials (10 T1 and 10 T2 by default)
-%   2. Two-target congruent/conflict choice trials
+% Training blocks contain three non-overlapping schedule phases:
+%   1. Ten consecutive successful trials from one single-target identity
+%   2. Ten consecutive successful trials from the other identity
+%   3. Two-target congruent/conflict choice trials
 %
-% The actual order within each priority group is randomized by nextParams.
-% A failed trial remains eligible until it is completed successfully.
+% The order of the T1-only and T2-only groups is randomized once per block.
+% Within a group, target side is randomized/counterbalanced. A failed trial
+% remains eligible, so the next group cannot begin until the current group
+% has been completed successfully.
 
 cols = p.init.trialsTableCols;
 conditionRows = zeros(0, numel(p.init.trialsTableColumnNames));
@@ -31,6 +34,23 @@ else
 end
 p.status.TotalChoiceTrialsPerBlock = nChoice;
 
+%% Choose the order of the two single-target instruction groups
+% Phase 1 and phase 2 are assigned once per block. This guarantees that
+% T1-only and T2-only trials never interleave.
+if useTraining
+    singleGroupOrder = randperm(2);
+    p.status.FirstSingleTargetID = singleGroupOrder(1);
+    p.status.SecondSingleTargetID = singleGroupOrder(2);
+
+    phaseT1 = find(singleGroupOrder == 1, 1, 'first');
+    phaseT2 = find(singleGroupOrder == 2, 1, 'first');
+else
+    p.status.FirstSingleTargetID = 0;
+    p.status.SecondSingleTargetID = 0;
+    phaseT1 = NaN;
+    phaseT2 = NaN;
+end
+
 %% Instruction conditions
 if useTraining
     if randomizeSides
@@ -38,18 +58,18 @@ if useTraining
         [nT2Right, nT2Left] = splitAcrossSides(nSingleT2);
 
         [conditionRows, conditionID] = addCondition(conditionRows, conditionID, cols, ...
-            1, 1, 1, 2, 0, 1, nT1Right); % T1 only, T1 right
+            1, 1, 1, 2, 0, phaseT1, nT1Right); % T1 only, T1 right
         [conditionRows, conditionID] = addCondition(conditionRows, conditionID, cols, ...
-            1, 1, 2, 1, 0, 1, nT1Left);  % T1 only, T1 left
+            1, 1, 2, 1, 0, phaseT1, nT1Left);  % T1 only, T1 left
         [conditionRows, conditionID] = addCondition(conditionRows, conditionID, cols, ...
-            1, 2, 2, 1, 0, 1, nT2Right); % T2 only, T2 right
+            1, 2, 2, 1, 0, phaseT2, nT2Right); % T2 only, T2 right
         [conditionRows, conditionID] = addCondition(conditionRows, conditionID, cols, ...
-            1, 2, 1, 2, 0, 1, nT2Left);  % T2 only, T2 left
+            1, 2, 1, 2, 0, phaseT2, nT2Left);  % T2 only, T2 left
     else
         [conditionRows, conditionID] = addCondition(conditionRows, conditionID, cols, ...
-            1, 1, 1, 2, 0, 1, nSingleT1); % T1 fixed right
+            1, 1, 1, 2, 0, phaseT1, nSingleT1); % T1 fixed right
         [conditionRows, conditionID] = addCondition(conditionRows, conditionID, cols, ...
-            1, 2, 1, 2, 0, 1, nSingleT2); % T2 fixed left
+            1, 2, 1, 2, 0, phaseT2, nSingleT2); % T2 fixed left
     end
 end
 
@@ -60,14 +80,14 @@ if randomizeSides
         for T1Side = 1:2
             T2Side = 3 - T1Side;
             [conditionRows, conditionID] = addCondition(conditionRows, conditionID, cols, ...
-                2, 0, T1Side, T2Side, trialType, 2, repsPerCell);
+                2, 0, T1Side, T2Side, trialType, 3, repsPerCell);
         end
     end
 else
     repsPerType = nChoice / 2;
     for trialType = 1:2
         [conditionRows, conditionID] = addCondition(conditionRows, conditionID, cols, ...
-            2, 0, 1, 2, trialType, 2, repsPerType);
+            2, 0, 1, 2, trialType, 3, repsPerType);
     end
 end
 
