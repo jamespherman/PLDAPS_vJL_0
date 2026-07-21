@@ -1,0 +1,897 @@
+function p = srsSmooth_settings
+%  p = srsSmooth_settings
+%
+%  "scd" - stimulus change detection; stimuli have multiple feature
+%  dimensions, each of which can change.
+%
+% Part of the quintet of pldpas functions:
+%   settings function
+%   init function
+%   next function (before each trial)
+%   run function (each trial)
+%   finish function (after each trial)
+%
+%%% settings function
+% runs at the very beginning of the task, only once.
+% All settings are set here.
+%   s struct has status values that change within the trial
+%   p struct has control parameters that are defined once
+
+
+%%
+% p.init;           % all things that are saved once except for trialVarsInit
+% p.rig;            % all rig (monitor, PTB stuff, distances) related stuff
+% p.audio;          % all things audio related
+% p.draw;           % all widths/hieghts/etc of stuff that's drawn. (all except for stimulus, which is saved uniquely in stim struct)
+% p.state           % all the states that we use and their id integer
+% p.trVarsInit;     % all vars used in pldaps. here intiailized.
+% p.trVars;         % all vars used in run function inherit value from trVarsInit.
+% p.trVarsGuiComm;  % inheritance and user update of trVars happens through this struct, the trial variables gui coomunication
+% p.trData;         % all data collected in a trial (behavior, timing, analog..)
+
+
+%% p.init:
+p = struct;
+
+% determine which PC we're on so we can select the appropriate reward
+% magnitude:
+if ~ispc
+    [~, p.init.pcName] = unix('hostname');
+else
+    % if this IS running on a (windows) PC that means we've neglected to
+    % account for something - figure it out now! JPH - 5/16/2023
+    keyboard
+end
+
+% rig config file has subject/rig-specific details (eg distance from
+% screen). Select rig config file depending on PC name (assuming the 2nd to
+% last characteer in the pcName string is 1 or 2):
+p.init.rigConfigFile     = which(['rigConfigFiles.rigConfig_rig' ...
+    p.init.pcName(end-1)]);
+
+% need to set "useDataPixxBool" to true in all settings files. We really
+% need to change how we do this in general. There should be a some master
+% list of settings that are required for all tasks to run correctly that
+% get set in every settings file without the need to duplicate lines of
+% code across all settings files, and separately a list of settings that is
+% task-specific (JPH - 05/25/2023).
+p.init.useDataPixxBool = true;
+
+%% define task name and related files:
+
+p.init.taskName         = 'srsSmooth';
+p.init.taskType         = 1;                            % poorly defined numerical index for the task "type"
+p.init.pldapsFolder     = pwd;                          % pldaps gui takes us to taks folder automatically once we choose a settings file
+p.init.protocol_title   = [p.init.taskName '_task'];    % Define Banner text to identify the experimental protocol
+p.init.date             = datestr(now,'yyyymmdd');
+p.init.time             = datestr(now,'HHMM');
+
+p.init.date_1yyyy       = str2double(['1' datestr(now,'yyyy')]); % gotta add a '1' otherwise date/times starting with zero lose that zero in conversion to double.
+p.init.date_1mmdd       = str2double(['1' datestr(now,'mmdd')]);
+p.init.time_1hhmm       = str2double(['1' datestr(now,'HHMM')]);
+
+% output files:
+p.init.outputFolder     = fullfile(p.init.pldapsFolder, 'output');
+p.init.figureFolder     = fullfile(p.init.pldapsFolder, 'output', 'figures');
+p.init.sessionId        = [p.init.date '_t' p.init.time '_' p.init.taskName];     % Define the prefix for the Output File
+p.init.sessionFolder    = fullfile(p.init.outputFolder, p.init.sessionId);
+
+% Define the "init", "next", "run", and "finish" ".m" files.
+p.init.taskFiles.init   = [p.init.taskName '_init.m'];
+p.init.taskFiles.next   = [p.init.taskName '_next.m'];
+p.init.taskFiles.run    = [p.init.taskName '_run.m'];
+p.init.taskFiles.finish = [p.init.taskName '_finish.m'];
+
+%% Define the Action M-files
+% User-defined actions that are either within the task folder under
+% "actions" or within the +pdsActions:
+p.init.taskActions{1} = 'pdsActions.dataToWorkspace';
+p.init.taskActions{2} = 'pdsActions.blackScreen';
+p.init.taskActions{3} = 'pdsActions.alphaBinauralBeats';
+p.init.taskActions{4} = 'pdsActions.catOldOutput';
+p.init.taskActions{5} = 'i1FindGrayBackgroundLum';
+p.init.taskActions{6} = 'i1LivePhotometer';
+p.init.taskActions{7} = 'i1MeasureSrsRedLumRamp';
+p.init.taskActions{8} = 'i1ScanRedRgbDkl';
+p.init.taskActions{9} = 'i1ScanRedRgbDirect';
+
+%% Photometer measurement mode
+p.trVarsInit.measureRedLumRampWithI1 = false;
+p.trVarsInit.i1RampNRepeats = 3;
+p.trVarsInit.i1RampSettleTime = 0.25;
+
+p.trVarsInit.scanDklRedLumWithI1 = false;
+p.trVarsInit.findGrayBgWithI1 = false;
+
+% Direct-RGB red-ramp search actions. 'quick' is suitable for an initial
+% search; 'full' is much denser and can require a long photometer session.
+p.trVarsInit.redRgbScanProfile = 'quick';
+p.trVarsInit.redRgbScanNRepeats = 1;
+p.trVarsInit.redRgbScanSettleTime = 0.20;
+p.trVarsInit.redRgbScanTargetLowCdM2 = 0.01;
+p.trVarsInit.redRgbScanTargetHighCdM2 = 12.15;
+
+%% audio:
+p.audio.audsplfq        = 48000; % datapixx audio playback sampling rate.
+p.audio.Hitfq           = 600;   % frequency for "high" (hit) tone.
+p.audio.Missfq          = 100;   % frequency for "low" (miss) tone.
+p.audio.auddur          = 4800;  % duration in samples for tones.
+p.audio.lineOutLevel    = 0.4;   % datapixx line out audio level [0 - 1].
+p.audio.pcPlayback      = false;  % do we want audio playback from psychtoolbox PC?
+
+%% STATES
+
+
+% % % % Was the previous trial aborted? state in 10:20 = ABORTED
+% % % p.trData.trialRepeatFlag = (p.trData.trialEndState > 10) & ...
+% % %     (p.trData.trialEndState < 20);  
+
+% transition states:
+p.state.trialBegun      = 1;
+p.state.showFix         = 2;
+p.state.holdJoy         = 3;
+p.state.dontMove        = 4;
+
+p.state.MakeSaccade       = 450;
+p.state.checkLanding      = 451;
+p.state.holdTarg          = 452;
+
+
+
+p.state.makeDecision    = 5;
+% end states - aborted:
+p.state.fixBreak        = 11;
+p.state.joyBreak        = 12;
+p.state.nonStart        = 13;
+
+p.state.noResponse       = 453;
+p.state.inaccurate       = 454;
+
+% end states - success:
+p.state.hit             = 21;
+p.state.cr              = 22;
+p.state.miss            = 23;
+p.state.foilFa          = 24;
+p.state.fa              = 25;
+
+% end states - success:
+p.state.sacComplete         = 455;
+
+
+
+%% STATUS VALUES
+
+p.status.iTrial                     = 0; % ITERATOR for current trial count
+p.status.iGoodTrial                 = 0; % count of all trials that have ended in hit, miss, cr, foil fa (no fix or joy breaks, no fa)
+p.status.trialsLeftInBlock          = 0; % how many trials remain in the current block?
+p.status.blockNumber                = 0; % what block are we in?
+
+% %% T1
+% %Congruent trial 
+% p.status.iTrial_Rich_High_T1         = 0; % count number of trial where congruent choice rich-high (T1) has been chosen while T1 was rich
+% p.status.iTrial_Poor_low_T1          = 0; % count number of trial where poor-low target (T2) has been chosen while congruent trial in T1 was rich
+% %Conflict
+% p.status.iTrial_Rich_low_T1          = 0; % count number of trial where rich-low T1 was chosen while conflict trial in T1 rich
+% p.status.iTrial_Poor_High_T1         = 0; % count number of trial where poor-high target T2 has been chosen while conflict trial in T1 was rich
+% 
+% %% T2
+% %Congruent trial
+% p.status.iTrial_Rich_High_T2         = 0; % count number of trial where congruent choice rich-high (T1) has been chosen while T1 was rich
+% p.status.iTrial_Poor_low_T2          = 0; % count number of trial where poor-low target (T2) has been chosen while congruent trial in T1 was rich
+% %Conflict
+% p.status.iTrial_Rich_low_T2          = 0; % count number of trial where rich-low T2 was chosen while conflict trial in T2 rich
+% p.status.iTrial_Poor_High_T2         = 0; % count number of trial where poor-high target T1 has been chosen while conflict trial in T2 was rich
+
+%% Total T1 + T2
+p.status.iTrial_Rich_High        = 0; % count number of trial where congruent choice rich-high 
+p.status.iTrial_Poor_low         = 0; % count number of trial where poor-low  
+%Conflict
+p.status.iTrial_Rich_low         = 0; % count number of trial where rich-low 
+p.status.iTrial_Poor_High        = 0; % count number of trial where poor-high 
+%% Block Organization ;
+
+% Per session;
+p.status.CurrentBlockType           = 0;    % Rich target identity: 1 = T1, 2 = T2
+p.status.CurrentBlockNumber         = 0;
+p.status.TotalBlocksTarget          = 8;
+p.status.RemainingBlock             = p.status.TotalBlocksTarget;
+
+% Per block schedule
+p.status.TotalTrialsPerBlock        = 0;     % Instruction + choice trials
+p.status.TotalChoiceTrialsPerBlock  = 0;     % Random multiple of 4, 60-100
+p.status.TotalInstructionTrialsPerBlock = 0;
+p.status.TotalSingleT1             = 0;
+p.status.TotalSingleT2             = 0;
+p.status.TotalConflict             = 0;
+p.status.TotalCongruent            = 0;
+p.status.RemainingSingleT1         = 0;
+p.status.RemainingSingleT2         = 0;
+p.status.RemainingInstructionTrials = 0;
+p.status.RemainingConflict         = 0;
+p.status.RemainingCongruent        = 0;
+p.status.RemainingChoiceTrials     = 0;
+p.status.CurrentBlockTrial         = 0;     % Successfully completed schedule rows
+p.status.blockAttemptCount         = 0;     % Includes failed attempts
+p.status.blockScheduleComplete     = true;
+p.status.FirstSingleTargetID        = 0;     % Deprecated: singles are mixed
+p.status.SecondSingleTargetID       = 0;     % Deprecated: singles are mixed
+p.status.SingleTargetsMixed          = false; % true in training blocks
+p.status.ActiveSchedulePhase        = 0;     % 1=mixed singles, 2=choice
+p.status.ActiveSingleTargetID       = 0;     % 0 during choice phase
+p.status.RemainingActivePhase       = 0;
+
+% Per trial
+p.status.CurrentTrialType           = 0;     % 0 = instruction, 1 = congruent, 2 = conflict
+p.status.CurrentTrialPhase          = 0;     % 1=mixed singles, 2=choice
+p.status.CurrentNStim               = 0;
+p.status.CurrentSingleTargetID      = 0;     % 0 = dual, 1 = T1 only, 2 = T2 only
+p.status.ActualTrialType            = 0;
+p.status.ActualRichReward           = 0;
+p.status.ActualPoorReward           = 0;
+p.status.highRewardTargetID         = 0;
+p.status.highSalienceTargetID       = 0;
+p.status.iSingleT1Correct           = 0;
+p.status.iSingleT2Correct           = 0;
+
+p.status.fixDurReq                  = 0; % how long was the monkey required to hold down the joystick on the last trial?
+
+p.status.hr1Loc1                    = 0; % hit rate for single patch at location 1
+p.status.cr1Loc1                    = 0; % correct reject rate for single patch at location 1
+p.status.hr1Loc2                    = 0; % hit rate for single patch at location 2
+p.status.cr1Loc2                    = 0; % correct reject rate for single patch at location 2
+p.status.hr2Loc1                    = 0; % hit rate for two patch at location 1
+p.status.cr2Loc1                    = 0; % correct reject rate for two patch at location 1
+p.status.hr2Loc2                    = 0; % hit rate for two patch at location 2
+p.status.cr2Loc2                    = 0; % correct reject rate for two patch at location 2
+
+p.status.hc1Loc1                    = 0; % hit count for single patch at location 1
+p.status.crc1Loc1                   = 0; % correct reject count for single patch at location 1
+p.status.hc1Loc2                    = 0; % hit count for single patch at location 2
+p.status.crc1Loc2                   = 0; % correct reject count for single patch at location 2
+p.status.hc2Loc1                    = 0; % hit count for two patch at location 1
+p.status.crc2Loc1                   = 0; % correct reject count for two patch at location 1
+p.status.hc2Loc2                    = 0; % hit count for two patch at location 2
+p.status.crc2Loc2                   = 0; % correct reject count for two patch at location 2
+
+p.status.cue1CtLoc1                 = 0; % count of single patch cue change trials at location 1
+p.status.foil1CtLoc1                = 0; % count of single patch foil change trials at location 1
+p.status.cue1CtLoc2                 = 0; % count of single patch cue change trials at location 2
+p.status.foil1CtLoc2                = 0; % count of single patch foil change trials at location 2
+p.status.cue2CtLoc1                 = 0; % count of two patch cue change trials at location 1
+p.status.foil2CtLoc1                = 0; % count of two patch foil change trials at location 1
+p.status.cue2CtLoc2                 = 0; % count of two patch cue change trials at location 2
+p.status.foil2CtLoc2                = 0; % count of two patch foil change trials at location 2
+
+p.status.missedFrames               = 0; % count of missed frames as reported by psychtoolbox
+
+p.status.trialsArrayRowsPossible    = [];
+
+p.rig.guiStatVals = {...
+    'CurrentBlockNumber'; ...
+    'TotalTrialsPerBlock'; ...
+    'iTrial'; ...   
+    'iGoodTrial'; ...
+    'iTrial_Rich_High'; ...
+    'iTrial_Rich_low'; ...          %6
+    'iTrial_Poor_High'; ...
+    'iTrial_Poor_low'; ...
+    'CurrentBlockType'; ...
+    'ActualTrialType'; ...
+    'ActualRichReward'; ...
+    'ActualPoorReward'};    
+
+%% user determines the 12 variables are shown in gui upon init
+% here you just list the vars you want to see. You do not set them, yet.
+% Setting them takes place below in the appropriate section.
+% The list of vars should be in string format eg 'p.trVarsInit.cueDelta'
+
+p.rig.guiVars = {...
+    'salienceType'; ...   %1
+    'rewardDelay'; ...
+    'fixDurReqMin'; ...
+    'fixDurReqMax'; ...
+    'MeanrewardDurationMs'; ...
+    'responseWindow'; ...
+    'T1_locDegX'; ...       % 6
+    'T1_locDegY'; ...
+    'T2_locDegX'; ...
+    'T2_locDegY'; ...
+    'mouseEyeSim'; ...          
+    'passEye'};              % 12
+
+
+%% INIT VARIABLES 
+% vars that are only set once
+
+p.init.exptType         = 'srs_smooth';  % Which experiment are we running? The full version with all trial types? The single-stimulus-only version? Something else?
+
+
+%% TRIAL VARIABLES
+% vars that may change throughout an experimental session and are therefore
+% saved on every trial. 
+% Here we define 'trVarsInit' as this is the default. However, user may
+% change any variable through the gui (which updates 'trVarsGuiComm) and
+% then updates 'trVars' during the run function. 
+% 'trVars' is the key strcutarray that gets saved on every trial.
+
+%% general vars:
+p.trVarsInit.mouseEyeSim         = 0;        % Mouse bqsed eye track
+p.trVarsInit.passJoy             = 1;       % pass = 1; simulate correct trials (for debugging)
+p.trVarsInit.passEye             = 1;       % pass = 1; simulate correct trials (for debugging)
+p.trVarsInit.blockNumber         = 0;       % block number
+p.trVarsInit.repeat              = 0;       % repeat trial if true
+p.trVarsInit.rwdJoyPR            = 0;       % 0 = Give reward if Joy is pressed; 1 = Give reward if Joystick released
+p.trVarsInit.isCueChangeTrial    = 0;       % change (1) or no change trial (0)
+p.trVarsInit.isFoilChangeTrial   = -1;      % no change(0); change(1); foil not present (-1)
+p.trVarsInit.isNoChangeTrial     = -1;
+p.trVarsInit.finish              = 1400;  % MAX DELAY PER TRIAL
+p.trVarsInit.filesufix           = 1;       % save to file sufix
+p.trVarsInit.joyVolt             = 0;
+p.trVarsInit.eyeDegX             = 0;
+p.trVarsInit.eyeDegY             = 0;
+p.trVarsInit.eyePixX             = 0;
+p.trVarsInit.eyePixY             = 0;
+
+%% geometry/stimulus vars:
+p.trVarsInit.speedDelta          = (pi/8);      % motion magniutde
+p.trVarsInit.contDelta           = 0.2;         % contrast
+p.trVarsInit.orientDelta         = 10;          % orientation
+p.trVarsInit.freqDelta           = 0.2;         % spatial frequency (cycles per degree)
+p.trVarsInit.satDelta            = 0.038;       % color saturation
+p.trVarsInit.lumDelta            = 0.1;         % luminance
+p.trVarsInit.hueDelta            = 15;          % hue (color angle)
+p.trVarsInit.stimLoc1Elev        = 0;           % Stimulus location (angle of elevation).
+p.trVarsInit.stimLoc1Ecc         = 10;          % Stimulus location (eccentricity in degrees).
+p.trVarsInit.stimLoc2Elev        = 180;         % Stimulus location (angle of elevation).
+p.trVarsInit.stimLoc2Ecc         = 10;          % Stimulus location (eccentricity in degrees).
+p.trVarsInit.stimRadius          = 3.25;        % aperture radius in deg
+p.trVarsInit.motionDir           = 30;          % Motion direction in degrees
+p.trVarsInit.fixDegX             = 0;           % fixation X location in degrees
+p.trVarsInit.fixDegY             = 0;           % fixation Y location in degrees
+
+%% SRS task specific variables
+
+% Training/schedule controls. The standard settings randomize T1/T2 sides
+% but do not include instruction trials. srsSmooth_training_settings.m enables
+% 10 T1-only and 10 T2-only instruction rows mixed in random order at the
+% beginning of every block. Choice rows remain locked until all instruction
+% rows have been completed successfully.
+p.trVarsInit.useSingleStimTraining = false;
+p.trVarsInit.nSingleT1PerBlock = 10;
+p.trVarsInit.nSingleT2PerBlock = 10;
+p.trVarsInit.randomizeTargetIdentitySides = true;
+p.trVarsInit.targetHorizontalEccDeg = 10; % Legacy field; locations now use T1/T2_locDegX/Y directly
+
+% Schedule metadata copied from the block trial array on every trial.
+p.trVarsInit.conditionID = 0;
+p.trVarsInit.currentTrialsArrayRow = 0;
+p.trVarsInit.nStim = 2;
+p.trVarsInit.singleTargetID = 0;
+p.trVarsInit.schedulePhase = 2;
+p.trVarsInit.trialSeed = 0;
+p.trVarsInit.T1Side = 1;             % Side convention: 1 = right, 2 = left
+p.trVarsInit.T2Side = 2;
+p.trVarsInit.T1_present = true;
+p.trVarsInit.T2_present = true;
+p.trVarsInit.rewardDurationT1 = 0;
+p.trVarsInit.rewardDurationT2 = 0;
+
+p.trVarsInit.backgroundHueIdx = 1;   % 1=Hue A (0 deg DKL), 2=Hue B (180 deg DKL)
+p.status.highSalienceSide = 0;       % Spatial side: 1=right, 2=left
+p.status.highRewardSide = 0;         % Spatial side: 1=right, 2=left
+p.trVarsInit.chosenSide = 0;         % Spatial choice: 1=right, 2=left, 0=neither
+p.trVarsInit.choseHighSalience = false;
+p.trVarsInit.outcome = '';
+
+
+%% Salience mode
+p.trVarsInit.salienceType = 1; % 1 = hue, 2 = luminance
+
+%% Luminance mode parameters
+% NOMINAL sampling coordinates inherited from the Dubey/Pesaran design.
+% These values determine position on the 32-level red DKL ramp; they are
+% not the physical luminance emitted by this rig. Physical cd/m^2 values
+% are recovered from the i1Pro 3 calibration table after a CLUT index is
+% selected.
+p.trVarsInit.luminanceMeanCdM2 = 6;
+p.trVarsInit.luminanceMinCdM2  = 0.01;
+p.trVarsInit.luminanceMaxCdM2  = 12.15;
+
+% Balanced luminance-pair sampling for the scheduled congruent/conflict
+% design. The pair mean stays at 6, while |T1-T2| is sampled directly so
+% the signed T1-T2 plot is centered and contains a broad range of values.
+% Set the mode to 'dubeyLogUniform' to recover the original log-uniform
+% draw described in Dubey & Pesaran.
+p.trVarsInit.luminancePairSamplingMode = 'uniformDifference';
+p.trVarsInit.luminanceDifferenceMinCdM2 = 0.25;
+p.trVarsInit.luminanceDifferenceMaxCdM2 = NaN; % NaN = largest valid value
+
+% Achromatic background used in luminance mode. The i1Pro 3 measurement
+% for DKL -0.085 is 47.4 cd/m^2 on the current rig.
+p.trVarsInit.srsLuminanceBackgroundDklLum = -0.085;
+p.trVarsInit.srsLuminanceBackgroundMeasuredCdM2 = 47.4;
+
+% Physical calibration for red CLUT entries 200:231.
+p.trVarsInit.redLuminanceCalibrationFile = ...
+    'SRS_red_luminance_calibration_20260716.csv';
+p.trVarsInit.redLuminanceCalibrationLabel = 'i1Pro3_20260716';
+p.trVarsInit.requireRedLuminanceCalibration = true;
+
+% Practical display maximum retained for backwards compatibility.
+p.trVarsInit.luminanceDisplayMaxCdM2 = 12;
+
+% Base hue for luminance mode Same hue, different intensity.
+p.trVarsInit.luminanceBaseRGB = [1 0 0];
+
+%% DKL red luminance ramp parameters
+% These values are DKL luminance coordinates, NOT cd/m².
+% They define the red luminance ramp used for drawing the targets.
+
+p.trVarsInit.luminanceRedDklLow  = -0.1;
+p.trVarsInit.luminanceRedDklHigh =  0.14;
+
+% Fixed chromatic saturation for the red DKL ramp.
+p.trVarsInit.luminanceRedDklSatRad = 0.35;
+
+% NaN = automatically find the DKL hue direction closest to SRS red.
+p.trVarsInit.luminanceRedDklHueDeg = NaN;
+
+% Target red used to find the closest DKL hue direction.
+p.trVarsInit.luminanceRedTargetRGB = [225 0 76] / 255;
+%% Trial-specific luminance values
+p.trVarsInit.ActualLuminanceT1 = 6;
+p.trVarsInit.ActualLuminanceT2 = 6;
+p.trVarsInit.ActualLuminanceT1_x1000 = 6000;
+p.trVarsInit.ActualLuminanceT2_x1000 = 6000;
+p.trVarsInit.LuminanceDifferenceT1MinusT2 = 0;
+p.trVarsInit.LuminanceDifferenceT1MinusT2_x1000 = 0;
+p.trVarsInit.LuminanceDifferenceMagnitude = 0;
+p.trVarsInit.LuminancePairMean = 6;
+
+% Explicit names distinguish nominal sampling values from physical output.
+p.trVarsInit.NominalLuminanceT1 = 6;
+p.trVarsInit.NominalLuminanceT2 = 6;
+p.trVarsInit.NominalLuminanceDifferenceT1MinusT2 = 0;
+
+% Physical luminance values looked up from the i1Pro 3 calibration table.
+p.trVarsInit.MeasuredLuminanceT1CdM2 = NaN;
+p.trVarsInit.MeasuredLuminanceT2CdM2 = NaN;
+p.trVarsInit.MeasuredLuminanceDifferenceT1MinusT2CdM2 = NaN;
+p.trVarsInit.MeasuredLuminanceT1_x100 = NaN;
+p.trVarsInit.MeasuredLuminanceT2_x100 = NaN;
+p.trVarsInit.BackgroundDklLuminance = -0.085;
+p.trVarsInit.BackgroundMeasuredLuminanceCdM2 = 47.4;
+
+p.trVarsInit.ActualDklRedLuminanceT1 = NaN;
+p.trVarsInit.ActualDklRedLuminanceT2 = NaN;
+p.trVarsInit.DklRedLuminanceDifferenceT1MinusT2 = NaN;
+p.trVarsInit.ActualDklRedLuminanceT1_x1000 = NaN;
+p.trVarsInit.ActualDklRedLuminanceT2_x1000 = NaN;
+p.trVarsInit.DklRedLuminanceDifferenceT1MinusT2_x1000 = NaN;
+
+%% Target colors actually used by drawMachine
+p.trVarsInit.T1_color = [1 0 0];
+p.trVarsInit.T2_color = [1 0 0];
+
+
+p.trVarsInit.T1_colorIdx = 250;
+p.trVarsInit.T2_colorIdx = 251;
+
+%% HUE CONTRAST = SaliencyType 1
+%% DKL hue contrast parameters
+% 1 = background DKL 0
+% 2 = background DKL 180
+
+p.trVarsInit.backgroundHueIdx = 1; % Starting zith 1, add random ??
+
+p.trVarsInit.ActualHueT1 = NaN;
+p.trVarsInit.ActualHueT2 = NaN;
+p.trVarsInit.BackgroundHue = NaN;
+p.trVarsInit.HueContrastT1 = NaN;
+p.trVarsInit.HueContrastT2 = NaN;
+
+% Hue angles are strobed scaled by 10 (0..3600) to stay under the 15-bit
+% strobe ceiling of 32767. See +pds/initCodes.m (ActualHueT1_x10 etc.).
+p.trVarsInit.ActualHueT1_x10 = NaN;
+p.trVarsInit.ActualHueT2_x10 = NaN;
+p.trVarsInit.BackgroundHue_x10 = NaN;
+p.trVarsInit.HueContrastT1_x10 = NaN;
+p.trVarsInit.HueContrastT2_x10 = NaN;
+
+%% Hue sampling version
+% 'smooth'  : Dubey-style continuous hue-contrast sampling. Each target's
+%             hue is background + offset, where the offset (circular
+%             distance from the background hue, in deg) is drawn per trial
+%             so that the two targets' offsets have a fixed mean. Targets
+%             are drawn by writing their exact DKL RGB into two reserved
+%             CLUT slots each trial (no precomputed hue bank).
+% 'classic' : fixed 0/20/180/200 deg hues, matching the original task.
+p.trVarsInit.hueSamplingMode = 'smooth';
+p.trVarsInit.hueModeCode = 2;             % 1=classic, 2=smooth
+
+% Hue-contrast offset range, in degrees RELATIVE TO THE BACKGROUND HUE.
+% The offset equals the circular hue contrast against the background
+% (monotonic with salience up to 180 deg). Analogous to Dubey's luminance
+% range [0.01, 12.15] cd/m^2. The choice-trial pair mean is fixed at the
+% symmetric midpoint (minHueAngleDeg + maxHueAngleDeg)/2, so every
+% log-uniform draw has a valid partner within [min, max].
+p.trVarsInit.minHueAngleDeg = 10;
+p.trVarsInit.maxHueAngleDeg = 180;
+
+% Choice-trial pair sampling:
+%   'dubeyLogUniform'  : draw one offset log-uniform in [min,max], set the
+%                        partner = 2*mean - offset (faithful to Dubey; the
+%                        |difference| distribution piles up near max).
+%   'uniformDifference': sample |offset1-offset2| uniformly with the mean
+%                        held at the midpoint (even salience-difference
+%                        axis; same approach as the luminance mode).
+p.trVarsInit.hueContrastSamplingMode = 'dubeyLogUniform';
+
+% Optional floor on the choice-trial offset difference |offset1-offset2|
+% so the salient side is always well defined. 0 = faithful to Dubey.
+p.trVarsInit.hueContrastDiffMinDeg = 0;
+
+% DKL coordinates shared by the background poles and both targets.
+p.trVarsInit.hueDklMeanLuminance = -0.495;
+p.trVarsInit.hueDklSaturationRadius = 0.4;
+
+% Set true per trial (in nextParams) when the reserved target CLUT slots
+% were rewritten and the combined CLUT must be re-pushed in srsSmooth_run.
+p.trVarsInit.updateClutThisTrial = false;
+
+% Trial-specific hue metadata. All values are DKL hue angles in degrees.
+p.trVarsInit.HighSalienceHueDeg = NaN;
+p.trVarsInit.LowSalienceHueDeg = NaN;
+p.trVarsInit.HueContrastDifferenceT1MinusT2 = NaN;
+p.trVarsInit.HueContrastDifferenceMagnitude = NaN;
+
+
+%% Target settings
+
+p.trVarsInit.responseWindow          = 0.45;     % 600ms response window from go signal
+p.trVarsInit.targHoldDurationMin     = 0.2;
+p.trVarsInit.targHoldDurationMax     = 0.3;
+p.trVarsInit.maxSacDurationToAccept  = 0.1;
+p.trVarsInit.goLatencyMin            = 0.0;     % minimum allowed RT (0 for this task)
+p.trVarsInit.goLatencyMax            = 0.45;     % 600ms max response time = responsewindow
+
+p.trVarsInit.T1_visible          = false;       % T1 stimulus should not be visible until GoSignal state is current state
+p.trVarsInit.T1_locDegX          = 10;          % Physical location A; full [X,Y] pair is preserved
+p.trVarsInit.T1_locDegY          =0;
+p.trVarsInit.T1_longAxisDeg      =2.00;          % Size in Deg of Long axis
+p.trVarsInit.T1_shortAxisDeg      =2.00/3.0;
+
+p.trVarsInit.T2_visible          = false;       % T2 stimulus should not be visible until GoSignal state is current state
+p.trVarsInit.T2_locDegX          = -10;         % Physical location B; full [X,Y] pair is preserved
+p.trVarsInit.T2_locDegY          =00;
+p.trVarsInit.T2_longAxisDeg      =2.00;          % Size in Deg of Long axis
+p.trVarsInit.T2_shortAxisDeg     =2.00/3.0;
+
+p.trVarsInit.targWinWidthDeg     = 4;
+p.trVarsInit.targWinHeightDeg    = 4;
+
+p.draw.targWinPenThin      = 4;
+p.draw.targWinPenThick     = 8;
+p.draw.targWinPenDraw            = [];
+ 
+p.trVarsInit.T1_luminance        = 6;           % Luminance of T1 =  random from a Log-uniform distribution ranging from 0.01cd/m^2 to 12.15cd/m^2
+p.trVarsInit.T2_luminance        = 6;           % Calculated from Lum of T1 so the average luminance btw T1 & T2 = 6
+%% Reward System
+
+p.trVarsInit.MeanrewardDurationMs        = 300;     % reward duration
+p.trVarsInit.SD_rewardDuration           = 0.015;     % SD for the Gaussian distributiom ;aking the reward value variable
+                                                        % SD is in ml not ms! 
+p.trVarsInit.RewardSdGaussianNoiseMs         = 14;      % SD for the gaussian distrib converted in Ms (0.0011ml/ms => 13.64ms--> 14ms)
+
+p.trVarsInit.rewardDurationLeft      = 163;     % To change
+p.trVarsInit.rewardDurationRight     = 163;     % To change
+p.trVarsInit.rewardDelay             = 0.25;    % delay between target hold and reward
+
+%% online gaze tracking
+p.trVarsInit.whileLoopIdx           = 0;
+p.trVarsInit.eyeVelFiltTaps         = 5;
+p.trVarsInit.eyeVelThresh           = 100;
+p.trVarsInit.useVelThresh           = true;
+p.trVarsInit.eyeVelThreshOffline    = 100;
+
+p.trVarsInit.connectRipple          = true;
+p.trVarsInit.rippleChanSelect       = 1;
+p.trVarsInit.useOnlineSort  	    = 1;  
+
+
+%% times/latencies/durations:
+p.trVarsInit.rewardDurationMs        = 300;     % reward duration %% Remove this
+
+% p.trVarsInit.fixDurReq               =0.8; % how long was the monkey required to fixate the fixation target
+p.trVarsInit.fixDurReqMin            = 0.5;      % minimum possible duration required to fixate the fixation target (Computed in next param)
+p.trVarsInit.fixDurReqMax            = 0.8;      % maximum possible duration required to fixate the fixation target (Computed in next param)
+p.trVarsInit.fix2CueIntvl            = 0.25;     % Time delay between acquiring fixation and cue ring onset.
+p.trVarsInit.cueDur                  = 0.133;    % Duration of ring presentaiton.
+p.trVarsInit.cue2StimItvl            = 0.567;    % time between ring offset and motion onset (stimulus onset asynchrony).
+p.trVarsInit.stim2ChgIntvl           = 1;        % minimum time between stimulus onset and change.
+p.trVarsInit.chgWinDur               = 3;        % time window during which a change is possible.
+% p.trVarsInit.rewardDelay             = 0;        % delay between cued change and reward delivery for hits.
+p.trVarsInit.joyMinLatency           = 0.2;      % minimum acceptable joystick release latency.
+p.trVarsInit.joyMaxLatency           = 0.8;      % maximum acceptable joystick release latency.
+p.trVarsInit.timeoutAfterFa          = 2;        % timeout duration following false alarm.
+p.trVarsInit.timeoutAfterFoilFa      = 3;        % timeout duration following false alarm.
+p.trVarsInit.timeoutAfterMiss        = 1;        % timeout duration following miss
+p.trVarsInit.timeoutAfterFixBreak    = 0.1;      % timeout duration following fixation break
+p.trVarsInit.joyWaitDur              = 5;        % how long to wait for the subject to press the joystick at the beginning of a trial?
+p.trVarsInit.fixWaitDur              = 0.3 ;        % how long to wait after initial joystick press for the subject to acquire fixation?
+p.trVarsInit.freeDur                 = 0;        % time before start of joystick press check
+
+p.trVarsInit.trialMax                = 15;       % max length of the trial
+
+p.trVarsInit.joyReleaseWaitDur       = 0;        % how long to wait after trial end to start flickering the screen if the joystick hasn't been released
+p.trVarsInit.stimFrameIdx            = 1;        % stimulus (eg dots) frame display index
+p.trVarsInit.flipIdx                 = 1;        % index of
+p.trVarsInit.postRewardDuration      = 0.25;     % how long should the trial last AFTER reward delivery? This lets us record the neuronal response to reward.
+p.trVarsInit.useQuest                = false;
+
+% I don't think I need to carry these around in 'p'....
+% can't I just define them in the 'run' worksapce and forget avbout them?
+p.trVarsInit.currentState     = p.state.trialBegun;  % initialize "state" variable.
+p.trVarsInit.exitWhileLoop    = false;  % do we want to exit the "run" while loop?
+p.trVarsInit.cueIsOn          = 0;  % is the cue ring currently being presented?
+p.trVarsInit.cueStimIsOn      = false;  % is the cued stimulus (eg motion dots) currently being presented?
+p.trVarsInit.foilStimIsOn     = false;  % is the foil stimulus (eg motion dots) currently being presented?
+
+p.trVarsInit.fixWinWidthDeg       = 6;        % fixation window width in degrees
+p.trVarsInit.fixWinHeightDeg      = 6;        % fixation window height in degrees
+p.trVarsInit.fixPointRadPix       = 20;       % fixation point "radius" in pixels
+p.trVarsInit.fixPointLinePix      = 12;       % fixation point line weight in pixels
+
+% variables related to how the experiment is run / what is shown, etc.
+p.trVarsInit.useCellsForDraw        = false;
+p.trVarsInit.wantEndFlicker         = false;    % have screen flicker / low tone play repeatedly while waiting for joystick release?
+%% PLOTS TURN TO TRUE   
+p.trVarsInit.wantOnlinePlots        = true;     % use online plotting window? 
+
+% initial / base values for each stimulus feature. Variables that hold
+% the magnitude of change (delta) for each feature are defined above under
+% "p.trVarsInit" so they can be adjusted in the GUI.
+p.trVarsInit.speedInit                = 0;        % initial motion magniutde
+p.trVarsInit.contInit                 = 0;        % initial contrast
+p.trVarsInit.orientInit               = 30;       % initial orientation
+p.trVarsInit.freqInit                 = 0.2;      % initial spatial frequency (cycles per degree)
+p.trVarsInit.satInit                  = 0.1;      % initial color saturation
+p.trVarsInit.lumInit                  = 0;        % initial luminance
+p.trVarsInit.hueInit                  = 90;       % initial hue (color angle)
+p.trVarsInit.boxSizePix               = 18;       % diameter of each "check" in pixels
+p.trVarsInit.boxLifetime              = 8;        % "check" lifetime in frams
+p.trVarsInit.nPatches                 = 2;        % number of stimuli 
+p.trVarsInit.nEpochs                  = 2;        % just one "pre-change" and one "post-change" epoch for now
+p.trVarsInit.orientVar                = 0;        % variability in orientation
+p.trVarsInit.hueVar                   = 0.00;     % variability in hue (angle)
+p.trVarsInit.lumVar                   = 0.05;     % variability in luminance
+p.trVarsInit.satVar                   = 0.05;     % variability in saturation
+
+% substructure for marking stimulus-events after each flip
+p.trVarsInit.postFlip.logical         = false;
+p.trVarsInit.postFlip.varNames        = cell(0);
+
+%% end of trVarsInit
+% once all trial variables have been initialized in trVarsInit, we copy 
+% them to 'trVarsGuiComm' in order to inform the gui. 
+% trVarsGuiComm's sole purpose is to communicate between the gui and the 
+% trVars that inherit its contents on every trial. Thus, user may change
+% things in gui (which effectively chagnes the trVarsGuiComm) that then
+% (in the 'next' function) updates the trVars!
+
+p.trVarsGuiComm = p.trVarsInit;
+
+
+%% trData - These are variables that acquire their values during the trial.
+% These variables need to be initialized to specific values prior to each
+% trial. Define a cell-array of variable names and values to loop over and
+% initialize prior to each trial.
+p.init.trDataInitList = {...
+    'p.trData.eyeX',                    '[]'; ...
+    'p.trData.eyeY',                    '[]'; ...
+    'p.trData.eyeP',                    '[]'; ...
+    'p.trData.eyeT',                    '[]'; ...
+    'p.trData.joyV',                    '[]'; ...
+    'p.trData.dInValues',               '[]'; ...
+    'p.trData.dInTimes',                '[]'; ...
+    'p.trData.onlineGaze',              '[]'; ... % Added
+    'p.trData.onlineEyeX',              '[]'; ...
+    'p.trData.onlineEyeY',              '[]'; ...
+    'p.trData.timing.lastFrameTime',    '0'; ...    % time at which last video frame was displayed
+    'p.trData.timing.trialStartPTB',     '-1'; ...
+    'p.trData.timing.trialStartDP',      '-1'; ...
+    'p.trData.timing.trialBegin',        '-1'; ...
+    'p.trData.timing.fixOn',             '-1'; ...   % time of fixation onset
+    'p.trData.timing.fixAq',             '-1'; ...   % time of fixation acquisition
+    'p.trData.timing.fixHoldReqMet',     '-1'; ...
+    'p.trData.timing.fixOff',            '-1'; ...
+    'p.trData.timing.saccadeOnset',      '-1'; ...
+    'p.trData.timing.saccadeOffset',     '-1'; ...
+    'p.trData.timing.targetAq',          '-1'; ...
+    'p.trData.timing.fixBreak',          '-1'; ...
+    'p.trData.timing.joyRelease',        '-1'; ...
+    'p.trData.timing.stimOn',           '-1'; ...   % time of stimulus onset
+    'p.trData.timing.stimOff',          '-1'; ...   % time of stimulus offset
+    'p.trData.timing.cueOn',            '-1'; ...   % time of cur ring onset
+    'p.trData.timing.cueOff',           '-1'; ...   % time of cue ring offset
+    'p.trData.timing.cueChg',           '-1'; ...   % time of cue change
+    'p.trData.timing.foilChg',          '-1'; ...   % time of foil change
+    'p.trData.timing.noChg',            '-1'; ...   % time of no change
+    'p.trData.timing.brokeFix',         '-1'; ...   % time of fixation break
+    'p.trData.timing.brokeJoy',         '-1'; ...   % time of joystick release
+    'p.trData.timing.reward',           '-1'; ...   % time of reward delivery
+    'p.trData.timing.tone',             '-1'; ...   % time of audio feedback delivery
+    'p.trData.timing.joyPress',         '-1'; ...   % time of joystick press
+    'p.trData.timing.flipTime',         '[]'; ...   % vector of flip times
+    'p.trData.timing.trialEnd',          '-1'; ...
+    'p.trData.GoodTrial',               '0'; ...
+    'p.trData.trialRepeatFlag',         'true'; ...
+    'p.trData.currentTrialsArrayRow',   '-1'; ...
+    'p.trData.conditionID',             '-1'; ...
+    'p.trData.nStim',                   '-1'; ...
+    'p.trData.singleTargetID',          '0'; ...
+    'p.trData.T1Side',                  '-1'; ...
+    'p.trData.T2Side',                  '-1'; ...
+    'p.trData.schedulePhase',           '-1'; ...
+    'p.trData.chosenSide',              '0'; ...
+    'p.trData.chosenTargetID',          '0'; ...
+    'p.trData.choseHighSalience',       '0'; ...
+    'p.trData.outcome',                 '""'; ...
+    'p.trData.outcomeCode',             '0'; ...
+    'p.trData.trialEndState',           '-1'; ...
+    };
+
+% since the list above is fixed, count its rows now for looping over later.
+p.init.nTrDataListRows                  = size(p.init.trDataInitList, 1);
+
+%% draw - these are paramters used for drawing
+% the boring stuff, like width and height of stuff that gets drawn - NOTE,
+% variables defined here are retained for the duration of the experiment,
+% they can't be changed from trial-to-trial in the GUI.
+
+p.draw.ringThickDeg         = 0.25;     % ring thickness in degrees
+p.draw.ringRadDeg           = 4;        % ring radius in degrees
+p.draw.eyePosWidth          = 6;        % eye position indicator width in pixels
+p.draw.fixPointWidth        = 4;        % fixation point indicator line width in pixels
+p.draw.fixPointRadius       = 6;        % fixation point "radius" in pixels
+p.draw.fixWinPenPre         = 4;        % fixation window width (prior to change).
+p.draw.fixWinPenPost        = 8;        % fixation window width (after change).
+p.draw.fixWinPenDraw        = [];       % gets assigned either the pre or the post during the run function 
+p.draw.gridSpacing          = 2;        % experimenter display grid spacing (in degrees).
+p.draw.gridW                = 2;        % grid spacing in degrees
+p.draw.joyRect              = [1705 900 1735 1100]; % experimenter-display joystick indicator rectangle.
+p.draw.cursorW              = 6; % cursor width in pixels
+
+p.draw.fixWinPenThin        =1;
+
+%% datapixx - vars related to datapixx schedule settings
+
+p.rig.dp.useDataPixxBool       = 1;        % using datapixx
+p.rig.dp.adcRate               = 1000;     % define ADC sampling rate (Hz).
+p.rig.dp.maxDurADC             = 15;       % what is the maximum duration to preallocate for ADC buffering?
+p.rig.dp.adcBuffAddr           = 4e6;      % VIEWPixx / DATAPixx internal ADC memory buffer address.
+p.rig.dp.dacRate               = 1000;     % define DAC sampling rate (Hz);
+p.rig.dp.dacPadDur             = 0.01;     % how much time to pad the DAC +4V with +0V?
+p.rig.dp.dacBuffAddr           = 10e6;     % DAC buffer base address
+p.rig.dp.dacChannelOut         = 0;        % Which channel to use for DAC outpt control of reward system.
+
+%% stimulus-specific (and static over the course of an experiment):
+% here we have motion related vars but if your stimulus is of different
+% nature, by all means.
+% While some stim vars go above in trVArsInit (e.g stimRadius) here I
+% placed the lower level stim vars that are unlikely to be changed in the
+% course of an experiment.
+
+% Store a list of stimulus feature value array names to speed up defining
+% them later. NOTE: the strings used here must match the strings used in
+% "p.init.trialArrayColumnNames" and pretty much everywhere else we refer
+% to each of the features. For example, p.trVars should have a field called
+% "contDelta" referring to the magnitude of contrast change (when a
+% contrast change trial occurs).
+p.stim.featureValueNames = {'speed', 'cont', 'orient', 'freq', 'sat', 'lum', 'hue'};
+p.stim.nFeatures         = length(p.stim.featureValueNames);
+
+%% CLUT - Color Look Up Table
+% the CLUT gets initialized in the _init file, but here we set character
+% string identifiers that may be used for ease. Integer number here
+% refers to a row in the CLUT (see initClut.m); format is:
+% 'expColor_subColor' where 'exp' stands for experimenter, 'sub' for 
+% subject clut ('Bg' = background)
+
+p.draw.clutIdx.expBlack_subBlack         = 0;
+p.draw.clutIdx.expGrey25_subBg           = 1;
+p.draw.clutIdx.expBg_subBg               = 2;
+p.draw.clutIdx.expGrey70_subBg           = 3;
+p.draw.clutIdx.expWhite_subWhite         = 4;
+p.draw.clutIdx.expRed_subBg              = 5;
+p.draw.clutIdx.expOrange_subBg           = 6;
+p.draw.clutIdx.expBlue_subBg             = 7;
+p.draw.clutIdx.expCyan_subCyan           = 8;
+p.draw.clutIdx.expGrey90_subBg           = 9;
+p.draw.clutIdx.expMutGreen_subBg         = 10;
+p.draw.clutIdx.expGreen_subBg            = 11;
+p.draw.clutIdx.expBlack_subBg            = 12;
+p.draw.clutIdx.expOldGreen_subOldGreen   = 13;
+p.draw.clutIdx.expRed_subRed             = 14;
+
+%% COLORS 
+% here we just init them. They get updated in the run function as a 
+% function of state- and time-machines. 
+% each color is assigned a row in the CLUT (see initClut.m), based on the
+% CLUT section above.
+p.draw.color.background = p.draw.clutIdx.expBg_subBg;                   % background CLUT index
+p.draw.color.cursor     = p.draw.clutIdx.expOrange_subBg;               % cursor CLUT index
+p.draw.color.fix        = p.draw.color.background;                      % fixation CLUT index
+p.draw.color.fixWin     = p.draw.clutIdx.expGrey25_subBg;               % fixation window CLUT index
+p.draw.color.cueDots    = p.draw.clutIdx.expWhite_subWhite;             % cue dots CLUT index
+p.draw.color.foilDots   = p.draw.clutIdx.expWhite_subWhite;             % foil CLUT index
+p.draw.color.eyePos     = p.draw.clutIdx.expBlue_subBg;                 % eye position indicator CLUT index
+p.draw.color.gridMajor  = p.draw.clutIdx.expGrey25_subBg;               % grid line CLUT index
+p.draw.color.gridMinor  = p.draw.clutIdx.expGrey25_subBg;               % grid line CLUT index
+p.draw.color.cueRing    = p.draw.clutIdx.expWhite_subWhite;             % fixation window CLUT index
+p.draw.color.joyInd     = p.draw.clutIdx.expGrey90_subBg;               % joy position indicator CLUT index
+
+
+%% WHAT TO STROBE:
+% NOTE: Every code name in column 1 MUST have a corresponding entry in
+% +pds/initCodes.m. The strobing mechanism (pds.strobeTrialData) looks up
+% p.init.codes.(codeName) to get the integer code to strobe.
+
+p.init.strobeList = {...                
+    
+    %--- basic information ---
+    'taskCode',             'p.init.taskCode'; ...
+    'date_1yyyy',           'p.init.date_1yyyy'; ...
+    'date_1mmdd',           'p.init.date_1mmdd'; ...
+    'time_1hhmm',           'p.init.time_1hhmm'; ...
+
+    % --- Core Trial Information ---
+    'trialCount',           'p.status.iTrial'; ...
+    'goodTrialCount',       'p.status.iGoodTrial'; ...
+    'CurrentBlockNumber',   'p.status.CurrentBlockNumber'; ... %ADD CODE
+
+
+    % SRS Task ;
+
+    %%%% For Salience
+    'salienceType',         'p.trVars.salienceType' ; ...       % TO ADD ; 1 = Hue ; 2 = Luminance
+    
+    % Luminance. ActualLuminanceT1/T2 are NOMINAL sampling coordinates.
+    'ActualLuminanceT1',    'p.trVars.ActualLuminanceT1_x1000'; ...
+    'ActualLuminanceT2',    'p.trVars.ActualLuminanceT2_x1000'; ...
+    % Physical i1Pro 3 luminance, encoded at 0.01 cd/m^2 resolution.
+    'MeasuredLuminanceT1_x100', 'p.trVars.MeasuredLuminanceT1_x100'; ...
+    'MeasuredLuminanceT2_x100', 'p.trVars.MeasuredLuminanceT2_x100'; ...
+
+    % Hue Contrast. Angles are strobed scaled by 10 (0..3600) to stay under
+    % the 15-bit strobe limit (32767); *_x1000 would overflow above ~33 deg.
+    'backgroundHueIdx',        'p.trVars.backgroundHueIdx'; ...
+    'ActualHueT1_x10',         'p.trVars.ActualHueT1_x10'; ...
+    'ActualHueT2_x10',         'p.trVars.ActualHueT2_x10'; ...
+    'BackgroundHue_x10',       'p.trVars.BackgroundHue_x10'; ...
+    'HueContrastT1_x10',       'p.trVars.HueContrastT1_x10'; ...
+    'HueContrastT2_x10',       'p.trVars.HueContrastT2_x10'; ...
+    'T1_colorIdx',             'p.trVars.T1_colorIdx'; ...
+    'T2_colorIdx',             'p.trVars.T2_colorIdx'; ...
+
+    % Schedule / identity information
+    'nStim',                   'p.trVars.nStim'; ...              % 1=single, 2=dual
+    'singleTargetID',          'p.trVars.singleTargetID'; ...     % 0=dual, 1=T1, 2=T2
+    'T1Side',                  'p.trVars.T1Side'; ...              % 1=right, 2=left
+    'T2Side',                  'p.trVars.T2Side'; ...              % 1=right, 2=left
+    'schedulePhase',           'p.trVars.schedulePhase'; ...       % 1=mixed singles, 2=choice
+    'chosenTargetID',          'p.trData.chosenTargetID'; ...      % 1=T1, 2=T2, 0=none
+
+    % Targets
+    'highSalienceLocation', 'p.status.highSalienceSide'; ...    % Spatial side: 1=right, 2=left
+    'highRewardLocation',   'p.status.highRewardSide';...       % Spatial side: 1=right, 2=left
+    'chosenTarget',         'p.trData.chosenSide'; ...          % Spatial side: 1=right, 2=left, 0=none
+    'choseHighSalience',    'p.trData.choseHighSalience'; ...   % 0 or 1
+    'outcomeCode',          'p.trData.outcomeCode'; ...         % 1=high sal, 2=low sal, 3+=error
+    
+    'CurrentBlockType',     'p.status.CurrentBlockType'; ...    % 1 = T1 Rich ; 2 = T2 Rich
+    'ActualTrialType',      'p.status.ActualTrialType'; ...     % 0=instruction, 1=congruent, 2=conflict
+    'ActualRichReward',     'p.status.ActualRichReward'; ...
+    'ActualPoorReward',     'p.status.ActualPoorReward'; ...
+    };
+end

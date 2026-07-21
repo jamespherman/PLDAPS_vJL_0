@@ -371,6 +371,16 @@ codes.schedulePhase = 20022;                 % 1=instruction, 2=two-target choic
 codes.MeasuredLuminanceT1_x100 = 20023;       % Physical T1 luminance in cd/m^2 * 100
 codes.MeasuredLuminanceT2_x100 = 20024;       % Physical T2 luminance in cd/m^2 * 100
 
+% DKL hue angles scaled by 10 (0..3600) so values stay under the 15-bit
+% strobe limit of 32767. Replaces the *_x1000 hue codes above, which
+% silently truncated any hue angle > 32.767 deg. Matches the existing
+% rfMapDklHue_x10 convention.
+codes.ActualHueT1_x10   = 20025;             % T1 DKL hue angle in degrees * 10
+codes.ActualHueT2_x10   = 20026;             % T2 DKL hue angle in degrees * 10
+codes.BackgroundHue_x10 = 20027;             % Background DKL hue angle in degrees * 10
+codes.HueContrastT1_x10 = 20028;             % T1 hue distance from background in degrees * 10
+codes.HueContrastT2_x10 = 20029;             % T2 hue distance from background in degrees * 10
+
 
 %% validation
 
