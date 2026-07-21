@@ -135,16 +135,19 @@ p.trVars.T1_visible = false;
 p.trVars.T2_visible = false;
 
 % Position is randomized/counterbalanced independently of target identity.
-if isfield(p.trVars, 'targetHorizontalEccDeg')
-    eccDeg = abs(p.trVars.targetHorizontalEccDeg);
-else
-    eccDeg = max(abs([p.trVars.T1_locDegX, p.trVars.T2_locDegX]));
-end
+% if isfield(p.trVars, 'targetHorizontalEccDeg')
+%     %eccDeg = abs(p.trVars.targetHorizontalEccDeg);
+%     eccDeg = 13;
+% else
+%     %eccDeg = max(abs([p.trVars.T1_locDegX, p.trVars.T2_locDegX]));
+%     eccDeg = 13;
+% end
+eccDeg = 13;
 
 p.trVars.T1_locDegX = sideToX(p.trVars.T1Side, eccDeg);
 p.trVars.T2_locDegX = sideToX(p.trVars.T2Side, eccDeg);
-p.trVars.T1_locDegY = 0;
-p.trVars.T2_locDegY = 0;
+p.trVars.T1_locDegY = sign(p.trVars.T1_locDegX)*0.5;
+p.trVars.T2_locDegY = sign(p.trVars.T2_locDegX)*0.5;
 
 end
 

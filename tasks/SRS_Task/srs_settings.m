@@ -499,14 +499,14 @@ p.trVarsInit.goLatencyMin            = 0.0;     % minimum allowed RT (0 for this
 p.trVarsInit.goLatencyMax            = 0.45;     % 600ms max response time = responsewindow
 
 p.trVarsInit.T1_visible          = false;       % T1 stimulus should not be visible until GoSignal state is current state
-p.trVarsInit.T1_locDegX          = 10;          % Updated trial-by-trial from T1Side 
-p.trVarsInit.T1_locDegY          =0;
+p.trVarsInit.T1_locDegX          = -13;          % Updated trial-by-trial from T1Side 
+p.trVarsInit.T1_locDegY          = -0.5;
 p.trVarsInit.T1_longAxisDeg      =2.00;          % Size in Deg of Long axis
 p.trVarsInit.T1_shortAxisDeg      =2.00/3.0;
 
 p.trVarsInit.T2_visible          = false;       % T2 stimulus should not be visible until GoSignal state is current state
-p.trVarsInit.T2_locDegX          = -10;         % Updated trial-by-trial from T2Side
-p.trVarsInit.T2_locDegY          =00;
+p.trVarsInit.T2_locDegX          = 13;         % Updated trial-by-trial from T2Side
+p.trVarsInit.T2_locDegY          = 0.5;
 p.trVarsInit.T2_longAxisDeg      =2.00;          % Size in Deg of Long axis
 p.trVarsInit.T2_shortAxisDeg     =2.00/3.0;
 
