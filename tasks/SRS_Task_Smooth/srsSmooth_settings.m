@@ -135,6 +135,7 @@ p.state.dontMove        = 4;
 p.state.MakeSaccade       = 450;
 p.state.checkLanding      = 451;
 p.state.holdTarg          = 452;
+p.state.targetDelay       = 456;    % targets shown, subject still fixating, before go signal
 
 
 
@@ -296,7 +297,7 @@ p.rig.guiVars = {...
     'T1_locDegY'; ...
     'T2_locDegX'; ...
     'T2_locDegY'; ...
-    'mouseEyeSim'; ...          
+    'delay_ms'; ...             % target-onset -> fixation-offset delay (ms)
     'passEye'};              % 12
 
 
@@ -316,8 +317,8 @@ p.init.exptType         = 'srs_smooth';  % Which experiment are we running? The 
 
 %% general vars:
 p.trVarsInit.mouseEyeSim         = 0;        % Mouse bqsed eye track
-p.trVarsInit.passJoy             = 1;       % pass = 1; simulate correct trials (for debugging)
-p.trVarsInit.passEye             = 1;       % pass = 1; simulate correct trials (for debugging)
+p.trVarsInit.passJoy             = 0;       % pass = 1; simulate correct trials (for debugging)
+p.trVarsInit.passEye             = 0;       % pass = 1; simulate correct trials (for debugging)
 p.trVarsInit.blockNumber         = 0;       % block number
 p.trVarsInit.repeat              = 0;       % repeat trial if true
 p.trVarsInit.rwdJoyPR            = 0;       % 0 = Give reward if Joy is pressed; 1 = Give reward if Joystick released
@@ -549,6 +550,7 @@ p.trVarsInit.HueContrastDifferenceMagnitude = NaN;
 %% Target settings
 
 p.trVarsInit.responseWindow          = 0.45;     % 600ms response window from go signal
+p.trVarsInit.delay_ms                = 300;      % delay (ms) between target onset and fixation offset (go signal). Targets appear while the subject keeps fixating; fixation is extinguished after this delay. GUI-editable.
 p.trVarsInit.targHoldDurationMin     = 0.2;
 p.trVarsInit.targHoldDurationMax     = 0.3;
 p.trVarsInit.maxSacDurationToAccept  = 0.1;
@@ -705,6 +707,7 @@ p.init.trDataInitList = {...
     'p.trData.timing.fixAq',             '-1'; ...   % time of fixation acquisition
     'p.trData.timing.fixHoldReqMet',     '-1'; ...
     'p.trData.timing.fixOff',            '-1'; ...
+    'p.trData.timing.targetOn',          '-1'; ...   % time of target onset (start of delay period)
     'p.trData.timing.saccadeOnset',      '-1'; ...
     'p.trData.timing.saccadeOffset',     '-1'; ...
     'p.trData.timing.targetAq',          '-1'; ...

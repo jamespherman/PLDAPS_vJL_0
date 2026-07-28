@@ -263,8 +263,8 @@ switch p.trVars.currentState
                 timeFromFixAq > p.trVars.fixDurReq
             % p.init.strb.strobeNow(p.init.codes.hit); % Must change to fixation completed
             p.trData.timing.fixHoldReqMet = timeNow;
-            
-            p.trVars.currentState = p.state.MakeSaccade;
+
+            p.trVars.currentState = p.state.targetDelay;
 
             % p.trVars.currentState      = p.state.hit; %Will go on end
             % p = playTone(p, 'high'); % When completed
@@ -277,8 +277,45 @@ switch p.trVars.currentState
         end
 
 
+    case p.state.targetDelay
+        %% State: TARGET DELAY (target onset -> go signal)
+        % Targets appear here while the subject continues to fixate the
+        % fixation point. After p.trVars.delay_ms milliseconds have elapsed
+        % since target onset, we advance to p.state.MakeSaccade, where the
+        % fixation point is extinguished (the go signal). Breaking fixation
+        % during the delay aborts the trial.
+
+        % Show T1 / T2 now; fixation point stays ON (unchanged fix color).
+        p.trVars.T1_visible = p.trVars.T1_present;
+        p.trVars.T2_visible = p.trVars.T2_present;
+
+        % Timestamp (and strobe) target onset once, on the flip that first
+        % renders the targets.
+        if p.trData.timing.targetOn < 0 && ...
+                ~ismember('targetOn', p.trVars.postFlip.varNames)
+            p.trVars.postFlip.logical           = true;
+            p.trVars.postFlip.varNames{end + 1} = 'targetOn';
+            if isfield(p.init.codes, 'targetOn')
+                p.init.strb.addValueOnce(p.init.codes.targetOn);
+            end
+        end
+
+        % Only evaluate the delay / fixation once targets have actually
+        % appeared (targetOn assigned by the postFlip mechanism).
+        if p.trData.timing.targetOn > 0
+            if (timeNow - p.trData.timing.targetOn) > p.trVars.delay_ms/1000
+                % Delay elapsed with fixation held: issue the go signal.
+                p.trVars.currentState = p.state.MakeSaccade;
+            elseif ~pds.eyeInWindow(p) && ~p.trVars.passEye
+                % Broke fixation before the go signal.
+                p.init.strb.strobeNow(p.init.codes.fixBreak);
+                p.trData.timing.fixBreak   = timeNow;
+                p.trVars.currentState      = p.state.fixBreak;
+            end
+        end
+
     case p.state.MakeSaccade
-        %% State 
+        %% State
         % After The go signal, the subject must make a saccade to one ef
         % the two targets
         %
