@@ -29,8 +29,10 @@ p.draw.clut.combinedClut            = [p.draw.clut.subCLUT; p.draw.clut.expCLUT]
 p.draw.middleXY                     = [p.draw.screenRect(3)/2 p.draw.screenRect(4)/2];
 Screen('LoadNormalizedGammaTable', p.draw.window, p.draw.clut.combinedClut, 2);
 
-p.rig.refreshRate                   = FrameRate(p.draw.window);
-p.rig.frameDuration                 = 1 / p.rig.refreshRate;
+% Measure the true refresh from the calibrated flip interval (precise +
+% logged; warns if not near a supported rig rate). Overrides the rig
+% config's hardcoded refreshRate so downstream timing always tracks reality.
+[p.rig.refreshRate, p.rig.frameDuration] = pds.measureRefresh(p.draw.window);
 
 % load an identity CLUT into the graphics-card hardware to make sure that
 % it doesn't transform our pixel colors at all. This uses the stored CLUT

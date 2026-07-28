@@ -13,6 +13,13 @@ function p = rfMap_run(p)
 %   Fixation break during noise -> fixBreak (11)
 %   Fixation never acquired -> nonStart (13)
 
+% (0) Post-completion no-op gate. When _next raised the session-done flag,
+% short-circuit immediately -- no state machine, no flips, no strobes.
+if isfield(p.trVars, 'rfMapSessionDone') && p.trVars.rfMapSessionDone
+    p.trVars.exitWhileLoop = true;
+    return;
+end
+
 % If movie is exhausted, exit immediately (nextParams already flagged this)
 if p.trVars.movieExhausted
     p.trVars.exitWhileLoop = true;
