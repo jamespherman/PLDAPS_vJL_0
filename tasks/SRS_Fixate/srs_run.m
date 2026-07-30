@@ -24,6 +24,96 @@ function p = srs_run(p)
 % % % (2c)  Draw.
 % % % (2d)  Wait for joystick relese.
 
+
+
+
+
+
+%% ------------------------------------------------------------
+% Optional i1 measurement mode
+% ------------------------------------------------------------
+% If enabled, measure the SRS red luminance ramp and return immediately.
+% This is meant to be launched from the PLDAPS GUI using the Run button.
+
+if isfield(p.trVars, 'measureRedLumRampWithI1') && ...
+        p.trVars.measureRedLumRampWithI1
+
+    if isfield(p.trVars, 'i1RampNRepeats')
+        nRepeats = p.trVars.i1RampNRepeats;
+    else
+        nRepeats = 3;
+    end
+
+    if isfield(p.trVars, 'i1RampSettleTime')
+        settleTime = p.trVars.i1RampSettleTime;
+    else
+        settleTime = 0.25;
+    end
+
+    p = i1MeasureSrsRedLumRamp(p, ...
+        'nRepeats', nRepeats, ...
+        'settleTime', settleTime);
+
+    p.trVars.measureRedLumRampWithI1 = false;
+
+    return
+end
+
+
+if isfield(p.trVars, 'scanDklRedLumWithI1') && ...
+        p.trVars.scanDklRedLumWithI1
+
+    p = i1ScanDklRedLumAxis(p, ...
+        'nRepeats', 3, ...
+        'settleTime', 0.25, ...
+        'targetLow', 0.01, ...
+        'targetHigh', 12.15, ...
+        'lumGrid', linspace(-1.00, 0.20, 61));
+
+    p.status.i1RampMeasurementDone = true;
+
+    if ~isfield(p, 'trData')
+        p.trData = struct();
+    end
+
+    if ~isfield(p.trData, 'timing')
+        p.trData.timing = struct();
+    end
+
+    p.trData.timing.trialStartPTB = GetSecs;
+
+    return
+end
+
+%% ------------------------------------------------------------
+% Optional i1 gray background measurement mode
+% ------------------------------------------------------------
+if isfield(p.trVars, 'findGrayBgWithI1') && ...
+        p.trVars.findGrayBgWithI1
+
+    p = i1FindGrayBackgroundLum(p, ...
+        'targetCdM2', 47.5, ...
+        'nRepeats', 3, ...
+        'settleTime', 0.25, ...
+        'dklGrid', linspace(-1.00, 0.40, 71));
+
+    p.status.i1GrayBgMeasurementDone = true;
+
+    if ~isfield(p, 'trData')
+        p.trData = struct();
+    end
+
+    if ~isfield(p.trData, 'timing')
+        p.trData.timing = struct();
+    end
+
+    p.trData.timing.trialStartPTB = GetSecs;
+
+    return
+end
+
+
+
 % (1) mark start time in PTB and DP time:
 [p.trData.timing.trialStartPTB, p.trData.timing.trialStartDP] = ...
     pds.getTimes;
@@ -500,8 +590,13 @@ elseif joyState == 1
     p.draw.color.joyInd = p.draw.clutIdx.expOrange_subBg;   % pressed in high voltage
 end
 
+% In DKL hue mode, exp-only colors need subject rows that match the
+% current DKL background, otherwise the subject sees debug overlays.
+p.draw.color.joyInd = expOnlyColorForCurrentBg(p, p.draw.color.joyInd);
+
 % now calculate size of joystick-fill rectangle
 joyRectNow = pds.joyRectFillCalc(p);
+
 
 % if we're close enough in time to the next screen flip, start drawing.
 if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNumber
@@ -510,14 +605,14 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     Screen('FillRect', p.draw.window, p.draw.color.background);
     
     % Draw the grid
-    Screen('DrawLines', p.draw.window, p.draw.gridXY, [], p.draw.color.gridMajor);
+    Screen('DrawLines', p.draw.window, p.draw.gridXY, [], expOnlyColorForCurrentBg(p, p.draw.color.gridMajor));
     
     % Draw the gaze position, MUST DRAW THE GAZE BEFORE THE
     % FIXATION. Otherwise, when the gaze indicator goes over any
     % stimuli it will change the occluded stimulus' color!
     gazePosition = [p.trVars.eyePixX p.trVars.eyePixY p.trVars.eyePixX p.trVars.eyePixY] + ...
         [-1 -1 1 1]*p.draw.eyePosWidth + repmat(p.draw.middleXY, 1, 2);
-    Screen('FillRect', p.draw.window, p.draw.color.eyePos, gazePosition);
+    Screen('FillRect', p.draw.window, expOnlyColorForCurrentBg(p, p.draw.color.eyePos), gazePosition);
     
   
     % draw fixation spot
@@ -525,7 +620,7 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
         p.draw.fixPointRadius*[-1 -1 1 1], p.draw.fixPointWidth);
     
     % draw fixation window
-    Screen('FrameRect',p.draw.window, p.draw.color.fixWin, repmat(p.draw.fixPointPix, 1, 2) +  ...
+    Screen('FrameRect',p.draw.window, expOnlyColorForCurrentBg(p, p.draw.color.fixWin), repmat(p.draw.fixPointPix, 1, 2) +  ...
         [-p.draw.fixWinWidthPix -p.draw.fixWinHeightPix ...
         p.draw.fixWinWidthPix p.draw.fixWinHeightPix], p.draw.fixWinPenDraw)
     
@@ -544,11 +639,11 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     p.draw.T1_locPixX, p.draw.T1_locPixY);
    
     % Draw filled rectangle
-    Screen('FillRect', p.draw.window, p.trVars.T1_color, T1_rect);
+    Screen('FillRect', p.draw.window, p.trVars.T1_colorIdx, T1_rect);
     
-    % Optionally draw a border
-    Screen('FrameRect', p.draw.window, p.draw.clutIdx.expBlack_subBg, ...
-    T1_rect, 2); % 2-pixel border
+    % % Optionally draw a border
+    % Screen('FrameRect', p.draw.window, p.draw.clutIdx.expBlack_subBg, ...
+    % T1_rect, 2); % 2-pixel border
     end
 
         % Draw T2 rectangle (3:1 ratio, long axis = 2°) vertical
@@ -560,11 +655,11 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     p.draw.T2_locPixX, p.draw.T2_locPixY);
     
     % Draw filled rectangle
-    Screen('FillRect', p.draw.window, p.trVars.T2_color, T2_rect);
+    Screen('FillRect', p.draw.window, p.trVars.T2_colorIdx, T2_rect);
 
-    % Optionally draw a border
-    Screen('FrameRect', p.draw.window, p.draw.clutIdx.expBlack_subBg, ...
-    T2_rect, 2); % 2-pixel border
+    % % Optionally draw a border
+    % Screen('FrameRect', p.draw.window, p.draw.clutIdx.expBlack_subBg, ...
+    % T2_rect, 2); % 2-pixel border
     end
 
     %% Draw target acceptance windows (same geometry as eyeInTargetWindow)
@@ -588,14 +683,14 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
         p.draw.T1_locPixY - targHalfHpix, ...
         p.draw.T1_locPixX + targHalfWpix, ...
         p.draw.T1_locPixY + targHalfHpix];
-    Screen('FrameRect', p.draw.window, targWinColor, T1_winRect, targWinPen);
+    Screen('FrameRect', p.draw.window, expOnlyColorForCurrentBg(p, targWinColor), T1_winRect, targWinPen);
     % T2 acceptance window
     T2_winRect = [ ...
         p.draw.T2_locPixX - targHalfWpix, ...
         p.draw.T2_locPixY - targHalfHpix, ...
         p.draw.T2_locPixX + targHalfWpix, ...
         p.draw.T2_locPixY + targHalfHpix];
-    Screen('FrameRect', p.draw.window, targWinColor, T2_winRect, targWinPen);
+    Screen('FrameRect', p.draw.window, expOnlyColorForCurrentBg(p, targWinColor), T2_winRect, targWinPen);
 
 %   %% Draw high-reward indicator (green frame around high-reward target)
 % % Convention in this task:
@@ -617,7 +712,7 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
         end
 
         rewardRect = [cx-hw cy-hh cx+hw cy+hh];
-        Screen('FrameRect', p.draw.window, p.draw.clutIdx.expGreen_subBg, rewardRect, 4);
+        Screen('FrameRect', p.draw.window, expOnlyColorForCurrentBg(p, p.draw.clutIdx.expGreen_subBg), rewardRect, 4);
     end
 
     % if p.status.ActualTrialType == 1, trialtype = 'Congruent' ;
@@ -697,6 +792,61 @@ logOut = ...
 
 end
 
+
+
+
+%% -------------------- EXP-ONLY COLOR MAPPING FOR DKL BACKGROUND --------------------
+function outIdx = expOnlyColorForCurrentBg(p, inIdx)
+% Convert exp-only colors to variants whose subject color matches the
+% current DKL background.
+%
+% Only do this in hue/contrast mode. In luminance mode, the normal SRS
+% background is used, so the original _subBg colors are already correct.
+
+outIdx = inIdx;
+
+if ~isfield(p.trVars, 'salienceType') || p.trVars.salienceType ~= 1
+    return
+end
+
+idx = p.draw.clutIdx;
+bgIdx = p.trVars.backgroundHueIdx;
+
+if bgIdx == 1
+    if inIdx == idx.expGrey25_subBg
+        outIdx = idx.expGrey25_subDkl0;
+    elseif inIdx == idx.expGrey70_subBg
+        outIdx = idx.expGrey70_subDkl0;
+    elseif inIdx == idx.expGrey90_subBg
+        outIdx = idx.expGrey90_subDkl0;
+    elseif inIdx == idx.expBlue_subBg
+        outIdx = idx.expBlue_subDkl0;
+    elseif inIdx == idx.expOrange_subBg
+        outIdx = idx.expOrange_subDkl0;
+    elseif inIdx == idx.expGreen_subBg
+        outIdx = idx.expGreen_subDkl0;
+    elseif inIdx == idx.expBlack_subBg
+        outIdx = idx.expBlack_subDkl0;
+    end
+else
+    if inIdx == idx.expGrey25_subBg
+        outIdx = idx.expGrey25_subDkl180;
+    elseif inIdx == idx.expGrey70_subBg
+        outIdx = idx.expGrey70_subDkl180;
+    elseif inIdx == idx.expGrey90_subBg
+        outIdx = idx.expGrey90_subDkl180;
+    elseif inIdx == idx.expBlue_subBg
+        outIdx = idx.expBlue_subDkl180;
+    elseif inIdx == idx.expOrange_subBg
+        outIdx = idx.expOrange_subDkl180;
+    elseif inIdx == idx.expGreen_subBg
+        outIdx = idx.expGreen_subDkl180;
+    elseif inIdx == idx.expBlack_subBg
+        outIdx = idx.expBlack_subDkl180;
+    end
+end
+
+end
 
 %% -------------------- EYE IN TARGET WINDOW --------------------
 function inWindow = eyeInTargetWindow(p, targetID)

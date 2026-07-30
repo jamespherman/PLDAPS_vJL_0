@@ -92,6 +92,16 @@ p.init.taskActions{4} = 'pdsActions.stopAudioSchedule';
 p.init.taskActions{5} = 'pdsActions.rewardDrain';
 p.init.taskActions{6} = 'pdsActions.singleReward';
 p.init.taskActions{7} = 'pdsActions.catOldOutput';
+p.init.taskActions{8} = 'i1FindGrayBackgroundLum';
+
+
+%% Photometer measurement mode
+p.trVarsInit.measureRedLumRampWithI1 = false;
+p.trVarsInit.i1RampNRepeats = 3;
+p.trVarsInit.i1RampSettleTime = 0.25;
+
+p.trVarsInit.scanDklRedLumWithI1 = false;
+p.trVarsInit.findGrayBgWithI1 = false;
 
 %% audio:
 p.audio.audsplfq        = 48000; % datapixx audio playback sampling rate.
@@ -148,21 +158,21 @@ p.status.iGoodTrial                 = 0; % count of all trials that have ended i
 p.status.trialsLeftInBlock          = 0; % how many trials remain in the current block?
 p.status.blockNumber                = 0; % what block are we in?
 
-%% T1
-%Congruent trial 
-p.status.iTrial_Rich_High_T1         = 0; % count number of trial where congruent choice rich-high (T1) has been chosen while T1 was rich
-p.status.iTrial_Poor_low_T1          = 0; % count number of trial where poor-low target (T2) has been chosen while congruent trial in T1 was rich
-%Conflict
-p.status.iTrial_Rich_low_T1          = 0; % count number of trial where rich-low T1 was chosen while conflict trial in T1 rich
-p.status.iTrial_Poor_High_T1         = 0; % count number of trial where poor-high target T2 has been chosen while conflict trial in T1 was rich
-
-%% T2
-%Congruent trial
-p.status.iTrial_Rich_High_T2         = 0; % count number of trial where congruent choice rich-high (T1) has been chosen while T1 was rich
-p.status.iTrial_Poor_low_T2          = 0; % count number of trial where poor-low target (T2) has been chosen while congruent trial in T1 was rich
-%Conflict
-p.status.iTrial_Rich_low_T2          = 0; % count number of trial where rich-low T2 was chosen while conflict trial in T2 rich
-p.status.iTrial_Poor_High_T2         = 0; % count number of trial where poor-high target T1 has been chosen while conflict trial in T2 was rich
+% %% T1
+% %Congruent trial 
+% p.status.iTrial_Rich_High_T1         = 0; % count number of trial where congruent choice rich-high (T1) has been chosen while T1 was rich
+% p.status.iTrial_Poor_low_T1          = 0; % count number of trial where poor-low target (T2) has been chosen while congruent trial in T1 was rich
+% %Conflict
+% p.status.iTrial_Rich_low_T1          = 0; % count number of trial where rich-low T1 was chosen while conflict trial in T1 rich
+% p.status.iTrial_Poor_High_T1         = 0; % count number of trial where poor-high target T2 has been chosen while conflict trial in T1 was rich
+% 
+% %% T2
+% %Congruent trial
+% p.status.iTrial_Rich_High_T2         = 0; % count number of trial where congruent choice rich-high (T1) has been chosen while T1 was rich
+% p.status.iTrial_Poor_low_T2          = 0; % count number of trial where poor-low target (T2) has been chosen while congruent trial in T1 was rich
+% %Conflict
+% p.status.iTrial_Rich_low_T2          = 0; % count number of trial where rich-low T2 was chosen while conflict trial in T2 rich
+% p.status.iTrial_Poor_High_T2         = 0; % count number of trial where poor-high target T1 has been chosen while conflict trial in T2 was rich
 
 %% Total T1 + T2
 p.status.iTrial_Rich_High        = 0; % count number of trial where congruent choice rich-high 
@@ -241,16 +251,16 @@ p.rig.guiStatVals = {...
 % The list of vars should be in string format eg 'p.trVarsInit.cueDelta'
 
 p.rig.guiVars = {...
-    'rewardDurationMs'; ...   %1
+    'salienceType'; ...   %1
     'rewardDelay'; ...
     'fixDurReqMin'; ...
     'fixDurReqMax'; ...
-    'fixWinWidthDeg'; ...
-    'fixWinHeightDeg'; ...
-    'fixDegX'; ...       % 6
-    'fixDegY'; ...
-    'fixPointLinePix'; ...
-    'fixPointRadPix'; ...
+    'MeanrewardDurationMs'; ...
+    'responseWindow'; ...
+    'T1_locDegX'; ...       % 6
+    'T1_locDegY'; ...
+    'T2_locDegX'; ...
+    'T2_locDegY'; ...
     'mouseEyeSim'; ...          
     'passEye'};              % 12
 
@@ -330,6 +340,21 @@ p.trVarsInit.luminanceDisplayMaxCdM2 = 12;
 % Base hue for luminance mode Same hue, different intensity.
 p.trVarsInit.luminanceBaseRGB = [1 0 0];
 
+%% DKL red luminance ramp parameters
+% These values are DKL luminance coordinates, NOT cd/m².
+% They define the red luminance ramp used for drawing the targets.
+
+p.trVarsInit.luminanceRedDklLow  = -0.1;
+p.trVarsInit.luminanceRedDklHigh =  0.14;
+
+% Fixed chromatic saturation for the red DKL ramp.
+p.trVarsInit.luminanceRedDklSatRad = 0.35;
+
+% NaN = automatically find the DKL hue direction closest to SRS red.
+p.trVarsInit.luminanceRedDklHueDeg = NaN;
+
+% Target red used to find the closest DKL hue direction.
+p.trVarsInit.luminanceRedTargetRGB = [225 0 76] / 255;
 %% Trial-specific luminance values
 p.trVarsInit.ActualLuminanceT1 = 6;
 p.trVarsInit.ActualLuminanceT2 = 6;
@@ -338,10 +363,39 @@ p.trVarsInit.ActualLuminanceT2_x1000 = 6000;
 p.trVarsInit.LuminanceDifferenceT1MinusT2 = 0;
 p.trVarsInit.LuminanceDifferenceT1MinusT2_x1000 = 0;
 
+p.trVarsInit.ActualDklRedLuminanceT1 = NaN;
+p.trVarsInit.ActualDklRedLuminanceT2 = NaN;
+p.trVarsInit.DklRedLuminanceDifferenceT1MinusT2 = NaN;
+p.trVarsInit.ActualDklRedLuminanceT1_x1000 = NaN;
+p.trVarsInit.ActualDklRedLuminanceT2_x1000 = NaN;
+p.trVarsInit.DklRedLuminanceDifferenceT1MinusT2_x1000 = NaN;
+
 %% Target colors actually used by drawMachine
 p.trVarsInit.T1_color = [1 0 0];
 p.trVarsInit.T2_color = [1 0 0];
 
+
+p.trVarsInit.T1_colorIdx = 250;
+p.trVarsInit.T2_colorIdx = 251;
+
+%% HUE CONTRAST = SaliencyType 1
+%% DKL hue contrast parameters
+% 1 = background DKL 0
+% 2 = background DKL 180
+
+p.trVarsInit.backgroundHueIdx = 1; % Starting zith 1, add random ??
+
+p.trVarsInit.ActualHueT1 = NaN;
+p.trVarsInit.ActualHueT2 = NaN;
+p.trVarsInit.BackgroundHue = NaN;
+p.trVarsInit.HueContrastT1 = NaN;
+p.trVarsInit.HueContrastT2 = NaN;
+
+p.trVarsInit.ActualHueT1_x1000 = NaN;
+p.trVarsInit.ActualHueT2_x1000 = NaN;
+p.trVarsInit.BackgroundHue_x1000 = NaN;
+p.trVarsInit.HueContrastT1_x1000 = NaN;
+p.trVarsInit.HueContrastT2_x1000 = NaN;
 
 
 %% Target settings
@@ -379,6 +433,8 @@ p.trVarsInit.T2_luminance        = 6;           % Calculated from Lum of T1 so t
 p.trVarsInit.MeanrewardDurationMs        = 300;     % reward duration
 p.trVarsInit.SD_rewardDuration           = 0.015;     % SD for the Gaussian distributiom ;aking the reward value variable
                                                         % SD is in ml not ms! 
+p.trVarsInit.RewardSdGaussianNoiseMs         = 14;      % SD for the gaussian distrib converted in Ms (0.0011ml/ms => 13.64ms--> 14ms)
+
 p.trVarsInit.rewardDurationLeft      = 163;     % To change
 p.trVarsInit.rewardDurationRight     = 163;     % To change
 p.trVarsInit.rewardDelay             = 0.25;    % delay between target hold and reward
@@ -509,7 +565,12 @@ p.init.trDataInitList = {...
     'p.trData.timing.reward',           '-1'; ...   % time of reward delivery
     'p.trData.timing.tone',             '-1'; ...   % time of audio feedback delivery
     'p.trData.timing.joyPress',         '-1'; ...   % time of joystick press
+    'p.trData.timing.flipTime',         '[]'; ...   % vector of flip times
     'p.trData.GoodTrial',               '0';...
+    'p.trData.chosenSide',              '-1';...
+    'p.trData.choseHighSalience',       '-1';...
+    'p.trData.outcomeCode',             '-1';...
+    'p.trData.trialEndState',           '-1';...
     };
 
 % since the list above is fixed, count its rows now for looping over later.
@@ -627,13 +688,21 @@ p.init.strobeList = {...
     %%%% For Salience
     'salienceType',         'p.trVars.salienceType' ; ...       % TO ADD ; 1 = Hue ; 2 = Luminance
     
-    'ActualLuminanceT1',    'p.trVars.ActualLuminanceT1'; ...   % TO ADD ; Luminance Value for T1
-    'ActualLuminanceT2',    'p.trVars.ActualLuminanceT2'; ...   % TO ADD ; Luminance Value for T2
-    'LuminanceDifferenceT1MinusT2_x1000','p.trVars.LuminanceDifferenceT1MinusT2_x1000'; ...
+    %Luminance
+    'ActualLuminanceT1',    'p.trVars.ActualLuminanceT1_x1000'; ...   % TO ADD ; Luminance Value for T1
+    'ActualLuminanceT2',    'p.trVars.ActualLuminanceT2_x1000'; ...   % TO ADD ; Luminance Value for T2
 
+    % Hue Contrast
+    'backgroundHueIdx',        'p.trVars.backgroundHueIdx'; ...
+    'ActualHueT1_x1000',       'p.trVars.ActualHueT1_x1000'; ...
+    'ActualHueT2_x1000',       'p.trVars.ActualHueT2_x1000'; ...
+    'BackgroundHue_x1000',     'p.trVars.BackgroundHue_x1000'; ...
+    'HueContrastT1_x1000',     'p.trVars.HueContrastT1_x1000'; ...
+    'HueContrastT2_x1000',     'p.trVars.HueContrastT2_x1000'; ...
+    'T1_colorIdx',             'p.trVars.T1_colorIdx'; ...
+    'T2_colorIdx',             'p.trVars.T2_colorIdx'; ...
     
-    'hueType',              'p.trVars.backgroundHueIdx'; ...    % 1=Hue A, 2=Hue B
-    
+        
     % Targets
     'highSalienceLocation', 'p.status.highSalienceSide'; ...    % 1=T1_Right, 2= T2_left
     'highRewardLocation',   'p.status.highRewardSide';...       % 1=T1_Right, 2= T2_left

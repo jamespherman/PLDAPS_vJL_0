@@ -106,9 +106,13 @@ end
 
 %% If within a block:
 %Draw a reward noise value from Gaussian SD 0.015ml =(14ms)
-
-x = randn * 14;
-y = randn * 14;
+x = p.status.BlockRichMeanDuration +1000;
+y = p.status.BlockRichMeanDuration +1000;
+while (p.status.BlockRichMeanDuration < x || p.status.BlockRichMeanDuration< y) 
+    x = randn * p.trVarsInit.RewardSdGaussianNoiseMs;
+    y = randn * p.trVarsInit.RewardSdGaussianNoiseMs;
+end
+    
 % Calculate the actual reward durations for the upcoming trial
 p.status.ActualRichReward = p.status.BlockRichMeanDuration + x;
 p.status.ActualPoorReward = p.status.BlockPoorMeanDuration + y;
@@ -217,26 +221,194 @@ switch p.trVars.salienceType
         p.trVars.LuminanceDifferenceT1MinusT2_x1000 = ...
             round(1000 * p.trVars.LuminanceDifferenceT1MinusT2);
 
-        %% Convert luminance values into RGB colors
-  
-        baseRGB = p.trVars.luminanceBaseRGB;
-        displayMaxLum = p.trVars.luminanceDisplayMaxCdM2;
+      %% ------------------------------------------------------------
+        % Convert luminance values into precomputed DKL-red CLUT indices
+        % ------------------------------------------------------------
+        % The task-level luminance values above stay Dubey/Pesaran-like
+        % cd/m2 values for logging/strobes/plots. For drawing, they are
+        % mapped onto a precomputed red DKL luminance ramp in initClut.m.
 
-        T1_scale = p.trVars.ActualLuminanceT1 / displayMaxLum;
-        T2_scale = p.trVars.ActualLuminanceT2 / displayMaxLum;
+        redLumStart = p.draw.clutIdx.redLumStart;
+        redLumN     = p.draw.clutIdx.redLumN;
 
-        T1_scale = min(max(T1_scale, 0), 1);
-        T2_scale = min(max(T2_scale, 0), 1);
+        % Normalize actual cd/m2-like luminances to the [1, redLumN] ramp.
+        lumRange = maxLum - minLum;
+        if lumRange <= 0
+            T1_norm = 0.5;
+            T2_norm = 0.5;
+        else
+            T1_norm = (p.trVars.ActualLuminanceT1 - minLum) / lumRange;
+            T2_norm = (p.trVars.ActualLuminanceT2 - minLum) / lumRange;
+        end
 
-        p.trVars.T1_color = min(max(baseRGB * T1_scale, 0), 1);
-        p.trVars.T2_color = min(max(baseRGB * T2_scale, 0), 1);
+        T1_norm = min(max(T1_norm, 0), 1);
+        T2_norm = min(max(T2_norm, 0), 1);
+
+        T1_level = round(1 + T1_norm * (redLumN - 1));
+        T2_level = round(1 + T2_norm * (redLumN - 1));
+
+        T1_level = min(max(T1_level, 1), redLumN);
+        T2_level = min(max(T2_level, 1), redLumN);
+
+        p.trVars.T1_colorIdx = redLumStart + T1_level - 1;
+        p.trVars.T2_colorIdx = redLumStart + T2_level - 1;
+
+        % Store the actual DKL luminance values used for drawing.
+        if isfield(p.draw, 'clut') && isfield(p.draw.clut, 'dklRedLumValues')
+            p.trVars.ActualDklRedLuminanceT1 = p.draw.clut.dklRedLumValues(T1_level);
+            p.trVars.ActualDklRedLuminanceT2 = p.draw.clut.dklRedLumValues(T2_level);
+            p.trVars.DklRedLuminanceDifferenceT1MinusT2 = ...
+                p.trVars.ActualDklRedLuminanceT1 - p.trVars.ActualDklRedLuminanceT2;
+
+            p.trVars.ActualDklRedLuminanceT1_x1000 = ...
+                round(1000 * p.trVars.ActualDklRedLuminanceT1);
+            p.trVars.ActualDklRedLuminanceT2_x1000 = ...
+                round(1000 * p.trVars.ActualDklRedLuminanceT2);
+            p.trVars.DklRedLuminanceDifferenceT1MinusT2_x1000 = ...
+                round(1000 * p.trVars.DklRedLuminanceDifferenceT1MinusT2);
+        end
+
+        %% Reset hue/background state when running luminance mode
+        % This prevents stale DKL hue values from the previous hue trial
+        % from keeping the background or status panel at DKL 0/180.
+        p.draw.color.background = p.draw.clutIdx.expBg_subBg;
+
+        p.trVars.backgroundHueIdx = NaN;
+        p.trVars.BackgroundHue = NaN;
+        p.trVars.BackgroundHue_x1000 = NaN;
+
+        p.trVars.ActualHueT1 = NaN;
+        p.trVars.ActualHueT2 = NaN;
+        p.trVars.ActualHueT1_x1000 = NaN;
+        p.trVars.ActualHueT2_x1000 = NaN;
+
+        p.trVars.HueContrastT1 = NaN;
+        p.trVars.HueContrastT2 = NaN;
+        p.trVars.HueContrastT1_x1000 = NaN;
+        p.trVars.HueContrastT2_x1000 = NaN;
+
 
     case 1
-        %% ------------------------------------------------------------
-        % HUE MODE
-        % ------------------------------------------------------------
-        %
+            %% ------------------------------------------------------------
+            % HUE / DKL CONTRAST MODE
+            % Same hue and contrast method as conflict_task
+            % ------------------------------------------------------------
+            %
+            % Salience is created by hue contrast with background:
+            %
+            % backgroundHueIdx = 1:
+            %   background = DKL 0
+            %   high salience = DKL 180
+            %   low salience = DKL 20
+            %
+            % backgroundHueIdx = 2:
+            %   background = DKL 180
+            %   high salience = DKL 0
+            %   low salience = DKL 200
+            %
+            % SRS convention:
+            %   T1 = right = side 1
+            %   T2 = left  = side 2
         
+            %% Choose background hue
+        
+            % Randomize the background on every hue trial.
+            % Do not keep the p.trVarsInit value, otherwise the task can
+            % get stuck on BackgroundHue = 0 deg.
+            p.trVars.backgroundHueIdx = randi(2);
+
+            bgHueIdx = p.trVars.backgroundHueIdx;
+        
+            %% Define background, high-salience, and low-salience hues
+        
+            if bgHueIdx == 1
+        
+                % Background at DKL 0
+                p.draw.color.background = p.draw.clutIdx.expDkl0_subDkl0;
+        
+                p.trVars.BackgroundHue = 0;
+        
+                % High salience = 180 deg away from background
+                p.trVars.highSalienceHueIdx = p.draw.clutIdx.expDkl180_subDkl180;
+                p.trVars.highSalienceHueDeg = 180;
+        
+                % Low salience = near background, same as conflict_task code value
+                p.trVars.lowSalienceHueIdx = p.draw.clutIdx.expDkl20_subDkl20;
+                p.trVars.lowSalienceHueDeg = 20;
+        
+            else
+        
+                % Background at DKL 180
+                p.draw.color.background = p.draw.clutIdx.expDkl180_subDkl180;
+        
+                p.trVars.BackgroundHue = 180;
+        
+                % High salience = 180 deg away from background
+                p.trVars.highSalienceHueIdx = p.draw.clutIdx.expDkl0_subDkl0;
+                p.trVars.highSalienceHueDeg = 0;
+        
+                % Low salience = near background, same as conflict_task code value
+                p.trVars.lowSalienceHueIdx = p.draw.clutIdx.expDkl200_subDkl200;
+                p.trVars.lowSalienceHueDeg = 200;
+            end
+        
+            %% Assign high/low salience hues to T1/T2
+        
+            if p.status.highSalienceSide == 1
+        
+                % T1/right is high salience
+                p.trVars.T1_colorIdx = p.trVars.highSalienceHueIdx;
+                p.trVars.T2_colorIdx = p.trVars.lowSalienceHueIdx;
+        
+                p.trVars.ActualHueT1 = p.trVars.highSalienceHueDeg;
+                p.trVars.ActualHueT2 = p.trVars.lowSalienceHueDeg;
+        
+            elseif p.status.highSalienceSide == 2
+        
+                % T2/left is high salience
+                p.trVars.T1_colorIdx = p.trVars.lowSalienceHueIdx;
+                p.trVars.T2_colorIdx = p.trVars.highSalienceHueIdx;
+        
+                p.trVars.ActualHueT1 = p.trVars.lowSalienceHueDeg;
+                p.trVars.ActualHueT2 = p.trVars.highSalienceHueDeg;
+        
+            else
+        
+                warning('highSalienceSide is not 1 or 2. Using equal low-salience hues.');
+        
+                p.trVars.T1_colorIdx = p.trVars.lowSalienceHueIdx;
+                p.trVars.T2_colorIdx = p.trVars.lowSalienceHueIdx;
+        
+                p.trVars.ActualHueT1 = p.trVars.lowSalienceHueDeg;
+                p.trVars.ActualHueT2 = p.trVars.lowSalienceHueDeg;
+            end
+        
+            %% Store contrast relative to background
+        
+            p.trVars.HueContrastT1 = absCircularDiffDeg( ...
+                p.trVars.ActualHueT1, p.trVars.BackgroundHue);
+        
+            p.trVars.HueContrastT2 = absCircularDiffDeg( ...
+                p.trVars.ActualHueT2, p.trVars.BackgroundHue);
+        
+            %% Integer strobe versions
+        
+            p.trVars.ActualHueT1_x1000 = round(1000 * p.trVars.ActualHueT1);
+            p.trVars.ActualHueT2_x1000 = round(1000 * p.trVars.ActualHueT2);
+            p.trVars.BackgroundHue_x1000 = round(1000 * p.trVars.BackgroundHue);
+        
+            p.trVars.HueContrastT1_x1000 = round(1000 * p.trVars.HueContrastT1);
+            p.trVars.HueContrastT2_x1000 = round(1000 * p.trVars.HueContrastT2);
+        
+            %% Clear luminance fields for this trial
+        
+            p.trVars.ActualLuminanceT1 = NaN;
+            p.trVars.ActualLuminanceT2 = NaN;
+            p.trVars.ActualLuminanceT1_x1000 = NaN;
+            p.trVars.ActualLuminanceT2_x1000 = NaN;
+            p.trVars.LuminanceDifferenceT1MinusT2 = NaN;
+            p.trVars.LuminanceDifferenceT1MinusT2_x1000 = NaN;
+                
 
 
     otherwise
@@ -445,3 +617,9 @@ function y = shuff(x)
     y = x(randperm(length(x)));
 end
 
+function d = absCircularDiffDeg(a, b)
+%% Absolute circular difference in degrees, in [0, 180]
+
+d = abs(mod(a - b + 180, 360) - 180);
+
+end

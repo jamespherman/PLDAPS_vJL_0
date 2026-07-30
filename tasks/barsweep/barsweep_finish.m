@@ -24,10 +24,14 @@ if p.trVars.barsweepSessionDone
     % valid final p.mat).
     status = p.status;
     save(fullfile(p.init.sessionFolder, 'p.mat'), 'status', '-append');
-    runButtonObj = findall(groot, 'Tag', 'runButton');
-    if ~isempty(runButtonObj)
-        runButtonObj.Value = false;
-    end
+    % Robustly stop the GUI run loop (guards empty / multi-handle), plus a
+    % small defensive wait so that even if the toggle fails to land this
+    % no-op cycle cannot spin fast enough to flood the command window.
+    fprintf(['barsweep: session complete (%d set(s) of %d done) -- ' ...
+        'stopping run.\n'], p.status.barsweepSetsCompleted, ...
+        p.init.barsweepSchedule.setRepeats);
+    pds.stopRunButton;
+    WaitSecs(0.05);
     return;
 end
 

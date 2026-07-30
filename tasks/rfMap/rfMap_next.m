@@ -11,6 +11,16 @@ function p = rfMap_next(p)
 % Runs before each trial. Sets up trial-specific parameters, creates
 % noise textures, and starts hardware schedules.
 
+% (0) Session-termination check (before any trial-specific work). Derived
+% from PERSISTENT state (p.status/p.init) so it survives the
+% `p.trVars = p.trVarsGuiComm` copy below; sets a transient flag consumed by
+% _run and _finish, then returns immediately -- no iTrial increment, no
+% nextParams, no schedules. _finish then drives the Run button off.
+if rfMapSessionComplete(p)
+    p.trVars.rfMapSessionDone = true;
+    return;
+end
+
 % (1) iterate trial counter
 p.status.iTrial = p.status.iTrial + 1;
 

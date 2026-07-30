@@ -31,8 +31,7 @@ p.draw.middleXY                     = [p.draw.screenRect(3)/2, ...
 % here (not used from the rig config) so that frameDuration always tracks
 % the actual measured refresh rate -- a stale rig-config refreshRate
 % would otherwise leave frameDuration disagreeing with reality.
-p.rig.refreshRate                   = FrameRate(p.draw.window);
-p.rig.frameDuration                 = 1/p.rig.refreshRate;
+[p.rig.refreshRate, p.rig.frameDuration] = pds.measureRefresh(p.draw.window);
 
 % define color range:
 p.draw.colorRange = Screen('ColorRange', p.draw.window);

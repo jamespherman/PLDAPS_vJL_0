@@ -11,6 +11,20 @@ function p = rfMap_finish(p)
 % Post-trial processing: retrieve Ripple data, accumulate STA on
 % successful trials, update display, strobe data, save, close textures.
 
+%% (00) Post-completion no-op gate. When the session target has been reached
+% (_next raised the flag, or -- belt and suspenders -- the persistent
+% condition is met), stop the GUI run loop and return without any per-trial
+% processing. Robust button toggle + defensive throttle so a failed toggle
+% cannot spin the loop fast enough to flood the command window.
+if (isfield(p.trVars, 'rfMapSessionDone') && p.trVars.rfMapSessionDone) ...
+        || rfMapSessionComplete(p)
+    fprintf('rfMap (%s): session complete -- stopping run.\n', ...
+        p.init.stimType);
+    pds.stopRunButton;
+    WaitSecs(0.05);
+    return;
+end
+
 %% (0) Retrieve spike data from Ripple (or simulator under sim mode)
 if isfield(p.trVars, 'useSimulatedSpikes') && p.trVars.useSimulatedSpikes
     % Simulation-mode validation harness: ground-truth LNP spikes from
@@ -319,6 +333,16 @@ else
         p.trVars.noiseFrameDurS, stimTensor, ...
         stimStartFrame, p.trVars.nFramesThisTrial, ...
         p.trVars.nSTALags);
+
+    % Zero the fixation-occluded checks: the clearing patch / fixation
+    % point are drawn over the noise (rfMap_run.m), so the noise there was
+    % never shown and its STA correlation is a spurious RF pinned at
+    % fixation. Applied every trial so the live RF centres / maps stay
+    % clean. (Cached mask; geometry is fixed within a session.)
+    if ~isfield(p.init, 'occludedMask') || isempty(p.init.occludedMask)
+        p.init.occludedMask = occludedCheckMask(p);
+    end
+    p.init.staAccum = applyOccludedMask(p.init.staAccum, p.init.occludedMask);
 end
 
 % Update online STA display via dispatcher, throttled per

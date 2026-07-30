@@ -7,7 +7,7 @@ function p = updateTrialsList(p)
 %
 
 % Mark the appropriate row of p.status.trialsArrayRowsPossible according to
-% the outcoe of the previous trial (does it need to be repeated?).
+% the outcome of the previous trial (does it need to be repeated?).
 p.status.trialsArrayRowsPossible(p.trVars.currentTrialsArrayRow) = ...
     p.trData.trialRepeatFlag;
 

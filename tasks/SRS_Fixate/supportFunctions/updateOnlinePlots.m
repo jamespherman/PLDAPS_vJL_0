@@ -56,7 +56,31 @@ if isfield(p.trVars, 'rewardDurationRight') && isfield(p.trVars, 'rewardDuration
 end
 
 %% ------------------------------------------------------------
-% 2. Store trial data for summary plots
+% 2. Luminance difference plot
+% ------------------------------------------------------------
+% Convention:
+% T1 = right target
+% T2 = left target
+%
+% Luminance difference:
+% luminanceDiff = T1 - T2
+% positive -> T1/right brighter
+% negative -> T2/left brighter
+
+luminanceDiff = getCurrentLuminanceDiff(p);
+
+if isfield(p.draw.onlinePlotObj, 'luminanceDiff') && ...
+        ishandle(p.draw.onlinePlotObj.luminanceDiff) && ...
+        isfinite(luminanceDiff)
+
+    appendOrReplacePoint( ...
+        p.draw.onlinePlotObj.luminanceDiff, ...
+        trialIdx, ...
+        luminanceDiff);
+end
+
+%% ------------------------------------------------------------
+% 3. Store trial data for summary plots
 % ------------------------------------------------------------
 
 trialType = getCurrentTrialType(p);          % 1 = congruent, 2 = conflict
@@ -202,6 +226,33 @@ if isfield(p.draw.onlinePlotAxes, 'rewardDiff') && ...
         'YLim', [-yAbsMax yAbsMax]);
 end
 
+% Luminance axis
+if isfield(p.draw.onlinePlotAxes, 'luminanceDiff') && ...
+        ishandle(p.draw.onlinePlotAxes.luminanceDiff)
+
+    set(p.draw.onlinePlotAxes.luminanceDiff, 'XLim', [0 xMax]);
+
+    if isfield(p.draw.onlinePlotObj, 'luminanceZero') && ...
+            ishandle(p.draw.onlinePlotObj.luminanceZero)
+
+        set(p.draw.onlinePlotObj.luminanceZero, ...
+            'XData', [0 xMax], ...
+            'YData', [0 0]);
+    end
+
+    luminanceY = get(p.draw.onlinePlotObj.luminanceDiff, 'YData');
+    luminanceY = luminanceY(isfinite(luminanceY));
+
+    if isempty(luminanceY)
+        yAbsMax = 10;
+    else
+        yAbsMax = max(1, 1.2 * max(abs(luminanceY)));
+    end
+
+    set(p.draw.onlinePlotAxes.luminanceDiff, ...
+        'YLim', [-yAbsMax yAbsMax]);
+end
+
 % Choice evolution axis
 if isfield(p.draw.onlinePlotAxes, 'choiceEvolution') && ...
         ishandle(p.draw.onlinePlotAxes.choiceEvolution)
@@ -226,7 +277,7 @@ end
 if isfield(p.draw.onlinePlotObj, 'statusText') && ...
         ishandle(p.draw.onlinePlotObj.statusText)
 
-    statusLines = makeOnlineStatusLines(p, trialIdx, rewardDiff, onlineStats);
+    statusLines = makeOnlineStatusLines(p, trialIdx, rewardDiff, luminanceDiff, onlineStats);
 
     set(p.draw.onlinePlotObj.statusText, ...
         'String', statusLines, ...
@@ -431,6 +482,115 @@ end
 
 end
 
+function luminanceDiff = getCurrentLuminanceDiff(p)
+
+luminanceDiff = NaN;
+
+% Preferred field: direct T1 - T2 luminance difference in cd/m2
+if isfield(p, 'trVars')
+    if isfield(p.trVars, 'LuminanceDifferenceT1MinusT2') && ...
+            isnumeric(p.trVars.LuminanceDifferenceT1MinusT2) && ...
+            isscalar(p.trVars.LuminanceDifferenceT1MinusT2)
+        luminanceDiff = double(p.trVars.LuminanceDifferenceT1MinusT2);
+        return;
+    end
+
+    if isfield(p.trVars, 'LuminanceDifferenceT1MinusT2_x1000') && ...
+            isnumeric(p.trVars.LuminanceDifferenceT1MinusT2_x1000) && ...
+            isscalar(p.trVars.LuminanceDifferenceT1MinusT2_x1000)
+        luminanceDiff = double(p.trVars.LuminanceDifferenceT1MinusT2_x1000) / 1000;
+        return;
+    end
+
+    if isfield(p.trVars, 'ActualLuminanceT1') && ...
+            isfield(p.trVars, 'ActualLuminanceT2') && ...
+            isnumeric(p.trVars.ActualLuminanceT1) && ...
+            isnumeric(p.trVars.ActualLuminanceT2) && ...
+            isscalar(p.trVars.ActualLuminanceT1) && ...
+            isscalar(p.trVars.ActualLuminanceT2)
+        luminanceDiff = double(p.trVars.ActualLuminanceT1) - ...
+            double(p.trVars.ActualLuminanceT2);
+        return;
+    end
+
+    if isfield(p.trVars, 'ActualLuminanceT1_x1000') && ...
+            isfield(p.trVars, 'ActualLuminanceT2_x1000') && ...
+            isnumeric(p.trVars.ActualLuminanceT1_x1000) && ...
+            isnumeric(p.trVars.ActualLuminanceT2_x1000) && ...
+            isscalar(p.trVars.ActualLuminanceT1_x1000) && ...
+            isscalar(p.trVars.ActualLuminanceT2_x1000)
+        luminanceDiff = (double(p.trVars.ActualLuminanceT1_x1000) - ...
+            double(p.trVars.ActualLuminanceT2_x1000)) / 1000;
+        return;
+    end
+end
+
+% Fallback: same fields in p.status, if you copy them there later.
+if isfield(p, 'status')
+    if isfield(p.status, 'LuminanceDifferenceT1MinusT2') && ...
+            isnumeric(p.status.LuminanceDifferenceT1MinusT2) && ...
+            isscalar(p.status.LuminanceDifferenceT1MinusT2)
+        luminanceDiff = double(p.status.LuminanceDifferenceT1MinusT2);
+        return;
+    end
+
+    if isfield(p.status, 'ActualLuminanceT1') && ...
+            isfield(p.status, 'ActualLuminanceT2') && ...
+            isnumeric(p.status.ActualLuminanceT1) && ...
+            isnumeric(p.status.ActualLuminanceT2) && ...
+            isscalar(p.status.ActualLuminanceT1) && ...
+            isscalar(p.status.ActualLuminanceT2)
+        luminanceDiff = double(p.status.ActualLuminanceT1) - ...
+            double(p.status.ActualLuminanceT2);
+        return;
+    end
+end
+
+end
+
+function [lumT1, lumT2] = getCurrentLuminanceValues(p)
+
+lumT1 = NaN;
+lumT2 = NaN;
+
+if isfield(p, 'trVars')
+    if isfield(p.trVars, 'ActualLuminanceT1') && ...
+            isnumeric(p.trVars.ActualLuminanceT1) && ...
+            isscalar(p.trVars.ActualLuminanceT1)
+        lumT1 = double(p.trVars.ActualLuminanceT1);
+    elseif isfield(p.trVars, 'ActualLuminanceT1_x1000') && ...
+            isnumeric(p.trVars.ActualLuminanceT1_x1000) && ...
+            isscalar(p.trVars.ActualLuminanceT1_x1000)
+        lumT1 = double(p.trVars.ActualLuminanceT1_x1000) / 1000;
+    end
+
+    if isfield(p.trVars, 'ActualLuminanceT2') && ...
+            isnumeric(p.trVars.ActualLuminanceT2) && ...
+            isscalar(p.trVars.ActualLuminanceT2)
+        lumT2 = double(p.trVars.ActualLuminanceT2);
+    elseif isfield(p.trVars, 'ActualLuminanceT2_x1000') && ...
+            isnumeric(p.trVars.ActualLuminanceT2_x1000) && ...
+            isscalar(p.trVars.ActualLuminanceT2_x1000)
+        lumT2 = double(p.trVars.ActualLuminanceT2_x1000) / 1000;
+    end
+end
+
+if isfield(p, 'status')
+    if ~isfinite(lumT1) && isfield(p.status, 'ActualLuminanceT1') && ...
+            isnumeric(p.status.ActualLuminanceT1) && ...
+            isscalar(p.status.ActualLuminanceT1)
+        lumT1 = double(p.status.ActualLuminanceT1);
+    end
+
+    if ~isfinite(lumT2) && isfield(p.status, 'ActualLuminanceT2') && ...
+            isnumeric(p.status.ActualLuminanceT2) && ...
+            isscalar(p.status.ActualLuminanceT2)
+        lumT2 = double(p.status.ActualLuminanceT2);
+    end
+end
+
+end
+
 function [hasValidRT, rtMs] = getCurrentRT(p)
 
 hasValidRT = false;
@@ -516,7 +676,7 @@ end
 % Status display helper functions
 % ============================================================
 
-function statusLines = makeOnlineStatusLines(p, trialIdx, rewardDiff, onlineStats)
+function statusLines = makeOnlineStatusLines(p, trialIdx, rewardDiff, luminanceDiff, onlineStats)
 
 %% Block type
 
@@ -590,6 +750,43 @@ if isfinite(rewardDiff)
 else
     rewardDiffString = 'NaN';
 end
+
+%% Luminance values
+
+[lumT1, lumT2] = getCurrentLuminanceValues(p);
+
+if isfinite(lumT1)
+    lumT1String = sprintf('%.3f cd/m2', lumT1);
+else
+    lumT1String = 'NaN';
+end
+
+if isfinite(lumT2)
+    lumT2String = sprintf('%.3f cd/m2', lumT2);
+else
+    lumT2String = 'NaN';
+end
+
+if isfinite(luminanceDiff)
+    luminanceDiffString = sprintf('%.3f cd/m2', luminanceDiff);
+else
+    luminanceDiffString = 'NaN';
+end
+
+if isfield(p, 'trVars')
+    T1ColorIdxString = getFieldString(p.trVars, 'T1_colorIdx');
+    T2ColorIdxString = getFieldString(p.trVars, 'T2_colorIdx');
+else
+    T1ColorIdxString = 'missing';
+    T2ColorIdxString = 'missing';
+end
+
+%% Hue contrast
+backgroundHueString = getFieldString(p.trVars, 'BackgroundHue', '%.1f deg');
+hueT1String = getFieldString(p.trVars, 'ActualHueT1', '%.1f deg');
+hueT2String = getFieldString(p.trVars, 'ActualHueT2', '%.1f deg');
+contrastT1String = getFieldString(p.trVars, 'HueContrastT1', '%.1f deg');
+contrastT2String = getFieldString(p.trVars, 'HueContrastT2', '%.1f deg');
 
 %% Remaining / total values
 
@@ -679,6 +876,20 @@ statusLines = { ...
     htmlLine('Poor reward', poorRewardString, '#000000'); ...
     htmlLine('Reward diff T1 - T2', rewardDiffString, '#000000'); ...
     ' '; ...
+    htmlSection('LUMINANCE', '#8064a2'); ...
+    htmlLine('T1 luminance', lumT1String, '#000000'); ...
+    htmlLine('T2 luminance', lumT2String, '#000000'); ...
+    htmlLine('Lum diff T1 - T2', luminanceDiffString, '#000000'); ...
+    htmlLine('T1 colorIdx', T1ColorIdxString, '#000000'); ...
+    htmlLine('T2 colorIdx', T2ColorIdxString, '#000000'); ...
+    ' '; ...
+    htmlSection('DKL HUE CONTRAST', '#7B1FA2'); ...
+    htmlLine('Background hue', backgroundHueString, '#000000'); ...
+    htmlLine('T1 hue', hueT1String, '#000000'); ...
+    htmlLine('T2 hue', hueT2String, '#000000'); ...
+    htmlLine('T1 contrast vs bg', contrastT1String, '#000000'); ...
+    htmlLine('T2 contrast vs bg', contrastT2String, '#000000'); ...
+    ' '; ...
     htmlSection('ONLINE SUMMARY', '#44546a'); ...
     htmlLine('P high sal conflict', pHighSalConflictString, '#c00000'); ...
     htmlLine('P high sal congruent', pHighSalCongruentString, '#008000'); ...
@@ -688,12 +899,29 @@ statusLines = { ...
 
 end
 
-function txt = getFieldString(s, fieldName)
+function txt = getFieldString(s, fieldName, fmt)
 
-if isfield(s, fieldName)
-    txt = valueToString(s.(fieldName));
-else
+if nargin < 3
+    fmt = '';
+end
+
+if ~isfield(s, fieldName)
     txt = 'missing';
+    return
+end
+
+value = s.(fieldName);
+
+if ~isempty(fmt) && isnumeric(value) && isscalar(value)
+
+    if isfinite(value)
+        txt = sprintf(fmt, value);
+    else
+        txt = 'NaN';
+    end
+
+else
+    txt = valueToString(value);
 end
 
 end

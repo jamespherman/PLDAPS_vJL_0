@@ -276,6 +276,16 @@ p.trVarsInit.currentNoiseIdx     = 1;
 p.trVarsInit.noiseStartFlipIdx   = 0;
 p.trVarsInit.movieExhausted      = false;
 
+% --- session termination (auto-stop) ---
+% STA noise modes stop after this many complete passes of the noise movie
+% (one pass ~ movieDurationMin of stimulus). checkerboard ignores this and
+% stops when its (checkSize, contrast) trial array is exhausted. The
+% condition is evaluated by supportFunctions/rfMapSessionComplete.m and the
+% no-op gates in rfMap_next/run/finish drive the GUI Run button off so the
+% loop stops cleanly instead of spinning through no-op trials.
+p.trVarsInit.targetNoiseCycles   = 1;
+p.trVarsInit.rfMapSessionDone    = false;
+
 % --- postFlip ---
 p.trVarsInit.postFlip.logical    = false;
 p.trVarsInit.postFlip.varNames   = cell(0);

@@ -23,15 +23,15 @@ end
 nSamples = length(eyeT);
 targY = zeros(1, nSamples);
 targY(eyeT > (p.trData.timing.targetOn - p.trData.timing.fixAq) & eyeT < ...
-    p.trData.timing.targetOff) = 1;
+    (p.trData.timing.targetOff - p.trData.timing.fixAq)) = 1;
 if ~p.trVars.isVisSac
-    targY(eyeT > p.trData.timing.targetReillum) = 1;
+    targY(eyeT > (p.trData.timing.targetReillum - p.trData.timing.fixAq)) = 1;
 end
 targY = targY + 2;
 
 % construct fixation plot:
 fixY = zeros(1, nSamples);
-fixY(eyeT > p.trData.timing.fixOn & eyeT < p.trData.timing.fixOff) = 1;
+fixY(eyeT > (p.trData.timing.fixOn - p.trData.timing.fixAq) & eyeT < (p.trData.timing.fixOff - p.trData.timing.fixAq)) = 1;
 
 % assign values to plot objects:
 set(p.draw.plotObs.xGaze, 'XData', eyeT, 'YData', eyeX);
