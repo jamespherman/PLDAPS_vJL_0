@@ -107,6 +107,84 @@ Sequencing note: Phase 4's window-selection threshold is calibrated from the
 Phase-2 barsweep SNR distribution (test-log item 2.5 asks for a sample CSV), so
 Phase 4 is deliberately staged after a Phase-2 rig check.
 
+### Resume guide (a fresh session starts HERE)
+
+1. Read the status table above + `LGN_battery_redesign_test_log.md`.
+2. Run `testBarsweepRF` (offline) to confirm Phase 2 still passes. Read
+   `reconstructBarsweepRF.m` / `accumulateBarsweepRF.m` to reload the midpoint
+   method in context.
+3. Get the operator's rig-test results and a **sample exported barsweep CSV**
+   (`rfCenters_*.csv`, columns `channel,x_deg,y_deg,snr,latency_ms`). Then build
+   the pending phases using the concrete notes below.
+
+**Phase 4 (rfMap RF-restricted window) — ready-to-write design.**
+- New `tasks/rfMap/supportFunctions/importBarsweepRFWindow.m`: resolve
+  `p.trVarsInit.barsweepRFCsv` (a file, or a directory → latest
+  `rfCenters_*_final.csv`); empty/missing/unreadable → return
+  `struct('active',false)` (full-screen fallback, warn). Else `readtable`; keep
+  `snr >= rfWindowSnrThresh` & finite; robust-trim `median ± rfWindowKmad*MAD`
+  per axis (MAD==0 → keep all); bounding box + `rfWindowPadDeg`; clamp size to
+  `[rfWindowMinDeg, rfWindowMaxDeg]`; flag `containsFixation = |cx|<w/2 &&
+  |cy|<h/2`. Store `p.init.barsweepWindow = {active, centerDeg, widthDeg,
+  heightDeg, containsFixation, nChannelsUsed, csvPath}`.
+- `rfMap_init.m`: call it right after `pds.initDataPixx` (deg2pix ready),
+  BEFORE step 3b. When active AND stimType is an STA variant (not
+  checkerboard): set `checkSizeDeg=rfWindowCheckSizeDeg` (1.0),
+  `noiseTargetUpdateHz=p.rig.refreshRate` (→ noiseFrameHold=1 via step 3b),
+  `nSTALags=rfWindowNSTALags` (12); if `~containsFixation` set
+  `clearPatchDeg=0`. Write to trVarsInit + trVars + trVarsGuiComm.
+- `generateStimForTask`: add a `usingWindow` branch — `fixPx = middleXY(1) +
+  deg2pix(fixDegX)`, `fixPy = middleXY(2) - deg2pix(fixDegY)`;
+  `gridCenterX = fixPx + deg2pix(centerDeg(1))`,
+  `gridCenterY = fixPy - deg2pix(centerDeg(2))`,
+  `gridWidthPix = deg2pix(widthDeg)`, `gridHeightPix = deg2pix(heightDeg)`;
+  `nChecksX/Y = ceil(grid.../checkSizePix)`. Keep the hemifield branch as the
+  fallback (`gridHeightPix=screenHeight`, `gridCenterY=middleXY(2)`). Leave
+  `stimHemifield`/`stimHemifieldInt` as-is (add `p.init.gridSource`); set
+  `noiseGridCenterPix=[gridCenterX,gridCenterY]` (Y is now variable).
+- `occludedCheckMask.m` (review #6): offset the check-center grid by
+  `(noiseGridCenterPix - middleXY)` in dva (via pix2deg) so the backstop is
+  correct under a displaced window, not just inert.
+- `rfMap_commonSettings.m` new fields: `barsweepRFCsv=''`,
+  `rfWindowSnrThresh=4.0`, `rfWindowKmad=2.0`, `rfWindowPadDeg=1.5`,
+  `rfWindowMinDeg=3`, `rfWindowMaxDeg=12`, `rfWindowFixMarginDeg=1.0`,
+  `rfWindowCheckSizeDeg=1.0`, `rfWindowNSTALags=12`.
+- Adequacy estimator (nextParams/finish): print expected spikes/channel from
+  observed crossing rate × accumulated fixation time; warn if below target at
+  the 10-min cap.
+- **Calibrate `rfWindowSnrThresh` from the operator's CSV.** 2026-06-08
+  grounding: SNR≥4 raw union ~17×16° (outlier-heavy); robust box ~10×4°; a
+  higher threshold tightens toward the fovea (see §2 grounding).
+
+**Phase 2 viz.** Rewrite the cardinal4 branch of `plotBarsweepRF.m` + the
+browser to 4 per-direction PSTH panels using the already-emitted
+`out.rateByDir/smoothByDir/peakByDir/fitByDir/snrByDir/directionsDeg`; bold
+high-SNR channels; show the midpoint center + latency; mirror live
+`speedDegPerSec` into the rf snapshot for the latency read-out.
+
+**Phase 5.** checkerboard `checkContrasts = [0.125 0.25 0.5 1.0]` (CLUT
+auto-allocates — confirmed); denseChromatic RF-centered via the Phase-4 window
+(automatic); new `+pdsActions/classifyCellTypes.m` cross-session readout
+(opponency from denseChromatic DKL STA × low-contrast gain from checkerboard
+F1). The checkerboard settings file is co-edited — coordinate.
+
+**Phase 3 (MUAE).** Selectable `rfSignalSource='crossings'|'muae'`; new
+`pds.getRippleContinuous` (`xippmex('cont'/'contdata')`) anchored to stimOn;
+Filt1 750–5000 → full-wave rectify → Filt2 <500 → downsample; per-SAMPLE
+position binning (not per-spike); envelope-specific noise floor in `profileSNR`
+(MAD-only, not the Poisson term); attempt-and-warn fallback to crossings.
+Requires Trellis continuous-stream validation.
+
+**Result → action for the rig tests.**
+- Refresh logs ~100 (not ~120): the display mode is 100 Hz — fine; all timing
+  uses the measured rate. No code change; just note it.
+- `testBarsweepRF` latency-independence fails: a latency term leaked into
+  accumulation — verify `latencySec=0` for cardinal4 in accumulateBarsweepRF.
+- A task doesn't auto-stop: confirm `findall(groot,'Tag','runButton')` resolves
+  one handle; check the `rfMapSessionComplete` target / `barsweepSessionDone`.
+- Export CSV SNR distribution: set `rfWindowSnrThresh` so the window covers the
+  tight reliable cluster and drops eccentric outliers.
+
 ---
 
 ## 1. Change 1 — Barsweep RF method (cardinal4)
