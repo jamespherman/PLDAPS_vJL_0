@@ -36,11 +36,22 @@ function p = srsSmooth_init(p)
 % (2) define rig-specific information
 p   = pds.initRigConfigFile(p);
 
-% (3) define color look-up-table (lut). 
+% (3) define color look-up-table (lut). The CLUT structures are still
+% initialized in direct-RGB mode because other task code expects their
+% metadata, but the C24 display never uses them to draw the targets.
 p   = initClut(p);
 
-% (4) initialize VIEWPixx/DATAPixx
-p   = pds.initDataPixx(p);
+% (4) initialize VIEWPixx/DATAPixx. salienceType 3 uses true C24 RGB
+% passthrough; hue and DKL-luminance modes retain the standard L48 window.
+salienceType = getInitialSalienceType(p);
+if salienceType == 3
+    p = loadSrsDirectRgbCalibration(p);
+    p = initDataPixxC24(p);
+else
+    p = pds.initDataPixx(p);
+    p.draw.displayMode = 'L48_DUAL_CLUT';
+    p.draw.isDirectRgb = false;
+end
 
 % (5) define audio waveforms and load to VIEWPixx
 p   = pds.initAudio(p);
@@ -50,6 +61,17 @@ p   = initTrialStructure(p);
 
 % (7) define online-plotting windows (and reposition others).
 p   = plotWindowSetup(p);
+
+% Direct-RGB C24 cannot hide overlays on the mirrored DATAPixx console.
+% Create a separate experimenter-only preview on the MATLAB desktop.
+if isfield(p.draw, 'isDirectRgb') && p.draw.isDirectRgb
+    p = initDirectRgbExperimenterPreview(p);
+end
+
+% Live correction controls are available in every salience mode. The task
+% reads these controls before each trial, so activation and parameter
+% changes take effect without restarting the session.
+p = initCorrectionControlWindow(p);
 
 % (8) define in-line functions
 p   = inLineDefs(p);
@@ -82,6 +104,24 @@ p.init.strb = pds.classyStrobe;
 
 
 
+
+end
+
+function salienceType = getInitialSalienceType(p)
+%GETINITIALSALIENCETYPE Resolve the display mode before trial variables run.
+
+salienceType = 1;
+if isfield(p, 'trVarsGuiComm') && ...
+        isfield(p.trVarsGuiComm, 'salienceType')
+    salienceType = double(p.trVarsGuiComm.salienceType);
+elseif isfield(p, 'trVarsInit') && isfield(p.trVarsInit, 'salienceType')
+    salienceType = double(p.trVarsInit.salienceType);
+elseif isfield(p, 'trVars') && isfield(p.trVars, 'salienceType')
+    salienceType = double(p.trVars.salienceType);
+end
+if ~isscalar(salienceType) || ~ismember(salienceType, [1 2 3])
+    error('salienceType must be 1 (hue), 2 (DKL luminance), or 3 (direct RGB).');
+end
 
 end
 

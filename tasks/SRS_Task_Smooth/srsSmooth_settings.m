@@ -111,6 +111,12 @@ p.trVarsInit.redRgbScanSettleTime = 0.20;
 p.trVarsInit.redRgbScanTargetLowCdM2 = 0.01;
 p.trVarsInit.redRgbScanTargetHighCdM2 = 12.15;
 
+% In C24, the DATAPixx console mirrors the subject image and cannot carry
+% exp-only overlays. Show acceptance windows and the rich-target frame in a
+% separate MATLAB preview on the experimenter desktop instead.
+p.trVarsInit.directRgbExperimenterPreview = true;
+p.trVarsInit.directRgbPreviewPosition = [40 80 720 520];
+
 %% audio:
 p.audio.audsplfq        = 48000; % datapixx audio playback sampling rate.
 p.audio.Hitfq           = 600;   % frequency for "high" (hit) tone.
@@ -200,6 +206,8 @@ p.status.RemainingBlock             = p.status.TotalBlocksTarget;
 % Per block schedule
 p.status.TotalTrialsPerBlock        = 0;     % Instruction + choice trials
 p.status.TotalChoiceTrialsPerBlock  = 0;     % Random multiple of 4, 60-100
+p.trVarsInit.minTrialsPerBlock      = 60;
+p.trVarsInit.maxTrialsPerBlock      = 100;
 p.status.TotalInstructionTrialsPerBlock = 0;
 p.status.TotalSingleT1             = 0;
 p.status.TotalSingleT2             = 0;
@@ -267,6 +275,18 @@ p.status.missedFrames               = 0; % count of missed frames as reported by
 
 p.status.trialsArrayRowsPossible    = [];
 
+% Persistent correction state. These fields live in p.status because they
+% must survive the per-trial replacement of p.trVars from the GUI copy.
+p.status.correctionTrialActive = false;
+p.status.correctionTrialRow = NaN;
+p.status.correctionTrialRepetition = 0;
+p.status.correctionTrialTriggerCount = 0;
+p.status.correctionTrialSuccessCount = 0;
+p.status.correctionTrialMaxReachedCount = 0;
+p.status.correctionTrialLastOutcome = 'inactive';
+p.status.correctionTrialSnapshot = struct();
+p.status.correctionTrialSnapshotValid = false;
+
 p.rig.guiStatVals = {...
     'CurrentBlockNumber'; ...
     'TotalTrialsPerBlock'; ...
@@ -277,7 +297,7 @@ p.rig.guiStatVals = {...
     'iTrial_Poor_High'; ...
     'iTrial_Poor_low'; ...
     'CurrentBlockType'; ...
-    'ActualTrialType'; ...
+    'delta'; ...
     'ActualRichReward'; ...
     'ActualPoorReward'};    
 
@@ -297,7 +317,7 @@ p.rig.guiVars = {...
     'T1_locDegY'; ...
     'T2_locDegX'; ...
     'T2_locDegY'; ...
-    'delay_ms'; ...             % target-onset -> fixation-offset delay (ms)
+    'mouseEyeSim'; ...             
     'passEye'};              % 12
 
 
@@ -363,6 +383,27 @@ p.trVarsInit.nSingleT2PerBlock = 10;
 p.trVarsInit.randomizeTargetIdentitySides = true;
 p.trVarsInit.targetHorizontalEccDeg = 10; % Legacy field; locations now use T1/T2_locDegX/Y directly
 
+% Optional anti-right-bias correction. When enabled, a conflict row is
+% forced again after a RIGHT choice that was not the high-reward choice.
+% The row stops repeating after a correct high-reward choice or after the
+% configurable cap. Both scalar fields can be changed from the GUI while
+% the task is running by selecting them in a control-parameter dropdown.
+p.trVarsInit.correctionTrial = false;
+p.trVarsInit.correctionTrialMaxRepetition = 15;
+p.trVarsInit.correctionTrialActive = 0;
+p.trVarsInit.correctionTrialRepetition = 0;
+% Live correction controls. These values are read from the dedicated
+% correction-control window before every trial and can be changed during
+% a running session.
+p.trVarsInit.correctionReduceRightReward = false;
+p.trVarsInit.correctionRightRewardMultiplier = 0.50;
+p.trVarsInit.correctionRightRewardMinimumMs = 10;
+p.trVarsInit.correctionRightRewardMultiplier_x1000 = 500;
+p.trVarsInit.correctionOriginalRightRewardMs = 0;
+p.trVarsInit.correctionRightRewardAppliedMs = 0;
+p.trVarsInit.correctionSnapshotValid = 0;
+p.trVarsInit.correctionControlWindow = true;
+
 % Schedule metadata copied from the block trial array on every trial.
 p.trVarsInit.conditionID = 0;
 p.trVarsInit.currentTrialsArrayRow = 0;
@@ -386,7 +427,7 @@ p.trVarsInit.outcome = '';
 
 
 %% Salience mode
-p.trVarsInit.salienceType = 1; % 1 = hue, 2 = luminance
+p.trVarsInit.salienceType = 1; % 1=hue L48, 2=DKL luminance L48, 3=direct RGB luminance C24
 
 %% Luminance mode parameters
 % NOMINAL sampling coordinates inherited from the Dubey/Pesaran design.
@@ -439,6 +480,44 @@ p.trVarsInit.luminanceRedDklHueDeg = NaN;
 
 % Target red used to find the closest DKL hue direction.
 p.trVarsInit.luminanceRedTargetRGB = [225 0 76] / 255;
+
+%% Direct RGB luminance mode = salienceType 3
+% This mode opens the DATAPixx in C24 RGB passthrough instead of L48.
+% Targets are selected only from family 15 measured with the i1Pro 3:
+%   RGB = [R, round(0.08*R), round(0.50*R)].
+% The desired pair follows the Dubey rule: one luminance is sampled
+% log-uniformly and the partner is chosen so the pair mean is 6 cd/m^2.
+p.trVarsInit.directRgbCalibrationFile = ...
+    'SRS_direct_rgb_red_family15_20260728.csv';
+p.trVarsInit.directRgbCalibrationLabel = ...
+    'i1Pro3_directRGB_family15_20260728';
+p.trVarsInit.directRgbFamilyID = 15;
+p.trVarsInit.directRgbGOverR = 0.08;
+p.trVarsInit.directRgbBOverR = 0.50;
+p.trVarsInit.directRgbBackgroundRGB255 = [0 0 0];
+p.trVarsInit.directRgbBackgroundMeasuredCdM2 = 0.120699;
+p.trVarsInit.directRgbLuminanceMeanCdM2 = 6.0;
+p.trVarsInit.directRgbLuminanceMinCdM2 = 0.206222;
+p.trVarsInit.directRgbLuminanceMaxCdM2 = 11.793778;
+p.trVarsInit.directRgbMaximumSamplingAttempts = 1000;
+
+% Trial-specific direct-RGB values. T1_colorIdx/T2_colorIdx are set to 0
+% in C24 mode only as explicit non-CLUT placeholders for legacy strobes.
+p.trVarsInit.displayModeCode = 1; % 1=L48 dual CLUT, 3=C24 direct RGB
+p.trVarsInit.T1_colorRGB255 = [0 0 0];
+p.trVarsInit.T2_colorRGB255 = [0 0 0];
+p.trVarsInit.T1_redLevel = 0;
+p.trVarsInit.T2_redLevel = 0;
+p.trVarsInit.DirectRgbT1R = 0;
+p.trVarsInit.DirectRgbT1G = 0;
+p.trVarsInit.DirectRgbT1B = 0;
+p.trVarsInit.DirectRgbT2R = 0;
+p.trVarsInit.DirectRgbT2G = 0;
+p.trVarsInit.DirectRgbT2B = 0;
+p.trVarsInit.DirectRgbBackgroundCdM2_x1000 = ...
+    round(1000 * p.trVarsInit.directRgbBackgroundMeasuredCdM2);
+p.trVarsInit.DirectRgbPairDesiredMeanCdM2 = NaN;
+p.trVarsInit.DirectRgbPairMeasuredMeanCdM2 = NaN;
 %% Trial-specific luminance values
 p.trVarsInit.ActualLuminanceT1 = 6;
 p.trVarsInit.ActualLuminanceT2 = 6;
@@ -550,7 +629,9 @@ p.trVarsInit.HueContrastDifferenceMagnitude = NaN;
 %% Target settings
 
 p.trVarsInit.responseWindow          = 0.45;     % 600ms response window from go signal
-p.trVarsInit.delay_ms                = 300;      % delay (ms) between target onset and fixation offset (go signal). Targets appear while the subject keeps fixating; fixation is extinguished after this delay. GUI-editable.
+p.status.delta                       = 450;
+p.trVarsInit.delay_ms_min                = 300;      % delay (ms) between target onset and fixation offset (go signal). Targets appear while the subject keeps fixating; fixation is extinguished after this delay. GUI-editable.
+p.trVarsInit.delay_ms_max                = 600; 
 p.trVarsInit.targHoldDurationMin     = 0.2;
 p.trVarsInit.targHoldDurationMax     = 0.3;
 p.trVarsInit.maxSacDurationToAccept  = 0.1;
@@ -639,8 +720,8 @@ p.trVarsInit.cueIsOn          = 0;  % is the cue ring currently being presented?
 p.trVarsInit.cueStimIsOn      = false;  % is the cued stimulus (eg motion dots) currently being presented?
 p.trVarsInit.foilStimIsOn     = false;  % is the foil stimulus (eg motion dots) currently being presented?
 
-p.trVarsInit.fixWinWidthDeg       = 6;        % fixation window width in degrees
-p.trVarsInit.fixWinHeightDeg      = 6;        % fixation window height in degrees
+p.trVarsInit.fixWinWidthDeg       = 2;        % fixation window width in degrees
+p.trVarsInit.fixWinHeightDeg      = 2;        % fixation window height in degrees
 p.trVarsInit.fixPointRadPix       = 20;       % fixation point "radius" in pixels
 p.trVarsInit.fixPointLinePix      = 12;       % fixation point line weight in pixels
 
@@ -857,14 +938,29 @@ p.init.strobeList = {...
     % SRS Task ;
 
     %%%% For Salience
-    'salienceType',         'p.trVars.salienceType' ; ...       % TO ADD ; 1 = Hue ; 2 = Luminance
+    'salienceType',         'p.trVars.salienceType' ; ...       % 1=hue L48, 2=DKL luminance L48, 3=direct RGB C24
     
-    % Luminance. ActualLuminanceT1/T2 are NOMINAL sampling coordinates.
+    % Luminance. In salienceType 2 these are nominal ramp coordinates;
+    % in salienceType 3 they are desired physical cd/m^2 values.
     'ActualLuminanceT1',    'p.trVars.ActualLuminanceT1_x1000'; ...
     'ActualLuminanceT2',    'p.trVars.ActualLuminanceT2_x1000'; ...
     % Physical i1Pro 3 luminance, encoded at 0.01 cd/m^2 resolution.
     'MeasuredLuminanceT1_x100', 'p.trVars.MeasuredLuminanceT1_x100'; ...
     'MeasuredLuminanceT2_x100', 'p.trVars.MeasuredLuminanceT2_x100'; ...
+
+    % Display mode and direct-RGB values. In salienceType 3 these encode
+    % the exact measured C24 target colors presented on the screen.
+    'displayModeCode',          'p.trVars.displayModeCode'; ...
+    'DirectRgbT1R',             'p.trVars.DirectRgbT1R'; ...
+    'DirectRgbT1G',             'p.trVars.DirectRgbT1G'; ...
+    'DirectRgbT1B',             'p.trVars.DirectRgbT1B'; ...
+    'DirectRgbT2R',             'p.trVars.DirectRgbT2R'; ...
+    'DirectRgbT2G',             'p.trVars.DirectRgbT2G'; ...
+    'DirectRgbT2B',             'p.trVars.DirectRgbT2B'; ...
+    'DirectRgbT1RedLevel',      'p.trVars.T1_redLevel'; ...
+    'DirectRgbT2RedLevel',      'p.trVars.T2_redLevel'; ...
+    'DirectRgbBackgroundCdM2_x1000', ...
+        'p.trVars.DirectRgbBackgroundCdM2_x1000'; ...
 
     % Hue Contrast. Angles are strobed scaled by 10 (0..3600) to stay under
     % the 15-bit strobe limit (32767); *_x1000 would overflow above ~33 deg.
@@ -885,6 +981,21 @@ p.init.strobeList = {...
     'schedulePhase',           'p.trVars.schedulePhase'; ...       % 1=mixed singles, 2=choice
     'chosenTargetID',          'p.trData.chosenTargetID'; ...      % 1=T1, 2=T2, 0=none
 
+    % Correction-trial metadata. These values identify forced repeats in
+    % the ephys stream and preserve the GUI-selected cap for each trial.
+    'correctionTrialEnabled',      'p.trVars.correctionTrial'; ...
+    'correctionTrialActive',       'p.trVars.correctionTrialActive'; ...
+    'correctionTrialRepetition',   'p.trVars.correctionTrialRepetition'; ...
+    'correctionTrialMaxRepetition','p.trVars.correctionTrialMaxRepetition'; ...
+    'correctionReduceRightReward', 'p.trVars.correctionReduceRightReward'; ...
+    'correctionRightRewardMultiplier_x1000', ...
+        'p.trVars.correctionRightRewardMultiplier_x1000'; ...
+    'correctionRightRewardMinimumMs', ...
+        'p.trVars.correctionRightRewardMinimumMs'; ...
+    'correctionRightRewardAppliedMs', ...
+        'p.trVars.correctionRightRewardAppliedMs'; ...
+    'correctionSnapshotValid', 'p.trVars.correctionSnapshotValid'; ...
+
     % Targets
     'highSalienceLocation', 'p.status.highSalienceSide'; ...    % Spatial side: 1=right, 2=left
     'highRewardLocation',   'p.status.highRewardSide';...       % Spatial side: 1=right, 2=left
@@ -893,7 +1004,7 @@ p.init.strobeList = {...
     'outcomeCode',          'p.trData.outcomeCode'; ...         % 1=high sal, 2=low sal, 3+=error
     
     'CurrentBlockType',     'p.status.CurrentBlockType'; ...    % 1 = T1 Rich ; 2 = T2 Rich
-    'ActualTrialType',      'p.status.ActualTrialType'; ...     % 0=instruction, 1=congruent, 2=conflict
+    'delta',                'p.status.delta'; ...     % actual delay
     'ActualRichReward',     'p.status.ActualRichReward'; ...
     'ActualPoorReward',     'p.status.ActualPoorReward'; ...
     };

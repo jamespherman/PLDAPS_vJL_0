@@ -59,6 +59,10 @@ p           = pds.readDatapixxBuffers(p);
 p.trData.GoodTrial = p.trData.trialEndState == p.state.sacComplete;
 p.trData.trialRepeatFlag = ~p.trData.GoodTrial;
 
+% Apply any correction-control changes made during the trial before
+% strobing and deciding whether a correction sequence should start/stop.
+p = readCorrectionControlWindow(p);
+
 %% strobes:
 % strobe trial data:
 p           = pds.strobeTrialData(p);
@@ -128,5 +132,9 @@ p           = updateStatusVariables(p);
 if isfield(p.trVars, 'wantOnlinePlots') && p.trVars.wantOnlinePlots
     p       = updateOnlinePlots(p);
 end
+
+% Keep the dedicated control window synchronized with correction state and
+% the continuously updated right-choice probability.
+p = updateCorrectionControlWindow(p);
 
 end

@@ -25,8 +25,24 @@ end
 
 p = chooseScheduledRow(p);
 p = applyScheduledRow(p);
-p = sampleTrialRewards(p);
-p = assignTrialRewardsAndSalience(p);
+
+% A forced correction must repeat the exact stochastic condition, not only
+% the same schedule row. Restore the reward samples, stimulus salience,
+% direct-RGB values and any per-trial CLUT entries captured on the trigger
+% trial. Normal trials continue to sample a fresh condition.
+if getLogicalScalar(p.trVars, 'correctionTrialActive', false) && ...
+        isfield(p.status, 'correctionTrialSnapshotValid') && ...
+        p.status.correctionTrialSnapshotValid
+    p = restoreCorrectionTrialSnapshot(p);
+else
+    p = sampleTrialRewards(p);
+    p = assignTrialRewardsAndSalience(p);
+    p.trVars.correctionSnapshotValid = 0;
+end
+
+% Optional anti-right-bias manipulation applied only after restoring the
+% exact condition. The stored snapshot remains unchanged across repeats.
+p = applyCorrectionRightRewardReduction(p);
 
 end
 
@@ -41,10 +57,19 @@ end
 
 % Preserve the original 60-100 choice-trial range and require a multiple of 4
 % so congruent/conflict and T1-left/T1-right can be exactly balanced.
-nChoice = Inf;
-while nChoice < 60 || nChoice > 100 || mod(nChoice, 4) ~= 0
-    nChoice = 80 + round(5 * randn);
+
+minMultiple = ceil(p.trVars.minTrialsPerBlock / 4);
+maxMultiple = floor(p.trVars.maxTrialsPerBlock / 4);
+
+if minMultiple > maxMultiple
+    error('SRS:InvalidTrialRange', ...
+        ['No multiple of 4 exists between minTrialsPerBlock=%g ' ...
+         'and maxTrialsPerBlock=%g.'], ...
+        p.trVars.minTrialsPerBlock, ...
+        p.trVars.maxTrialsPerBlock);
 end
+
+nChoice = 4 * randi([minMultiple, maxMultiple]);
 
 p.status.TotalChoiceTrialsPerBlock = nChoice;
 p.status.CurrentBlockNumber = p.status.CurrentBlockNumber + 1;
@@ -57,6 +82,13 @@ else
 end
 
 p.status.highRewardTargetID = p.status.CurrentBlockType;
+% A correction sequence must never carry into a new reward block.
+p.status.correctionTrialActive = false;
+p.status.correctionTrialRow = NaN;
+p.status.correctionTrialRepetition = 0;
+p.status.correctionTrialLastOutcome = 'new block';
+p.status.correctionTrialSnapshot = struct();
+p.status.correctionTrialSnapshotValid = false;
 p = chooseBlockReward(p);
 p = buildSrsBlockSchedule(p);
 
@@ -83,6 +115,82 @@ if ~any(remaining)
     error('No eligible SRS schedule rows remain in the current block.');
 end
 
+% Correction mode can force the exact same schedule row after a rightward
+% low-reward choice on a conflict trial. The maximum is read from the GUI
+% copy on every trial, so it can be changed while the task is running.
+p = ensureCorrectionStatusFields(p);
+correctionEnabled = getLogicalScalar(p.trVars, 'correctionTrial', false);
+maxRepetition = max(0, round(getNumericScalar( ...
+    p.trVars, 'correctionTrialMaxRepetition', 15)));
+
+if p.status.correctionTrialActive && (~correctionEnabled || maxRepetition == 0)
+    activeRow = p.status.correctionTrialRow;
+    if isfinite(activeRow) && activeRow >= 1 && activeRow <= numel(remaining)
+        p.status.trialsArrayRowsPossible(activeRow) = false;
+        remaining(activeRow) = false;
+    end
+    p.status.correctionTrialActive = false;
+    p.status.correctionTrialRow = NaN;
+    p.status.correctionTrialRepetition = 0;
+    p.status.correctionTrialLastOutcome = 'disabled';
+    p.status.correctionTrialSnapshot = struct();
+    p.status.correctionTrialSnapshotValid = false;
+    if ~any(remaining)
+        p = startNewBlock(p);
+        remaining = logical(p.status.trialsArrayRowsPossible(:));
+    end
+end
+
+% If the repetition cap is lowered from the GUI while a correction series
+% is active, apply the new cap before selecting another forced attempt.
+if p.status.correctionTrialActive && correctionEnabled && ...
+        p.status.correctionTrialRepetition >= maxRepetition
+    activeRow = p.status.correctionTrialRow;
+    if isfinite(activeRow) && activeRow >= 1 && activeRow <= numel(remaining)
+        p.status.trialsArrayRowsPossible(activeRow) = false;
+        remaining(activeRow) = false;
+    end
+    p.status.correctionTrialActive = false;
+    p.status.correctionTrialRow = NaN;
+    p.status.correctionTrialRepetition = 0;
+    p.status.correctionTrialMaxReachedCount = ...
+        p.status.correctionTrialMaxReachedCount + 1;
+    p.status.correctionTrialLastOutcome = 'maximum changed/reached';
+    p.status.correctionTrialSnapshot = struct();
+    p.status.correctionTrialSnapshotValid = false;
+    if ~any(remaining)
+        p = startNewBlock(p);
+        remaining = logical(p.status.trialsArrayRowsPossible(:));
+    end
+end
+
+if p.status.correctionTrialActive
+    forcedRow = round(p.status.correctionTrialRow);
+    if forcedRow < 1 || forcedRow > numel(remaining) || ~remaining(forcedRow)
+        warning('Active correction row is no longer eligible; correction was cancelled.');
+        p.status.correctionTrialActive = false;
+        p.status.correctionTrialRow = NaN;
+        p.status.correctionTrialRepetition = 0;
+        p.status.correctionTrialLastOutcome = 'invalid row';
+    p.status.correctionTrialSnapshot = struct();
+    p.status.correctionTrialSnapshotValid = false;
+    else
+        p.trVars.currentTrialsArrayRow = forcedRow;
+        p.status.blockAttemptCount = p.status.blockAttemptCount + 1;
+        p.status.correctionTrialRepetition = ...
+            p.status.correctionTrialRepetition + 1;
+        p.trVars.correctionTrialActive = 1;
+        p.trVars.correctionTrialRepetition = ...
+            p.status.correctionTrialRepetition;
+        p.trVars.correctionTrialMaxRepetition = maxRepetition;
+        return
+    end
+end
+
+p.trVars.correctionTrialActive = 0;
+p.trVars.correctionTrialRepetition = 0;
+p.trVars.correctionTrialMaxRepetition = maxRepetition;
+
 cols = p.init.trialCols;
 phase = p.init.trialsArray(:, cols.schedulePhase);
 
@@ -106,6 +214,49 @@ p.trVars.currentTrialsArrayRow = possibleRows(1);
 p.status.blockAttemptCount = p.status.blockAttemptCount + 1;
 
 end
+
+
+function p = ensureCorrectionStatusFields(p)
+defaults = struct( ...
+    'correctionTrialActive', false, ...
+    'correctionTrialRow', NaN, ...
+    'correctionTrialRepetition', 0, ...
+    'correctionTrialTriggerCount', 0, ...
+    'correctionTrialSuccessCount', 0, ...
+    'correctionTrialMaxReachedCount', 0, ...
+    'correctionTrialLastOutcome', 'inactive', ...
+    'correctionTrialSnapshot', struct(), ...
+    'correctionTrialSnapshotValid', false);
+fields = fieldnames(defaults);
+for iField = 1:numel(fields)
+    name = fields{iField};
+    if ~isfield(p.status, name)
+        p.status.(name) = defaults.(name);
+    end
+end
+end
+
+function value = getNumericScalar(s, fieldName, defaultValue)
+value = defaultValue;
+if isstruct(s) && isfield(s, fieldName)
+    candidate = s.(fieldName);
+    if (isnumeric(candidate) || islogical(candidate)) && ...
+            isscalar(candidate) && isfinite(double(candidate))
+        value = double(candidate);
+    end
+end
+end
+
+function value = getLogicalScalar(s, fieldName, defaultValue)
+value = logical(defaultValue);
+if isstruct(s) && isfield(s, fieldName)
+    candidate = s.(fieldName);
+    if (isnumeric(candidate) || islogical(candidate)) && isscalar(candidate)
+        value = logical(candidate);
+    end
+end
+end
+
 
 function p = applyScheduledRow(p)
 %APPLYSCHEDULEDROW Copy schedule columns into current trial variables.
@@ -231,7 +382,9 @@ highTargetID = p.status.highSalienceTargetID;
 
 switch p.trVars.salienceType
     case 2
-        %% Luminance mode
+        %% DKL / CLUT luminance mode
+        assertL48DisplayMode(p, 2);
+        p = clearDirectRgbTrialFields(p);
         meanLum = p.trVars.luminanceMeanCdM2;
         minLum = p.trVars.luminanceMinCdM2;
         maxLum = p.trVars.luminanceMaxCdM2;
@@ -396,8 +549,14 @@ switch p.trVars.salienceType
         p.trVars.HueContrastDifferenceMagnitude = NaN;
         p.trVars.hueModeCode = NaN;
 
+    case 3
+        %% Direct RGB luminance mode (DATAPixx C24)
+        p = applyDirectRgbLuminance(p, highTargetID);
+
     case 1
         %% Hue / DKL contrast mode
+        assertL48DisplayMode(p, 1);
+        p = clearDirectRgbTrialFields(p);
         % Background stays at the classic 0 or 180 deg DKL hue. In smooth
         % mode, each target's hue is (background + offset), where the offset
         % is the circular hue contrast against the background, sampled per
@@ -506,7 +665,214 @@ switch p.trVars.salienceType
         p.trVars.BackgroundMeasuredLuminanceCdM2 = NaN;
 
     otherwise
-        error('Unknown salienceType. Use 1 for hue or 2 for luminance.');
+        error(['Unknown salienceType. Use 1 for hue, 2 for DKL/CLUT ', ...
+            'luminance, or 3 for direct RGB luminance.']);
+end
+
+end
+
+function p = applyDirectRgbLuminance(p, highTargetID)
+%APPLYDIRECTRGBLUMINANCE Select measured red RGBs in C24 mode.
+%
+% Desired luminances follow the Dubey pair rule. The displayed target is
+% then chosen from the nearest actually measured family-15 RGB row. Desired
+% and measured values are stored separately because the calibration is
+% currently sampled every eight red-channel levels.
+
+if ~isfield(p.draw, 'isDirectRgb') || ~logical(p.draw.isDirectRgb)
+    error(['salienceType 3 requires a C24 window. Select a direct-RGB ', ...
+        'settings file and reinitialize the task.']);
+end
+if ~isfield(p.draw, 'directRgbCalibration') || ...
+        ~isfield(p.draw.directRgbCalibration, 'targetTable')
+    error('Direct-RGB calibration was not loaded during initialization.');
+end
+if ~any(highTargetID == [1 2])
+    error('Invalid highSalienceTargetID for direct RGB mode.');
+end
+
+minLum = p.trVars.directRgbLuminanceMinCdM2;
+maxLum = p.trVars.directRgbLuminanceMaxCdM2;
+meanLum = p.trVars.directRgbLuminanceMeanCdM2;
+if abs((minLum + maxLum) / 2 - meanLum) > 1e-6
+    error(['Direct-RGB luminance bounds must be symmetric around the ', ...
+        'configured pair mean.']);
+end
+
+calTable = p.draw.directRgbCalibration.targetTable;
+maxAttempts = round(p.trVars.directRgbMaximumSamplingAttempts);
+if ~isfinite(maxAttempts) || maxAttempts < 1
+    maxAttempts = 1000;
+end
+
+% Single-target instruction trials use the full visible contrast. Choice
+% trials use a log-uniform draw and its fixed-mean complement.
+if p.trVars.nStim == 1
+    highDesired = maxLum;
+    lowDesired = minLum;
+    [highEntry, lowEntry] = mapDirectRgbPair(calTable, ...
+        highDesired, lowDesired);
+else
+    validPair = false;
+    for iAttempt = 1:maxAttempts
+        lumA = exp(log(minLum) + rand * (log(maxLum) - log(minLum)));
+        lumB = 2 * meanLum - lumA;
+        highDesired = max(lumA, lumB);
+        lowDesired = min(lumA, lumB);
+        [highEntry, lowEntry] = mapDirectRgbPair(calTable, ...
+            highDesired, lowDesired);
+
+        % Require distinct displayed colors so the scheduled high-salience
+        % identity is physically brighter on every choice trial.
+        validPair = highEntry.measuredCdM2 > lowEntry.measuredCdM2 && ...
+            highEntry.redLevel ~= lowEntry.redLevel;
+        if validPair
+            break
+        end
+    end
+    if ~validPair
+        error(['Could not obtain two distinct direct-RGB luminance ', ...
+            'levels after %d attempts.'], maxAttempts);
+    end
+end
+
+if highTargetID == 1
+    desiredT1 = highDesired;
+    desiredT2 = lowDesired;
+    entryT1 = highEntry;
+    entryT2 = lowEntry;
+else
+    desiredT1 = lowDesired;
+    desiredT2 = highDesired;
+    entryT1 = lowEntry;
+    entryT2 = highEntry;
+end
+
+p.trVars.ActualLuminanceT1 = desiredT1;
+p.trVars.ActualLuminanceT2 = desiredT2;
+p.trVars.NominalLuminanceT1 = desiredT1;
+p.trVars.NominalLuminanceT2 = desiredT2;
+p.trVars.LuminanceDifferenceT1MinusT2 = desiredT1 - desiredT2;
+p.trVars.NominalLuminanceDifferenceT1MinusT2 = ...
+    p.trVars.LuminanceDifferenceT1MinusT2;
+p.trVars.LuminanceDifferenceMagnitude = ...
+    abs(p.trVars.LuminanceDifferenceT1MinusT2);
+p.trVars.LuminancePairMean = mean([desiredT1 desiredT2]);
+p.trVars.ActualLuminanceT1_x1000 = round(1000 * desiredT1);
+p.trVars.ActualLuminanceT2_x1000 = round(1000 * desiredT2);
+p.trVars.LuminanceDifferenceT1MinusT2_x1000 = ...
+    round(1000 * p.trVars.LuminanceDifferenceT1MinusT2);
+
+p.trVars.T1_colorRGB255 = entryT1.rgb255;
+p.trVars.T2_colorRGB255 = entryT2.rgb255;
+p.trVars.T1_color = entryT1.rgb255 / 255;
+p.trVars.T2_color = entryT2.rgb255 / 255;
+p.trVars.T1_redLevel = entryT1.redLevel;
+p.trVars.T2_redLevel = entryT2.redLevel;
+p.trVars.DirectRgbT1R = entryT1.rgb255(1);
+p.trVars.DirectRgbT1G = entryT1.rgb255(2);
+p.trVars.DirectRgbT1B = entryT1.rgb255(3);
+p.trVars.DirectRgbT2R = entryT2.rgb255(1);
+p.trVars.DirectRgbT2G = entryT2.rgb255(2);
+p.trVars.DirectRgbT2B = entryT2.rgb255(3);
+
+p.trVars.MeasuredLuminanceT1CdM2 = entryT1.measuredCdM2;
+p.trVars.MeasuredLuminanceT2CdM2 = entryT2.measuredCdM2;
+p.trVars.MeasuredLuminanceDifferenceT1MinusT2CdM2 = ...
+    entryT1.measuredCdM2 - entryT2.measuredCdM2;
+p.trVars.MeasuredLuminanceT1_x100 = round(100 * entryT1.measuredCdM2);
+p.trVars.MeasuredLuminanceT2_x100 = round(100 * entryT2.measuredCdM2);
+p.trVars.DirectRgbPairDesiredMeanCdM2 = mean([desiredT1 desiredT2]);
+p.trVars.DirectRgbPairMeasuredMeanCdM2 = ...
+    mean([entryT1.measuredCdM2 entryT2.measuredCdM2]);
+
+p.trVars.BackgroundDklLuminance = NaN;
+p.trVars.BackgroundMeasuredLuminanceCdM2 = ...
+    p.draw.directRgbCalibration.backgroundMeasuredCdM2;
+p.trVars.DirectRgbBackgroundCdM2_x1000 = round(1000 * ...
+    p.trVars.BackgroundMeasuredLuminanceCdM2);
+p.draw.color.background = ...
+    double(p.draw.directRgbCalibration.backgroundRGB255);
+
+% These are explicit legacy placeholders, not CLUT indices in C24 mode.
+p.trVars.T1_colorIdx = 0;
+p.trVars.T2_colorIdx = 0;
+p.trVars.displayModeCode = 3;
+p.trVars.updateClutThisTrial = false;
+
+% Clear DKL and hue variables so saved data cannot confuse the two modes.
+p.trVars.ActualDklRedLuminanceT1 = NaN;
+p.trVars.ActualDklRedLuminanceT2 = NaN;
+p.trVars.DklRedLuminanceDifferenceT1MinusT2 = NaN;
+p.trVars.ActualDklRedLuminanceT1_x1000 = 0;
+p.trVars.ActualDklRedLuminanceT2_x1000 = 0;
+p.trVars.DklRedLuminanceDifferenceT1MinusT2_x1000 = 0;
+p.trVars.backgroundHueIdx = 0;
+p.trVars.BackgroundHue = NaN;
+p.trVars.BackgroundHue_x10 = 0;
+p.trVars.ActualHueT1 = NaN;
+p.trVars.ActualHueT2 = NaN;
+p.trVars.ActualHueT1_x10 = 0;
+p.trVars.ActualHueT2_x10 = 0;
+p.trVars.HueContrastT1 = NaN;
+p.trVars.HueContrastT2 = NaN;
+p.trVars.HueContrastT1_x10 = 0;
+p.trVars.HueContrastT2_x10 = 0;
+p.trVars.HighSalienceHueDeg = NaN;
+p.trVars.LowSalienceHueDeg = NaN;
+p.trVars.HueContrastDifferenceT1MinusT2 = NaN;
+p.trVars.HueContrastDifferenceMagnitude = NaN;
+p.trVars.hueModeCode = 0;
+
+end
+
+function [highEntry, lowEntry] = mapDirectRgbPair(calTable, highDesired, lowDesired)
+%MAPDIRECTRGBPAIR Map desired luminances to nearest measured RGB rows.
+
+highEntry = nearestDirectRgbEntry(calTable, highDesired);
+lowEntry = nearestDirectRgbEntry(calTable, lowDesired);
+
+end
+
+function entry = nearestDirectRgbEntry(calTable, desiredCdM2)
+%NEARESTDIRECTRGBENTRY Return one measured direct-RGB calibration row.
+
+[~, rowIdx] = min(abs(calTable.measuredCdM2 - desiredCdM2));
+entry = struct();
+entry.redLevel = double(calTable.redLevel(rowIdx));
+entry.rgb255 = double([calTable.rgbR_255(rowIdx), ...
+    calTable.rgbG_255(rowIdx), calTable.rgbB_255(rowIdx)]);
+entry.measuredCdM2 = double(calTable.measuredCdM2(rowIdx));
+
+end
+
+function p = clearDirectRgbTrialFields(p)
+%CLEARDIRECTRGBTRIALFIELDS Reset C24-only fields in L48 modes.
+
+p.trVars.displayModeCode = 1;
+p.trVars.T1_colorRGB255 = [0 0 0];
+p.trVars.T2_colorRGB255 = [0 0 0];
+p.trVars.T1_redLevel = 0;
+p.trVars.T2_redLevel = 0;
+p.trVars.DirectRgbT1R = 0;
+p.trVars.DirectRgbT1G = 0;
+p.trVars.DirectRgbT1B = 0;
+p.trVars.DirectRgbT2R = 0;
+p.trVars.DirectRgbT2G = 0;
+p.trVars.DirectRgbT2B = 0;
+p.trVars.DirectRgbPairDesiredMeanCdM2 = NaN;
+p.trVars.DirectRgbPairMeasuredMeanCdM2 = NaN;
+p.trVars.DirectRgbBackgroundCdM2_x1000 = 0;
+
+end
+
+function assertL48DisplayMode(p, salienceType)
+%ASSERTL48DISPLAYMODE Prevent display-mode changes without reinitializing.
+
+if isfield(p.draw, 'isDirectRgb') && logical(p.draw.isDirectRgb)
+    error(['salienceType %d requires the L48 window, but the task was ', ...
+        'initialized in C24 direct-RGB mode. Change settings and ', ...
+        'reinitialize.'], salienceType);
 end
 
 end

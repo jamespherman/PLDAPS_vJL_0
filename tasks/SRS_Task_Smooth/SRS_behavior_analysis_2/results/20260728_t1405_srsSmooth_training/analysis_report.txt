@@ -1,0 +1,184 @@
+SRS_TASK_SMOOTH BEHAVIORAL ANALYSIS
+===================================
+
+Session or dataset : 20260728_t1405_srsSmooth_training
+Source folder      : /home/herman_lab/Documents/PLDAPS_vK2_MASTER/output/20260728_t1405_srsSmooth_training
+Generated          : 30-Jul-2026 10:39:48
+
+STATISTICAL SYMBOLS
+-------------------
+ns: p/q >= 0.05; *: <0.05; **: <0.01; ***: <0.001.
+Families of related exploratory tests are corrected with the Benjamini-Hochberg false-discovery-rate procedure. Figures use q-values for stars whenever a corrected family is available. Single tests such as the conflict-congruent RT permutation test and psychometric slope test use their raw p-values.
+
+1. DATA VALIDITY
+----------------
+No simulation or bypass warning was detected.
+
+Saved two-target choices : 464
+Choices eligible for inference: 464
+passEye fraction          : 0.000
+passJoy fraction          : 0.000
+Valid reaction times      : 625
+Valid fixation latencies  : 660
+
+2. SESSION SUMMARY
+------------------
+Saved attempts                        : 660.0 trials
+Successful trials                     : 587.0 trials
+Completion rate                       : 0.8894 proportion
+Successful instruction trials         : 123.0 trials
+Successful two-target choices         : 464.0 trials
+Real eye-controlled choices           : 464.0 trials
+Fraction passEye                      : 0.0000 proportion
+Fraction passJoy                      : 0.0000 proportion
+Valid reaction times                  : 625.0 trials
+Valid fixation-acquisition latencies  : 660.0 trials
+Session duration                      : 59.8921 minutes
+Missed frames                         : 57.0000 frames
+Identity-side mapping errors          : 0.0000 trials
+
+3. DESIGN BALANCE
+-----------------
+T1 presented on the right         : 232/464 = 0.5000; exact p=1.0000; FDR q=1.0000 ns
+Rich target on the right          : 232/464 = 0.5000; exact p=1.0000; FDR q=1.0000 ns
+High-salience target on the right : 232/464 = 0.5000; exact p=1.0000; FDR q=1.0000 ns
+Congruent trial                   : 232/464 = 0.5000; exact p=1.0000; FDR q=1.0000 ns
+T1 instruction trial              : 60/123 = 0.4878; exact p=0.8570; FDR q=1.0000 ns
+
+A significant balance test indicates that the corresponding design factor departed from 0.5. This may confound behavioral interpretation if it is also associated with the animal's choices.
+
+4. CORE CHOICE BIASES AND PERSEVERATION
+---------------------------------------
+Choose right                   | all: 400/464 = 0.8621 | real: 400/464 = 0.8621, 95% Wilson CI [0.8277, 0.8905], exact p=<0.001, FDR q=<0.001 ***
+Choose T1                      | all: 238/464 = 0.5129 | real: 238/464 = 0.5129, 95% Wilson CI [0.4675, 0.5581], exact p=0.6096, FDR q=0.7316 ns
+Choose rich target             | all: 230/464 = 0.4957 | real: 230/464 = 0.4957, 95% Wilson CI [0.4504, 0.5410], exact p=0.8893, FDR q=0.8893 ns
+Choose high-salience target    | all: 268/464 = 0.5776 | real: 268/464 = 0.5776, 95% Wilson CI [0.5322, 0.6217], exact p=<0.001, FDR q=0.0019 **
+Repeat target identity         | all: 239/463 = 0.5162 | real: 239/463 = 0.5162, 95% Wilson CI [0.4707, 0.5614], exact p=0.5153, FDR q=0.7316 ns
+Repeat side                    | all: 406/463 = 0.8769 | real: 406/463 = 0.8769, 95% Wilson CI [0.8438, 0.9038], exact p=<0.001, FDR q=<0.001 ***
+
+5. CONFLICT VERSUS CONGRUENT CHOICE COMPARISONS
+------------------------------------------------
+Choose high-salience target  | conflict 135/232=0.5819, congruent 133/232=0.5733, delta(congruent-conflict)=-0.0086, OR=0.9654, Fisher p=0.9251, FDR q=0.9251 ns
+Choose high-reward target    | conflict 97/232=0.4181, congruent 133/232=0.5733, delta(congruent-conflict)=0.1552, OR=1.8646, Fisher p=0.0011, FDR q=0.0034 **
+Choose right                 | conflict 199/232=0.8578, congruent 201/232=0.8664, delta(congruent-conflict)=0.0086, OR=1.0742, Fisher p=0.8930, FDR q=0.9251 ns
+
+6. REACTION TIMES
+-----------------
+All choices      | all N=464 median=242.0 ms IQR=33.4768 | real N=464 median=242.0 ms IQR=33.4768
+Congruent        | all N=232 median=242.1 ms IQR=33.3927 | real N=232 median=242.1 ms IQR=33.3927
+Conflict         | all N=232 median=234.5 ms IQR=33.5454 | real N=232 median=234.5 ms IQR=33.5454
+Conflict minus congruent median RT = -7.5628 ms; two-sided permutation p=0.7990 ns.
+
+7. CANDIDATE STRATEGIES
+-----------------------
+Ranking based on real choices:
+ 1. Repeat previous side               accuracy=0.8769, N=463, exact p=<0.001, FDR q=<0.001 ***
+ 2. Always right                       accuracy=0.8621, N=464, exact p=<0.001, FDR q=<0.001 ***
+ 3. Choose high-salience target        accuracy=0.5776, N=464, exact p=<0.001, FDR q=0.0019 **
+ 4. Choose high-salience side          accuracy=0.5776, N=464, exact p=<0.001, FDR q=0.0019 **
+ 5. Repeat previous identity           accuracy=0.5162, N=463, exact p=0.5153, FDR q=0.8128 ns
+ 6. Always T1                          accuracy=0.5129, N=464, exact p=0.6096, FDR q=0.8128 ns
+ 7. Choose low-reward target           accuracy=0.5043, N=464, exact p=0.8893, FDR q=0.8893 ns
+ 8. Choose low-reward side             accuracy=0.5043, N=464, exact p=0.8893, FDR q=0.8893 ns
+ 9. Choose rich target                 accuracy=0.4957, N=464, exact p=0.8893, FDR q=0.8893 ns
+10. Choose rich side                   accuracy=0.4957, N=464, exact p=0.8893, FDR q=0.8893 ns
+11. Always T2                          accuracy=0.4871, N=464, exact p=0.6096, FDR q=0.8128 ns
+12. Switch identity                    accuracy=0.4838, N=463, exact p=0.5153, FDR q=0.8128 ns
+13. Choose low-salience target         accuracy=0.4224, N=464, exact p=<0.001, FDR q=0.0019 **
+14. Choose low-salience side           accuracy=0.4224, N=464, exact p=<0.001, FDR q=0.0019 **
+15. Always left                        accuracy=0.1379, N=464, exact p=<0.001, FDR q=<0.001 ***
+16. Switch side                        accuracy=0.1231, N=463, exact p=<0.001, FDR q=<0.001 ***
+
+Accuracy alone cannot identify a policy when two candidate strategies make identical predictions under the current block structure. Use multiple blocks with rich-target reversals.
+
+8. CONDITIONAL ASSOCIATIONS
+---------------------------
+Rich target on the right     -> Choose right       | all delta=-0.0086, OR=0.9310, N=464 | real delta=-0.0086, OR=0.9310, Fisher p=0.8930, FDR q=0.9260 ns, N=464
+High-salience target on the right -> Choose right       | all delta=0.1552, OR=4.1698, N=464 | real delta=0.1552, OR=4.1698, Fisher p=<0.001, FDR q=<0.001 ***, N=464
+T1 on the right              -> Choose right       | all delta=0.0259, OR=1.2399, N=464 | real delta=0.0259, OR=1.2399, Fisher p=0.5011, FDR q=0.6877 ns, N=464
+Previous choice on the right -> Choose right       | all delta=0.4767, OR=15.6863, N=463 | real delta=0.4767, OR=15.6863, Fisher p=<0.001, FDR q=<0.001 ***, N=463
+T1 is rich                   -> Choose T1          | all delta=-0.0082, OR=0.9679, N=464 | real delta=-0.0082, OR=0.9679, Fisher p=0.9260, FDR q=0.9260 ns, N=464
+T1 is high salience          -> Choose T1          | all delta=0.1552, OR=1.8653, N=464 | real delta=0.1552, OR=1.8653, Fisher p=0.0011, FDR q=0.0023 **, N=464
+T1 on the right              -> Choose T1          | all delta=0.7241, OR=38.3779, N=464 | real delta=0.7241, OR=38.3779, Fisher p=<0.001, FDR q=<0.001 ***, N=464
+Previous choice was T1       -> Choose T1          | all delta=0.0319, OR=1.1354, N=463 | real delta=0.0319, OR=1.1354, Fisher p=0.5158, FDR q=0.6877 ns, N=463
+
+Delta is P(response=1|predictor=1) minus P(response=1|predictor=0). Odds ratios use a 0.5 Haldane-Anscombe correction in each 2x2 cell.
+
+9. EARLY VERSUS LATE CHOICE POLICY
+----------------------------------
+P(choose right)                | all 0.8961 -> 0.8701, delta=-0.0260 | real 0.8961 -> 0.8701, delta=-0.0260, permutation p=0.5905, FDR q=1.0000 ns
+P(choose T1)                   | all 0.5390 -> 0.5325, delta=-0.0065 | real 0.5390 -> 0.5325, delta=-0.0065, permutation p=1.0000, FDR q=1.0000 ns
+P(choose rich target)          | all 0.4870 -> 0.4805, delta=-0.0065 | real 0.4870 -> 0.4805, delta=-0.0065, permutation p=1.0000, FDR q=1.0000 ns
+P(choose high-salience target) | all 0.5649 -> 0.5779, delta=0.0130 | real 0.5649 -> 0.5779, delta=0.0130, permutation p=0.9028, FDR q=1.0000 ns
+P(repeat identity)             | all 0.5065 -> 0.5195, delta=0.0130 | real 0.5065 -> 0.5195, delta=0.0130, permutation p=0.9104, FDR q=1.0000 ns
+P(repeat side)                 | all 0.8896 -> 0.8701, delta=-0.0195 | real 0.8896 -> 0.8701, delta=-0.0195, permutation p=0.7233, FDR q=1.0000 ns
+
+10. SALIENCE PSYCHOMETRIC ANALYSIS
+----------------------------------
+Evidence variable        : T1 - T2 hue contrast (deg)
+N real choices           : 464
+Slope per evidence SD    : 0.4620 (SE 0.0968)
+Odds ratio per evidence SD: 1.5872
+Wald p                   : <0.001
+Likelihood-ratio p       : <0.001 ***
+The logistic regression uses unbinned choices. Binned proportions and Wilson intervals are exported separately for visualization.
+
+11. STAY/SWITCH AND PREVIOUS REWARD
+-----------------------------------
+P(identity switch), all  : 0.4838 (N=463)
+P(identity switch), real : 0.4838, 95% CI [0.4386, 0.5293], exact p vs 0.5=0.5153
+Previous reward versus switch: r=-0.0187, permutation p=0.6903 ns.
+
+12. OPERATIONAL ENGAGEMENT
+--------------------------
+Completion rate                    early=0.8955, late=0.8500, delta=-0.0455, permutation p=0.2002, FDR q=0.2304 ns
+Median pre-trial interval (s)      early=1.5906, late=1.6162, delta=0.0256, permutation p=<0.001, FDR q=<0.001 ***
+Median reaction time (ms)          early=233.7, late=242.6, delta=8.8205, permutation p=<0.001, FDR q=<0.001 ***
+Median fixation acquisition latency (ms) early=192.1, late=200.5, delta=8.3771, permutation p=0.2304, FDR q=0.2304 ns
+Mean missed frames                 early=0.1136, late=0.1000, delta=-0.0136, permutation p=n/a, FDR q=n/a n/a
+
+Change-point tests corrected by permutation over candidate splits:
+  Failures          : attempt 573.0, effect=0.1378, p=<0.001
+  Pre-trial interval: attempt 568.0, log effect=0.0098, p=<0.001
+  Reaction time     : attempt 149.0, log effect=0.0702, p=<0.001
+  Fixation latency  : attempt 190.0, log effect=0.0445, p=0.1639
+
+Operational interpretation: increased failure rate ; longer pre-trial intervals ; longer reaction times ; at least three consecutive failures
+This is not a direct measure of boredom. It only detects changes in observable task engagement.
+
+13. BLOCK COMPLETION
+--------------------
+20260728_t1405_srsSmooth_training_B001: rich target T1, attempts=103, successful trials=96, two-target choices=76, expected=96.0000, completion=1.0000, missing=0.0000.
+20260728_t1405_srsSmooth_training_B002: rich target T2, attempts=110, successful trials=96, two-target choices=76, expected=96.0000, completion=1.0000, missing=0.0000.
+20260728_t1405_srsSmooth_training_B003: rich target T1, attempts=98, successful trials=88, two-target choices=68, expected=88.0000, completion=1.0000, missing=0.0000.
+20260728_t1405_srsSmooth_training_B004: rich target T2, attempts=112, successful trials=104, two-target choices=84, expected=104.0, completion=1.0000, missing=0.0000.
+20260728_t1405_srsSmooth_training_B005: rich target T1, attempts=111, successful trials=104, two-target choices=84, expected=104.0, completion=1.0000, missing=0.0000.
+20260728_t1405_srsSmooth_training_B006: rich target T2, attempts=112, successful trials=96, two-target choices=76, expected=96.0000, completion=1.0000, missing=0.0000.
+20260728_t1405_srsSmooth_training_B007: rich target T1, attempts=14, successful trials=3, two-target choices=0, expected=96.0000, completion=0.0312, missing=93.0000.
+
+14. MULTIVARIABLE LOGISTIC MODELS
+---------------------------------
+Choose right   | (Intercept)          beta=-0.9931, SE=0.4084, OR=0.3704, p=0.0150, FDR q=0.0301 *, N=463, 
+Choose right   | RichOnRight          beta=-0.1826, SE=0.3264, OR=0.8331, p=0.5758, FDR q=0.6282 ns, N=463, 
+Choose right   | HighSalienceOnRight  beta=1.6785, SE=0.3722, OR=5.3575, p=<0.001, FDR q=<0.001 ***, N=463, 
+Choose right   | T1OnRight            beta=0.4031, SE=0.3297, OR=1.4964, p=0.2215, FDR q=0.3322 ns, N=463, 
+Choose right   | PreviousRight        beta=2.9097, SE=0.3553, OR=18.3520, p=<0.001, FDR q=<0.001 ***, N=463, 
+Choose right   | ChoiceProgress       beta=0.2626, SE=0.1625, OR=1.3003, p=0.1061, FDR q=0.1819 ns, N=463, 
+Choose T1      | (Intercept)          beta=-2.6952, SE=0.3616, OR=0.0675, p=<0.001, FDR q=<0.001 ***, N=463, 
+Choose T1      | T1IsRich             beta=-0.1225, SE=0.2797, OR=0.8847, p=0.6614, FDR q=0.6614 ns, N=463, 
+Choose T1      | T1IsHighSalience     beta=1.4353, SE=0.3204, OR=4.2009, p=<0.001, FDR q=<0.001 ***, N=463, 
+Choose T1      | T1OnRight            beta=4.0791, SE=0.3225, OR=59.0948, p=<0.001, FDR q=<0.001 ***, N=463, 
+Choose T1      | PreviousT1           beta=0.2179, SE=0.2809, OR=1.2434, p=0.4380, FDR q=0.5256 ns, N=463, 
+Choose T1      | ChoiceProgress       beta=-0.1552, SE=0.1403, OR=0.8563, p=0.2688, FDR q=0.3585 ns, N=463, 
+
+15. FIGURE GUIDE
+----------------
+Figure 1 reconstructs the online plots and adds confidence intervals, exact choice tests, direct condition comparisons, RT statistics, and the previous-reward stay/switch analysis.
+Figure 2 distinguishes spatial, identity, reward, salience, and perseverative strategies using candidate accuracy, trial-by-trial sequences, conditional choice probabilities, block summaries, and spatial entropy.
+Figure 3 describes operational engagement and technical quality. Red lines are shown only when the predefined operational criterion retains a candidate disengagement point.
+Figure 4 contains the psychometric fit, early-late policy changes, conditional effect sizes, and temporal trends.
+Figure 5 provides a compact inferential summary, including core biases, conflict-congruent comparisons, multivariable models, and numerical engagement statistics.
+
+INTERPRETATION CAUTION
+----------------------
+These analyses are exploratory. A confirmatory conclusion should be based on a prespecified hypothesis, adequate counterbalancing, replication across sessions, and an analysis plan that accounts for repeated observations within the same animal.

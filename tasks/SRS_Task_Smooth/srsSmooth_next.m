@@ -1,54 +1,56 @@
 function p = srsSmooth_next(p)
-%   function p = joystickPress_next(p)
-% Part of the quintet of pldpas functions:
-%
-%   settings function
-%   init function
-%   next function (before each trial)
-%   run function (each trial)
-%   finish function (after each trial)
-% "next" file runs for the first time after "init" and before "run".
-% Thereafter, runs after "finish" and before "run" until experiment is
-% done.
+%SRSSMOOTH_NEXT Prepare one SRS trial before the run function.
 
-%% In this fuction, you may expect:
-% (1) Iterate trial counter
-% (2) Initialize trial variables (fixation color, joystick release time,
-%     etc.)
-% (3) Define parameters for next trial (stimulus location, properties,
-% etc).
-% (4) Set "schedules" for VIEWPixx/DATAPixx.
-% (5) Define visual elements (grid, fixation window, joystick bar).
-% (6) Initialize trial data (holders for values recorded during trial)
-% (7) Generate stimuli
-% (8) record stimulus details
-% (9) Start (or "unpause") electrophysiology system and start schedules.
-
-%% update p.trialVars:
-% p.trialVars inherits whatever was set in p.userVars which inherited its
-% goodies from initVars. Thus, the variables on every trial (ie trialVars)
-% stem from the initVars (in settings file) btu may be overriden by user
-% via userVars
-
-% (1) iterate trial counter
+% (1) Iterate the attempt counter.
 p.status.iTrial = p.status.iTrial + 1;
 
-% (2) initialize trial variables.
+% (2) Pull the latest GUI-editable values. This is why correctionTrial and
+% correctionTrialMaxRepetition can be changed while the task is running.
 p.trVars = p.trVarsGuiComm;
+% Read the dedicated correction window after the normal GUI copy so live
+% controls cannot be overwritten by stale startup values.
+p = readCorrectionControlWindow(p);
 
-% (3) define next trial parameters
-p  = nextParams(p);
+% (3) Select the schedule row and define trial parameters.
+p = nextParams(p);
+p = updateCorrectionControlWindow(p);
 
-% (4) define visual elements (experimenter display only)
-p  = defineVisuals(p);
+% (4) Define visual elements.
+p = defineVisuals(p);
 
-% (5) set schedules
-p  = pds.setSchedules(p);
+% C24 mirrors the subject image on the DATAPixx console. Exp-only overlays
+% are therefore shown in a separate MATLAB preview, never in the subject
+% RGB stream. The preview is updated once per trial, outside critical
+% stimulus timing.
+if isfield(p, 'draw') && isfield(p.draw, 'isDirectRgb') && ...
+        p.draw.isDirectRgb
 
-% (6) init trial data
+    previewDisabled = isfield(p, 'status') && ...
+        isfield(p.status, 'directRgbPreviewDisabledAfterError') && ...
+        p.status.directRgbPreviewDisabledAfterError;
+
+    if ~previewDisabled
+        try
+            p = updateDirectRgbExperimenterPreview(p);
+        catch previewError
+            % The preview is diagnostic only. Never abort the behavioral
+            % task because a MATLAB figure failed to update.
+            p.status.directRgbPreviewDisabledAfterError = true;
+            warning('SRS:DirectRgbPreviewDisabled', ...
+                ['Direct-RGB experimenter preview disabled after an error: ' ...
+                 '%s'], previewError.message);
+        end
+    end
+end
+
+% (5) Configure DATAPixx schedules.
+p = pds.setSchedules(p);
+
+% (6) Initialize trial data.
 p = initTrData(p);
 
-% Record schedule metadata after initTrData so it is not overwritten.
+% Record schedule and correction metadata after initTrData so they are not
+% overwritten by the generic trial-data initialization.
 p.trData.currentTrialsArrayRow = p.trVars.currentTrialsArrayRow;
 p.trData.conditionID = p.trVars.conditionID;
 p.trData.nStim = p.trVars.nStim;
@@ -57,15 +59,39 @@ p.trData.T1Side = p.trVars.T1Side;
 p.trData.T2Side = p.trVars.T2Side;
 p.trData.schedulePhase = p.trVars.schedulePhase;
 p.trData.trialRepeatFlag = true;
+p.trData.correctionTrialEnabled = double( ...
+    isfield(p.trVars, 'correctionTrial') && logical(p.trVars.correctionTrial));
+p.trData.correctionTrialActive = getScalarOrDefault( ...
+    p.trVars, 'correctionTrialActive', 0);
+p.trData.correctionTrialRepetition = getScalarOrDefault( ...
+    p.trVars, 'correctionTrialRepetition', 0);
+p.trData.correctionTrialMaxRepetition = getScalarOrDefault( ...
+    p.trVars, 'correctionTrialMaxRepetition', 15);
+p.trData.correctionReduceRightReward = getScalarOrDefault( ...
+    p.trVars, 'correctionReduceRightReward', 0);
+p.trData.correctionRightRewardMultiplier = getScalarOrDefault( ...
+    p.trVars, 'correctionRightRewardMultiplier', 0.50);
+p.trData.correctionRightRewardMinimumMs = getScalarOrDefault( ...
+    p.trVars, 'correctionRightRewardMinimumMs', 1);
+p.trData.correctionRightRewardAppliedMs = getScalarOrDefault( ...
+    p.trVars, 'correctionRightRewardAppliedMs', 0);
+p.trData.correctionSnapshotValid = getScalarOrDefault( ...
+    p.trVars, 'correctionSnapshotValid', 0);
 
-% (7) generate stimuli
-% p   = generateStimuli(p);
+% (7) Stimulus generation is not required for the rectangle targets.
 
-% (8) record save the stim details (ie dot XYCW)
-% p.trVars.stim = p.stim;
-
-% (9) Start ephys recording and ADC schedules
+% (8) Start electrophysiology and acquisition schedules.
 pds.startEphysAndSchedules;
 
+end
 
+function value = getScalarOrDefault(s, fieldName, defaultValue)
+value = defaultValue;
+if isstruct(s) && isfield(s, fieldName)
+    candidate = s.(fieldName);
+    if (isnumeric(candidate) || islogical(candidate)) && ...
+            isscalar(candidate) && isfinite(double(candidate))
+        value = double(candidate);
+    end
+end
 end

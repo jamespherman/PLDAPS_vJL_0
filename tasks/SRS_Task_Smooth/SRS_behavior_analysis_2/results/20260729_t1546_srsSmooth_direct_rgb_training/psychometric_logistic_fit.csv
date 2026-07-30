@@ -1,0 +1,2 @@
+EvidenceType,N,EvidenceMean,EvidenceSD,Intercept,InterceptSE,SlopePerSD,SlopeSE,OddsRatioPerSD,WaldP,LikelihoodRatioP,Converged,Note
+T1 - T2 luminance (cd/m2),86,-0.605656899685081,8.60970500849436,0.000149981993376609,0.217078622586358,0.230529916194631,0.218919639100196,1.25926713920299,0.292325215009141,0.290123037917075,1,Slope tests whether signed salience predicts T1 choice.

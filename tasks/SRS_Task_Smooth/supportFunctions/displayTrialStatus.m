@@ -85,11 +85,24 @@ printField('Reward diff T1-T2 (ms)', ...
     getField(p.trVars, 'rewardDurationT1', NaN) - ...
     getField(p.trVars, 'rewardDurationT2', NaN));
 
+fprintf('\n-------------------------- DISPLAY -------------------------\n');
+printField('Display mode', displayModeString(p));
+printField('T1 / T2 RGB', sprintf('%s / %s', ...
+    rgbString(getField(p.trVars, 'T1_colorRGB255', [NaN NaN NaN])), ...
+    rgbString(getField(p.trVars, 'T2_colorRGB255', [NaN NaN NaN]))));
+printField('T1 / T2 red level', sprintf('%s / %s', ...
+    valueToString(getField(p.trVars, 'T1_redLevel', NaN)), ...
+    valueToString(getField(p.trVars, 'T2_redLevel', NaN))));
+
 fprintf('\n------------------ MEASURED LUMINANCE ----------------------\n');
 backgroundDkl = getBackgroundDkl(p);
 backgroundCdM2 = getBackgroundCdM2(p);
-printField('Background DKL lum', formatScalar(backgroundDkl, '%.3f'));
-printField('Background measured', formatScalar(backgroundCdM2, '%.1f cd/m^2'));
+if getField(p.trVars, 'salienceType', NaN) == 3
+    printField('Background RGB', '[0 0 0]');
+else
+    printField('Background DKL lum', formatScalar(backgroundDkl, '%.3f'));
+end
+printField('Background measured', formatScalar(backgroundCdM2, '%.3f cd/m^2'));
 printField('T1 measured', formatScalar( ...
     getField(p.trVars, 'MeasuredLuminanceT1CdM2', NaN), '%.3f cd/m^2'));
 printField('T2 measured', formatScalar( ...
@@ -106,6 +119,12 @@ printField('Calibration label', calibrationLabel);
 printField('T1 / T2 colorIdx', sprintf('%s / %s', ...
     valueToString(getField(p.trVars, 'T1_colorIdx', NaN)), ...
     valueToString(getField(p.trVars, 'T2_colorIdx', NaN))));
+printField('Desired pair mean', formatScalar( ...
+    getField(p.trVars, 'DirectRgbPairDesiredMeanCdM2', NaN), ...
+    '%.3f cd/m^2'));
+printField('Measured pair mean', formatScalar( ...
+    getField(p.trVars, 'DirectRgbPairMeasuredMeanCdM2', NaN), ...
+    '%.3f cd/m^2'));
 
 fprintf('\n------------------- LUMINANCE MAPPING ----------------------\n');
 nominalT1 = getField(p.trVars, 'NominalLuminanceT1', ...
@@ -147,6 +166,23 @@ fprintf('============================================================\n\n');
 
 end
 
+function txt = displayModeString(p)
+if isfield(p.draw, 'isDirectRgb') && logical(p.draw.isDirectRgb)
+    txt = 'C24 direct RGB';
+else
+    txt = 'L48 dual CLUT';
+end
+end
+
+function txt = rgbString(rgb)
+if isnumeric(rgb) && numel(rgb) == 3 && all(isfinite(rgb))
+    rgb = double(rgb(:)');
+    txt = sprintf('[%.0f %.0f %.0f]', rgb(1), rgb(2), rgb(3));
+else
+    txt = 'n/a';
+end
+end
+
 function printField(label, value)
 fprintf('  %-29s : %s\n', label, valueToString(value));
 end
@@ -170,6 +206,10 @@ end
 
 function value = getBackgroundCdM2(p)
 value = getField(p.trVars, 'BackgroundMeasuredLuminanceCdM2', NaN);
+if ~isfiniteScalar(value) && isfield(p.draw, 'directRgbCalibration')
+    value = getField(p.draw.directRgbCalibration, ...
+        'backgroundMeasuredCdM2', NaN);
+end
 if ~isfiniteScalar(value) && isfield(p.draw, 'clut')
     value = getField(p.draw.clut, 'srsBackgroundMeasuredCdM2', NaN);
 end
@@ -182,7 +222,14 @@ function [minimumCdM2, maximumCdM2, label] = getCalibrationSummary(p)
 minimumCdM2 = NaN;
 maximumCdM2 = NaN;
 label = 'not loaded';
-if isfield(p.draw, 'clut') && ...
+if getField(p.trVars, 'salienceType', NaN) == 3 && ...
+        isfield(p.draw, 'directRgbCalibration') && ...
+        isstruct(p.draw.directRgbCalibration)
+    calibration = p.draw.directRgbCalibration;
+    minimumCdM2 = getField(calibration, 'minimumCdM2', NaN);
+    maximumCdM2 = getField(calibration, 'maximumCdM2', NaN);
+    label = getField(calibration, 'label', label);
+elseif isfield(p.draw, 'clut') && ...
         isfield(p.draw.clut, 'redLumCalibration') && ...
         isstruct(p.draw.clut.redLumCalibration)
     calibration = p.draw.clut.redLumCalibration;

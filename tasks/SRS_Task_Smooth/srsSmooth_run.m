@@ -157,6 +157,13 @@ while ~p.trVars.exitWhileLoop
      % Store gaze position and compute online eye velocity
     p = onlineGazeCalcs(p);
 
+    % In direct-RGB mode, show gaze only in the independent experimenter
+    % preview. This function is throttled to 20 Hz and never draws into the
+    % subject's Psychtoolbox window.
+    if isfield(p.draw, 'isDirectRgb') && p.draw.isDirectRgb
+        p = updateDirectRgbExperimenterGaze(p);
+    end
+
     % STATE DEPENDENT section
     p = stateMachine(p);
     
@@ -209,11 +216,18 @@ switch p.trVars.currentState
         %   SHOW FIXATION POINT AND WAIT FOR
         %   SUBJECT TO ACQUIRE FIXATION.
         
-        % show fixatoin point & fixation window on exp-display
-        p.draw.color.fix                = p.draw.clutIdx.expWhite_subWhite;
+        % Show the fixation point. In C24 direct-RGB mode the same RGB
+        % image reaches both displays, so experimenter-only overlays are
+        % disabled and fixation is drawn as ordinary white RGB.
+        if isDirectRgbMode(p)
+            p.draw.color.fix = [255 255 255];
+            p.draw.color.fixWin = p.draw.color.background;
+        else
+            p.draw.color.fix = p.draw.clutIdx.expWhite_subWhite;
+            p.draw.color.fixWin = p.draw.clutIdx.expGrey25_subBg;
+        end
         
         % set fixation window color:
-        p.draw.color.fixWin         = p.draw.clutIdx.expGrey25_subBg;
         p.draw.fixWinPenDraw = p.draw.fixWinPenPre;
         
         % we only want to strobe this once:
@@ -280,7 +294,8 @@ switch p.trVars.currentState
     case p.state.targetDelay
         %% State: TARGET DELAY (target onset -> go signal)
         % Targets appear here while the subject continues to fixate the
-        % fixation point. After p.trVars.delay_ms milliseconds have elapsed
+        % fixation point. After random delay between delay_ms_min and 
+        % delay_ms_max milliseconds have elapsed
         % since target onset, we advance to p.state.MakeSaccade, where the
         % fixation point is extinguished (the go signal). Breaking fixation
         % during the delay aborts the trial.
@@ -302,8 +317,9 @@ switch p.trVars.currentState
 
         % Only evaluate the delay / fixation once targets have actually
         % appeared (targetOn assigned by the postFlip mechanism).
+        p.status.delta = round(unifrnd(p.trVarsInit.delay_ms_min, p.trVarsInit.delay_ms_max));
         if p.trData.timing.targetOn > 0
-            if (timeNow - p.trData.timing.targetOn) > p.trVars.delay_ms/1000
+            if (timeNow - p.trData.timing.targetOn) > p.status.delta/1000
                 % Delay elapsed with fixation held: issue the go signal.
                 p.trVars.currentState = p.state.MakeSaccade;
             elseif ~pds.eyeInWindow(p) && ~p.trVars.passEye
@@ -642,6 +658,8 @@ end
 
 function p = drawMachine(p)
 
+directRgbMode = isDirectRgbMode(p);
+
 % timeNow is relative to trial Start
 timeNow = GetSecs - p.trData.timing.trialStartPTB;
 
@@ -659,7 +677,9 @@ end
 
 % In DKL hue mode, exp-only colors need subject rows that match the
 % current DKL background, otherwise the subject sees debug overlays.
-p.draw.color.joyInd = expOnlyColorForCurrentBg(p, p.draw.color.joyInd);
+if ~directRgbMode
+    p.draw.color.joyInd = expOnlyColorForCurrentBg(p, p.draw.color.joyInd);
+end
 
 % now calculate size of joystick-fill rectangle
 joyRectNow = pds.joyRectFillCalc(p);
@@ -671,29 +691,37 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     % Fill the window with the background color.
     Screen('FillRect', p.draw.window, p.draw.color.background);
     
-    % Draw the grid
-    Screen('DrawLines', p.draw.window, p.draw.gridXY, [], expOnlyColorForCurrentBg(p, p.draw.color.gridMajor));
-    
-    % Draw the gaze position, MUST DRAW THE GAZE BEFORE THE
-    % FIXATION. Otherwise, when the gaze indicator goes over any
-    % stimuli it will change the occluded stimulus' color!
-    gazePosition = [p.trVars.eyePixX p.trVars.eyePixY p.trVars.eyePixX p.trVars.eyePixY] + ...
-        [-1 -1 1 1]*p.draw.eyePosWidth + repmat(p.draw.middleXY, 1, 2);
-    Screen('FillRect', p.draw.window, expOnlyColorForCurrentBg(p, p.draw.color.eyePos), gazePosition);
-    
-  
+    % L48 can hide experimenter overlays in the subject half of the dual
+    % CLUT. C24 cannot, so direct-RGB mode intentionally draws only the
+    % actual task stimuli: background, fixation, and targets.
+    if ~directRgbMode
+        Screen('DrawLines', p.draw.window, p.draw.gridXY, [], ...
+            expOnlyColorForCurrentBg(p, p.draw.color.gridMajor));
+
+        % Draw gaze before task stimuli so it cannot alter their color.
+        gazePosition = [p.trVars.eyePixX p.trVars.eyePixY ...
+            p.trVars.eyePixX p.trVars.eyePixY] + ...
+            [-1 -1 1 1] * p.draw.eyePosWidth + ...
+            repmat(p.draw.middleXY, 1, 2);
+        Screen('FillRect', p.draw.window, ...
+            expOnlyColorForCurrentBg(p, p.draw.color.eyePos), gazePosition);
+    end
+
     % draw fixation spot
     Screen('FrameRect',p.draw.window, p.draw.color.fix, repmat(p.draw.fixPointPix, 1, 2) + ...
         p.draw.fixPointRadius*[-1 -1 1 1], p.draw.fixPointWidth);
     
-    % draw fixation window
-    Screen('FrameRect',p.draw.window, expOnlyColorForCurrentBg(p, p.draw.color.fixWin), repmat(p.draw.fixPointPix, 1, 2) +  ...
-        [-p.draw.fixWinWidthPix -p.draw.fixWinHeightPix ...
-        p.draw.fixWinWidthPix p.draw.fixWinHeightPix], p.draw.fixWinPenDraw)
-    
-    % Draw the joystick-bar graphic.
-    Screen('FrameRect', p.draw.window, p.draw.color.joyInd, p.draw.joyRect);
-    Screen('FillRect',  p.draw.window, p.draw.color.joyInd, joyRectNow);
+    if ~directRgbMode
+        % Experimenter-only fixation and joystick indicators.
+        Screen('FrameRect', p.draw.window, ...
+            expOnlyColorForCurrentBg(p, p.draw.color.fixWin), ...
+            repmat(p.draw.fixPointPix, 1, 2) + ...
+            [-p.draw.fixWinWidthPix -p.draw.fixWinHeightPix ...
+             p.draw.fixWinWidthPix  p.draw.fixWinHeightPix], ...
+            p.draw.fixWinPenDraw);
+        Screen('FrameRect', p.draw.window, p.draw.color.joyInd, p.draw.joyRect);
+        Screen('FillRect', p.draw.window, p.draw.color.joyInd, joyRectNow);
+    end
 
     %% Draw T1 and T2
     
@@ -706,7 +734,7 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     p.draw.T1_locPixX, p.draw.T1_locPixY);
    
     % Draw filled rectangle
-    Screen('FillRect', p.draw.window, p.trVars.T1_colorIdx, T1_rect);
+    Screen('FillRect', p.draw.window, targetDrawColor(p, 1), T1_rect);
     
     % % Optionally draw a border
     % Screen('FrameRect', p.draw.window, p.draw.clutIdx.expBlack_subBg, ...
@@ -722,13 +750,14 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     p.draw.T2_locPixX, p.draw.T2_locPixY);
     
     % Draw filled rectangle
-    Screen('FillRect', p.draw.window, p.trVars.T2_colorIdx, T2_rect);
+    Screen('FillRect', p.draw.window, targetDrawColor(p, 2), T2_rect);
 
     % % Optionally draw a border
     % Screen('FrameRect', p.draw.window, p.draw.clutIdx.expBlack_subBg, ...
     % T2_rect, 2); % 2-pixel border
     end
 
+    if ~directRgbMode
     %% Draw target acceptance windows (same geometry as eyeInTargetWindow)
     % Convert half-width/half-height from deg -> pix
     targHalfWpix = pds.deg2pix(p.trVars.targWinWidthDeg, p);
@@ -792,6 +821,7 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
             expOnlyColorForCurrentBg(p, p.draw.clutIdx.expGreen_subBg), ...
             rewardRect, 4);
     end
+    end % experimenter-only overlays are unavailable in C24 mode
 
     % if p.status.ActualTrialType == 1, trialtype = 'Congruent' ;
     % else,    trialtype = 'Conflict'; end        
@@ -872,6 +902,38 @@ end
 
 
 
+
+%% -------------------- DISPLAY-MODE HELPERS --------------------
+function tf = isDirectRgbMode(p)
+%ISDIRECTRGBMODE True only for salienceType 3 initialized in C24 mode.
+
+tf = isfield(p, 'draw') && isfield(p.draw, 'isDirectRgb') && ...
+    logical(p.draw.isDirectRgb);
+
+end
+
+function color = targetDrawColor(p, targetID)
+%TARGETDRAWCOLOR Return a CLUT index in L48 or an RGB triplet in C24.
+
+if isDirectRgbMode(p)
+    if targetID == 1
+        color = double(p.trVars.T1_colorRGB255(:)');
+    else
+        color = double(p.trVars.T2_colorRGB255(:)');
+    end
+    if numel(color) ~= 3 || any(~isfinite(color)) || ...
+            any(color < 0) || any(color > 255)
+        error('Invalid direct-RGB target color for T%d.', targetID);
+    end
+else
+    if targetID == 1
+        color = p.trVars.T1_colorIdx;
+    else
+        color = p.trVars.T2_colorIdx;
+    end
+end
+
+end
 
 %% -------------------- EXP-ONLY COLOR MAPPING FOR DKL BACKGROUND --------------------
 function outIdx = expOnlyColorForCurrentBg(p, inIdx)

@@ -382,6 +382,20 @@ codes.HueContrastT1_x10 = 20028;             % T1 hue distance from background i
 codes.HueContrastT2_x10 = 20029;             % T2 hue distance from background in degrees * 10
 
 
+% SRS direct-RGB C24 luminance mode. These values record the exact RGB
+% triplets selected from the measured family-15 calibration table.
+codes.displayModeCode = 20030;               % 1=L48 dual CLUT, 3=C24 direct RGB
+codes.DirectRgbT1R = 20031;                  % T1 red channel, 0..255
+codes.DirectRgbT1G = 20032;                  % T1 green channel, 0..255
+codes.DirectRgbT1B = 20033;                  % T1 blue channel, 0..255
+codes.DirectRgbT2R = 20034;                  % T2 red channel, 0..255
+codes.DirectRgbT2G = 20035;                  % T2 green channel, 0..255
+codes.DirectRgbT2B = 20036;                  % T2 blue channel, 0..255
+codes.DirectRgbT1RedLevel = 20037;            % Family-15 red level for T1
+codes.DirectRgbT2RedLevel = 20038;            % Family-15 red level for T2
+codes.DirectRgbBackgroundCdM2_x1000 = 20039; % Physical black background * 1000
+
+
 %% validation
 
 % making sure that every code is listed once (i.e. unique)
