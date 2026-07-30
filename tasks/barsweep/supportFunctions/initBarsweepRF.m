@@ -59,11 +59,30 @@ switch p.init.exptType
     case 'barsweep_cardinal4'
         directionsDeg    = [0 90 180 270];
         orientationsDeg  = [0 90];
+        % v2 midpoint method: accumulate BY DIRECTION (0/90/180/270 each
+        % get their own histogram row) so opposite sweeps are NOT pooled.
+        % The RF center is then the midpoint of opposite-direction peaks,
+        % which cancels response latency without assuming it. Contrast
+        % rfmap12 below, which still pools opposite directions by
+        % orientation for filtered back-projection.
+        accumBy          = 'direction';
     case 'barsweep_rfmap12'
         directionsDeg    = 0:30:330;
         orientationsDeg  = 0:30:150;
+        % Unchanged: iradon reconstruction pools opposite directions into
+        % one orientation row (each row is a sinogram projection).
+        accumBy          = 'orientation';
     otherwise
         error('initBarsweepRF: unknown exptType "%s".', p.init.exptType);
+end
+
+% Number of histogram rows = directions (cardinal4) or orientations
+% (rfmap12). This is the ONLY structural difference between the regimes'
+% accumulators.
+if strcmp(accumBy, 'direction')
+    nAccum = numel(directionsDeg);
+else
+    nAccum = numel(orientationsDeg);
 end
 
 %% Position edges: span the sweep with a small accum margin, in
@@ -87,6 +106,8 @@ nCh      = src.rfNChannels;
 %% Pack the struct (preserve fig + resetCount if present).
 rf.enabled            = true;
 rf.exptType           = p.init.exptType;
+rf.accumBy            = accumBy;      % 'direction' (cardinal4) | 'orientation' (rfmap12)
+rf.formatVersion      = 2;           % v2 = per-direction midpoint method (cardinal4)
 rf.nChannels          = nCh;
 rf.orientationsRad    = deg2rad(orientationsDeg);
 rf.directionsRad      = deg2rad(directionsDeg);
@@ -99,11 +120,19 @@ rf.positionCenters    = positionCenters;
 rf.pathCenterDeg      = [src.pathCenterXDeg; src.pathCenterYDeg];
 rf.mapExtentDeg       = src.rfMapExtentDeg;
 rf.mapPixelDeg        = src.rfPosBinDeg;
-rf.latencyMs          = src.rfLatencyMs;
+rf.latencyMs          = src.rfLatencyMs;   % rfmap12 only in v2 (cardinal4 needs no assumed latency)
+% Sweep speed snapshot: cardinal4 reads it back to convert the
+% opposite-direction peak separation into a latency estimate (dva / (dva/s)
+% = s). Guarded for the synthetic test harness, which may not set it.
+if isfield(src, 'speedDegPerSec') && ~isempty(src.speedDegPerSec)
+    rf.speedDegPerSec = src.speedDegPerSec;
+else
+    rf.speedDegPerSec = NaN;
+end
 rf.rampFilter         = src.rfRampFilter;
 rf.rampCutoff         = src.rfRampCutoff;
-rf.spikeHist          = zeros(nOri, nPosBins, nCh);
-rf.dwellTime          = zeros(nOri, nPosBins);
+rf.spikeHist          = zeros(nAccum, nPosBins, nCh);
+rf.dwellTime          = zeros(nAccum, nPosBins);
 rf.spikeCount         = zeros(nCh, 1);
 rf.trialsByDirection  = zeros(nDir, 1);
 rf.resetCount         = priorReset;
