@@ -166,7 +166,7 @@ p.draw.color.targWin         = p.draw.clutIdx.expVisGreen_subBg;
 
 
 % Scale reward with eccentricity
-p.trVars.rewardDurationMs = round(p.trVars.rewardDurationMs*(eccentricityScaleFactor));
+%p.trVars.rewardDurationMs = round(p.trVars.rewardDurationMs*(eccentricityScaleFactor));
 
 
 %%%%%%%%%%%%%%%%%
@@ -480,6 +480,10 @@ p.draw.predictedRFCirclePointPix = p.draw.middleXY + [1, -1] .* ...
 p.draw.predRFCircleSizePix = pds.deg2pix(p.trVars.predRFCircleSize, p);
 
 
+% Scale reward randomly in the same range as for visual trials
+%p.trVars.rewardDurationMs = round(p.trVars.rewardDurationMs*(1 + rand^2));
+
+
 % Depending on trial type, pick electrodes and polarities
 
 switch p.init.exptType
@@ -560,6 +564,35 @@ end
 % ***********
 
 
+% Safety check to make sure we aren't applying too much stimulation.
+% If we are stimulating at over 420 total uA or on >4 channels,
+% pause the run and show a popup that must be clicked to continue
+if p.status.safetyCheckFlag
+    if p.trVars.stimAmplitude*numel(p.trVars.stimElectrodeList) > 420 || numel(p.trVars.stimElectrodeList) > 4
+
+        uiMessage = ['Stimulating on ', num2str(numel(p.trVars.stimElectrodeList)), ...
+            ' electrodes at ', num2str(p.trVars.stimAmplitude), ' uA. Are you sure you want to continue?'];
+
+        fig = uifigure;
+        selection = uiconfirm(fig, uiMessage, 'Microstim Safety Check');
+
+        switch selection
+            case 'OK'
+                disp ('Resuming');
+                p.status.safetyCheckFlag = false;
+            case 'Cancel'
+                disp ('Setting microstim amplitude to 0 and stopping Run');
+                p.trVars.stimAmplitude = 0;
+                runButton = findall(0, 'Tag', 'runButton'); runButton.Value = 0;
+        end
+
+        close(fig);
+
+    end
+end
+
+
+
 
 
 % If always using step size of 2:
@@ -625,6 +658,9 @@ else
     error ('Stimulation amplitude is greater than 500 uA');
 
 end
+
+
+
 
 % For this task, we are always using the same stimAmplitude, but
 % to stay consistent with other tasks, we are strobing the value

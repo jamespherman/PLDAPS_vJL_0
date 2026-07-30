@@ -1,7 +1,7 @@
 function p = sacc_to_phosph_settings
-%  p = seansFirstTask_settings
+%  p = sacc_to_phosph
 %
-%   seansFirstTask task
+%   sacc_to_phosph task
 % =============
 % gSac - guided saccades. 
 % This is your stock visually- or memory-guided saccade task.
@@ -250,7 +250,7 @@ p.trVarsInit.stimShape		 = 0;
 p.trVarsInit.targsSameColor	 = false;
 
 % times/latencies/durations:
-p.trVarsInit.rewardDurationMs        = 140; % reward duration
+p.trVarsInit.rewardDurationMs        = 120; % reward duration
 p.trVarsInit.rewardDelay             = 0;        % delay between cued change and reward delivery for hits.
 p.trVarsInit.timeoutAfterFa          = 2;        % timeout duration following false alarm.
 p.trVarsInit.joyWaitDur              = 5;        % how long to wait for the subject to press the joystick at the beginning of a trial?
@@ -295,6 +295,9 @@ p.trVarsInit.connectRipple           = true;
 % Flag to notify only once if we're stimulating on an electrode that is not 
 % on the good electrode list. Reset when switching to a new electrode
 p.status.badElectrodeWarningFlag            = true;
+
+% Flag to throw a dialog box warning if stimulation amplitude is too high
+p.status.safetyCheckFlag                    = true;
 
 % Load in data about the electrode (RFs, SNR, etc.)
 p.init.electrodeInfo = load ('electrodeInfo.mat'); % Load in data about the electrodes from RF mapping
@@ -358,8 +361,8 @@ p.trVarsInit.minTargAmp              = 3;    % minimum target amplitude
 p.trVarsInit.maxTargAmp              = 18;   % maximum target amplitude
 p.trVarsInit.staticTargAmp           = 12;  % fixed target amplitude
 
-p.trVarsInit.fixWinWidthDeg       = 1.5;        % fixation window width in degrees
-p.trVarsInit.fixWinHeightDeg      = 1.5;        % fixation window height in degrees
+p.trVarsInit.fixWinWidthDeg       = 1;        % fixation window width in degrees
+p.trVarsInit.fixWinHeightDeg      = 1;        % fixation window height in degrees
 p.trVarsInit.visTargWinWidthDeg      = 3.5;        % target window width in degrees, for visual stimuli
 p.trVarsInit.visTargWinHeightDeg     = 3.5;        % target window height in degrees, for visual stimuli
 %p.trVarsInit.microstimTargWinWidthDeg      = 8;        % target window width in degrees, for microstim

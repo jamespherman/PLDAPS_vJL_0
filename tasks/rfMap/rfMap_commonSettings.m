@@ -219,7 +219,7 @@ p.trVarsInit.sparseBalancedFlag  = 2;
 % --- trial timing ---
 p.trVarsInit.trialDurationS      = 1.5;
 p.trVarsInit.fixWaitDur          = 5.0;
-p.trVarsInit.rewardDurationMs    = 280;
+p.trVarsInit.rewardDurationMs    = 120;
 p.trVarsInit.timeoutAfterFixBreak = 0.1;
 p.trVarsInit.postRewardDuration  = 0.1;
 

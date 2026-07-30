@@ -177,7 +177,7 @@ p.trVarsInit.noiseFrameHold      = 1;       % display frames per noise update (c
 
 % --- trial timing ---
 p.trVarsInit.fixWaitDur          = 5.0;     % max wait for fixation acquisition (s)
-p.trVarsInit.rewardDurationMs    = 280;     % reward duration on successful trial (ms)
+p.trVarsInit.rewardDurationMs    = 120;     % reward duration on successful trial (ms)
 p.trVarsInit.timeoutAfterFixBreak = 0.5;    % timeout after fixation break / non-start (s)
 p.trVarsInit.postRewardDuration  = 0.1;     % post-reward period before iti (s)
 p.trVarsInit.iti                 = 0.5;     % inter-trial interval (s, matches Stm.ITI = 500 ms)

@@ -5,6 +5,22 @@ function p = nextParams(p)
 % Define parameters for upcoming trial.
 
 
+
+%{
+fig = uifigure('Visible', 'on');
+selection = uiconfirm(fig, 'Click OK to continue', 'Script Paused');
+switch selection
+    case 'OK'
+        disp('Resuming');
+    case 'Cancel'
+        runButton = findall(0, 'Tag', 'runButton'); runButton.Value = 0;
+        disp('Stopping');
+end
+%}
+
+
+
+
 % Trial type information:
 % vis- or mem-guided saccade
 p = trialTypeInfo(p);

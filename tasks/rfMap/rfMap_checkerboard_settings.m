@@ -28,12 +28,15 @@ p = rfMap_commonSettings(p);
 
 %% checkerboard-specific overrides
 % Spatial scales (NOT SF -- broadband).
-p.trVarsInit.checkSizesDva   = [0.5 1.0 2.0];
+%p.trVarsInit.checkSizesDva   = [0.5 1.0 2.0];
+
+p.trVarsInit.checkSizesDva   = [0.5 1.0];
 
 % Michelson contrasts in (0, 1]. Each contrast reserves 2 CLUT slots
 % (low/high gray pair, gamma-corrected via dkl2rgb at install time).
 %p.trVarsInit.checkContrasts  = [0.25 0.5 1.0];
-p.trVarsInit.checkContrasts  = [0.25 0.5 1.0];
+
+p.trVarsInit.checkContrasts  = [1.0];
 
 % Polarity reversal frequency. MUST divide refresh rate evenly AND
 % F2 = 2 * checkReversalHz must be strictly below Nyquist
@@ -45,7 +48,9 @@ p.trVarsInit.checkReversalHz = 5;
 % Trials per (checkSize, contrast) cell. Plan target is ~80 for stable
 % F1/F2; calibrate against bootstrap CIs on first real session.
 % Trial count = nCheckSize * nContrast * checkRepsPerCondition.
-p.trVarsInit.checkRepsPerCondition = 12;
+%p.trVarsInit.checkRepsPerCondition = 12;
+
+p.trVarsInit.checkRepsPerCondition = 20;
 
 % Hard cap on pre-rendered texture memory (bytes). Default 512 MB.
 p.trVarsInit.checkGpuMemCapBytes = 512 * 1024 * 1024;
