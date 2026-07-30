@@ -89,6 +89,26 @@ This plan implements four workstreams:
 
 ---
 
+## Implementation status (updated 2026-07-30)
+
+Committed + pushed to `main`; **none yet validated on the rig** — see
+`LGN_battery_redesign_test_log.md`.
+
+| Item | Status | Commit |
+|---|---|---|
+| **Phase 1** — auto-stop (both tasks) + measured-refresh hardening | ✅ done | `cea9c31d` |
+| **Phase 2 core** — barsweep cardinal4 midpoint method (crossings) + offline tests + export latency column | ✅ done | `44e4e016` (rebased `c4b143af`) |
+| Phase 2 viz — 4-panel per-direction PSTH display (plotBarsweepRF + browser) | ⬜ pending | — (task runs now via backward-compat fields) |
+| **Phase 3** — MUAE selectable signal source | ⬜ pending | needs rig/Trellis continuous-stream validation |
+| **Phase 4** — rfMap RF-restricted window + STA defaults + occlusion-mask fix + adequacy estimator | ⬜ pending | best built with a real Phase-2 export CSV in hand (calibrates `rfWindowSnrThresh`) |
+| **Phase 5** — checkerboard contrast set `[0.125 0.25 0.5 1.0]` + RF-centered denseChromatic + cross-session classifier | ⬜ pending | checkerboard settings file is actively co-edited; do as one unit |
+
+Sequencing note: Phase 4's window-selection threshold is calibrated from the
+Phase-2 barsweep SNR distribution (test-log item 2.5 asks for a sample CSV), so
+Phase 4 is deliberately staged after a Phase-2 rig check.
+
+---
+
 ## 1. Change 1 — Barsweep RF method (cardinal4)
 
 ### 1.1 What's wrong today
