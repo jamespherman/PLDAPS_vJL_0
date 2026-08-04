@@ -1,0 +1,2 @@
+EvidenceType,N,EvidenceMean,EvidenceSD,Intercept,InterceptSE,SlopePerSD,SlopeSE,OddsRatioPerSD,WaldP,LikelihoodRatioP,Converged,Note
+T1 - T2 hue contrast (deg),316,-3.22430857443558,115.128715089776,0.0509710725628952,0.112905022049326,0.160232930903135,0.113273190798251,1.17378424977678,0.157194419852012,0.156187427208157,1,Slope tests whether signed salience predicts T1 choice.

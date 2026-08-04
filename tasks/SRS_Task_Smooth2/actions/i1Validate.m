@@ -1,0 +1,106 @@
+function p = i1Validate(p)
+%   [] = i1Validate(p)
+
+% use the directly callable I1 MEX used on this rig:
+i1Path = '/home/herman_lab/OneDrive/Code/i1';
+if exist(i1Path, 'dir')
+    addpath(i1Path, '-begin');
+    rehash;
+end
+if exist('I1', 'file') ~= 2 && exist('I1', 'file') ~= 3
+    error('I1.mexa64 was not found. Expected folder: %s', i1Path);
+end
+p.rig.i1Connected = I1('IsConnected');
+if ~p.rig.i1Connected
+    error('The i1Pro is not connected or not detected by I1.mexa64.');
+end
+screenCleanup = onCleanup(@()restoreTaskBackground(p)); %#ok<NASGU>
+
+% tell user to put device in calibration cradle then wait for them to press
+% a key before initiating calibration:
+disp('Place photomer in calibration cradle then press any keyboard key.');
+pause;
+I1('Calibrate');
+
+% tell user calibration is complete:
+disp('Calibration complete.')
+
+% tell user to place photomer on screen for measurement then wait for key
+% press to continue to measurement:
+disp('Place photomer on screen for measurement.');
+pause;
+
+% we're going to measure at 11 X 11 locations at a single luminance
+% preallocate space (3 color coords X 11 X 11):
+measurements = zeros(3, 11, 11);
+rgbColors    = zeros(3, 11, 11);
+
+% define a vector of values to query DKL plane:
+values = linspace(-1, 1, 11);
+
+% loop over points on a plane in DKL space (at mid-level luminance)
+for i = 1:11
+    for j = 1:11
+
+        % define color to show:
+        tempColor = [0 0 0];
+        [tempColor(1), tempColor(2), tempColor(3)] = ...
+            dkl2rgb([0, values(i), values(j)]');
+
+        % fill screen with color
+        Screen('FillRect', p.draw.window, fix(tempColor*255));
+        Screen('Flip', p.draw.window);
+
+        % trigger measurement
+        I1('TriggerMeasurement');
+
+        % retrieve measurement:
+        measurements(:, i, j) = I1('GetTriStimulus');
+        
+        % store RGB color:
+        rgbColors(:, i, j) = fix(tempColor*255);
+
+    end
+end
+
+% holder for luminance linearity measurement values:
+lumMeasures = zeros(3, 11);
+lumColors   = zeros(3, 11);
+
+% loop from lowest luminance to highest luminance to measure linearity
+for i = 1:11
+    % define color to show:
+        tempColor = [0 0 0];
+        [tempColor(1), tempColor(2), tempColor(3)] = ...
+            dkl2rgb([values(i), 0 0]');
+
+        % fill screen with color
+        Screen('FillRect', p.draw.window, fix(tempColor*255));
+        Screen('Flip', p.draw.window);
+
+        % trigger measurement
+        I1('TriggerMeasurement');
+
+        % retrieve measurement:
+        lumMeasures(:, i) = I1('GetTriStimulus');
+        
+        % store RGB color:
+        lumColors(:, i) = fix(tempColor*255);
+end
+
+
+p.rig.displayCal.colorMeasurements = measurements;
+p.rig.displayCal.rgbColors = rgbColors;
+p.rig.displayCal.lumMeasures = lumMeasures;
+p.rig.displayCal.lumColors = lumColors;
+
+end
+
+function restoreTaskBackground(p)
+if isfield(p.draw, 'color') && isfield(p.draw.color, 'background')
+    Screen('FillRect', p.draw.window, p.draw.color.background);
+else
+    Screen('FillRect', p.draw.window, 0);
+end
+Screen('Flip', p.draw.window);
+end

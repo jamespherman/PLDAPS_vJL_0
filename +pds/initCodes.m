@@ -395,6 +395,22 @@ codes.DirectRgbT1RedLevel = 20037;            % Family-15 red level for T1
 codes.DirectRgbT2RedLevel = 20038;            % Family-15 red level for T2
 codes.DirectRgbBackgroundCdM2_x1000 = 20039; % Physical black background * 1000
 
+% SRS correction-trial metadata. These paired-strobe identifiers are kept
+% contiguous so the correction sequence and the reward actually available
+% on the RIGHT can be reconstructed from the ephys stream.
+codes.correctionTrialEnabled = 20040;              % 0=off, 1=enabled
+codes.correctionTrialActive = 20041;               % 0=normal, 1=forced repeat
+codes.correctionTrialRepetition = 20042;           % forced-attempt number
+codes.correctionRightRewardReductionLevel = 20043; % cumulative RIGHT-choice level
+codes.correctionTrialMaxRepetition = 20044;        % configured safety cap
+codes.correctionReduceRightReward = 20045;         % 0=off, 1=reduce
+codes.correctionRightRewardMultiplier_x1000 = 20046; % multiplier * 1000
+codes.correctionRightRewardMinimumMs = 20047;      % configured floor in ms
+codes.correctionRightRewardAppliedMs = 20048;      % RIGHT reward after reduction
+codes.correctionOriginalRightRewardMs = 20049;     % restored pre-reduction reward
+codes.correctionSnapshotValid = 20050;             % exact trigger condition restored
+codes.delta = 20051;                               % sampled target delay in ms
+
 
 %% validation
 
@@ -419,4 +435,3 @@ else
     error('YOU MUST FIX IT')
     keyboard
 end
-

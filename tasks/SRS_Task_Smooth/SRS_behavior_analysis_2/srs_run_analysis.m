@@ -10,6 +10,8 @@ function results = srs_run_analysis(sessionFolders, options)
 %
 % This keeps generated files separate from the raw PLDAPS session folders.
 
+trial_start = 527;
+
 if nargin < 1 || isempty(sessionFolders)
     selectedFolder = uigetdir(pwd, ...
         'Select an SRS session folder containing trialXXXX.mat files');
@@ -41,7 +43,7 @@ results.combined = [];
 allTrials = table();
 allMetas = cell(nSessions, 1);
 
-for iSession = 1:nSessions
+for iSession = trial_start:nSessions
     sessionFolder = sessionFolders{iSession};
     if options.verbose
         fprintf('\n============================================================\n');

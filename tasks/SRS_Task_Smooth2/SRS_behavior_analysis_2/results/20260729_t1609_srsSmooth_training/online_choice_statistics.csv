@@ -1,0 +1,7 @@
+Domain,Metric,NAll,CountAll,ProportionAll,NReal,CountReal,ProportionReal,CI95LowReal,CI95HighReal,PExactVsHalfReal,Notes,QFDR
+Online plot,P(high salience) - conflict,199,182,0.914572864321608,199,182,0.914572864321608,0.867462521457538,0.945980652138719,4.59394577792709e-36,Offline equivalent of pHighSalConflict.,9.18789155585418e-36
+Online plot,P(high salience) - congruent,32,14,0.4375,32,14,0.4375,0.281653311150404,0.60674408863148,0.596614895854149,Offline equivalent of pHighSalCongruent.,0.596614895854149
+Online plot,P(high reward) - conflict,199,17,0.085427135678392,199,17,0.085427135678392,0.0540193478612809,0.132537478542462,4.59394577792709e-36,Offline equivalent of pHighRewardConflict.,9.18789155585418e-36
+Online plot,P(high reward) - congruent,32,14,0.4375,32,14,0.4375,0.281653311150404,0.60674408863148,0.596614895854149,Offline equivalent of pHighRewardCongruent.,0.596614895854149
+Online plot,P(right) - conflict,199,199,1,199,199,1,0.981061766943365,1,2.48920611114445e-60,Additional spatial control.,1.49352366668667e-59
+Online plot,P(right) - congruent,32,32,1,32,32,1,0.89282080174493,1,4.6566128730774e-10,Additional spatial control.,6.98491930961609e-10

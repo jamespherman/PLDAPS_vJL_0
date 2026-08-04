@@ -1,81 +1,87 @@
 %% RUN_ONE_SRS_SESSION
-% Point d'entree pour analyser une session SRS_Task_Smooth.
+% Main entry point for analyzing one SRS_Task_Smooth session.
 %
-% Utilisation conseillee :
-%   1. Ouvrir ce fichier dans l'Editor MATLAB.
-%   2. Modifier seulement la variable sessionFolder ci-dessous si besoin.
-%   3. Cliquer sur Run, ou executer les sections une par une.
+% Recommended workflow:
+%   1. Open this file in the MATLAB Editor.
+%   2. Edit only sessionFolder if required.
+%   3. Click Run.
 %
-% Le code n'a pas besoin que PLDAPS soit dans le MATLAB path. Il lit
-% directement les fichiers trialXXXX.mat sauvegardes dans la session.
+% The analysis does not require PLDAPS to be on the MATLAB path. It reads
+% the trialXXXX.mat files directly and stores all generated outputs inside
+% this SRS_behavior_analysis folder.
 
 clear;
 clc;
 close all;
 
-%% 1. Ajouter le dossier d'analyse au MATLAB path
+%% 1. Add the analysis code to the MATLAB path
 analysisFolder = fileparts(mfilename('fullpath'));
 if isempty(analysisFolder)
-    % Ce cas peut arriver si le code est colle directement dans la console.
     analysisFolder = pwd;
 end
 addpath(analysisFolder);
 
-%% 2. Choisir la session
-% Chemin correspondant a la session que tu as transmise.
+%% 2. Select the session
 sessionFolder = fullfile( ...
     '/home/herman_lab/Documents/PLDAPS_vK2_MASTER', ...
     'output', ...
-    '20260721_t1530_srsSmooth_training');
+    '20260803_t1352_srsSmooth_Moretraining');
 
-% Si le chemin n'existe pas sur cette machine, MATLAB ouvre un selecteur.
+% If the path is not present on this computer, MATLAB opens a folder picker.
 if ~isfolder(sessionFolder)
     sessionFolder = uigetdir(pwd, ...
-        'Choisir le dossier de session SRS contenant trialXXXX.mat');
+        'Select the SRS session folder containing trialXXXX.mat files');
     if isequal(sessionFolder, 0)
-        error('Aucun dossier de session selectionne.');
+        error('No session folder was selected.');
     end
 end
 
-%% 3. Options principales
+%% 3. Analysis options
 options = struct();
 
-% Fenetre glissante utilisee pour les courbes d'engagement.
+% Analyze block 8 through the final available block.
+% Use [9 Inf] to exclude the first eight blocks.
+% Use [] to analyze every block as before.
+options.blockRange = [];
+
+% Trailing-window length for engagement and spatial-entropy curves.
 options.rollingWindow = 20;
 
-% Nombre de permutations pour les comparaisons non parametriques.
-% 5000 donne des p-values assez stables tout en restant raisonnable.
+% Number of permutations for non-parametric tests. Five thousand provides
+% reasonably stable exploratory p-values while remaining practical.
 options.nPermutations = 5000;
 
-% Graine fixe : les tests par permutation sont reproductibles.
+% Fixed seed makes permutation tests and outputs reproducible.
 options.randomSeed = 20260720;
 
-% Creer et sauvegarder les figures.
+% Figure exports. PNG, PDF, and editable MATLAB FIG files are generated.
 options.makeFigures = true;
 options.saveFigures = true;
+options.savePdfFigures = true;
 options.saveMatlabFigures = true;
 
-% Par defaut, les resultats sont places dans :
-%   <sessionFolder>/offline_behavior_analysis
-% Laisser vide pour conserver ce comportement.
+% Default output locations are created automatically:
+%   SRS_behavior_analysis/results/<session name>/
+%   SRS_behavior_analysis/figures/<session name>/
+% Leave outputRoot empty to use this structure.
 options.outputRoot = '';
 
-% Afficher les etapes et les principaux resultats dans la Command Window.
+% Print progress and main output paths in the Command Window.
 options.verbose = true;
 
-%% 4. Lancer l'analyse
+%% 4. Run the analysis
 results = srs_run_analysis({sessionFolder}, options);
 
-%% 5. Variables utiles apres execution
-% results.sessions(1).trials       : table complete, un essai par ligne
-% results.sessions(1).statistics   : tables statistiques et diagnostics
-% results.sessions(1).outputFolder : dossier contenant CSV, figures et rapport
-%
-% Exemple : afficher uniquement les choix a deux cibles.
+%% 5. Useful variables after execution
+% results.sessions(1).trials        complete trial table
+% results.sessions(1).statistics    statistical tables and diagnostics
+% results.sessions(1).outputFolder  CSV, MAT, and report folder
+% results.sessions(1).figureFolder  PNG, PDF, and FIG folder
+
 choiceTrials = results.sessions(1).trials( ...
     results.sessions(1).trials.GoodChoice, :);
 
-disp('Apercu des choix a deux cibles :');
+disp('Preview of two-target choices:');
 disp(choiceTrials(1:min(10, height(choiceTrials)), ...
     {'Attempt', 'Block', 'TrialTypeLabel', ...
      'ChosenTarget', 'ChosenSideLabel', ...
