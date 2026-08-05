@@ -281,6 +281,7 @@ p.status.trialsArrayRowsPossible    = [];
 p.status.correctionTrialActive = false;
 p.status.correctionTrialRow = NaN;
 p.status.correctionTrialRepetition = 0;
+p.status.correctionTrialTriggerSide = NaN;
 p.status.correctionRightRewardReductionLevel = 0;
 p.status.correctionTrialTriggerCount = 0;
 p.status.correctionTrialSuccessCount = 0;
@@ -385,16 +386,17 @@ p.trVarsInit.nSingleT2PerBlock = 10;
 p.trVarsInit.randomizeTargetIdentitySides = true;
 p.trVarsInit.targetHorizontalEccDeg = 10; % Legacy field; locations now use T1/T2_locDegX/Y directly
 
-% Optional anti-right-bias correction. When enabled, a conflict row is
-% forced again after a RIGHT choice that was not the high-reward choice.
-% The row stops repeating after a correct high-reward choice or after the
-% configurable cap. The optional RIGHT reward multiplier compounds only
-% after completed RIGHT choices; aborted trials retain the current level.
-% Controls can be changed live in the dedicated correction window.
+% Optional correction trials. The default preserves the original
+% anti-right-bias rule: repeat a conflict condition after an incorrect
+% RIGHT low-reward choice. The live correction window can enable bilateral
+% triggering so the same rule also applies to incorrect LEFT choices.
+% The repeated condition stops after a high-reward choice or the safety cap.
 p.trVarsInit.correctionTrial = false;
+p.trVarsInit.correctionBothSides = false;
 p.trVarsInit.correctionTrialMaxRepetition = 15;
 p.trVarsInit.correctionTrialActive = 0;
 p.trVarsInit.correctionTrialRepetition = 0;
+p.trVarsInit.correctionTrialTriggerSide = 0;
 p.trVarsInit.correctionRightRewardReductionLevel = 0;
 % Live correction controls. These values are read from the dedicated
 % correction-control window before every trial and can be changed during
@@ -835,6 +837,8 @@ p.init.trDataInitList = {...
     'p.trData.deliveredRewardDurationMs','NaN'; ...
     'p.trData.expectedCorrectionRightRewardMs','NaN'; ...
     'p.trData.correctionRewardConsistencyPassed','-1'; ...
+    'p.trData.correctionBothSides',     '0'; ...
+    'p.trData.correctionTrialTriggerSide','0'; ...
     'p.trData.trialEndState',           '-1'; ...
     };
 
@@ -997,6 +1001,8 @@ p.init.strobeList = {...
     % Correction-trial metadata. These values identify forced repeats in
     % the ephys stream and preserve the GUI-selected cap for each trial.
     'correctionTrialEnabled',      'p.trVars.correctionTrial'; ...
+    'correctionBothSides',         'p.trVars.correctionBothSides'; ...
+    'correctionTrialTriggerSide',   'p.trVars.correctionTrialTriggerSide'; ...
     'correctionTrialActive',       'p.trVars.correctionTrialActive'; ...
     'correctionTrialRepetition',   'p.trVars.correctionTrialRepetition'; ...
     'correctionRightRewardReductionLevel', ...

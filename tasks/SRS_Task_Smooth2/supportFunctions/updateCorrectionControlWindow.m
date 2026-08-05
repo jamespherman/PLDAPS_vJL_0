@@ -17,10 +17,12 @@ elseif isfield(p, 'trVarsGuiComm') && isstruct(p.trVarsGuiComm)
 elseif isfield(p, 'trVarsInit') && isstruct(p.trVarsInit)
     trVars = p.trVarsInit;
 end
+
 guiVars = struct();
 if isfield(p, 'trVarsGuiComm') && isstruct(p.trVarsGuiComm)
     guiVars = p.trVarsGuiComm;
 end
+
 status = struct();
 if isfield(p, 'status') && isstruct(p.status)
     status = p.status;
@@ -30,6 +32,7 @@ pRight = computeRightChoiceProbability(p);
 active = getLogical(status, 'correctionTrialActive', false);
 row = getNumeric(status, 'correctionTrialRow', NaN);
 rep = getNumeric(status, 'correctionTrialRepetition', 0);
+triggerSide = getNumeric(status, 'correctionTrialTriggerSide', NaN);
 reductionLevel = getNumeric(status, ...
     'correctionRightRewardReductionLevel', 0);
 maxRep = getNumeric(trVars, 'correctionTrialMaxRepetition', ...
@@ -38,6 +41,14 @@ outcome = getText(status, 'correctionTrialLastOutcome', 'inactive');
 origRight = getNumeric(trVars, 'correctionOriginalRightRewardMs', NaN);
 appliedRight = getNumeric(trVars, 'correctionRightRewardAppliedMs', NaN);
 snapshotValid = getLogical(status, 'correctionTrialSnapshotValid', false);
+bothSides = getLogical(trVars, 'correctionBothSides', ...
+    getLogical(guiVars, 'correctionBothSides', false));
+
+if bothSides
+    modeText = 'LEFT + RIGHT low-reward choices';
+else
+    modeText = 'RIGHT low-reward choices only';
+end
 
 if isfinite(pRight.value)
     rightText = sprintf('P(right choice): %.3f  (n=%d)', ...
@@ -48,7 +59,9 @@ end
 
 lines = { ...
     sprintf('Enabled: %s', yesNo(getLogical(trVars, 'correctionTrial', false))), ...
-    sprintf('Active:  %s', yesNo(active)), ...
+    sprintf('Trigger mode: %s', modeText), ...
+    sprintf('Active: %s', yesNo(active)), ...
+    sprintf('Incorrect trigger side: %s', sideText(triggerSide)), ...
     sprintf('Forced row: %s', numberText(row)), ...
     sprintf('Repetition: %d / %d', round(rep), round(maxRep)), ...
     sprintf('RIGHT reward reduction level: %d', round(reductionLevel)), ...
@@ -62,6 +75,7 @@ lines = { ...
         round(getNumeric(status, 'correctionTrialSuccessCount', 0)), ...
         round(getNumeric(status, 'correctionTrialMaxReachedCount', 0))) ...
     };
+
 set(p.draw.correctionControl.statusText, 'String', lines);
 drawnow limitrate nocallbacks;
 
@@ -82,12 +96,16 @@ if isfield(op, 'nStim')
     valid = valid & double(op.nStim(:)) == 2;
 end
 if isfield(op, 'mappingValid')
-    try
-    valid = valid & logical(op.mappingValid(:));
-    catch exception
-        ... 
+    % mappingValid is NaN for trials where the two-target mapping does not
+    % apply, notably single-target instruction trials. Do not convert NaN
+    % directly to logical because MATLAB raises an error. Treat only finite,
+    % non-zero entries as valid mappings.
+    mappingRaw = double(op.mappingValid(:));
+    if numel(mappingRaw) == numel(valid)
+        mappingValid = isfinite(mappingRaw) & (mappingRaw ~= 0);
+        valid = valid & mappingValid;
     end
-    end
+end
 result.n = sum(valid);
 if result.n > 0
     result.value = mean(chosenSide(valid) == 1);
@@ -124,6 +142,16 @@ end
 function text = numberText(value)
 if isfinite(value)
     text = sprintf('%.0f', value);
+else
+    text = 'n/a';
+end
+end
+
+function text = sideText(side)
+if side == 1
+    text = 'RIGHT';
+elseif side == 2
+    text = 'LEFT';
 else
     text = 'n/a';
 end

@@ -7,11 +7,11 @@ if ~isfield(p, 'draw') || ~isfield(p.draw, 'correctionControlFigure') || ...
     return
 end
 
-% Process pending MATLAB UI edits before reading String/Value properties.
-drawnow limitrate;
+% Refresh graphics without allowing nested callbacks from the PLDAPS GUI.
+drawnow limitrate nocallbacks;
 
 h = p.draw.correctionControl;
-required = {'enable','maxRepetition','reduceRightReward', ...
+required = {'enable','bothSides','maxRepetition','reduceRightReward', ...
     'rightRewardMultiplier','rightRewardMinimumMs'};
 for i = 1:numel(required)
     if ~isfield(h, required{i}) || ~isgraphics(h.(required{i}))
@@ -20,29 +20,33 @@ for i = 1:numel(required)
 end
 
 enabled = logical(get(h.enable, 'Value'));
+bothSides = logical(get(h.bothSides, 'Value'));
 maxRep = parseNumericEdit(h.maxRepetition, 15, 0, 1000, true);
 reduceRight = logical(get(h.reduceRightReward, 'Value'));
 multiplier = parseNumericEdit(h.rightRewardMultiplier, 0.50, 0, 1, false);
 minimumMs = parseNumericEdit(h.rightRewardMinimumMs, 1, 0, inf, true);
 
 p.trVars.correctionTrial = enabled;
+p.trVars.correctionBothSides = bothSides;
 p.trVars.correctionTrialMaxRepetition = maxRep;
 p.trVars.correctionReduceRightReward = reduceRight;
 p.trVars.correctionRightRewardMultiplier = multiplier;
 p.trVars.correctionRightRewardMinimumMs = minimumMs;
 p.trVars.correctionRightRewardMultiplier_x1000 = round(1000 * multiplier);
 
-% Mirror into the GUI communication copy so the values survive the normal
+% Mirror into the GUI communication copy so values survive the normal
 % p.trVars = p.trVarsGuiComm assignment on the next trial.
 if ~isfield(p, 'trVarsGuiComm') || ~isstruct(p.trVarsGuiComm)
     p.trVarsGuiComm = p.trVars;
 else
     p.trVarsGuiComm.correctionTrial = enabled;
+    p.trVarsGuiComm.correctionBothSides = bothSides;
     p.trVarsGuiComm.correctionTrialMaxRepetition = maxRep;
     p.trVarsGuiComm.correctionReduceRightReward = reduceRight;
     p.trVarsGuiComm.correctionRightRewardMultiplier = multiplier;
     p.trVarsGuiComm.correctionRightRewardMinimumMs = minimumMs;
-    p.trVarsGuiComm.correctionRightRewardMultiplier_x1000 = round(1000 * multiplier);
+    p.trVarsGuiComm.correctionRightRewardMultiplier_x1000 = ...
+        round(1000 * multiplier);
 end
 
 end

@@ -10,7 +10,12 @@ p.trVars.correctionRightRewardAppliedMs = 0;
 
 active = getLogical(p.trVars, 'correctionTrialActive', false);
 reduce = getLogical(p.trVars, 'correctionReduceRightReward', false);
-if ~active || ~reduce
+triggerSide = getNumeric(p.status, 'correctionTrialTriggerSide', NaN);
+
+% This is an explicitly anti-right-bias manipulation. When a bilateral
+% correction was triggered by an incorrect LEFT choice, the HIGH-reward
+% target is on the right and its reward must not be reduced.
+if ~active || ~reduce || triggerSide ~= 1
     return
 end
 
@@ -42,8 +47,9 @@ elseif T2Side == 1
     p.trVars.rewardDurationT2 = reducedRight;
 end
 
-% The trigger rule requires high reward on the left, so the right reward is
-% normally the poor reward. Keep status/strobes consistent with delivery.
+% RIGHT-triggered correction implies that the high-reward target is on the
+% left, so the right reward is the poor reward. Keep status/strobes aligned
+% with the value that will actually be delivered.
 highRewardSide = getNumeric(p.status, 'highRewardSide', NaN);
 if highRewardSide == 1
     p.status.ActualRichReward = reducedRight;

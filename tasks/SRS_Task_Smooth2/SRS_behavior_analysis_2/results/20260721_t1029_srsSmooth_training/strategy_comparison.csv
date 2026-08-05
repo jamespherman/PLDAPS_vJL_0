@@ -1,0 +1,17 @@
+Domain,Strategy,NAll,CorrectAll,AccuracyAll,NReal,CorrectReal,AccuracyReal,CI95LowReal,CI95HighReal,PExactVsChanceReal,IndistinguishableFrom,QFDR
+Identity,Always T1,800,400,0.5,0,0,NaN,NaN,NaN,NaN,None,NaN
+Identity,Always T2,800,400,0.5,0,0,NaN,NaN,NaN,NaN,None,NaN
+Identity,Choose rich target,800,800,1,0,0,NaN,NaN,NaN,NaN,None,NaN
+Identity,Choose low-reward target,800,0,0,0,0,NaN,NaN,NaN,NaN,None,NaN
+Identity,Choose high-salience target,800,400,0.5,0,0,NaN,NaN,NaN,NaN,None,NaN
+Identity,Choose low-salience target,800,400,0.5,0,0,NaN,NaN,NaN,NaN,None,NaN
+Identity,Repeat previous identity,799,790,0.988735919899875,0,0,NaN,NaN,NaN,NaN,None,NaN
+Identity,Switch identity,799,9,0.0112640801001252,0,0,NaN,NaN,NaN,NaN,None,NaN
+Spatial,Always right,800,400,0.5,0,0,NaN,NaN,NaN,NaN,None,NaN
+Spatial,Always left,800,400,0.5,0,0,NaN,NaN,NaN,NaN,None,NaN
+Spatial,Choose rich side,800,800,1,0,0,NaN,NaN,NaN,NaN,None,NaN
+Spatial,Choose low-reward side,800,0,0,0,0,NaN,NaN,NaN,NaN,None,NaN
+Spatial,Choose high-salience side,800,400,0.5,0,0,NaN,NaN,NaN,NaN,None,NaN
+Spatial,Choose low-salience side,800,400,0.5,0,0,NaN,NaN,NaN,NaN,None,NaN
+Spatial,Repeat previous side,799,376,0.470588235294118,0,0,NaN,NaN,NaN,NaN,None,NaN
+Spatial,Switch side,799,423,0.529411764705882,0,0,NaN,NaN,NaN,NaN,None,NaN

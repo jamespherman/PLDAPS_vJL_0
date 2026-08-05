@@ -86,6 +86,7 @@ p.status.highRewardTargetID = p.status.CurrentBlockType;
 p.status.correctionTrialActive = false;
 p.status.correctionTrialRow = NaN;
 p.status.correctionTrialRepetition = 0;
+p.status.correctionTrialTriggerSide = NaN;
 p.status.correctionRightRewardReductionLevel = 0;
 p.status.correctionTrialLastOutcome = 'new block';
 p.status.correctionTrialSnapshot = struct();
@@ -116,15 +117,23 @@ if ~any(remaining)
     error('No eligible SRS schedule rows remain in the current block.');
 end
 
-% Correction mode can force the exact same schedule row after a rightward
-% low-reward choice on a conflict trial. The maximum is read from the GUI
-% copy on every trial, so it can be changed while the task is running.
+% Correction mode can force the exact same schedule row after a low-reward
+% choice on a conflict trial. The live checkbox selects RIGHT-only or
+% bilateral triggering. The maximum is read before every trial.
 p = ensureCorrectionStatusFields(p);
 correctionEnabled = getLogicalScalar(p.trVars, 'correctionTrial', false);
+correctionBothSides = getLogicalScalar( ...
+    p.trVars, 'correctionBothSides', false);
 maxRepetition = max(0, round(getNumericScalar( ...
     p.trVars, 'correctionTrialMaxRepetition', 15)));
+activeTriggerSide = getNumericScalar( ...
+    p.status, 'correctionTrialTriggerSide', NaN);
+leftCorrectionNoLongerAllowed = p.status.correctionTrialActive && ...
+    activeTriggerSide == 2 && ~correctionBothSides;
 
-if p.status.correctionTrialActive && (~correctionEnabled || maxRepetition == 0)
+if p.status.correctionTrialActive && ...
+        (~correctionEnabled || maxRepetition == 0 || ...
+        leftCorrectionNoLongerAllowed)
     activeRow = p.status.correctionTrialRow;
     if isfinite(activeRow) && activeRow >= 1 && activeRow <= numel(remaining)
         p.status.trialsArrayRowsPossible(activeRow) = false;
@@ -133,8 +142,13 @@ if p.status.correctionTrialActive && (~correctionEnabled || maxRepetition == 0)
     p.status.correctionTrialActive = false;
     p.status.correctionTrialRow = NaN;
     p.status.correctionTrialRepetition = 0;
+    p.status.correctionTrialTriggerSide = NaN;
     p.status.correctionRightRewardReductionLevel = 0;
-    p.status.correctionTrialLastOutcome = 'disabled';
+    if leftCorrectionNoLongerAllowed
+        p.status.correctionTrialLastOutcome = 'bilateral mode disabled';
+    else
+        p.status.correctionTrialLastOutcome = 'disabled';
+    end
     p.status.correctionTrialSnapshot = struct();
     p.status.correctionTrialSnapshotValid = false;
     if ~any(remaining)
@@ -155,6 +169,7 @@ if p.status.correctionTrialActive && correctionEnabled && ...
     p.status.correctionTrialActive = false;
     p.status.correctionTrialRow = NaN;
     p.status.correctionTrialRepetition = 0;
+    p.status.correctionTrialTriggerSide = NaN;
     p.status.correctionRightRewardReductionLevel = 0;
     p.status.correctionTrialMaxReachedCount = ...
         p.status.correctionTrialMaxReachedCount + 1;
@@ -174,6 +189,7 @@ if p.status.correctionTrialActive
         p.status.correctionTrialActive = false;
         p.status.correctionTrialRow = NaN;
         p.status.correctionTrialRepetition = 0;
+        p.status.correctionTrialTriggerSide = NaN;
         p.status.correctionRightRewardReductionLevel = 0;
         p.status.correctionTrialLastOutcome = 'invalid row';
         p.status.correctionTrialSnapshot = struct();
@@ -186,7 +202,9 @@ if p.status.correctionTrialActive
         p.trVars.correctionTrialActive = 1;
         p.trVars.correctionTrialRepetition = ...
             p.status.correctionTrialRepetition;
-        p.trVars.correctionRightRewardReductionLevel = max(1, round( ...
+        p.trVars.correctionTrialTriggerSide = getNumericScalar( ...
+            p.status, 'correctionTrialTriggerSide', 0);
+        p.trVars.correctionRightRewardReductionLevel = max(0, round( ...
             p.status.correctionRightRewardReductionLevel));
         p.trVars.correctionTrialMaxRepetition = maxRepetition;
         return
@@ -195,6 +213,7 @@ end
 
 p.trVars.correctionTrialActive = 0;
 p.trVars.correctionTrialRepetition = 0;
+p.trVars.correctionTrialTriggerSide = 0;
 p.trVars.correctionRightRewardReductionLevel = 0;
 p.trVars.correctionTrialMaxRepetition = maxRepetition;
 
@@ -228,6 +247,7 @@ defaults = struct( ...
     'correctionTrialActive', false, ...
     'correctionTrialRow', NaN, ...
     'correctionTrialRepetition', 0, ...
+    'correctionTrialTriggerSide', NaN, ...
     'correctionRightRewardReductionLevel', 0, ...
     'correctionTrialTriggerCount', 0, ...
     'correctionTrialSuccessCount', 0, ...

@@ -410,6 +410,8 @@ codes.correctionRightRewardAppliedMs = 20048;      % RIGHT reward after reductio
 codes.correctionOriginalRightRewardMs = 20049;     % restored pre-reduction reward
 codes.correctionSnapshotValid = 20050;             % exact trigger condition restored
 codes.delta = 20051;                               % sampled target delay in ms
+codes.correctionBothSides = 20052;                 % 0=RIGHT-only, 1=LEFT+RIGHT
+codes.correctionTrialTriggerSide = 20053;          % 0=none, 1=RIGHT, 2=LEFT
 
 
 %% validation

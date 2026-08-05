@@ -1,0 +1,6 @@
+Metric,EarlyValue,LateValue,LateMinusEarly,PermutationP,NEarly,NLate,QFDR
+Completion rate,1,1,0,1,5,5,1
+Median pre-trial interval (s),1.83312499523163,1.55733013153076,-0.275794863700867,0.0267946410717856,4,5,0.0803839232153569
+Median reaction time (ms),NaN,NaN,NaN,NaN,0,0,NaN
+Median fixation acquisition latency (ms),2.10857391357422,1.66964530944824,-0.438928604125977,0.195360927814437,5,5,0.293041391721656
+Mean missed frames,4,2.2,-1.8,NaN,5,5,NaN

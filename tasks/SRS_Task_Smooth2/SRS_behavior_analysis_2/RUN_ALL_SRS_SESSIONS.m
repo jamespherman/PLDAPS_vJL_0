@@ -25,7 +25,7 @@ addpath(analysisFolder);
 %% 2. Folder containing SRS session folders
 parentFolder = fullfile( ...
     '/home/herman_lab/Documents/PLDAPS_vK2_MASTER', ...
-    'tasks', 'SRS_Task_Smooth', 'output');
+    'output');
 
 if ~isfolder(parentFolder)
     parentFolder = uigetdir(pwd, ...
@@ -63,7 +63,7 @@ end
 %% 4. Options
 options = struct();
 % Apply the block selection separately within every session.
-options.blockRange = [8 Inf];
+options.blockRange = [];
 options.rollingWindow = 20;
 options.nPermutations = 5000;
 options.randomSeed = 20260720;

@@ -1,10 +1,12 @@
 function p = enforceCorrectionRewardDelivery(p)
 %ENFORCECORRECTIONREWARDDELIVERY Validate and record reward before delivery.
 %
-% On an active correction trial, a completed RIGHT choice must receive the
-% cumulative reward calculated by applyCorrectionRightRewardReduction. This
-% guard detects identity/side mismatches, repairs a stale duration if one is
-% encountered, and stores enough information to audit the delivered value.
+% On a RIGHT-triggered active correction trial, a completed RIGHT choice
+% must receive the cumulative reward calculated by
+% applyCorrectionRightRewardReduction. LEFT-triggered corrections preserve
+% the original rewards, so this guard must not apply the RIGHT-reward rule
+% to them. The validation below detects identity/side mismatches, repairs a
+% stale duration if one is encountered, and records the delivered value.
 
 currentRewardMs = getNumeric(p.trVars, 'currentRewardDuration', NaN);
 if ~isfinite(currentRewardMs)
@@ -21,8 +23,9 @@ reduceRight = getLogical( ...
     p.trVars, 'correctionReduceRightReward', false);
 chosenSide = getNumeric(p.trData, 'chosenSide', NaN);
 chosenTargetID = getNumeric(p.trData, 'chosenTargetID', NaN);
+triggerSide = getNumeric(p.status, 'correctionTrialTriggerSide', NaN);
 
-if active && reduceRight && chosenSide == 1
+if active && reduceRight && triggerSide == 1 && chosenSide == 1
     if chosenTargetID == 1
         targetSide = getNumeric(p.trVars, 'T1Side', NaN);
         targetRewardMs = getNumeric(p.trVars, 'rewardDurationT1', NaN);
