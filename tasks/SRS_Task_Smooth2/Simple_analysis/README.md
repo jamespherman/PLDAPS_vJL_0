@@ -1,8 +1,8 @@
 # Simple_analysis
 
-This folder runs the requested SRS behavioral analysis in **one MATLAB window**.
+This folder runs the requested SRS behavioral analysis in **one MATLAB window and on one page**.
 
-The window contains eight tabs:
+There are no tabs and no additional figure windows. The page contains a 4 x 2 grid:
 
 1. Candidate strategies
 2. Choice by task condition
@@ -13,7 +13,7 @@ The window contains eight tabs:
 7. Reaction time
 8. Text recap
 
-Each plot tab contains a caption explaining:
+Each plot has a figure caption directly underneath it explaining:
 
 - the axes;
 - the statistical test;
@@ -52,7 +52,7 @@ This analyzes block 8 through the final available block.
 
 4. Run `RUN_SIMPLE_ANALYSIS.m`.
 
-Only one figure window is opened. Use the tabs at the top to move between plots and the recap.
+All seven plots and the recap appear simultaneously in the same figure window.
 
 ## Outputs
 
@@ -63,13 +63,15 @@ figures/<session_and_blocks>/
 results/<session_and_blocks>/
 ```
 
-The complete interactive tabbed window is saved as:
+The complete page is exported as:
 
 ```text
-simple_analysis_all_tabs.fig
+simple_analysis_one_page.png
+simple_analysis_one_page.pdf
+simple_analysis_one_page.fig
 ```
 
-Each tab is also exported separately as PNG and PDF without opening additional MATLAB windows. The results folder contains:
+The results folder also contains:
 
 - `simple_analysis_summary.txt`
 - `simple_analysis_results.mat`

@@ -86,8 +86,6 @@ p.status.highRewardTargetID = p.status.CurrentBlockType;
 p.status.correctionTrialActive = false;
 p.status.correctionTrialRow = NaN;
 p.status.correctionTrialRepetition = 0;
-p.status.correctionTrialTriggerSide = NaN;
-p.status.correctionRightRewardReductionLevel = 0;
 p.status.correctionTrialLastOutcome = 'new block';
 p.status.correctionTrialSnapshot = struct();
 p.status.correctionTrialSnapshotValid = false;
@@ -117,23 +115,15 @@ if ~any(remaining)
     error('No eligible SRS schedule rows remain in the current block.');
 end
 
-% Correction mode can force the exact same schedule row after a low-reward
-% choice on a conflict trial. The live checkbox selects RIGHT-only or
-% bilateral triggering. The maximum is read before every trial.
+% Correction mode can force the exact same schedule row after a rightward
+% low-reward choice on a conflict trial. The maximum is read from the GUI
+% copy on every trial, so it can be changed while the task is running.
 p = ensureCorrectionStatusFields(p);
 correctionEnabled = getLogicalScalar(p.trVars, 'correctionTrial', false);
-correctionBothSides = getLogicalScalar( ...
-    p.trVars, 'correctionBothSides', false);
 maxRepetition = max(0, round(getNumericScalar( ...
     p.trVars, 'correctionTrialMaxRepetition', 15)));
-activeTriggerSide = getNumericScalar( ...
-    p.status, 'correctionTrialTriggerSide', NaN);
-leftCorrectionNoLongerAllowed = p.status.correctionTrialActive && ...
-    activeTriggerSide == 2 && ~correctionBothSides;
 
-if p.status.correctionTrialActive && ...
-        (~correctionEnabled || maxRepetition == 0 || ...
-        leftCorrectionNoLongerAllowed)
+if p.status.correctionTrialActive && (~correctionEnabled || maxRepetition == 0)
     activeRow = p.status.correctionTrialRow;
     if isfinite(activeRow) && activeRow >= 1 && activeRow <= numel(remaining)
         p.status.trialsArrayRowsPossible(activeRow) = false;
@@ -142,13 +132,7 @@ if p.status.correctionTrialActive && ...
     p.status.correctionTrialActive = false;
     p.status.correctionTrialRow = NaN;
     p.status.correctionTrialRepetition = 0;
-    p.status.correctionTrialTriggerSide = NaN;
-    p.status.correctionRightRewardReductionLevel = 0;
-    if leftCorrectionNoLongerAllowed
-        p.status.correctionTrialLastOutcome = 'bilateral mode disabled';
-    else
-        p.status.correctionTrialLastOutcome = 'disabled';
-    end
+    p.status.correctionTrialLastOutcome = 'disabled';
     p.status.correctionTrialSnapshot = struct();
     p.status.correctionTrialSnapshotValid = false;
     if ~any(remaining)
@@ -169,8 +153,6 @@ if p.status.correctionTrialActive && correctionEnabled && ...
     p.status.correctionTrialActive = false;
     p.status.correctionTrialRow = NaN;
     p.status.correctionTrialRepetition = 0;
-    p.status.correctionTrialTriggerSide = NaN;
-    p.status.correctionRightRewardReductionLevel = 0;
     p.status.correctionTrialMaxReachedCount = ...
         p.status.correctionTrialMaxReachedCount + 1;
     p.status.correctionTrialLastOutcome = 'maximum changed/reached';
@@ -189,11 +171,9 @@ if p.status.correctionTrialActive
         p.status.correctionTrialActive = false;
         p.status.correctionTrialRow = NaN;
         p.status.correctionTrialRepetition = 0;
-        p.status.correctionTrialTriggerSide = NaN;
-        p.status.correctionRightRewardReductionLevel = 0;
         p.status.correctionTrialLastOutcome = 'invalid row';
-        p.status.correctionTrialSnapshot = struct();
-        p.status.correctionTrialSnapshotValid = false;
+    p.status.correctionTrialSnapshot = struct();
+    p.status.correctionTrialSnapshotValid = false;
     else
         p.trVars.currentTrialsArrayRow = forcedRow;
         p.status.blockAttemptCount = p.status.blockAttemptCount + 1;
@@ -202,10 +182,6 @@ if p.status.correctionTrialActive
         p.trVars.correctionTrialActive = 1;
         p.trVars.correctionTrialRepetition = ...
             p.status.correctionTrialRepetition;
-        p.trVars.correctionTrialTriggerSide = getNumericScalar( ...
-            p.status, 'correctionTrialTriggerSide', 0);
-        p.trVars.correctionRightRewardReductionLevel = max(0, round( ...
-            p.status.correctionRightRewardReductionLevel));
         p.trVars.correctionTrialMaxRepetition = maxRepetition;
         return
     end
@@ -213,8 +189,6 @@ end
 
 p.trVars.correctionTrialActive = 0;
 p.trVars.correctionTrialRepetition = 0;
-p.trVars.correctionTrialTriggerSide = 0;
-p.trVars.correctionRightRewardReductionLevel = 0;
 p.trVars.correctionTrialMaxRepetition = maxRepetition;
 
 cols = p.init.trialCols;
@@ -247,8 +221,6 @@ defaults = struct( ...
     'correctionTrialActive', false, ...
     'correctionTrialRow', NaN, ...
     'correctionTrialRepetition', 0, ...
-    'correctionTrialTriggerSide', NaN, ...
-    'correctionRightRewardReductionLevel', 0, ...
     'correctionTrialTriggerCount', 0, ...
     'correctionTrialSuccessCount', 0, ...
     'correctionTrialMaxReachedCount', 0, ...
@@ -377,11 +349,14 @@ end
 p.status.highRewardSide = sideOfTarget(p, p.status.highRewardTargetID);
 
 if p.trVars.nStim == 1
-    % The only visible target is made high-salience in instruction trials.
-    % This keeps T1-only and T2-only trials equally easy to see while reward
-    % remains determined solely by target identity.
-    p.status.highSalienceTargetID = p.trVars.singleTargetID;
-    p.status.highSalienceSide = sideOfTarget(p, p.trVars.singleTargetID);
+    % Instruction trials use the same high/low salience assignment rule as
+    % two-target trials, but independently of reward, target identity and
+    % screen side. Because only one target is displayed, this makes the
+    % visible target receive the sampled high or low salience value with
+    % equal probability.
+    p.status.highSalienceTargetID = randi(2);
+    p.status.highSalienceSide = sideOfTarget( ...
+        p, p.status.highSalienceTargetID);
 else
     if p.status.ActualTrialType == 1
         % Congruent: salience and reward favor the same spatial target.
@@ -733,35 +708,29 @@ if ~isfinite(maxAttempts) || maxAttempts < 1
     maxAttempts = 1000;
 end
 
-% Single-target instruction trials use the full visible contrast. Choice
-% trials use a log-uniform draw and its fixed-mean complement.
-if p.trVars.nStim == 1
-    highDesired = maxLum;
-    lowDesired = minLum;
+% Use the same log-uniform pair sampling on instruction and choice trials.
+% On instruction trials, assignTrialRewardsAndSalience independently decides
+% whether the visible target receives the sampled high or low luminance.
+validPair = false;
+for iAttempt = 1:maxAttempts
+    lumA = exp(log(minLum) + rand * (log(maxLum) - log(minLum)));
+    lumB = 2 * meanLum - lumA;
+    highDesired = max(lumA, lumB);
+    lowDesired = min(lumA, lumB);
     [highEntry, lowEntry] = mapDirectRgbPair(calTable, ...
         highDesired, lowDesired);
-else
-    validPair = false;
-    for iAttempt = 1:maxAttempts
-        lumA = exp(log(minLum) + rand * (log(maxLum) - log(minLum)));
-        lumB = 2 * meanLum - lumA;
-        highDesired = max(lumA, lumB);
-        lowDesired = min(lumA, lumB);
-        [highEntry, lowEntry] = mapDirectRgbPair(calTable, ...
-            highDesired, lowDesired);
 
-        % Require distinct displayed colors so the scheduled high-salience
-        % identity is physically brighter on every choice trial.
-        validPair = highEntry.measuredCdM2 > lowEntry.measuredCdM2 && ...
-            highEntry.redLevel ~= lowEntry.redLevel;
-        if validPair
-            break
-        end
+    % Require distinct displayed colors so the assigned high-salience
+    % identity is physically brighter on every trial.
+    validPair = highEntry.measuredCdM2 > lowEntry.measuredCdM2 && ...
+        highEntry.redLevel ~= lowEntry.redLevel;
+    if validPair
+        break
     end
-    if ~validPair
-        error(['Could not obtain two distinct direct-RGB luminance ', ...
-            'levels after %d attempts.'], maxAttempts);
-    end
+end
+if ~validPair
+    error(['Could not obtain two distinct direct-RGB luminance ', ...
+        'levels after %d attempts.'], maxAttempts);
 end
 
 if highTargetID == 1
@@ -925,63 +894,58 @@ if ~(isfinite(minOff) && isfinite(maxOff)) || ...
 end
 pairMean = (minOff + maxOff) / 2;
 
-if p.trVars.nStim == 1
-    % Instruction trial: the single visible target is drawn at maximum
-    % contrast to teach the identity->side association. The other (absent)
-    % target gets the minimum offset; it is not drawn.
-    offHigh = maxOff;
-    offLow = minOff;
-else
-    % Choice trial: sample the offset pair about the fixed midpoint.
-    minDiff = 0;
-    if isfield(p.trVars, 'hueContrastDiffMinDeg') && ...
-            isfinite(p.trVars.hueContrastDiffMinDeg)
-        minDiff = max(0, p.trVars.hueContrastDiffMinDeg);
-    end
+% Instruction and choice trials use exactly the same contrast-pair sampler.
+% On an instruction trial, only one member of the pair is displayed, and
+% assignTrialRewardsAndSalience independently randomizes whether that visible
+% target receives the high or low member.
+minDiff = 0;
+if isfield(p.trVars, 'hueContrastDiffMinDeg') && ...
+        isfinite(p.trVars.hueContrastDiffMinDeg)
+    minDiff = max(0, p.trVars.hueContrastDiffMinDeg);
+end
 
-    samplingMode = 'dubeyloguniform';
-    if isfield(p.trVars, 'hueContrastSamplingMode') && ...
-            ~isempty(p.trVars.hueContrastSamplingMode)
-        samplingMode = lower(char(p.trVars.hueContrastSamplingMode));
-    end
+samplingMode = 'dubeyloguniform';
+if isfield(p.trVars, 'hueContrastSamplingMode') && ...
+        ~isempty(p.trVars.hueContrastSamplingMode)
+    samplingMode = lower(char(p.trVars.hueContrastSamplingMode));
+end
 
-    switch samplingMode
-        case 'dubeyloguniform'
-            % Draw one offset log-uniform in [min,max], set the partner so
-            % the pair mean equals the midpoint. Because the mean is the
-            % midpoint, the partner is always within [min,max].
-            valid = false;
-            attempts = 0;
-            while ~valid
-                offA = exp(log(minOff) + ...
-                    rand * (log(maxOff) - log(minOff)));
-                offB = 2 * pairMean - offA;
-                valid = offB >= minOff - 1e-9 && ...
-                    offB <= maxOff + 1e-9 && ...
-                    abs(offA - offB) >= minDiff;
-                attempts = attempts + 1;
-                if attempts > 1000
-                    error(['Could not satisfy hueContrastDiffMinDeg ', ...
-                        'for the hue offset pair.']);
-                end
+switch samplingMode
+    case 'dubeyloguniform'
+        % Draw one offset log-uniform in [min,max], set the partner so
+        % the pair mean equals the midpoint. Because the mean is the
+        % midpoint, the partner is always within [min,max].
+        valid = false;
+        attempts = 0;
+        while ~valid
+            offA = exp(log(minOff) + ...
+                rand * (log(maxOff) - log(minOff)));
+            offB = 2 * pairMean - offA;
+            valid = offB >= minOff - 1e-9 && ...
+                offB <= maxOff + 1e-9 && ...
+                abs(offA - offB) >= minDiff;
+            attempts = attempts + 1;
+            if attempts > 1000
+                error(['Could not satisfy hueContrastDiffMinDeg ', ...
+                    'for the hue offset pair.']);
             end
-            offHigh = max(offA, offB);
-            offLow = min(offA, offB);
+        end
+        offHigh = max(offA, offB);
+        offLow = min(offA, offB);
 
-        case 'uniformdifference'
-            % Sample the offset difference uniformly with the mean fixed.
-            maxDiff = min(2 * (pairMean - minOff), 2 * (maxOff - pairMean));
-            if maxDiff < minDiff
-                error(['hueContrastDiffMinDeg exceeds the maximum valid ', ...
-                    'offset difference.']);
-            end
-            differenceMagnitude = minDiff + rand * (maxDiff - minDiff);
-            offHigh = pairMean + differenceMagnitude / 2;
-            offLow = pairMean - differenceMagnitude / 2;
+    case 'uniformdifference'
+        % Sample the offset difference uniformly with the mean fixed.
+        maxDiff = min(2 * (pairMean - minOff), 2 * (maxOff - pairMean));
+        if maxDiff < minDiff
+            error(['hueContrastDiffMinDeg exceeds the maximum valid ', ...
+                'offset difference.']);
+        end
+        differenceMagnitude = minDiff + rand * (maxDiff - minDiff);
+        offHigh = pairMean + differenceMagnitude / 2;
+        offLow = pairMean - differenceMagnitude / 2;
 
-        otherwise
-            error('Unknown hueContrastSamplingMode: %s', samplingMode);
-    end
+    otherwise
+        error('Unknown hueContrastSamplingMode: %s', samplingMode);
 end
 
 % Map the high/low offsets to targets by salience identity.
@@ -1079,27 +1043,6 @@ end
 
 function p = timingInfo(p)
 %TIMINGINFO Define trial timing values.
-
-% Sample the target-onset -> fixation-offset delay exactly once per trial.
-% The previous implementation sampled this value on every display-loop
-% iteration, so the go-signal threshold changed while the monkey waited.
-delayMinMs = double(p.trVars.delay_ms_min);
-delayMaxMs = double(p.trVars.delay_ms_max);
-if ~isscalar(delayMinMs) || ~isscalar(delayMaxMs) || ...
-        ~isfinite(delayMinMs) || ~isfinite(delayMaxMs) || ...
-        delayMinMs < 0 || delayMaxMs < delayMinMs
-    error('SRS:InvalidTargetDelayRange', ...
-        ['delay_ms_min and delay_ms_max must be finite nonnegative ', ...
-         'scalars with delay_ms_min <= delay_ms_max.']);
-end
-previousDelayMs = getNumericScalar( ...
-    p.status, 'previousTargetDelayDurationMs', NaN);
-p.trVars.targetDelayDurationMs = sampleTargetDelayMs( ...
-    delayMinMs, delayMaxMs, previousDelayMs);
-p.status.previousTargetDelayDurationMs = ...
-    p.trVars.targetDelayDurationMs;
-% Keep the legacy status field synchronized for existing strobes and plots.
-p.status.delta = p.trVars.targetDelayDurationMs;
 
 p.trVars.fix2StimOnIntvl = ...
     p.trVars.fix2CueIntvl + p.trVars.cueDur + p.trVars.cue2StimItvl;

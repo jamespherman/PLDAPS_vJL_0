@@ -38,7 +38,14 @@ addpath(coreFolder);
 
 %% 2. Select the session
 % Leave empty to open a folder picker, or enter a full session path.
-sessionFolder = '';
+
+% sessionFolder = '/home/herman_lab/Documents/PLDAPS_vK2_MASTER/output';
+
+sessionFolder = fullfile( ...
+    '/home/herman_lab/Documents/PLDAPS_vK2_MASTER', ...
+    'output', ...
+    '20260805_t1351_srsClassic_Moretraining');
+
 
 if isempty(sessionFolder) || ~isfolder(sessionFolder)
     selectedFolder = uigetdir(pwd, ...
@@ -83,7 +90,7 @@ if ~isfolder(resultFolder)
     mkdir(resultFolder);
 end
 
-%% 7. Create the recap, then display everything in one window
+%% 7. Create the recap, then display every plot on one page
 summaryFile = srs_write_simple_summary(T, stats, meta, resultFolder);
 figureFiles = srs_make_simple_figures(T, stats, meta, figureFolder, ...
     options, summaryFile);

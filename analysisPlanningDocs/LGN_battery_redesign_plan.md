@@ -91,8 +91,9 @@ This plan implements four workstreams:
 
 ## Implementation status (updated 2026-07-30)
 
-Committed + pushed to `main`; **none yet validated on the rig** — see
-`LGN_battery_redesign_test_log.md`.
+Committed + pushed to `main`. **All [OFFLINE] tests pass as of 2026-08-06**
+(1.5, 2.1, 2.2, 2.3 — run on `pldaps1`); **no [RIG] or [REC] test has been run
+yet.** See `LGN_battery_redesign_test_log.md` for per-block numbers.
 
 | Item | Status | Commit |
 |---|---|---|
