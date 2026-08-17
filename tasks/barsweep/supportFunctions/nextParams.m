@@ -59,20 +59,42 @@ end
 assert(p.trVars.setRepeats >= 1, ...
     'nextParams: setRepeats must be >= 1.');
 
-%% (4) Sweep trajectory (dva -> pix).
-cx_pix = p.draw.middleXY(1) + pds.deg2pix(p.trVars.pathCenterXDeg, p);
-cy_pix = p.draw.middleXY(2) - pds.deg2pix(p.trVars.pathCenterYDeg, p);
-L_pix  = pds.deg2pix(p.trVars.pathLengthDeg, p);
-
+%% (4) Sweep trajectory: endpoints in dva, THEN dva -> pix.
+% CRITICAL: pds.deg2pix is a tangent (perspective) mapping, not a scale
+% factor. deg2pix(a + b) ~= deg2pix(a) + deg2pix(b), and in particular
+% 0.5*deg2pix(L) ~= deg2pix(L/2). It is valid ONLY on an absolute
+% eccentricity measured from screen centre.
+%
+% Passing a LENGTH (pathLengthDeg) through it and then doing linear
+% arithmetic in pixel space -- as this function did prior to 2026-08-17 --
+% stretches the path and displaces its endpoints asymmetrically. For
+% pathCenterXDeg = -17, pathLengthDeg = 40 that put the start of a
+% leftward sweep at +6.50 deg instead of +3.00 deg and made the path span
+% 42.44 deg rather than 40. See
+% analysisPlanningDocs/barsweep_geometry_discrepancy_report.md.
+%
+% So: resolve both endpoints as absolute dva positions first, and only
+% then convert each one to pixels.
 theta = deg2rad(p.trVars.pathAngleDeg);
-% Y-sign convention follows existing PLDAPS tasks (rfMap, fixate, etc.):
-% positive Y in dva is up; pixel Y is down. Center conversion already
-% subtracted Y; for the trajectory, motion in +Y dva -> -Y pixels.
-dx =  0.5 * L_pix * cos(theta);
-dy = -0.5 * L_pix * sin(theta);
 
-p.trVars.sweepStartPix = [cx_pix - dx; cy_pix - dy];
-p.trVars.sweepEndPix   = [cx_pix + dx; cy_pix + dy];
+dxDeg = 0.5 * p.trVars.pathLengthDeg * cos(theta);
+dyDeg = 0.5 * p.trVars.pathLengthDeg * sin(theta);
+startDeg = [p.trVars.pathCenterXDeg - dxDeg; p.trVars.pathCenterYDeg - dyDeg];
+endDeg   = [p.trVars.pathCenterXDeg + dxDeg; p.trVars.pathCenterYDeg + dyDeg];
+
+% Y-sign convention follows existing PLDAPS tasks (rfMap, fixate, etc.):
+% positive Y in dva is up; pixel Y is down.
+p.trVars.sweepStartPix = [ ...
+    p.draw.middleXY(1) + pds.deg2pix(startDeg(1), p); ...
+    p.draw.middleXY(2) - pds.deg2pix(startDeg(2), p)];
+p.trVars.sweepEndPix   = [ ...
+    p.draw.middleXY(1) + pds.deg2pix(endDeg(1), p); ...
+    p.draw.middleXY(2) - pds.deg2pix(endDeg(2), p)];
+
+% Geometry-version stamp, saved per trial via p.trVars. Sessions recorded
+% before this fix carry no such field; correctBarsweepRFCenters keys off
+% its absence to identify data needing the post-hoc coordinate correction.
+p.trVars.sweepGeometryVersion = 2;
 
 %% (5) Quantization contract (visibility vs motion duration).
 frameInterval = p.rig.frameDuration;
@@ -118,26 +140,22 @@ if p.trVars.speedDegPerSec / refreshRate > p.trVars.barWidthDeg
         p.trVars.speedDegPerSec / refreshRate, p.trVars.barWidthDeg);
 end
 
-%% (7) Precomputed bar-center pixel array (2 x sweepFrames).
-% Endpoint contract: sweepCenterPix(:,1) == sweepStartPix and
-% sweepCenterPix(:,sweepFrames) == sweepEndPix exactly.
-if sweepFrames >= 2
-    p.trVars.sweepCenterPix = [ ...
-        linspace(p.trVars.sweepStartPix(1), p.trVars.sweepEndPix(1), sweepFrames); ...
-        linspace(p.trVars.sweepStartPix(2), p.trVars.sweepEndPix(2), sweepFrames) ];
-else
-    p.trVars.sweepCenterPix = p.trVars.sweepStartPix;
-end
-
-%% (7b) Parallel bar-center array in dva (y-up sign convention).
-% Sweep endpoints in dva, derived from pathCenterDeg + half-length along
-% the motion axis. Used by accumulateBarsweepRF to compute the
-% path-center-relative projection coordinate without inverting deg2pix.
+%% (7) Precomputed bar-center arrays (2 x sweepFrames): dva, then pixels.
+% Interpolate in DEGREES so the bar advances by a constant ANGULAR step
+% per frame -- i.e. so speedDegPerSec means what it says. Interpolating in
+% pixel space instead (as this function did prior to 2026-08-17) would
+% reintroduce the tangent distortion fixed in §4: constant pixel velocity
+% is not constant angular velocity on a flat screen.
+%
+% sweepCenterDegByFrame is the y-up dva array consumed by
+% accumulateBarsweepRF as the RF position axis. Because it is now the true
+% on-screen position of the bar, that axis needs no correction downstream.
 % Distinct from the existing static [1x2] p.trData.sweepCenterDeg.
-dxDeg = 0.5 * p.trVars.pathLengthDeg * cos(theta);
-dyDeg = 0.5 * p.trVars.pathLengthDeg * sin(theta);
-startDeg = [p.trVars.pathCenterXDeg - dxDeg; p.trVars.pathCenterYDeg - dyDeg];
-endDeg   = [p.trVars.pathCenterXDeg + dxDeg; p.trVars.pathCenterYDeg + dyDeg];
+%
+% Endpoint contract: sweepCenterPix(:,1) == sweepStartPix and
+% sweepCenterPix(:,sweepFrames) == sweepEndPix exactly, since both are the
+% same pds.deg2pix call applied to the same startDeg / endDeg values.
+% Intermediate frames are deliberately NOT linear in pixels.
 if sweepFrames >= 2
     p.trVars.sweepCenterDegByFrame = [ ...
         linspace(startDeg(1), endDeg(1), sweepFrames); ...
@@ -145,6 +163,10 @@ if sweepFrames >= 2
 else
     p.trVars.sweepCenterDegByFrame = startDeg;
 end
+
+p.trVars.sweepCenterPix = [ ...
+    p.draw.middleXY(1) + pds.deg2pix(p.trVars.sweepCenterDegByFrame(1, :), p); ...
+    p.draw.middleXY(2) - pds.deg2pix(p.trVars.sweepCenterDegByFrame(2, :), p)];
 
 %% (8) Bar geometry in pixels for textures and dest rect.
 barWidthPix  = max(1, round(pds.deg2pix(p.trVars.barWidthDeg,  p)));
