@@ -1,6 +1,0 @@
-Metric,N,Count,Proportion,CI95Low,CI95High,PExactVsHalf,Notes,QFDR
-T1 presented on the right,800,400,0.5,0.465435291822163,0.534564708177837,1,Spatial counterbalancing of target identity.,1
-Rich target on the right,800,400,0.5,0.465435291822163,0.534564708177837,1,Reward value should be independent of side.,1
-High-salience target on the right,800,400,0.5,0.465435291822163,0.534564708177837,1,Salience should be independent of side.,1
-Congruent trial,800,400,0.5,0.465435291822163,0.534564708177837,1,Congruent/conflict balance.,1
-T1 instruction trial,212,106,0.5,0.4332961868042,0.5667038131958,1,Identity balance in instruction trials.,1

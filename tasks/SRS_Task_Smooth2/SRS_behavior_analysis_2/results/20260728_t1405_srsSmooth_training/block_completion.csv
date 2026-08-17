@@ -1,8 +1,0 @@
-SessionID,BlockUID,Block,RichTarget,Attempts,GoodTrials,GoodChoices,RealEyeChoices,ExpectedTrials,TrialsMissing,CompletionFraction,Incomplete
-20260728_t1405_srsSmooth_training,20260728_t1405_srsSmooth_training_B001,1,1,103,96,76,76,96,0,1,0
-20260728_t1405_srsSmooth_training,20260728_t1405_srsSmooth_training_B002,2,2,110,96,76,76,96,0,1,0
-20260728_t1405_srsSmooth_training,20260728_t1405_srsSmooth_training_B003,3,1,98,88,68,68,88,0,1,0
-20260728_t1405_srsSmooth_training,20260728_t1405_srsSmooth_training_B004,4,2,112,104,84,84,104,0,1,0
-20260728_t1405_srsSmooth_training,20260728_t1405_srsSmooth_training_B005,5,1,111,104,84,84,104,0,1,0
-20260728_t1405_srsSmooth_training,20260728_t1405_srsSmooth_training_B006,6,2,112,96,76,76,96,0,1,0
-20260728_t1405_srsSmooth_training,20260728_t1405_srsSmooth_training_B007,7,1,14,3,0,0,96,93,0.03125,1

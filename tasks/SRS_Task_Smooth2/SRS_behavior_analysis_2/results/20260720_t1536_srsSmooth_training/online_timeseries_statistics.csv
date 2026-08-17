@@ -1,9 +1,0 @@
-Metric,N,Mean,SD,Median,IQR,Minimum,Maximum,CorrelationWithAttempt,PermutationP,Notes,QFDR
-T1 - T2 reward difference (ms),5,37,7.03562363973514,39,5,25,42,0.157851698853852,0.916416716656669,Design variable; not necessarily known before the choice.,0.916416716656669
-T1 - T2 hue contrast difference (deg),5,28.6,161.00753087977,145,289.5,-151,148.5,0.607210949714635,0.277744451109778,Signed visual-salience evidence.,0.555488902219556
-T1 - T2 luminance difference (cd/m2),0,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,Used when the session manipulates luminance.,NaN
-Pre-trial interval (s),5,47.6130218029022,45.6285802421991,21.2134644985199,66.6591715812683,2.78125476837158,105.101151943207,0.687016285920198,0.233953209358128,A late increase can indicate slower task initiation.,0.555488902219556
-Fixation acquisition latency (ms),7,108.91148022243,104.582923844783,136.343955993652,191.008567810059,1.26218795776367,236.356973648071,0.461800271504051,0.246950609878024,Operational engagement measure before the saccadic response.,0.555488902219556
-Reaction time (ms),0,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,fixOff to saccadeOnset.,NaN
-Attempt duration (s),7,1.1825544152941,0.785228623064706,1.06960606575012,1.21294260025024,0.160844087600708,2.09116244316101,-0.160385883788336,0.701659668066387,Includes completed and aborted attempts.,0.916416716656669
-Missed frames,7,2.14285714285714,2.19306265517513,2,2.5,0,6,0.0827385829627423,0.857028594281144,Technical display-quality control.,0.916416716656669

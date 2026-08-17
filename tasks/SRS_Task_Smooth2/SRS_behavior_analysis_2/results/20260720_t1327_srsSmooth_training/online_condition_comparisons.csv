@@ -1,4 +1,0 @@
-Outcome,NTotal,NConflict,CountConflict,PConflict,CI95LowConflict,CI95HighConflict,NCongruent,CountCongruent,PCongruent,CI95LowCongruent,CI95HighCongruent,Difference,OddsRatio,FisherP,QFDR,Notes
-Choose high-salience target,252,126,126,1,0.970414235517802,1,126,124,0.984126984126984,0.943971236215075,0.995636198175177,-0.0158730158730159,0.196837944664032,0.498007968127516,0.747011952191273,Tests whether salience-guided choices differ between conditions.
-Choose high-reward target,252,126,0,0,0,0.0295857644821983,126,124,0.984126984126984,0.943971236215075,0.995636198175177,0.984126984126984,12599.4,4.47348348893503e-71,1.34204504668051e-70,Tests whether reward-guided choices differ between conditions.
-Choose right,252,126,63,0.5,0.413997435383882,0.586002564616118,126,63,0.5,0.413997435383882,0.586002564616118,0,1,0.999999999999998,0.999999999999999,Spatial control comparing conflict and congruent trials.

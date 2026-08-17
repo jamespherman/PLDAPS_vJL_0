@@ -1,7 +1,0 @@
-Domain,Metric,NAll,CountAll,ProportionAll,NReal,CountReal,ProportionReal,CI95LowReal,CI95HighReal,PExactVsHalfReal,Notes,QFDR
-Spatial,Choose right,0,0,NaN,0,0,NaN,NaN,NaN,NaN,Absolute right/left bias.,NaN
-Identity,Choose T1,0,0,NaN,0,0,NaN,NaN,NaN,NaN,Absolute T1/T2 bias.,NaN
-Reward,Choose rich target,0,0,NaN,0,0,NaN,NaN,NaN,NaN,Choice based on the blockwise reward contingency.,NaN
-Salience,Choose high-salience target,0,0,NaN,0,0,NaN,NaN,NaN,NaN,Choice guided by visual salience.,NaN
-Perseveration,Repeat target identity,0,0,NaN,0,0,NaN,NaN,NaN,NaN,Current choice compared with the previous two-target choice.,NaN
-Perseveration,Repeat side,0,0,NaN,0,0,NaN,NaN,NaN,NaN,Current choice compared with the previous two-target choice.,NaN

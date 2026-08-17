@@ -1,9 +1,0 @@
-Domain,Response,Predictor,NAll,PResponseWhen0All,PResponseWhen1All,DifferenceAll,OddsRatioAll,NReal,PResponseWhen0Real,PResponseWhen1Real,DifferenceReal,OddsRatioReal,FisherPReal,Notes,QFDR
-Spatial,Choose right,Rich target on the right,86,0.953488372093023,0.953488372093023,0,1,86,0.953488372093023,0.953488372093023,0,1,1,Effect of reward on chosen side.,1
-Spatial,Choose right,High-salience target on the right,86,0.909090909090909,1,0.0909090909090909,9.44444444444444,86,0.909090909090909,1,0.0909090909090909,9.44444444444444,0.116635076557939,Effect of salience on chosen side.,0.466540306231755
-Spatial/identity,Choose right,T1 on the right,86,0.953488372093023,0.953488372093023,0,1,86,0.953488372093023,0.953488372093023,0,1,1,A T1 preference produces a positive association; T2 produces a negative association.,1
-Spatial perseveration,Choose right,Previous choice on the right,85,0.75,0.962962962962963,0.212962962962963,9.61224489795918,85,0.75,0.962962962962963,0.212962962962963,9.61224489795918,0.178312759132441,Dependence on the side selected previously.,0.475500691019843
-Reward,Choose T1,T1 is rich,86,0.5,0.5,0,1,86,0.5,0.5,0,1,0.999999999999973,Reward effect independent of T1 side.,1
-Salience,Choose T1,T1 is high salience,86,0.466666666666667,0.536585365853659,0.0699186991869919,1.31484794275492,86,0.466666666666667,0.536585365853659,0.0699186991869919,1.31484794275492,0.666163956354154,Effect of salience on identity choice.,1
-Identity/spatial,Choose T1,T1 on the right,86,0.0465116279069767,0.953488372093023,0.906976744186047,275.56,86,0.0465116279069767,0.953488372093023,0.906976744186047,275.56,2.46253096444222e-19,An always-right policy produces a positive association.,1.97002477155378e-18
-Identity perseveration,Choose T1,Previous choice was T1,85,0.5,0.488372093023256,-0.0116279069767442,0.955555555555556,85,0.5,0.488372093023256,-0.0116279069767442,0.955555555555556,0.999999999999988,Dependence on the previously selected identity.,1
