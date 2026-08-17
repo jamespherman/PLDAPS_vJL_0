@@ -1,0 +1,4 @@
+SessionID,BlockUID,Block,RichTarget,Attempts,GoodTrials,GoodChoices,RealEyeChoices,ExpectedTrials,TrialsMissing,CompletionFraction,Incomplete
+20260720_t1327_srsSmooth_training,20260720_t1327_srsSmooth_training_B001,1,2,106,100,80,80,100,0,1,0
+20260720_t1327_srsSmooth_training,20260720_t1327_srsSmooth_training_B002,2,1,113,108,88,88,108,0,1,0
+20260720_t1327_srsSmooth_training,20260720_t1327_srsSmooth_training_B003,3,2,113,104,84,84,104,0,1,0

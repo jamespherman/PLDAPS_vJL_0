@@ -6,9 +6,9 @@ function p = updateTrialsList(p)
 %   - failed or aborted rows remain eligible.
 %
 % Optional correction behavior:
-%   When correctionTrial is enabled, a successful two-target conflict trial
-%   triggers correction if the subject chose the RIGHT target while the
-%   high-reward target was not on the right. The exact schedule row is then
+%   The legacy mode corrects only a RIGHT low-reward choice on a conflict
+%   trial. When correctionBothSides is enabled, the same rule applies to a
+%   low-reward choice on either side. The exact stochastic condition is
 %   forced again until the high-reward target is chosen or the configurable
 %   repetition limit is reached.
 
@@ -25,17 +25,28 @@ end
 
 p = ensureCorrectionStatusFields(p);
 correctionEnabled = getLogicalField(p.trVars, 'correctionTrial', false);
+correctionBothSides = getLogicalField( ...
+    p.trVars, 'correctionBothSides', false);
 maxRepetition = max(0, round(getNumericField( ...
     p.trVars, 'correctionTrialMaxRepetition', 15)));
+activeTriggerSide = getNumericField( ...
+    p.status, 'correctionTrialTriggerSide', NaN);
+leftCorrectionNoLongerAllowed = p.status.correctionTrialActive && ...
+    activeTriggerSide == 2 && ~correctionBothSides;
 
-% If correction was switched off from the GUI while a row was active,
-% retire that already-completed trigger row and resume normal scheduling.
-if p.status.correctionTrialActive && ~correctionEnabled
+% If correction was switched off, or bilateral mode was disabled during a
+% LEFT-triggered sequence, retire the completed trigger row and resume.
+if p.status.correctionTrialActive && ...
+        (~correctionEnabled || leftCorrectionNoLongerAllowed)
     activeRow = p.status.correctionTrialRow;
     if isValidRow(activeRow, p.status.trialsArrayRowsPossible)
         p.status.trialsArrayRowsPossible(activeRow) = false;
     end
-    p = clearCorrectionState(p, 'disabled');
+    if leftCorrectionNoLongerAllowed
+        p = clearCorrectionState(p, 'bilateral mode disabled');
+    else
+        p = clearCorrectionState(p, 'disabled');
+    end
 end
 
 if p.status.correctionTrialActive
@@ -54,10 +65,29 @@ if p.status.correctionTrialActive
         return
     end
 
+    trialCompleted = logical(p.trData.GoodTrial);
     choseHighReward = currentChoiceWasHighReward(p);
+    triggerSide = getNumericField( ...
+        p.status, 'correctionTrialTriggerSide', NaN);
+
+    % RIGHT reward reduction is only meaningful for a correction that was
+    % triggered by an incorrect RIGHT choice. A LEFT-triggered correction
+    % must preserve the correct HIGH reward on the right.
+    if triggerSide == 1
+        currentReductionLevel = max(1, round( ...
+            p.status.correctionRightRewardReductionLevel));
+        nextReductionLevel = advanceCorrectionRightRewardReductionLevel( ...
+            currentReductionLevel, trialCompleted, ...
+            getNumericField(p.trData, 'chosenSide', NaN), choseHighReward);
+        choseRightAgain = nextReductionLevel > currentReductionLevel;
+    else
+        currentReductionLevel = 0;
+        nextReductionLevel = 0;
+        choseRightAgain = false;
+    end
     repetition = p.status.correctionTrialRepetition;
 
-    if logical(p.trData.GoodTrial) && choseHighReward
+    if trialCompleted && choseHighReward
         % Correction succeeded. Remove the row and resume the schedule.
         p.status.trialsArrayRowsPossible(rowIdx) = false;
         p.trData.trialRepeatFlag = false;
@@ -80,29 +110,59 @@ if p.status.correctionTrialActive
         % Keep forcing the same row on the next attempt.
         p.status.trialsArrayRowsPossible(rowIdx) = true;
         p.trData.trialRepeatFlag = true;
-        p.status.correctionTrialLastOutcome = 'repeat pending';
+        if choseRightAgain
+            % Only another completed RIGHT choice compounds the reward
+            % reduction. Fixation breaks, no-response trials and other
+            % aborted attempts keep the current reduction level.
+            p.status.correctionRightRewardReductionLevel = ...
+                nextReductionLevel;
+            p.status.correctionTrialLastOutcome = sprintf( ...
+                'right choice; reduction level %d pending', ...
+                p.status.correctionRightRewardReductionLevel);
+        else
+            p.status.correctionTrialLastOutcome = ...
+                'repeat pending; reduction level unchanged';
+        end
     end
 
     p = updateSrsScheduleStatus(p);
     return
 end
 
-% Trigger correction only after a valid free-choice conflict trial in which
-% the subject chose RIGHT while the high-reward target was on the LEFT.
+% Trigger correction after a valid free-choice conflict trial when the
+% subject chose the low-reward target. correctionBothSides selects between
+% the legacy RIGHT-only trigger and a bilateral LEFT/RIGHT trigger.
 highRewardSide = getHighRewardSide(p);
+chosenSide = getNumericField(p.trData, 'chosenSide', NaN);
+choseHighReward = currentChoiceWasHighReward(p);
+bothSides = getLogicalField(p.trVars, 'correctionBothSides', false);
+validSideChoice = any(chosenSide == [1 2]) && any(highRewardSide == [1 2]);
+wrongLowRewardChoice = validSideChoice && ~choseHighReward && ...
+    chosenSide ~= highRewardSide;
+
+if bothSides
+    sideRulePassed = wrongLowRewardChoice;
+else
+    sideRulePassed = wrongLowRewardChoice && chosenSide == 1;
+end
+
 triggerCorrection = correctionEnabled && maxRepetition > 0 && ...
     logical(p.trData.GoodTrial) && getCurrentNStim(p) == 2 && ...
-    getCurrentTrialType(p) == 2 && ...
-    getNumericField(p.trData, 'chosenSide', NaN) == 1 && ...
-    highRewardSide == 2;
+    getCurrentTrialType(p) == 2 && sideRulePassed;
 
 if triggerCorrection
     p.status.correctionTrialActive = true;
     p.status.correctionTrialRow = rowIdx;
     p.status.correctionTrialRepetition = 0;
+    p.status.correctionTrialTriggerSide = chosenSide;
+
+    % Only a RIGHT-triggered correction uses the optional anti-right reward
+    % reduction. LEFT-triggered corrections keep the original rewards.
+    p.status.correctionRightRewardReductionLevel = double(chosenSide == 1);
     p.status.correctionTrialTriggerCount = ...
         p.status.correctionTrialTriggerCount + 1;
-    p.status.correctionTrialLastOutcome = 'triggered by right low-reward choice';
+    p.status.correctionTrialLastOutcome = sprintf( ...
+        'triggered by %s low-reward choice', lower(sideName(chosenSide)));
     p = captureCorrectionTrialSnapshot(p);
 
     % Keep the completed trigger row eligible so chooseScheduledRow can
@@ -123,6 +183,8 @@ defaults = struct( ...
     'correctionTrialActive', false, ...
     'correctionTrialRow', NaN, ...
     'correctionTrialRepetition', 0, ...
+    'correctionTrialTriggerSide', NaN, ...
+    'correctionRightRewardReductionLevel', 0, ...
     'correctionTrialTriggerCount', 0, ...
     'correctionTrialSuccessCount', 0, ...
     'correctionTrialMaxReachedCount', 0, ...
@@ -142,6 +204,8 @@ function p = clearCorrectionState(p, outcome)
 p.status.correctionTrialActive = false;
 p.status.correctionTrialRow = NaN;
 p.status.correctionTrialRepetition = 0;
+p.status.correctionTrialTriggerSide = NaN;
+p.status.correctionRightRewardReductionLevel = 0;
 p.status.correctionTrialLastOutcome = outcome;
 p.status.correctionTrialSnapshot = struct();
 p.status.correctionTrialSnapshotValid = false;
@@ -191,6 +255,16 @@ end
 function tf = isValidRow(rowIdx, rowMask)
 tf = isfinite(rowIdx) && rowIdx >= 1 && rowIdx <= numel(rowMask) && ...
     rowIdx == round(rowIdx);
+end
+
+function name = sideName(side)
+if side == 1
+    name = 'RIGHT';
+elseif side == 2
+    name = 'LEFT';
+else
+    name = 'UNKNOWN';
+end
 end
 
 function value = getNumericField(s, fieldName, defaultValue)

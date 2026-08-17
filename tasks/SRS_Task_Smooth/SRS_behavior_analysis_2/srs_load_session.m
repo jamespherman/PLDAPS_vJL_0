@@ -1,4 +1,4 @@
-function [T, meta] = srs_load_session(sessionFolder)
+function [T, meta] = srs_load_session(sessionFolder, blockRange)
 %SRS_LOAD_SESSION Read a PLDAPS SRS session directly from MAT files.
 %
 %   [T, META] = SRS_LOAD_SESSION(SESSIONFOLDER)
@@ -19,6 +19,22 @@ function [T, meta] = srs_load_session(sessionFolder)
 %% Folder checks
 if nargin < 1 || isempty(sessionFolder)
     error('A session folder must be provided.');
+end
+
+% Keep all blocks by default for backward compatibility with existing calls.
+if nargin < 2
+    blockRange = [];
+end
+
+if ~isempty(blockRange)
+    validateattributes(blockRange, {'numeric'}, ...
+        {'vector', 'numel', 2, 'real', 'nonnan'}, ...
+        mfilename, 'blockRange', 2);
+    blockRange = double(blockRange(:)');
+    if blockRange(1) > blockRange(2)
+        error(['The lower blockRange limit must be less than or equal ', ...
+            'to the upper limit.']);
+    end
 end
 
 if isstring(sessionFolder)
@@ -254,6 +270,23 @@ T = struct2table(rows);
 [~, rowOrder] = sort(T.Attempt);
 T = T(rowOrder, :);
 
+% Filter before cumulative indices, timing, and sequential dependencies are
+% calculated. The first retained choice therefore never uses an excluded
+% block as its previous choice.
+if ~isempty(blockRange)
+    availableBlocks = unique(T.Block(isfinite(T.Block)))';
+    keepTrial = isfinite(T.Block) & ...
+        T.Block >= blockRange(1) & T.Block <= blockRange(2);
+
+    if ~any(keepTrial)
+        error(['No attempts were found in blocks %g through %g. ', ...
+            'Available blocks: %s'], ...
+            blockRange(1), blockRange(2), mat2str(availableBlocks));
+    end
+
+    T = T(keepTrial, :);
+end
+
 nTrials = height(T);
 
 T.TrialTypeLabel = repmat("Other", nTrials, 1);
@@ -413,6 +446,8 @@ T.RealEyeChoice = T.GoodChoice & T.PassEye == 0 & T.MouseEyeSim == 0;
 meta = struct();
 meta.sessionFolder = sessionFolder;
 meta.sessionID = sessionID;
+meta.blockRangeRequested = blockRange;
+meta.analyzedBlocks = unique(T.Block(isfinite(T.Block)), 'stable')';
 meta.experimentType = experimentType;
 meta.taskName = taskName;
 meta.sessionDate = sessionDate;

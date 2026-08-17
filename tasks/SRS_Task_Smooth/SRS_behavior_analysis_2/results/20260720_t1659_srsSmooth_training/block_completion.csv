@@ -1,0 +1,2 @@
+SessionID,BlockUID,Block,RichTarget,Attempts,GoodTrials,GoodChoices,RealEyeChoices,ExpectedTrials,TrialsMissing,CompletionFraction,Incomplete
+20260720_t1659_srsSmooth_training,20260720_t1659_srsSmooth_training_B001,1,1,15,15,0,0,96,81,0.15625,1

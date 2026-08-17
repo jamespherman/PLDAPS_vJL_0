@@ -20,6 +20,11 @@ fprintf(fid, 'Session or dataset : %s\n', meta.sessionID);
 if isfield(meta, 'sessionFolder')
     fprintf(fid, 'Source folder      : %s\n', meta.sessionFolder);
 end
+if isfield(meta, 'blockRangeRequested') && ...
+        ~isempty(meta.blockRangeRequested)
+    fprintf(fid, 'Analyzed blocks    : %g through %g\n', ...
+        meta.blockRangeRequested(1), meta.blockRangeRequested(2));
+end
 fprintf(fid, 'Generated          : %s\n\n', datestr(now));
 
 fprintf(fid, 'STATISTICAL SYMBOLS\n');

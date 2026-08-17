@@ -25,7 +25,7 @@ addpath(analysisFolder);
 sessionFolder = fullfile( ...
     '/home/herman_lab/Documents/PLDAPS_vK2_MASTER', ...
     'output', ...
-    '20260731_t1356_srsSmooth_Moretraining');
+    '20260804_t1517_srsSmooth_Moretraining');
 
 % If the path is not present on this computer, MATLAB opens a folder picker.
 if ~isfolder(sessionFolder)
@@ -38,6 +38,11 @@ end
 
 %% 3. Analysis options
 options = struct();
+
+% Analyze block 8 through the final available block.
+% Use [9 Inf] to exclude the first eight blocks.
+% Use [] to analyze every block as before.
+options.blockRange = [];
 
 % Trailing-window length for engagement and spatial-entropy curves.
 options.rollingWindow = 20;

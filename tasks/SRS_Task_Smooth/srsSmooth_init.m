@@ -55,6 +55,10 @@ end
 
 % (5) define audio waveforms and load to VIEWPixx
 p   = pds.initAudio(p);
+if isfield(p.trVarsInit, 'useThreeOutcomeTones') && ...
+        logical(p.trVarsInit.useThreeOutcomeTones)
+    p = initSrsFeedbackAudio(p);
+end
 
 % (6) define trial structure
 p   = initTrialStructure(p);
@@ -160,7 +164,6 @@ p.stim.funs.fidiff  = @(x)[x(1) diff(x)];
 p.stim.funs.iseven  = @(x)round(x/2) == x/2;
 
 end
-
 
 
 
