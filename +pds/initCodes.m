@@ -47,6 +47,7 @@ codes.uniqueTaskCode_sacc_to_phosph     = 32019;
 codes.uniqueTaskCode_rfMap              = 32020;
 codes.uniqueTaskCode_barsweep           = 32022;
 codes.uniqueTaskCode_SRS_task           = 32023;
+codes.uniqueTaskCode_SRS_mooving        = 32024; % moving-target SRS variant
 
 %% unique codes that are internal to the 'classyStrobe' function class
 % (see pds.classyStrobe.m for more details)
@@ -412,6 +413,21 @@ codes.correctionSnapshotValid = 20050;             % exact trigger condition res
 codes.delta = 20051;                               % sampled target delay in ms
 codes.correctionBothSides = 20052;                 % 0=RIGHT-only, 1=LEFT+RIGHT
 codes.correctionTrialTriggerSide = 20053;          % 0=none, 1=RIGHT, 2=LEFT
+
+
+% SRS_mooving target geometry. These codes preserve the actual target
+% positions independently of the legacy horizontal-side codes.
+codes.movingT1Angle_x10 = 20054;                 % T1 polar angle, deg x10 (0..3599)
+codes.movingT2Angle_x10 = 20055;                 % T2 polar angle, deg x10 (0..3599)
+codes.movingSeparation_x10 = 20056;              % shortest angular separation, deg x10
+codes.movingEccentricity_x100 = 20057;           % eccentricity, deg x100
+codes.T1PhysicalSide = 20058;                    % horizontal hemifield: 0=midline,1=right,2=left
+codes.T2PhysicalSide = 20059;                    % horizontal hemifield: 0=midline,1=right,2=left
+codes.chosenPhysicalSide = 20060;                % chosen horizontal hemifield: 0=none/midline,1=right,2=left
+codes.movingTargetsStraddleLR = 20061;           % 1=one target in each horizontal hemifield
+codes.movingTargetsStraddleUD = 20062;           % 1=one target above and one below fixation
+codes.chosenHorizontalRank = 20063;              % 0=undefined/tie,1=rightmost,2=leftmost
+codes.chosenVerticalRank = 20064;                % 0=undefined/tie,1=uppermost,2=lowermost
 
 
 %% validation

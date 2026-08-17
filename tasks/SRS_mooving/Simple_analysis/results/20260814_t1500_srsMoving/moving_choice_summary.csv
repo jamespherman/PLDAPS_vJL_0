@@ -1,0 +1,8 @@
+Metric,Value,N
+P(high reward identity),0.549019607843137,204
+P(high salience identity),0.573529411764706,204
+P(T1 identity),0.5,204
+P(right hemi | L/R available),0.802721088435374,147
+P(rightmost target),0.720588235294118,204
+P(upper hemi | U/D available),0.587837837837838,148
+P(uppermost target),0.593137254901961,204
