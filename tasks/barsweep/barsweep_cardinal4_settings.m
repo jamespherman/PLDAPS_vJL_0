@@ -197,6 +197,14 @@ p.trVarsInit.exitWhileLoop       = false;
 % --- runtime status flags (not GUI-exposed) ---
 p.trVarsInit.barsweepSessionDone = false;   % set true in _next.m when termination condition met
 
+% Sweep-geometry version, re-stamped every trial by nextParams.m. 1 (or
+% absent) = the pre-2026-08-17 geometry, where pathLengthDeg was pushed
+% through the tangent mapping pds.deg2pix as if it were a scale factor.
+% 2 = endpoints resolved in dva before conversion to pixels. Offline
+% tooling keys off this to decide whether a session needs the post-hoc
+% coordinate correction (see correctBarsweepRFCenters).
+p.trVarsInit.sweepGeometryVersion = 2;
+
 % --- Ripple / online RF mapping ---
 % useOnlineRF = true keeps the RF accumulator alive; with Ripple unavailable
 % the accumulation step is silently skipped (acceptance criterion #4).

@@ -39,8 +39,11 @@ end
 stimOnRipple = p.trData.eventTimes(find(onMask, 1, 'last'));
 
 %% (2) Sweep geometry, path-center-relative projection coordinate.
-% sweepCenterDegByFrame is precomputed in nextParams.m (§7b) parallel to
-% sweepCenterPix, in dva with the user-visible y-up sign convention.
+% sweepCenterDegByFrame is precomputed in nextParams.m (§7) parallel to
+% sweepCenterPix, in dva with the user-visible y-up sign convention. Since
+% the 2026-08-17 geometry fix it is the true on-screen bar position, so
+% this axis needs no post-hoc correction; sessions recorded before that
+% (no p.trVars.sweepGeometryVersion) do -- see correctBarsweepRFCenters.
 relCenter   = p.trVars.sweepCenterDegByFrame - rf.pathCenterDeg;  % [2 x sweepFrames]
 thetaMotion = mod(deg2rad(p.trVars.pathAngleDeg), 2*pi);
 thetaOri    = mod(thetaMotion, pi);
