@@ -46,15 +46,30 @@ elseif strcmp(p.init.exptType, 'pick_all_channels')
     p.status.mstimMissCurrent = sum (p.status.microstimNumMisses (p.trVars.stimListIndex, :));
     p.status.propMstimHitsCurrent = p.status.mstimHitsCurrent/p.status.mstimMissCurrent;
 
+elseif strcmp(p.init.exptType, 'random_sample') && p.trVars.trialType == 7
+
+    p.status.microstimNumHits (p.trVars.stimulatedElectrode, find(p.trVarsInit.ampVals == p.trVars.stimAmplitude)) = ...
+        p.status.microstimNumHits (p.trVars.stimulatedElectrode, find(p.trVarsInit.ampVals == p.trVars.stimAmplitude)) + ...
+        (ismember(p.trVars.trialType, [7]) && p.trData.trialEndState == p.state.sacComplete);
+
+    p.status.microstimNumMisses (p.trVars.stimulatedElectrode, find(p.trVarsInit.ampVals == p.trVars.stimAmplitude)) = ...
+        p.status.microstimNumMisses (p.trVars.stimulatedElectrode, find(p.trVarsInit.ampVals == p.trVars.stimAmplitude)) + ...
+        (ismember(p.trVars.trialType, [7]) && p.trData.trialEndState == p.state.heldFix);
+
+    p.status.mstimHitsCurrent = sum (p.status.microstimNumHits (p.trVars.stimulatedElectrode, :));
+    p.status.mstimMissCurrent = sum (p.status.microstimNumMisses (p.trVars.stimulatedElectrode, :));
+    p.status.propMstimHitsCurrent = p.status.mstimHitsCurrent/p.status.mstimMissCurrent;
+
 end
 
 
-% For staircase procedure
+% For staircase procedure, if not random_sample version
+if ~strcmp(p.init.exptType, 'random_sample')
 p.status.staircaseHits = p.status.staircaseHits + ...
     (ismember(p.trVars.trialType, [2 4 5 6]) && p.trData.trialEndState == p.state.sacComplete && p.trVars.overrideStaircase == 0);
 p.status.staircaseMisses = p.status.staircaseMisses + ...
     (ismember(p.trVars.trialType, [2 4 5 6]) && p.trData.trialEndState == p.state.heldFix && p.trVars.overrideStaircase == 0);
-
+end
 
 % For nostim trials
 p.status.noStimTrials = p.status.noStimTrials + (p.trVars.trialType == 3);
@@ -66,10 +81,6 @@ p.status.falseAlarms = p.status.falseAlarms + (p.trVars.trialType == 3 && ...
                                                p.trData.trialEndState == p.state.sacComplete);
 
 p.status.propNoStimRejects = p.status.correctRejects/p.status.falseAlarms;
-
-
-
-
 
 
 

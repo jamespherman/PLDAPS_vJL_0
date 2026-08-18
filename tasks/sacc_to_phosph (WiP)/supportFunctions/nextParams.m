@@ -39,6 +39,18 @@ elseif strcmp (p.init.exptType, 'pick_all_channels')
         warning ('Some chosen electrode(s) are not on good electrodes list!');
         p.status.badElectrodeWarningFlag = false;
     end
+elseif strcmp (p.init.exptType, 'random_sample')
+    if ~(p.status.previousElectrode == p.trVars.stimulatedElectrode)
+        p.status.previousElectrode = p.trVars.stimulatedElectrode;
+        p.status.badElectrodeWarningFlag = true;
+    end
+
+    if p.trVars.stimulatedElectrode == -1
+        error ('Need to set stimulated electrode');totalFixDur
+    elseif ~any(p.trVars.stimulatedElectrode == p.init.electrodeInfo.goodElectrodes) && p.status.badElectrodeWarningFlag
+        warning ('Chosen electrode is not on good electrodes list!');
+        p.status.badElectrodeWarningFlag = false;
+    end
 
 end
 
@@ -68,7 +80,7 @@ switch p.trVars.trialType
     case 1 % visual stimulus
         p = createVisualStimulusTexture(p);
 
-    case {2, 4, 5, 6} % microstim, bipolar stim, or two-channel stim
+    case {2, 4, 5, 6, 7} % microstim, bipolar stim, or two-channel stim
         p = createMicrostimTrain(p);
 
     case 3 % No stim trial
@@ -381,108 +393,6 @@ end
 %%%%%%%%%%%%%%%%%%%
 function p = createMicrostimTrain(p)
 
-% Timing Info:
-
-% time of stim onset and offset wrt fixAcq:
-p.trVars.timeStimOnset		= unifrnd (p.trVars.stimOnsetMin, p.trVars.stimOnsetMax);
-p.trVars.stimDur             = (p.trVars.cmdPeriod*p.trVars.cmdRepeats*(100/3))/1000000;
-p.trVars.timeStimOffset		= p.trVars.timeStimOnset + p.trVars.stimDur;
-
-% time of target onset wrt fixAcq:
-p.trVars.timeTargOnset          = p.trVars.timeStimOnset;
-p.trVars.timeTargOffset         = Inf;
-
-
-% time of fix offset wrt fix acquired:
-p.trVars.timeFixOffset          = p.trVars.totalFixDur;
-
-% Time subject should hold fix on the target
-p.trVars.targHoldDuration         = unifrnd(p.trVars.targHoldDurationMin, p.trVars.targHoldDurationMax);
-
-
-% Locations:
-
-% fixation location in pixels relative to the center of the screen!
-% (Y is flipped because positive is down in psychophysics toolbox).
-p.draw.fixPointPix      =  p.draw.middleXY + [1, -1] .* ...
-    pds.deg2pix([p.trVars.fixDegX, p.trVars.fixDegY], p);
-
-% fixation window width and height in pixels.
-p.draw.fixWinWidthPix       = pds.deg2pix(p.trVars.fixWinWidthDeg, p);
-p.draw.fixWinHeightPix      = pds.deg2pix(p.trVars.fixWinHeightDeg, p);
-
-
-% If we want the target window to be the entire screen
-% Set target location as centre of screen
-p.trVars.targDegX	= 0;
-p.trVars.targDegY	= 0;
-p.draw.targPointPix = p.draw.middleXY + [1, -1] .* ...
-    pds.deg2pix([p.trVars.targDegX, p.trVars.targDegY], p);
-
-% target window width and height in pixels.
-p.trVars.targWinWidthDeg    = 30;
-p.trVars.targWinHeightDeg   = 20;
-p.draw.targWinWidthPix      = pds.deg2pix(p.trVars.targWinWidthDeg, p);
-p.draw.targWinHeightPix     = pds.deg2pix(p.trVars.targWinHeightDeg, p);
-
-p.draw.color.targWin         = p.draw.clutIdx.expMemMagenta_subBg;
-
-
-% If we instead want to set target location as predicted RF of stimulated electrode:
-%{
-% Set target location as predicted RF of stimulated electrode
-% ************
-p.trVars.targDegX	= p.init.electrodeInfo.predictedRFX(p.trVars.stimulatedElectrode);
-p.trVars.targDegY	= p.init.electrodeInfo.predictedRFY(p.trVars.stimulatedElectrode);
-p.draw.targPointPix     =  p.draw.middleXY + [1, -1] .* ...
-    pds.deg2pix([p.trVars.targDegX, p.trVars.targDegY], p);
-
-% target window width and height in pixels.
-p.trVars.targWinWidthDeg    = p.trVars.microstimTargWinWidthDeg;
-p.trVars.targWinHeightDeg   = p.trVars.microstimTargWinHeightDeg;
-p.draw.targWinWidthPix      = pds.deg2pix(p.trVars.targWinWidthDeg, p);
-p.draw.targWinHeightPix     = pds.deg2pix(p.trVars.targWinHeightDeg, p);
-%}
-
-% Convert target X & Y into radius and theta so that we can strobe:
-% (can't strobe negative values, so r/th solves that)
-
-[tmpTheta, tmpRadius]   = cart2pol(p.trVars.targDegX, p.trVars.targDegY);
-
-% In order to strobe I need round positive numbers. 
-% For theta, I multiply by 10 ('_x10') and round. That gives 1 decimlal 
-% point precision, good enough!
-p.trVars.targTheta_x10  = round(mod(tmpTheta * 180 / pi, 360) * 10); 
-
-% For radius, I multiply by 100 ('_x100') and round. That gives 2 decimal
-% point precision, goo enough!
-p.trVars.targRadius_x100 = round(tmpRadius * 100);
-
-% Predicted RF Indicator Circle
-if strcmp(p.init.exptType, 'pick_one_channel') && isfield(p.init.electrodeInfo, 'predictedRFX') && isfield(p.init.electrodeInfo, 'predictedRFY') 
-    if ~isnan(p.init.electrodeInfo.predictedRFX(p.trVars.stimulatedElectrode)) && ~isnan(p.init.electrodeInfo.predictedRFY(p.trVars.stimulatedElectrode))
-        p.trVars.predRFCircleDegX = p.init.electrodeInfo.predictedRFX(p.trVars.stimulatedElectrode);
-        p.trVars.predRFCircleDegY = p.init.electrodeInfo.predictedRFY(p.trVars.stimulatedElectrode);
-        p.draw.color.predRFCircle   = p.draw.clutIdx.expCyan_subBg;
-    else
-        p.trVars.predRFCircleDegX = 0;
-        p.trVars.predRFCircleDegY = 0;
-        p.draw.color.predRFCircle = p.draw.clutIdx.expOrange_subBg;
-    end
-else
-    p.trVars.predRFCircleDegX = 0;
-    p.trVars.predRFCircleDegY = 0;
-    p.draw.color.predRFCircle = p.draw.clutIdx.expOrange_subBg;
-end
-
-p.draw.predictedRFCirclePointPix = p.draw.middleXY + [1, -1] .* ...
-    pds.deg2pix([p.trVars.predRFCircleDegX, p.trVars.predRFCircleDegY], p);
-p.draw.predRFCircleSizePix = pds.deg2pix(p.trVars.predRFCircleSize, p);
-
-
-% Scale reward randomly in the same range as for visual trials
-%p.trVars.rewardDurationMs = round(p.trVars.rewardDurationMs*(1 + rand^2));
-
 
 % Depending on trial type, pick electrodes and polarities
 
@@ -525,42 +435,86 @@ switch p.init.exptType
             p.trVars.stimElectrodeList = p.trVars.stimList{p.trVars.stimListIndex}(1,:);
             p.trVars.stimPolarities = p.trVars.stimList{p.trVars.stimListIndex}(2,:);
         end
-end
+
+
+    case 'random_sample'
+        if p.trVars.stimulatedElectrode < 1 || p.trVars.stimulatedElectrode > 64
+            error ('Chosen stimulated electrode is out of bounds');
+        end
+
+        if p.trVars.stimulatedElectrode - floor((p.trVars.numStimElectrodes)/2) < 1
+            p.trVars.stimElectrodeList = 1:p.trVars.numStimElectrodes;
+            p.trVars.stimPolarities = zeros(1, p.trVars.numStimElectrodes);
+        elseif p.trVars.stimulatedElectrode + floor((p.trVars.numStimElectrodes - 1)/2) > 64
+            p.trVars.stimElectrodeList = (65 - p.trVars.numStimElectrodes):64;
+            p.trVars.stimPolarities = zeros(1, p.trVars.numStimElectrodes);
+        else
+            minRange = p.trVars.stimulatedElectrode - floor((p.trVars.numStimElectrodes)/2);
+            maxRange = p.trVars.stimulatedElectrode + floor((p.trVars.numStimElectrodes - 1)/2);
+            p.trVars.stimElectrodeList = minRange:maxRange;
+            p.trVars.stimPolarities = zeros(1, p.trVars.numStimElectrodes);
+        end
+end   
 
 % Use channel-mapping to convert to Ripple channel
 p.trVars.rippleStimElectrodes = p.init.electrodeInfo.rippleChannel (p.trVars.stimElectrodeList);
 
+% If this is the random sample method, we retrieve current amplitude,
+% cmdPeriod, cmdRepeats, cmdSeqLength, and cmdSeqIPI from the trial structure
+if strcmp (p.init.exptType, 'random_sample')
+
+    stimAmplitudeCol = strcmp(p.init.trialArrayColumnNames, 'stimAmplitude');
+    p.trVars.stimAmplitude = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
+        stimAmplitudeCol);
+
+    cmdPeriodCol = strcmp(p.init.trialArrayColumnNames, 'cmdPeriod');
+    p.trVars.cmdPeriod = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
+        cmdPeriodCol);
+
+    cmdRepeatsCol = strcmp(p.init.trialArrayColumnNames, 'cmdRepeats');
+    p.trVars.cmdRepeats = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
+        cmdRepeatsCol);
+
+    cmdSeqLengthCol = strcmp(p.init.trialArrayColumnNames, 'cmdSeqLength');
+    p.trVars.cmdSeqLength = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
+        cmdSeqLengthCol);
+
+    cmdSeqIPICol = strcmp(p.init.trialArrayColumnNames, 'cmdSeqIPI');
+    p.trVars.cmdSeqIPI = p.init.trialsArray(p.trVars.currentTrialsArrayRow, ...
+        cmdSeqIPICol);
 
 
+% If overrideStaircase is enabled, use that value instead
+elseif p.trVars.overrideStaircase > 0
 
+    p.trVars.stimAmplitude = p.trVars.overrideStaircase;
 
+% If he has had 2 hits, reduce current amplitude according to staircase
+elseif p.status.staircaseHits >= 2 && p.status.staircaseCurrentIndex > 1  && p.trVars.overrideStaircase <= 0
 
-
-
-
-
-
-
-% Determine current based on where we are in the staircase procedure
-
-if p.status.staircaseHits >= 2 && p.status.staircaseCurrentIndex > 1  && p.trVars.overrideStaircase <= 0
     p.status.staircaseCurrentIndex = p.status.staircaseCurrentIndex - 1;
     p.status.staircaseHits = 0;
     p.status.staircaseMisses = 0;
 
+    p.trVars.stimAmplitude = p.trVars.ampVals (p.status.staircaseCurrentIndex);
+
+% If he has had 2 misses, increase current amplitude according to staircase
 elseif p.status.staircaseMisses >= 2 && p.status.staircaseCurrentIndex < numel(p.trVars.ampVals) && p.trVars.overrideStaircase <= 0
+
     p.status.staircaseCurrentIndex = p.status.staircaseCurrentIndex + 1;
     p.status.staircaseHits = 0;
     p.status.staircaseMisses = 0;
 
+    p.trVars.stimAmplitude = p.trVars.ampVals (p.status.staircaseCurrentIndex);
+
+% If none of the above, use current value defined by where we are in staircase
+else
+
+    p.trVars.stimAmplitude = p.trVars.ampVals (p.status.staircaseCurrentIndex);
+
 end
 
-% If overrideStaircase is not 0, use it as the stimAmplitude instead
-if p.trVars.overrideStaircase > 0
-    p.trVars.stimAmplitude = p.trVars.overrideStaircase;
-else
-    p.trVars.stimAmplitude = p.trVars.ampVals (p.status.staircaseCurrentIndex);
-end
+
 % ***********
 
 
@@ -671,16 +625,72 @@ p.trVars.stimAmplitudeStrobes = repmat(p.trVars.stimAmplitude, 1, numel(p.trVars
 % Message we will display while microstimming
 if p.trVars.trialType == 4
     p.trVars.microstimDispMessage = ['Opposite polarity microstim @ ', num2str(p.trVars.stimAmplitude), ' uA / ', num2str(p.trVars.stimCurrentSteps), ' steps on channel(s) '];
+elseif p.trVars.trialType == 7
+    p.trVars.microstimDispMessage = ['Microstim @ ', num2str(p.trVars.stimAmplitude), ' uA / ', num2str(p.trVars.stimCurrentSteps), ' steps, ', ...
+        num2str(round(p.trVars.cmdPeriod*33.3333)), ' us period, ', num2str(p.trVars.cmdRepeats), ' pulses, ', ...
+        num2str(round(p.trVars.cmdSeqLength*33.3333)), ' us phase width, ', num2str(round(p.trVars.cmdSeqIPI*33.3333)), ' us IPI '...
+        'on channel(s) '];
 else
     p.trVars.microstimDispMessage = ['Microstim @ ', num2str(p.trVars.stimAmplitude), ' uA / ', num2str(p.trVars.stimCurrentSteps), ' steps on channel(s) '];
 end
+
+
+
+
+
+% Working on Biomimetic stuff
+%{
+for j = 1:numel(p.trVars.cmdPeriodBiomim)
+
+% Make stimulation trains
+for i = 1:numel(p.trVars.rippleStimElectrodes)
+
+    %Make stimulation train
+    cmdTemp = struct ('elec', p.trVars.rippleStimElectrodes(i), ...
+        'period', p.trVars.cmdPeriodBiomim(j), 'repeats', round(p.trVars.cmdRepeats/numel(p.trVars.cmdPeriodBiomim)), 'action', 'allcyc');
+
+    % cmd.seq(1) describes the first phase of the biphasic pulse
+    cmdTemp.seq(1) = struct('length', p.trVars.cmdSeqLength, 'ampl', p.trVars.stimCurrentSteps, ...
+        'pol', p.trVars.stimPolarities(i), 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
+
+    % cmd.seq(2) describes the interphase interval of the biphasic pulse
+    cmdTemp.seq(2) = struct('length', p.trVars.cmdSeqIPI, 'ampl', 0, ...
+        'pol', 0, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
+
+    % cmd.seq(3) describes the second phase of the biphasic pulse. It
+    % should always be opposite polarity to the first phase
+    if cmdTemp.seq(1).pol == 0
+        cmdTemp.seq(3) = struct('length', p.trVars.cmdSeqLength, 'ampl', p.trVars.stimCurrentSteps, ...
+            'pol', 1, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);
+    elseif cmdTemp.seq(1).pol == 1
+        cmdTemp.seq(3) = struct('length', p.trVars.cmdSeqLength, 'ampl', p.trVars.stimCurrentSteps, ...
+            'pol', 0, 'fs', 1, 'enable', 1, 'delay', 0, 'ampSelect', 1);  
+    else
+        error ('Microstim polarity was not set correctly');
+    end
+
+
+    % Add this electrode's command to the list of commands to send
+    p.trVars.stimCommands{j}(i) = cmdTemp;
+
+    % While we're looping, also build the message we will display while
+    % stimulating
+    p.trVars.microstimDispMessage = [p.trVars.microstimDispMessage, num2str(p.trVars.stimElectrodeList(i)), ', '];
+
+end
+
+end
+% Remove the last ', ' from the display message
+p.trVars.microstimDispMessage = p.trVars.microstimDispMessage(1:end-2);
+%}
+
 
 % Make stimulation trains
 for i = 1:numel(p.trVars.rippleStimElectrodes)
     
     %Make stimulation train
     cmdTemp = struct ('elec', p.trVars.rippleStimElectrodes(i), ...
-    'period', p.trVars.cmdPeriod, 'repeats', p.trVars.cmdRepeats);
+    'period', p.trVars.cmdPeriod, 'repeats', p.trVars.cmdRepeats, 'action', 'allcyc');
 
     % cmd.seq(1) describes the first phase of the biphasic pulse
     cmdTemp.seq(1) = struct('length', p.trVars.cmdSeqLength, 'ampl', p.trVars.stimCurrentSteps, ...
@@ -714,6 +724,112 @@ end
 
 % Remove the last ', ' from the display message
 p.trVars.microstimDispMessage = p.trVars.microstimDispMessage(1:end-2);
+
+
+
+
+
+% Timing Info:
+
+% time of stim onset and offset wrt fixAcq:
+p.trVars.timeStimOnset		= unifrnd (p.trVars.stimOnsetMin, p.trVars.stimOnsetMax);
+p.trVars.stimDur             = (p.trVars.cmdPeriod*p.trVars.cmdRepeats*(100/3))/1000000;
+p.trVars.timeStimOffset		= p.trVars.timeStimOnset + p.trVars.stimDur;
+
+% time of target onset wrt fixAcq:
+p.trVars.timeTargOnset          = p.trVars.timeStimOnset;
+p.trVars.timeTargOffset         = Inf;
+
+
+% time of fix offset wrt fix acquired:
+p.trVars.timeFixOffset          = p.trVars.totalFixDur;
+
+% Time subject should hold fix on the target
+p.trVars.targHoldDuration         = unifrnd(p.trVars.targHoldDurationMin, p.trVars.targHoldDurationMax);
+
+
+% Locations:
+
+% fixation location in pixels relative to the center of the screen!
+% (Y is flipped because positive is down in psychophysics toolbox).
+p.draw.fixPointPix      =  p.draw.middleXY + [1, -1] .* ...
+    pds.deg2pix([p.trVars.fixDegX, p.trVars.fixDegY], p);
+
+% fixation window width and height in pixels.
+p.draw.fixWinWidthPix       = pds.deg2pix(p.trVars.fixWinWidthDeg, p);
+p.draw.fixWinHeightPix      = pds.deg2pix(p.trVars.fixWinHeightDeg, p);
+
+
+% If we want the target window to be the entire screen
+% Set target location as centre of screen
+p.trVars.targDegX	= 0;
+p.trVars.targDegY	= 0;
+p.draw.targPointPix = p.draw.middleXY + [1, -1] .* ...
+    pds.deg2pix([p.trVars.targDegX, p.trVars.targDegY], p);
+
+% target window width and height in pixels.
+p.trVars.targWinWidthDeg    = 30;
+p.trVars.targWinHeightDeg   = 20;
+p.draw.targWinWidthPix      = pds.deg2pix(p.trVars.targWinWidthDeg, p);
+p.draw.targWinHeightPix     = pds.deg2pix(p.trVars.targWinHeightDeg, p);
+
+p.draw.color.targWin         = p.draw.clutIdx.expMemMagenta_subBg;
+
+
+% If we instead want to set target location as predicted RF of stimulated electrode:
+%{
+% Set target location as predicted RF of stimulated electrode
+% ************
+p.trVars.targDegX	= p.init.electrodeInfo.predictedRFX(p.trVars.stimulatedElectrode);
+p.trVars.targDegY	= p.init.electrodeInfo.predictedRFY(p.trVars.stimulatedElectrode);
+p.draw.targPointPix     =  p.draw.middleXY + [1, -1] .* ...
+    pds.deg2pix([p.trVars.targDegX, p.trVars.targDegY], p);
+
+% target window width and height in pixels.
+p.trVars.targWinWidthDeg    = p.trVars.microstimTargWinWidthDeg;
+p.trVars.targWinHeightDeg   = p.trVars.microstimTargWinHeightDeg;
+p.draw.targWinWidthPix      = pds.deg2pix(p.trVars.targWinWidthDeg, p);
+p.draw.targWinHeightPix     = pds.deg2pix(p.trVars.targWinHeightDeg, p);
+%}
+
+% Convert target X & Y into radius and theta so that we can strobe:
+% (can't strobe negative values, so r/th solves that)
+
+[tmpTheta, tmpRadius]   = cart2pol(p.trVars.targDegX, p.trVars.targDegY);
+
+% In order to strobe I need round positive numbers. 
+% For theta, I multiply by 10 ('_x10') and round. That gives 1 decimlal 
+% point precision, good enough!
+p.trVars.targTheta_x10  = round(mod(tmpTheta * 180 / pi, 360) * 10); 
+
+% For radius, I multiply by 100 ('_x100') and round. That gives 2 decimal
+% point precision, goo enough!
+p.trVars.targRadius_x100 = round(tmpRadius * 100);
+
+% Predicted RF Indicator Circle
+if strcmp(p.init.exptType, 'pick_one_channel') && isfield(p.init.electrodeInfo, 'predictedRFX') && isfield(p.init.electrodeInfo, 'predictedRFY') 
+    if ~isnan(p.init.electrodeInfo.predictedRFX(p.trVars.stimulatedElectrode)) && ~isnan(p.init.electrodeInfo.predictedRFY(p.trVars.stimulatedElectrode))
+        p.trVars.predRFCircleDegX = p.init.electrodeInfo.predictedRFX(p.trVars.stimulatedElectrode);
+        p.trVars.predRFCircleDegY = p.init.electrodeInfo.predictedRFY(p.trVars.stimulatedElectrode);
+        p.draw.color.predRFCircle   = p.draw.clutIdx.expCyan_subBg;
+    else
+        p.trVars.predRFCircleDegX = 0;
+        p.trVars.predRFCircleDegY = 0;
+        p.draw.color.predRFCircle = p.draw.clutIdx.expOrange_subBg;
+    end
+else
+    p.trVars.predRFCircleDegX = 0;
+    p.trVars.predRFCircleDegY = 0;
+    p.draw.color.predRFCircle = p.draw.clutIdx.expOrange_subBg;
+end
+
+p.draw.predictedRFCirclePointPix = p.draw.middleXY + [1, -1] .* ...
+    pds.deg2pix([p.trVars.predRFCircleDegX, p.trVars.predRFCircleDegY], p);
+p.draw.predRFCircleSizePix = pds.deg2pix(p.trVars.predRFCircleSize, p);
+
+
+% Scale reward randomly in the same range as for visual trials
+%p.trVars.rewardDurationMs = round(p.trVars.rewardDurationMs*(1 + rand^2));
 
 
 

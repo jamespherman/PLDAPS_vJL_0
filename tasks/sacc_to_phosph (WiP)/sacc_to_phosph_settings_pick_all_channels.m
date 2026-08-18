@@ -278,8 +278,8 @@ p.trVarsInit.goLatencyMax            = 0.3;  % maximum saccade-latency criterion
 
 % Visual stimulus variables
 p.trVarsInit.stimOnsetMin	     = 0.3; % Time after fixation before stim comes on
-p.trVarsInit.stimOnsetMax	     = 0.8; % Once trained, should be 0.3 to 0.7
-p.trVarsInit.stimDurMin		     = 0.12; % Time stim stays on
+p.trVarsInit.stimOnsetMax	     = 1.3; % Once trained, should be 0.3 to 1.3
+p.trVarsInit.stimDurMin		     = 0.10; % Time stim stays on
 p.trVarsInit.stimDurMax		     = 0.20;
 p.trVarsInit.totalFixDur         = 1.5; % Total time from fixAcq to "heldFix" state
 

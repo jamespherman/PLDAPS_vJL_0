@@ -69,7 +69,7 @@ p.init.rigConfigFile     = which(['rigConfigFiles.rigConfig_rig' ...
 % define task name and related files:
 p.init.taskName     = 'sacc_to_phosph';
 
-p.init.exptType     = 'pick_one_channel';
+p.init.exptType     = 'random_sample';
 
 %% Task Code
 codes           = pds.initCodes;
@@ -148,9 +148,9 @@ p.status.trialsLeftInBlock          = 0; % how many trials remain in the current
 
 
 p.rig.guiStatVals = {...   
-    'staircaseCurrentIndex'; ...
-    'staircaseHits'; ...
-    'staircaseMisses'; ...
+    'iTrial'; ...
+    'iGoodTrial'; ...
+    'trialsLeftInBlock'; ...
     'visTrials'; ...
     'visNumHits'; ...
     'visNumMisses'; ...
@@ -172,10 +172,10 @@ p.rig.guiVars = {...
     'stimulatedElectrode'; ...          
     'numStimElectrodes'; ...
     'rewardDurationMs';...
-    'cmdPeriod'; ...       
-    'cmdRepeats'; ...
-    'cmdSeqLength'; ...
-    'cmdSeqIPI'; ...
+    'fixDegX'; ...
+    'fixDegY'; ...
+    'fixWinWidthDeg'; ...       
+    'fixWinHeightDeg'; ...
     'visTargWinWidthDeg'; ...
     'visTargWinHeightDeg'; ...
     'staircaseStartingIndex';...
@@ -250,7 +250,7 @@ p.trVarsInit.stimShape		 = 0;
 p.trVarsInit.targsSameColor	 = false;
 
 % times/latencies/durations:
-p.trVarsInit.rewardDurationMs        = 200; % reward duration
+p.trVarsInit.rewardDurationMs        = 120; % reward duration
 p.trVarsInit.rewardDelay             = 0;        % delay between cued change and reward delivery for hits.
 p.trVarsInit.timeoutAfterFa          = 2;        % timeout duration following false alarm.
 p.trVarsInit.joyWaitDur              = 5;        % how long to wait for the subject to press the joystick at the beginning of a trial?
@@ -305,28 +305,21 @@ p.init.electrodeInfo = load ('electrodeInfo.mat'); % Load in data about the elec
 p.trVarsInit.stimulatedElectrode = -1; % initialized to -1 to force user to set it when starting
 p.status.previousElectrode = p.trVarsInit.stimulatedElectrode; % Used to check when the stimulated electrode has been switched
 p.trVarsInit.numStimElectrodes = 1; % Used for N-channel stimulation
-p.trVarsInit.cmdPeriod = 150; % In 33.333 us clock cycles, calculated as 30,000/stimFrequency
-p.trVarsInit.cmdRepeats = 10; % Number of pulses
-p.trVarsInit.cmdSeqLength = 5; % Duration of single phase of pulse, in 33.333 us clock cycles
-p.trVarsInit.cmdSeqIPI = 2; % Duration of interphase interval, in 33.333 us clock cycles
 
-p.trVarsInit.cmdPeriodBiomim = [100 300 100]; % What periods (i.e. frequencies) do we want to use for biomimetic stim? 
-
-
+% These parameters are defined in the trial structure for this version
+% p.trVarsInit.cmdPeriod = 100; % In 33.333 us clock cycles, calculated as 30,000/stimFrequency
+% p.trVarsInit.cmdRepeats = 50; % Number of pulses
+% p.trVarsInit.cmdSeqLength = 5; % Duration of single phase of pulse, in 33.333 us clock cycles
+% p.trVarsInit.cmdSeqIPI = 2; % Duration of interphase interval, in 33.333 us clock cycles
+% 
 % For staircase procedure
 %p.trVarsInit.ampVals = [1, 2, 3, 4, 5, 6, 7, 9, 12, 14, 18, ...
-%                            23, 28, 35, 44, 55, 69, 86, 108, 134, 168, 210];
+%                            23, 28, 35, 44, 55, 69, 86, 108, 134, 168, 210];                          
+%p.trVarsInit.ampVals = [1, 12, 18, 23, 35, 44, 55, 69, 86, 108, 134, 168, 210];                     
                             
-                                                     
-p.trVarsInit.ampVals = [1, 3, 5, 8, 12, 14, 18, 23, 28];
-           
-%p.trVarsInit.ampVals = [1, 3, 5, 8, 12, 14, 18, 23, 28, 35, 44, 55];                 
-                            
-%p.trVarsInit.ampVals = [1, 12, 23, 35, 44, 55, 69, 86, 108, 134, 168, 210];                     
-                            
-p.trVarsInit.staircaseStartingIndex = 1;
+%p.trVarsInit.staircaseStartingIndex = 1;
 
-p.trVarsInit.overrideStaircase = 0; % When not 0, ignore staircase and use this value instead
+%p.trVarsInit.overrideStaircase = 0; % When not 0, ignore staircase and use this value instead
 
 % Predicted RF circle size, in dva
 p.trVarsInit.predRFCircleSize = 5;
@@ -339,16 +332,16 @@ p.status.visNumMisses = 0;
 p.status.propVisHits = 0;
 
 p.status.microstimTrials = 0;
-p.status.microstimNumHits = zeros (64, numel(p.trVarsInit.ampVals));
-p.status.microstimNumMisses = zeros (64, numel(p.trVarsInit.ampVals));
+%p.status.microstimNumHits = zeros (64, numel(p.trVarsInit.ampVals));
+%p.status.microstimNumMisses = zeros (64, numel(p.trVarsInit.ampVals));
 
 p.status.mstimHitsCurrent = 0;
 p.status.mstimMissCurrent = 0;
 p.status.propMstimHitsCurrent = 0;
 
-p.status.staircaseCurrentIndex = p.trVarsInit.staircaseStartingIndex;
-p.status.staircaseHits = 0;
-p.status.staircaseMisses = 0;
+%p.status.staircaseCurrentIndex = p.trVarsInit.staircaseStartingIndex;
+%p.status.staircaseHits = 0;
+%p.status.staircaseMisses = 0;
 
 p.status.noStimTrials = 0;
 p.status.correctRejects = 0;

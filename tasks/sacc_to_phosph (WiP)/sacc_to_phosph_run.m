@@ -319,7 +319,7 @@ switch p.trVars.currentState
         % STATE 21 = get reward delivery if not nostim trial
 
         % If this was visual or microstim, this means he did it correctly
-        if ismember(p.trVars.trialType, [1 2 4 5 6])
+        if ismember(p.trVars.trialType, [1 2 4 5 6 7])
 
         % if the delay for reward delivery has elapsed and reward delivery
         % hasn't yet been triggered, deliver the reward.
@@ -348,7 +348,7 @@ switch p.trVars.currentState
         % STATE 22 
 
         % If this was visual or microstim, this means he did it incorrectly
-        if ismember(p.trVars.trialType, [1 2 4 5 6])
+        if ismember(p.trVars.trialType, [1 2 4 5 6 7])
             % p = playTone(p, 'low');
             p.trVars.exitWhileLoop = true;
 
@@ -548,7 +548,7 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
                 Screen('DrawTexture', p.draw.window, p.draw.stimTexture, [], repmat(p.draw.stimPointPix, 1, 2) + ...
                     [-p.draw.textureWindowDimensions/2 -p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2 p.draw.textureWindowDimensions/2]);
 
-            case {2, 4, 5, 6} % Microstim
+            case {2, 4, 5, 6, 7} % Microstim
 
                 Screen('FrameOval',p.draw.window, p.draw.color.predRFCircle, ...
                     repmat(p.draw.predictedRFCirclePointPix, 1, 2) +  [-p.draw.predRFCircleSizePix/2 -p.draw.predRFCircleSizePix/2 p.draw.predRFCircleSizePix/2 p.draw.predRFCircleSizePix/2], 2);   
@@ -556,7 +556,7 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
 
                 if p.trData.timing.microstimSent == -1
                     % Apply Ripple's fast settle function to all recording channels
-                    % for 1 ms when we stimulate on any electrode
+                    % for 2 ms when we stimulate on any electrode
                     [index, source_list, duration] = pds.xippmex ('fastsettle', 'stim', p.rig.ripple.recChans, 2, 2);
                     
                     % Display message describing stimulation, mark time of 
@@ -566,8 +566,28 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
                     p.init.strb.strobeNow(p.init.codes.microStimOn);
     
                     % Send stimulation command(s)
-                    pds.xippmex('stimseq', p.trVars.stimCommands);
+                    %for j = 1:numel(p.trVars.cmdPeriodBiomim)
+                        pds.xippmex('stimseq', p.trVars.stimCommands);
+                    %end
                 end
+
+%{
+    if p.trData.timing.microstimSent == -1
+                    % Apply Ripple's fast settle function to all recording channels
+                    % for 2 ms when we stimulate on any electrode
+                    [index, source_list, duration] = pds.xippmex ('fastsettle', 'stim', p.rig.ripple.recChans, 2, 2);
+                    
+                    % Display message describing stimulation, mark time of 
+                    % microstim, and send strobe
+                    disp (p.trVars.microstimDispMessage);
+                    p.trData.timing.microstimSent = timeNow;
+                    p.init.strb.strobeNow(p.init.codes.microStimOn);
+    
+                    % Send stimulation command(s)
+                    pds.xippmex('stimseq', p.trVars.stimCommands{j});
+                end
+%}
+
 
                 %{
                 if p.trData.timing.microstimSent == -1

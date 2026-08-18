@@ -10,7 +10,9 @@ function p = initTrialStructure(p)
 
 % column descriptions
 % p.init.trialColumnNames = {'number of target stimuli', 'no of trials' 'trialCode'};
-p.init.trialArrayColumnNames = {'trialType', 'no of trials', 'trialCode'};
+p.init.trialArrayColumnNames = {'trialType', 'stimAmplitude', ...
+    'cmdPeriod', 'cmdRepeats', 'cmdSeqLength', 'cmdSeqIPI', ... 
+    'no of trials', 'trialCode'};
 
 % table definition
 switch p.init.exptType
@@ -18,6 +20,16 @@ switch p.init.exptType
         table = pick_one_channel_table;
     case 'pick_all_channels'
         table = pick_all_channels_table;
+    case 'random_sample'
+        table = random_sample_table;
+
+        % initialize ampVals variable and status variables for microstim
+        % Note: Doing it here because it depends on the trial structure
+        tempShortTable = table;
+        tempShortTable (tempShortTable(:, 7) == 0, :) = [];
+        p.trVarsInit.ampVals = unique(tempShortTable(:, 2));
+        p.status.microstimNumHits = zeros (64, numel(p.trVarsInit.ampVals));
+        p.status.microstimNumMisses = zeros (64, numel(p.trVarsInit.ampVals));
 end    
          
 
@@ -56,32 +68,64 @@ p.init.blockLength = size(p.init.trialsArray, 1);
 
 end
 
-
+% For the "pick one channel" version of the task. Note that stim parameters
+% are defined in the settings file or in the GUI for this version
 function table = pick_one_channel_table
 table = [
-    1 10 24001; ... % visual stimulus, 24001 trial code
+    1 0 0 0 0 0 15 24001; ... % visual stimulus, 24001 trial code
 
-    2 0 24002; ... % One-channel microstimulation, 24002 trial code
+    2 0 0 0 0 0 0 24002; ... % One-channel microstimulation, 24002 trial code
 
-    3 50 24003; ... % no stimulus, 24003 trial code
+    3 0 0 0 0 0 50 24003; ... % no stimulus, 24003 trial code
 
-    4 0 24004; ... % Two-channel microstimulation, opposite polarity, 24004 trial code
+    4 0 0 0 0 0 0 24004; ... % Two-channel microstimulation, opposite polarity, 24004 trial code
 
-    5 40 24005; ... % N-channel microstimulation, same polarity, 24005 trial code
+    5 0 0 0 0 0 35 24005; ... % N-channel microstimulation, same polarity, 24005 trial code
+    
+    8 0 0 0 0 0 0 24008; ... % Biomimetic microstimulation, N-channel, 24008 trial code
     ];
 end
 
-
+% For the "pick all channels" version of the task. Note that stim parameters
+% are defined in the settings file or in the GUI for this version
 function table = pick_all_channels_table
 table = [
-    1 1 24001; ... % visual stimulus, 24001 trial code
+    1 0 0 0 0 0 1 24001; ... % visual stimulus, 24001 trial code
 
-    3 1 24003; ... % no stimulus, 24003 trial code
+    3 0 0 0 0 0 1 24003; ... % no stimulus, 24003 trial code
 
-    6 0 24006; ... % microstimulation, 24006 trial code
+    6 0 0 0 0 0 0 24006; ... % microstimulation, 24006 trial code
     ];
 end
 
+% For the "random sample" version of the task. We pick which 
+function table = random_sample_table
+table = [
+    1 0 0 0 0 0 2 24001; ... % visual stimulus, 24001 trial code
 
+    3 0 0 0 0 0 6 24003; ... % no stimulus, 24003 trial code
+
+    % 100 Hz
+    7 1 100 20 3 2 1 24007; ... % microstimulation, 24007 trial code
+    7 12 100 20 3 2 1 24007; ... % microstimulation, 24007 trial code
+    7 24 100 20 3 2 1 24007; ... % microstimulation, 24007 trial code
+    7 36 100 20 3 2 1 24007; ... % microstimulation, 24007 trial code
+    7 48 100 20 3 2 1 24007; ... % microstimulation, 24007 trial code
+
+    % 200 Hz
+    7 1 100 20 4 2 1 24007; ... % microstimulation, 24007 trial code
+    7 12 100 20 4 2 1 24007; ... % microstimulation, 24007 trial code
+    7 24 100 20 4 2 1 24007; ... % microstimulation, 24007 trial code
+    7 36 100 20 4 2 1 24007; ... % microstimulation, 24007 trial code
+    7 48 100 20 4 2 1 24007; ... % microstimulation, 24007 trial code
+
+	%300 Hz	
+    7 1 100 20 5 2 1 24007; ... % microstimulation, 24007 trial code
+    7 12 100 20 5 2 1 24007; ... % microstimulation, 24007 trial code
+    7 24 100 20 5 2 1 24007; ... % microstimulation, 24007 trial code
+    7 36 100 20 5 2 1 24007; ... % microstimulation, 24007 trial code
+    7 48 100 20 5 2 1 24007; ... % microstimulation, 24007 trial code
+    ];
+end
 
 

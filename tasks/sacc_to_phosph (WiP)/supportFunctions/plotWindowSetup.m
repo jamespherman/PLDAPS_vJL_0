@@ -27,7 +27,7 @@ if isfield(p.trVarsInit, 'wantOnlinePlots') && p.trVarsInit.wantOnlinePlots
     xlabel(p.draw.onlinePlotPsychoAxes, 'Current amplitude (uA)');
     ylabel(p.draw.onlinePlotPsychoAxes, 'Performance');
     
-    p.draw.onlinePlotPsychoAxes.XLim = [-1, 211];
+    p.draw.onlinePlotPsychoAxes.XLim = [-1, 60];
     p.draw.onlinePlotPsychoAxes.YLim = [0, 1];
 
     p.draw.onlinePlotPsychoData = line(p.draw.onlinePlotPsychoAxes);

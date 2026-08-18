@@ -219,15 +219,15 @@ p.trVarsInit.sparseBalancedFlag  = 2;
 % --- trial timing ---
 p.trVarsInit.trialDurationS      = 1.5;
 p.trVarsInit.fixWaitDur          = 5.0;
-p.trVarsInit.rewardDurationMs    = 120;
+p.trVarsInit.rewardDurationMs    = 160;
 p.trVarsInit.timeoutAfterFixBreak = 0.1;
 p.trVarsInit.postRewardDuration  = 0.1;
 
 % --- fixation ---
 p.trVarsInit.fixDegX             = 0;
 p.trVarsInit.fixDegY             = 0;
-p.trVarsInit.fixWinWidthDeg      = 3.0;
-p.trVarsInit.fixWinHeightDeg     = 3.0;
+p.trVarsInit.fixWinWidthDeg      = 2.0;
+p.trVarsInit.fixWinHeightDeg     = 2.0;
 p.trVarsInit.fixPointRadPix      = 20;
 p.trVarsInit.fixPointLinePix     = 12;
 
