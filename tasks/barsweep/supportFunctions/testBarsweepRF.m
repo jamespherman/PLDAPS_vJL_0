@@ -129,6 +129,61 @@ assert(errX < params.tolCardinal, 'cardinal4 xCenter %.2f dva off (tol %.2f).', 
 assert(errY < params.tolCardinal, 'cardinal4 yCenter %.2f dva off (tol %.2f).', errY, params.tolCardinal);
 fprintf('  [OK] cardinal4 within %.1f dva on both axes\n', params.tolCardinal);
 
+%% cardinal4 latency independence (v2 midpoint guarantee)
+% The midpoint of opposite-direction peaks is latency-free. Run the SAME
+% RF/spike-count sequence (seed pinned) with two very different generator
+% latencies; the recovered center must not move. This is the property the
+% old (pooled + assumed-latency) estimator did not have.
+fprintf('\n=== testBarsweepRF: cardinal4 latency independence (v2) ===\n');
+pLatA = params; pLatA.latencyMs = 20;
+pLatB = params; pLatB.latencyMs = 80;
+[~, ~, ~, xLatA, yLatA] = runRegimeSeeded(pLatA, 'barsweep_cardinal4', ...
+    params.rfSigmaCardinal, [0 90 180 270], params.nRepeatsCardinal, ...
+    params.latencyMs, 7771);
+[~, ~, ~, xLatB, yLatB] = runRegimeSeeded(pLatB, 'barsweep_cardinal4', ...
+    params.rfSigmaCardinal, [0 90 180 270], params.nRepeatsCardinal, ...
+    params.latencyMs, 7771);
+dLat = hypot(xLatA - xLatB, yLatA - yLatB);
+fprintf(['  gen latency 20 ms -> (%.2f, %.2f); 80 ms -> (%.2f, %.2f); ' ...
+    'center moved %.2f dva\n'], xLatA, yLatA, xLatB, yLatB, dLat);
+results.cardinal4LatencyIndep = struct('xA', xLatA, 'yA', yLatA, ...
+    'xB', xLatB, 'yB', yLatB, 'delta', dLat, 'pass', dLat < 3 * 0.25);
+assert(dLat < 3 * 0.25, ...
+    ['cardinal4 midpoint center moved %.2f dva when latency changed ' ...
+     '(should be ~0). Latency is leaking into the center estimate.'], dLat);
+fprintf('  [OK] center latency-independent (moved %.2f dva < %.2f)\n', ...
+    dLat, 3 * 0.25);
+
+%% cardinal4 projection-sign-trap guard (asymmetric forward/backward gain)
+% With an OFF-CENTER RF and ASYMMETRIC per-direction gain, the correct
+% midpoint recovers the true center. A projection computed from the full
+% direction vector (instead of mod(theta,pi)) would sign-flip the 180/270
+% profiles and pin the center at +/- latency*speed near path center (~0),
+% regardless of the true RF -- this test fails loudly if that regression is
+% ever introduced.
+fprintf('\n=== testBarsweepRF: cardinal4 projection-sign-trap guard ===\n');
+pSign = params;
+pSign.dirGain = containers.Map([0 90 180 270], [1.6 1.4 0.6 0.7]);
+[~, ~, ~, xSign, ySign] = runRegimeSeeded(pSign, 'barsweep_cardinal4', ...
+    params.rfSigmaCardinal, [0 90 180 270], params.nRepeatsCardinal, ...
+    params.latencyMs, 5553);
+errXSign = abs(xSign - params.rfX);
+errYSign = abs(ySign - params.rfY);
+fprintf('  asymmetric-gain center=(%.2f, %.2f), truth=(%.2f, %.2f)\n', ...
+    xSign, ySign, params.rfX, params.rfY);
+results.cardinal4SignTrap = struct('xSign', xSign, 'ySign', ySign, ...
+    'errX', errXSign, 'errY', errYSign, ...
+    'pass', errXSign < params.tolCardinal && errYSign < params.tolCardinal);
+assert(errXSign < params.tolCardinal, ...
+    ['sign-trap guard: xCenter %.2f dva off truth %.2f under asymmetric ' ...
+     'gain (a sign-flipped projection would pin it near path center 0).'], ...
+    xSign, params.rfX);
+assert(errYSign < params.tolCardinal, ...
+    'sign-trap guard: yCenter %.2f dva off truth %.2f under asymmetric gain.', ...
+    ySign, params.rfY);
+fprintf('  [OK] center recovered under asymmetric gain (errX=%.2f errY=%.2f)\n', ...
+    errXSign, errYSign);
+
 %% Regime equivalence (plan §11.5)
 % The two regimes' recovered centers should agree to within one position
 % bin on the same RF. We use the cardinal4-friendly (wider) sigma to
@@ -369,6 +424,7 @@ peakX = NaN; peakY = NaN; xC = NaN; yC = NaN;
 p = struct();
 p.init.exptType = exptType;
 p.trVarsInit.pathLengthDeg = params.pathLengthDeg;
+p.trVarsInit.speedDegPerSec = params.speedDegPerSec;   % cardinal4 v2 reads this for latency
 p.trVarsInit.barWidthDeg = 0.5;
 p.trVarsInit.rfPosBinDeg = 0.25;
 p.trVarsInit.rfMapExtentDeg = 8;
@@ -416,7 +472,16 @@ for iTr = 1:numel(dirSched)
 
     dx = sweepCenterDeg(1, :) - params.rfX;
     dy = sweepCenterDeg(2, :) - params.rfY;
-    rate = params.peakRate * exp(-(dx.^2 + dy.^2) / (2 * sigma^2)) + params.baseRate;
+    % Optional per-direction gain on the driven component (used by the
+    % sign-trap guard: asymmetric forward/backward gain must NOT move the
+    % midpoint center).
+    dGain = 1;
+    if isfield(params, 'dirGain') && ~isempty(params.dirGain) && ...
+            isKey(params.dirGain, angleDeg)
+        dGain = params.dirGain(angleDeg);
+    end
+    rate = dGain * params.peakRate * exp(-(dx.^2 + dy.^2) / (2 * sigma^2)) ...
+        + params.baseRate;
     nPerFrame = poissrnd(rate * params.frameDur);
 
     spikeT = zeros(1, 0);

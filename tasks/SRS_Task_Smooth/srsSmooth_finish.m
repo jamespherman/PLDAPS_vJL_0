@@ -124,6 +124,10 @@ p           = updateTrialsList(p);
 % (8) update status variables and behavioral outcome counters.
 p           = updateStatusVariables(p);
 
+% Print one standardized, human-readable result for every attempt. This is
+% intentionally centralized here so success and every abort state are
+% reported even when the state machine itself did not print a message.
+printSrsTrialOutcome(p);
 
 % disp(p.trData.timing.saccadeOnset)
 % disp(p.trData.timing.fixOff)
@@ -138,3 +142,154 @@ end
 p = updateCorrectionControlWindow(p);
 
 end
+
+function printSrsTrialOutcome(p)
+%PRINTSRSTRIALOUTCOME Print exactly one final outcome line per attempt.
+
+attempt = getScalarField(p.status, 'iTrial', NaN);
+nStim = getScalarField(p.trData, 'nStim', ...
+    getScalarField(p.trVars, 'nStim', NaN));
+trialType = getScalarField(p.status, 'ActualTrialType', NaN);
+goodTrial = isfield(p.trData, 'GoodTrial') && logical(p.trData.GoodTrial);
+
+correctionText = '';
+wasForcedCorrection = logical(getScalarField( ...
+    p.trData, 'correctionTrialActive', 0));
+if wasForcedCorrection
+    rep = getScalarField(p.trData, 'correctionTrialRepetition', 0);
+    correctionText = sprintf(' | correction repeat %d', round(rep));
+elseif isfield(p.status, 'correctionTrialActive') && ...
+        logical(p.status.correctionTrialActive) && ...
+        getScalarField(p.status, 'correctionTrialRepetition', 0) == 0
+    correctionText = ' | correction triggered';
+end
+
+if goodTrial
+    chosenTarget = getScalarField(p.trData, 'chosenTargetID', NaN);
+    chosenSide = getScalarField(p.trData, 'chosenSide', NaN);
+    highRewardTarget = getScalarField(p.status, 'highRewardTargetID', NaN);
+
+    if nStim == 1
+        decisionText = 'single target';
+    elseif chosenTarget == highRewardTarget
+        decisionText = 'HIGH REWARD choice';
+    else
+        decisionText = 'LOW REWARD choice';
+    end
+
+    fprintf('[SRS trial %s] saccadeMade: choice T%s/%s | %s | %s%s\n', ...
+        integerText(attempt), integerText(chosenTarget), ...
+        sideText(chosenSide), trialTypeText(nStim, trialType), ...
+        decisionText, correctionText);
+else
+    reason = getTextField(p.trData, 'failureReason', '');
+    reasonText = canonicalFailureText(reason, p);
+    fprintf('[SRS trial %s] %s%s\n', ...
+        integerText(attempt), reasonText, correctionText);
+end
+
+end
+
+function text = canonicalFailureText(reason, p)
+key = lower(regexprep(char(string(reason)), '[^a-zA-Z]', ''));
+switch key
+    case 'fixationnotacquired'
+        text = 'no fix';
+    case 'fixbreakbeforetargeton'
+        text = 'breakfix';
+    case 'fixbreakduringdelay'
+        text = 'breakfixduringdelay';
+    case 'noresponse'
+        text = 'no response';
+    case 'targetholdbreak'
+        text = 'breakfix: target hold';
+    case 'landingoutsidetargetwindows'
+        text = 'inaccurate: landing outside target windows';
+    case 'saccadedurationexceeded'
+        text = 'inaccurate: saccade duration exceeded';
+    case 'blinkduringsaccade'
+        text = 'blink during saccade';
+    case 'miss'
+        text = 'miss';
+    case 'fixbreak'
+        text = 'breakfix';
+    otherwise
+        text = inferFailureFromEndState(p);
+        if strcmp(text, 'trial aborted') && ~isempty(strtrim(char(string(reason))))
+            text = char(string(reason));
+        end
+end
+end
+
+function text = inferFailureFromEndState(p)
+text = 'trial aborted';
+if ~isfield(p.trData, 'trialEndState') || ~isfield(p, 'state')
+    return
+end
+state = p.trData.trialEndState;
+if isfield(p.state, 'nonStart') && state == p.state.nonStart
+    text = 'no fix';
+elseif isfield(p.state, 'noResponse') && state == p.state.noResponse
+    text = 'no response';
+elseif isfield(p.state, 'fixBreak') && state == p.state.fixBreak
+    text = 'breakfix';
+elseif isfield(p.state, 'inaccurate') && state == p.state.inaccurate
+    text = 'inaccurate';
+elseif isfield(p.state, 'miss') && state == p.state.miss
+    text = 'miss';
+end
+end
+
+function text = trialTypeText(nStim, trialType)
+if nStim == 1
+    text = 'single-target';
+elseif trialType == 1
+    text = 'congruent';
+elseif trialType == 2
+    text = 'conflict';
+else
+    text = 'unknown trial type';
+end
+end
+
+function text = sideText(side)
+if side == 1
+    text = 'right';
+elseif side == 2
+    text = 'left';
+else
+    text = 'unknown side';
+end
+end
+
+function text = integerText(value)
+if isfinite(value)
+    text = sprintf('%.0f', value);
+else
+    text = '?';
+end
+end
+
+function value = getScalarField(s, name, defaultValue)
+value = defaultValue;
+if isstruct(s) && isfield(s, name)
+    candidate = s.(name);
+    if (isnumeric(candidate) || islogical(candidate)) && ...
+            isscalar(candidate) && isfinite(double(candidate))
+        value = double(candidate);
+    end
+end
+end
+
+function value = getTextField(s, name, defaultValue)
+value = defaultValue;
+if isstruct(s) && isfield(s, name)
+    candidate = s.(name);
+    if ischar(candidate)
+        value = candidate;
+    elseif isstring(candidate) && isscalar(candidate)
+        value = char(candidate);
+    end
+end
+end
+

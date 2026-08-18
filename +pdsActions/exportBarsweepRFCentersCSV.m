@@ -97,19 +97,23 @@ end
 nCh     = rf.nChannels;
 centers = nan(nCh, 2);
 snr     = nan(nCh, 1);
+latMs   = nan(nCh, 1);
 pathOff = rf.pathCenterDeg(:).';   % [xOff, yOff] in dva
+
+% Deferred/authoritative reconstruction: request the full per-direction
+% Gaussian fits (fitMode = 'full'), not the cheap live parabolic peaks.
+% Harmless for rfmap12 (it ignores fitMode and uses iradon).
+reconOpts = struct('fitMode', 'full');
 
 for ch = 1:nCh
     if rf.spikeCount(ch) < 1, continue; end
-    out = reconstructBarsweepRF(rf, ch, rf.exptType);
+    out = reconstructBarsweepRF(rf, ch, rf.exptType, reconOpts);
     snr(ch) = out.peakStats.snr;
+    if isfield(out, 'latencyMs'), latMs(ch) = out.latencyMs; end
     if ~out.peakStats.detected, continue; end
     switch rf.exptType
         case 'barsweep_cardinal4'
-            % Parabolic peaks of the 1-D marginals. gaussFit on the
-            % outer-product sep2 thumbnail is biased toward path center
-            % because the spontaneous baseline makes the 0.25*peak mask
-            % cover most of the grid, pulling the centroid toward 0.
+            % v2 midpoint of opposite-direction peaks (latency-free).
             centers(ch, 1) = out.xCenter + pathOff(1);
             centers(ch, 2) = out.yCenter + pathOff(2);
         case 'barsweep_rfmap12'
@@ -130,9 +134,10 @@ if fid < 0
         'Could not open %s for writing.', csvPath);
 end
 cleanup = onCleanup(@() fclose(fid));
-fprintf(fid, 'channel,x_deg,y_deg,snr\n');
+fprintf(fid, 'channel,x_deg,y_deg,snr,latency_ms\n');
 for ch = 1:nCh
-    fprintf(fid, '%d,%.4f,%.4f,%.4g\n', ch, centers(ch, 1), centers(ch, 2), snr(ch));
+    fprintf(fid, '%d,%.4f,%.4f,%.4g,%.4g\n', ch, centers(ch, 1), ...
+        centers(ch, 2), snr(ch), latMs(ch));
 end
 
 nDet = sum(~isnan(centers(:, 1)));

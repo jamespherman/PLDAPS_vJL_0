@@ -39,22 +39,48 @@ end
 stimOnRipple = p.trData.eventTimes(find(onMask, 1, 'last'));
 
 %% (2) Sweep geometry, path-center-relative projection coordinate.
-% sweepCenterDegByFrame is precomputed in nextParams.m (§7b) parallel to
-% sweepCenterPix, in dva with the user-visible y-up sign convention.
+% sweepCenterDegByFrame is precomputed in nextParams.m (§7) parallel to
+% sweepCenterPix, in dva with the user-visible y-up sign convention. Since
+% the 2026-08-17 geometry fix it is the true on-screen bar position, so
+% this axis needs no post-hoc correction; sessions recorded before that
+% (no p.trVars.sweepGeometryVersion) do -- see correctBarsweepRFCenters.
 relCenter   = p.trVars.sweepCenterDegByFrame - rf.pathCenterDeg;  % [2 x sweepFrames]
-thetaMotion = deg2rad(p.trVars.pathAngleDeg);
+thetaMotion = mod(deg2rad(p.trVars.pathAngleDeg), 2*pi);
 thetaOri    = mod(thetaMotion, pi);
+% CRITICAL: the position coordinate is ALWAYS projected onto the
+% ORIENTATION axis (mod theta, pi), regardless of how the histogram is
+% keyed below. This is what lets the midpoint of opposite-direction peaks
+% cancel latency: 0 deg and 180 deg share the same signed s-axis, so their
+% peaks land at s_RF + L*v and s_RF - L*v and average to s_RF. Projecting
+% onto the full direction vector instead would sign-flip the 180 deg
+% profile and pin every RF at +/- L*v from path center.
 projAxis    = [cos(thetaOri); sin(thetaOri)];
 s_perFrame  = projAxis' * relCenter;                              % [1 x sweepFrames]
 
-% Map orientation to its row in spikeHist/dwellTime. The pooling is
-% automatic because thetaOri = mod(thetaMotion, pi) collapses opposite
-% directions to the same orientation row.
-[diffOri, oriIdx] = min(abs(rf.orientationsRad - thetaOri));
-if diffOri > 1e-3
-    fprintf('  barsweepRF: trial orientation %.3f rad has no match in orientationsRad; skipping.\n', ...
-        thetaOri);
-    return;
+% Choose the histogram ROW and the latency correction by regime. This is
+% the only place the two regimes' accumulation differs:
+%   cardinal4 (accumBy = 'direction'): one row per direction (0/90/180/270);
+%       NO latency subtraction (the midpoint cancels it, so subtracting an
+%       assumed latency would double-correct).
+%   rfmap12   (accumBy = 'orientation'): opposite directions pool into one
+%       orientation row, WITH the assumed-latency subtraction (unchanged).
+if isfield(rf, 'accumBy') && strcmp(rf.accumBy, 'direction')
+    angDiff = abs(mod(rf.directionsRad - thetaMotion + pi, 2*pi) - pi);
+    [dMatch, rowIdx] = min(angDiff);
+    if dMatch > 1e-3
+        fprintf('  barsweepRF: trial direction %.3f rad has no match in directionsRad; skipping.\n', ...
+            thetaMotion);
+        return;
+    end
+    latencySec = 0;
+else
+    [dMatch, rowIdx] = min(abs(rf.orientationsRad - thetaOri));
+    if dMatch > 1e-3
+        fprintf('  barsweepRF: trial orientation %.3f rad has no match in orientationsRad; skipping.\n', ...
+            thetaOri);
+        return;
+    end
+    latencySec = rf.latencyMs / 1000;
 end
 
 %% (3) Slice flipTime starting at the stimOn flip index.
@@ -142,7 +168,7 @@ end
 
 valid = ~isnan(posBins_perFrame) & visMask & clippedDur > 0 & onScreen;
 if any(valid)
-    rf.dwellTime(oriIdx, :) = rf.dwellTime(oriIdx, :) + ...
+    rf.dwellTime(rowIdx, :) = rf.dwellTime(rowIdx, :) + ...
         accumarray(posBins_perFrame(valid)', clippedDur(valid)', ...
                    [numel(rf.positionCenters), 1])';
 end
@@ -156,7 +182,7 @@ spikeT = p.trData.spikeTimes(:);
 spikeC = p.trData.spikeClusters(:);
 
 if ~isempty(spikeT)
-    tEff = spikeT - stimOnRipple - rf.latencyMs / 1000;
+    tEff = spikeT - stimOnRipple - latencySec;
     keep = tEff >= 0 & tEff < visibleEnd;
     if any(keep)
         chs    = spikeC(keep);
@@ -193,8 +219,8 @@ if ~isempty(spikeT)
                 nPos = numel(rf.positionCenters);
                 % 2D accumarray: rows = posBin, cols = channel.
                 inc  = accumarray([posK(:), chsK(:)], 1, [nPos, rf.nChannels]);
-                rf.spikeHist(oriIdx, :, :) = ...
-                    squeeze(rf.spikeHist(oriIdx, :, :)) + inc;
+                rf.spikeHist(rowIdx, :, :) = ...
+                    squeeze(rf.spikeHist(rowIdx, :, :)) + inc;
                 rf.spikeCount = rf.spikeCount + ...
                     accumarray(chsK(:), 1, [rf.nChannels, 1]);
             end

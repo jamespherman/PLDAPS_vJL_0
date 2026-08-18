@@ -49,7 +49,7 @@ for iSession = 1:nSessions
             iSession, nSessions, sessionFolder);
     end
 
-    [T, meta] = srs_load_session(sessionFolder);
+    [T, meta] = srs_load_session(sessionFolder, options.blockRange);
     stats = srs_compute_statistics(T, meta, options);
 
     sessionKey = sanitizePathComponent(meta.sessionID);
@@ -311,6 +311,7 @@ else
 end
 
 defaults = struct( ...
+    'blockRange', [], ...
     'rollingWindow', 20, ...
     'nPermutations', 5000, ...
     'randomSeed', 1, ...

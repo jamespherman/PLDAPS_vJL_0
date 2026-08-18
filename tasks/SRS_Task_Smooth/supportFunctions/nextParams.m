@@ -349,11 +349,14 @@ end
 p.status.highRewardSide = sideOfTarget(p, p.status.highRewardTargetID);
 
 if p.trVars.nStim == 1
-    % The only visible target is made high-salience in instruction trials.
-    % This keeps T1-only and T2-only trials equally easy to see while reward
-    % remains determined solely by target identity.
-    p.status.highSalienceTargetID = p.trVars.singleTargetID;
-    p.status.highSalienceSide = sideOfTarget(p, p.trVars.singleTargetID);
+    % Instruction trials use the same high/low salience assignment rule as
+    % two-target trials, but independently of reward, target identity and
+    % screen side. Because only one target is displayed, this makes the
+    % visible target receive the sampled high or low salience value with
+    % equal probability.
+    p.status.highSalienceTargetID = randi(2);
+    p.status.highSalienceSide = sideOfTarget( ...
+        p, p.status.highSalienceTargetID);
 else
     if p.status.ActualTrialType == 1
         % Congruent: salience and reward favor the same spatial target.
@@ -705,35 +708,29 @@ if ~isfinite(maxAttempts) || maxAttempts < 1
     maxAttempts = 1000;
 end
 
-% Single-target instruction trials use the full visible contrast. Choice
-% trials use a log-uniform draw and its fixed-mean complement.
-if p.trVars.nStim == 1
-    highDesired = maxLum;
-    lowDesired = minLum;
+% Use the same log-uniform pair sampling on instruction and choice trials.
+% On instruction trials, assignTrialRewardsAndSalience independently decides
+% whether the visible target receives the sampled high or low luminance.
+validPair = false;
+for iAttempt = 1:maxAttempts
+    lumA = exp(log(minLum) + rand * (log(maxLum) - log(minLum)));
+    lumB = 2 * meanLum - lumA;
+    highDesired = max(lumA, lumB);
+    lowDesired = min(lumA, lumB);
     [highEntry, lowEntry] = mapDirectRgbPair(calTable, ...
         highDesired, lowDesired);
-else
-    validPair = false;
-    for iAttempt = 1:maxAttempts
-        lumA = exp(log(minLum) + rand * (log(maxLum) - log(minLum)));
-        lumB = 2 * meanLum - lumA;
-        highDesired = max(lumA, lumB);
-        lowDesired = min(lumA, lumB);
-        [highEntry, lowEntry] = mapDirectRgbPair(calTable, ...
-            highDesired, lowDesired);
 
-        % Require distinct displayed colors so the scheduled high-salience
-        % identity is physically brighter on every choice trial.
-        validPair = highEntry.measuredCdM2 > lowEntry.measuredCdM2 && ...
-            highEntry.redLevel ~= lowEntry.redLevel;
-        if validPair
-            break
-        end
+    % Require distinct displayed colors so the assigned high-salience
+    % identity is physically brighter on every trial.
+    validPair = highEntry.measuredCdM2 > lowEntry.measuredCdM2 && ...
+        highEntry.redLevel ~= lowEntry.redLevel;
+    if validPair
+        break
     end
-    if ~validPair
-        error(['Could not obtain two distinct direct-RGB luminance ', ...
-            'levels after %d attempts.'], maxAttempts);
-    end
+end
+if ~validPair
+    error(['Could not obtain two distinct direct-RGB luminance ', ...
+        'levels after %d attempts.'], maxAttempts);
 end
 
 if highTargetID == 1
@@ -897,63 +894,58 @@ if ~(isfinite(minOff) && isfinite(maxOff)) || ...
 end
 pairMean = (minOff + maxOff) / 2;
 
-if p.trVars.nStim == 1
-    % Instruction trial: the single visible target is drawn at maximum
-    % contrast to teach the identity->side association. The other (absent)
-    % target gets the minimum offset; it is not drawn.
-    offHigh = maxOff;
-    offLow = minOff;
-else
-    % Choice trial: sample the offset pair about the fixed midpoint.
-    minDiff = 0;
-    if isfield(p.trVars, 'hueContrastDiffMinDeg') && ...
-            isfinite(p.trVars.hueContrastDiffMinDeg)
-        minDiff = max(0, p.trVars.hueContrastDiffMinDeg);
-    end
+% Instruction and choice trials use exactly the same contrast-pair sampler.
+% On an instruction trial, only one member of the pair is displayed, and
+% assignTrialRewardsAndSalience independently randomizes whether that visible
+% target receives the high or low member.
+minDiff = 0;
+if isfield(p.trVars, 'hueContrastDiffMinDeg') && ...
+        isfinite(p.trVars.hueContrastDiffMinDeg)
+    minDiff = max(0, p.trVars.hueContrastDiffMinDeg);
+end
 
-    samplingMode = 'dubeyloguniform';
-    if isfield(p.trVars, 'hueContrastSamplingMode') && ...
-            ~isempty(p.trVars.hueContrastSamplingMode)
-        samplingMode = lower(char(p.trVars.hueContrastSamplingMode));
-    end
+samplingMode = 'dubeyloguniform';
+if isfield(p.trVars, 'hueContrastSamplingMode') && ...
+        ~isempty(p.trVars.hueContrastSamplingMode)
+    samplingMode = lower(char(p.trVars.hueContrastSamplingMode));
+end
 
-    switch samplingMode
-        case 'dubeyloguniform'
-            % Draw one offset log-uniform in [min,max], set the partner so
-            % the pair mean equals the midpoint. Because the mean is the
-            % midpoint, the partner is always within [min,max].
-            valid = false;
-            attempts = 0;
-            while ~valid
-                offA = exp(log(minOff) + ...
-                    rand * (log(maxOff) - log(minOff)));
-                offB = 2 * pairMean - offA;
-                valid = offB >= minOff - 1e-9 && ...
-                    offB <= maxOff + 1e-9 && ...
-                    abs(offA - offB) >= minDiff;
-                attempts = attempts + 1;
-                if attempts > 1000
-                    error(['Could not satisfy hueContrastDiffMinDeg ', ...
-                        'for the hue offset pair.']);
-                end
+switch samplingMode
+    case 'dubeyloguniform'
+        % Draw one offset log-uniform in [min,max], set the partner so
+        % the pair mean equals the midpoint. Because the mean is the
+        % midpoint, the partner is always within [min,max].
+        valid = false;
+        attempts = 0;
+        while ~valid
+            offA = exp(log(minOff) + ...
+                rand * (log(maxOff) - log(minOff)));
+            offB = 2 * pairMean - offA;
+            valid = offB >= minOff - 1e-9 && ...
+                offB <= maxOff + 1e-9 && ...
+                abs(offA - offB) >= minDiff;
+            attempts = attempts + 1;
+            if attempts > 1000
+                error(['Could not satisfy hueContrastDiffMinDeg ', ...
+                    'for the hue offset pair.']);
             end
-            offHigh = max(offA, offB);
-            offLow = min(offA, offB);
+        end
+        offHigh = max(offA, offB);
+        offLow = min(offA, offB);
 
-        case 'uniformdifference'
-            % Sample the offset difference uniformly with the mean fixed.
-            maxDiff = min(2 * (pairMean - minOff), 2 * (maxOff - pairMean));
-            if maxDiff < minDiff
-                error(['hueContrastDiffMinDeg exceeds the maximum valid ', ...
-                    'offset difference.']);
-            end
-            differenceMagnitude = minDiff + rand * (maxDiff - minDiff);
-            offHigh = pairMean + differenceMagnitude / 2;
-            offLow = pairMean - differenceMagnitude / 2;
+    case 'uniformdifference'
+        % Sample the offset difference uniformly with the mean fixed.
+        maxDiff = min(2 * (pairMean - minOff), 2 * (maxOff - pairMean));
+        if maxDiff < minDiff
+            error(['hueContrastDiffMinDeg exceeds the maximum valid ', ...
+                'offset difference.']);
+        end
+        differenceMagnitude = minDiff + rand * (maxDiff - minDiff);
+        offHigh = pairMean + differenceMagnitude / 2;
+        offLow = pairMean - differenceMagnitude / 2;
 
-        otherwise
-            error('Unknown hueContrastSamplingMode: %s', samplingMode);
-    end
+    otherwise
+        error('Unknown hueContrastSamplingMode: %s', samplingMode);
 end
 
 % Map the high/low offsets to targets by salience identity.

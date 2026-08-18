@@ -219,6 +219,7 @@ switch p.trVars.currentState
         % Show the fixation point. In C24 direct-RGB mode the same RGB
         % image reaches both displays, so experimenter-only overlays are
         % disabled and fixation is drawn as ordinary white RGB.
+        p.trVars.fixationVisible = true;
         if isDirectRgbMode(p)
             p.draw.color.fix = [255 255 255];
             p.draw.color.fixWin = p.draw.color.background;
@@ -258,6 +259,7 @@ switch p.trVars.currentState
             % fixation was never acquired
             p.init.strb.strobeNow(p.init.codes.nonStart);
             p.trData.timing.joyRelease = timeNow;
+            p.trData.failureReason = "fixationNotAcquired";
             p.trVars.currentState      = p.state.nonStart;
         end
         
@@ -286,6 +288,7 @@ switch p.trVars.currentState
         elseif ~pds.eyeInWindow(p)
             p.init.strb.strobeNow(p.init.codes.fixBreak);
             p.trData.timing.fixBreak   = timeNow;
+            p.trData.failureReason = "fixBreakBeforeTargetOn";
             p.trVars.currentState      = p.state.fixBreak;
             
         end
@@ -317,16 +320,16 @@ switch p.trVars.currentState
 
         % Only evaluate the delay / fixation once targets have actually
         % appeared (targetOn assigned by the postFlip mechanism).
-        p.status.delta = round(unifrnd(p.trVarsInit.delay_ms_min, p.trVarsInit.delay_ms_max));
         if p.trData.timing.targetOn > 0
-            if (timeNow - p.trData.timing.targetOn) > p.status.delta/1000
+            if ~pds.eyeInWindow(p) && ~p.trVars.passEye
+                % The fixation point is still physically visible. Always
+                % classify an eye departure here as a delay-period break,
+                % even if it occurs close to the scheduled go-signal time.
+                p = markFixBreakDuringDelay(p, timeNow);
+            elseif (timeNow - p.trData.timing.targetOn) >= ...
+                    p.trVars.targetDelayDurationMs / 1000
                 % Delay elapsed with fixation held: issue the go signal.
                 p.trVars.currentState = p.state.MakeSaccade;
-            elseif ~pds.eyeInWindow(p) && ~p.trVars.passEye
-                % Broke fixation before the go signal.
-                p.init.strb.strobeNow(p.init.codes.fixBreak);
-                p.trData.timing.fixBreak   = timeNow;
-                p.trVars.currentState      = p.state.fixBreak;
             end
         end
 
@@ -352,6 +355,14 @@ switch p.trVars.currentState
         %Next trial
 
 
+        % If gaze left fixation after the delay state changed but before the
+        % fixation-off frame was displayed, this is still a delay break.
+        if p.trData.timing.fixOff < 0 && ...
+                ~pds.eyeInWindow(p) && ~p.trVars.passEye
+            p = markFixBreakDuringDelay(p, timeNow);
+            return
+        end
+
         % Go signal given - 
         %   show T1 now
         %   show T2 now
@@ -376,18 +387,27 @@ switch p.trVars.currentState
         end
 
         
-        timeSinceGo = -1;
-        % Calculate time since Go :
-        if p.trData.timing.fixOff > 0 || p.trVars.passEye
-            timeSinceGo = timeNow - p.trData.timing.fixOff;         %Time since go doesnt exist if not fixOff or passeye
+        % Do not evaluate saccade initiation until the fixation-off flip has
+        % actually occurred and its post-flip timestamp is available.
+        if p.trData.timing.fixOff < 0 && ~p.trVars.passEye
+            return
+        end
+
+        if p.trVars.passEye
+            timeSinceGo = 0;
+        else
+            timeSinceGo = timeNow - p.trData.timing.fixOff;
         end
 
         % Check for saccade :
         eyeLeftFixWin = ~pds.eyeInWindow(p);
         velocityExceedsThresh = gazeVelThreshCheck(p, timeNow) || p.trVars.passEye;
         
-        if (eyeLeftFixWin && velocityExceedsThresh && ...
-                timeSinceGo < p.trVars.responseWindow) || p.trVars.passEye
+        validGoLatency = timeSinceGo >= p.trVars.goLatencyMin;
+        withinResponseWindow = timeSinceGo <= p.trVars.responseWindow;
+
+        if (eyeLeftFixWin && velocityExceedsThresh && validGoLatency && ...
+                withinResponseWindow) || p.trVars.passEye
         % Valid saccade initiation
             p.init.strb.strobeNow(p.init.codes.saccadeOnset);
             p.trData.timing.saccadeOnset = timeNow;
@@ -402,6 +422,7 @@ switch p.trVars.currentState
             % No saccade within response window
             p.init.strb.strobeNow(p.init.codes.noResponse);
             p.trData.timing.fixBreak = timeNow;
+            p.trData.failureReason = "noResponse";
             p.trVars.currentState = p.state.noResponse;
             disp(['no response after ' num2str(timeSinceGo * 1000) ' ms'])
 
@@ -418,6 +439,7 @@ switch p.trVars.currentState
 
         % Check if saccade is still in flight (high velocity)
         sacInFlight = gazeVelThreshCheck(p, timeNow);
+        saccadeDuration = timeNow - p.trData.timing.saccadeOnset;
 
         % Get gaze samples since fixation offset for blink detection
         % Only compute if fixOff has been assigned (>0)
@@ -438,6 +460,22 @@ switch p.trVars.currentState
         gazeInT2Target = p.trVars.T2_present && eyeInTargetWindow(p, 'T2');
         gazeInT1Target = p.trVars.T1_present && eyeInTargetWindow(p, 'T1');
 
+        % If user-edited positions/windows overlap, assign the sample to the
+        % nearest target instead of silently favoring T2 because it is tested
+        % first below.
+        if gazeInT1Target && gazeInT2Target
+            distanceT1 = normalizedTargetDistance(p, 'T1');
+            distanceT2 = normalizedTargetDistance(p, 'T2');
+            if distanceT1 <= distanceT2
+                gazeInT2Target = false;
+            else
+                gazeInT1Target = false;
+            end
+            fprintf(['overlapping target windows: gaze=(%.2f, %.2f), ', ...
+                'normalized distances T1=%.3f, T2=%.3f\n'], ...
+                p.trVars.eyeDegX, p.trVars.eyeDegY, distanceT1, distanceT2);
+        end
+
         % In passEye mode, choose the only shown target on instruction
         % trials and the rich target on two-target trials.
         if p.trVars.passEye
@@ -448,17 +486,37 @@ switch p.trVars.currentState
             blinkDetected = false;
         end
 
-        if sacInFlight
+        if sacInFlight && ...
+                saccadeDuration <= p.trVars.maxSacDurationToAccept
             % Saccade still in flight - continue waiting
+
+        elseif sacInFlight
+            % Velocity never fell below threshold within the accepted
+            % saccade duration. Without this branch the state could wait
+            % indefinitely and obscure the actual reason for failure.
+            p.trData.landingEyeDegX = p.trVars.eyeDegX;
+            p.trData.landingEyeDegY = p.trVars.eyeDegY;
+            p.trData.failureReason = "saccadeDurationExceeded";
+            p.init.strb.strobeNow(p.init.codes.inaccurate);
+            p.trData.timing.fixBreak = timeNow;
+            p.trVars.currentState = p.state.inaccurate;
+            fprintf(['saccadeDurationExceeded: %.1f ms > %.1f ms, ', ...
+                'gaze=(%.2f, %.2f)\n'], ...
+                1000 * saccadeDuration, ...
+                1000 * p.trVars.maxSacDurationToAccept, ...
+                p.trVars.eyeDegX, p.trVars.eyeDegY);
 
         elseif blinkDetected
             disp('blink detected');
+            p.trData.failureReason = "blinkDuringSaccade";
             p.init.strb.strobeNow(p.init.codes.blinkDuringSac);
             p.trData.timing.fixBreak = timeNow;
             p.trVars.currentState = p.state.fixBreak;
 
         elseif gazeInT2Target
             % Saccade landed in the T2 target window, wherever T2 is.
+            p.trData.landingEyeDegX = p.trVars.eyeDegX;
+            p.trData.landingEyeDegY = p.trVars.eyeDegY;
             p.init.strb.strobeNow(p.init.codes.saccadeOffset);
             p.trData.timing.saccadeOffset = timeNow;
             p.trData.chosenTargetID = 2;
@@ -470,6 +528,8 @@ switch p.trVars.currentState
 
         elseif gazeInT1Target
             % Saccade landed in the T1 target window, wherever T1 is.
+            p.trData.landingEyeDegX = p.trVars.eyeDegX;
+            p.trData.landingEyeDegY = p.trVars.eyeDegY;
             p.init.strb.strobeNow(p.init.codes.saccadeOffset);
             p.trData.timing.saccadeOffset = timeNow;
             p.trData.chosenTargetID = 1;
@@ -481,13 +541,22 @@ switch p.trVars.currentState
 
         else
             % Saccade landed outside both target windows - inaccurate
+            p.trData.landingEyeDegX = p.trVars.eyeDegX;
+            p.trData.landingEyeDegY = p.trVars.eyeDegY;
+            p.trData.failureReason = "landingOutsideTargetWindows";
             p.init.strb.strobeNow(p.init.codes.inaccurate);
             p.trData.timing.fixBreak = timeNow;
             p.trData.chosenSide = 0;
             p.trData.chosenTargetID = 0;
             p.trVars.currentState = p.state.inaccurate;
             p.draw.targWinPenDraw = p.draw.targWinPenThin;
-            disp('inaccurate - outside both targets')
+            fprintf(['inaccurate - outside both targets: gaze=(%.2f, %.2f), ', ...
+                'T1=(%.2f, %.2f), T2=(%.2f, %.2f), ', ...
+                'window half-size=(%.2f, %.2f) deg\n'], ...
+                p.trVars.eyeDegX, p.trVars.eyeDegY, ...
+                p.trVars.T1_locDegX, p.trVars.T1_locDegY, ...
+                p.trVars.T2_locDegX, p.trVars.T2_locDegY, ...
+                p.trVars.targWinWidthDeg, p.trVars.targWinHeightDeg);
         end
 
 
@@ -525,8 +594,11 @@ switch p.trVars.currentState
             p.init.strb.strobeNow(p.init.codes.fixBreak);
             p.trData.timing.fixBreak = timeNow;
             p.trVars.currentState = p.state.fixBreak;
+            p.trData.failureReason = "targetHoldBreak";
             p.draw.targWinPenDraw = p.draw.targWinPenThin;
-            disp('target break');
+            fprintf('target break: gaze=(%.2f, %.2f), chosen target=T%d\n', ...
+                p.trVars.eyeDegX, p.trVars.eyeDegY, ...
+                p.trData.chosenTargetID);
         end
 
 
@@ -534,12 +606,12 @@ switch p.trVars.currentState
         %% State noResponse
         % If subject doesnt make a saccade in the correct delay after Go
         % Abort trial
-        p = playTone(p, 'low');
+        p = playFailureFeedback(p);
         p.trVars.exitWhileLoop = true; 
         
     case p.state.inaccurate
         %% State Inaccurate : saccade too away from target
-        p = playTone(p, 'low');
+        p = playFailureFeedback(p);
         p.trVars.exitWhileLoop = true;
 
 
@@ -572,15 +644,26 @@ switch p.trVars.currentState
             p.trData.outcomeCode = 2;
         end
 
-        % Give the reward corresponding
-        % Determine reward based on chosen SIDE (left or right)
-        if p.trData.chosenSide == 2
-            % Chose LEFT target
-            p.trVars.currentRewardDuration = round(p.trVars.rewardDurationLeft);
+        % Deliver reward by chosen TARGET ID. This is the primary task
+        % contingency and avoids any dependence on a potentially stale side
+        % label when identities are randomized across positions.
+        if p.trData.chosenTargetID == 1
+            p.trVars.currentRewardDuration = ...
+                round(p.trVars.rewardDurationT1);
+        elseif p.trData.chosenTargetID == 2
+            p.trVars.currentRewardDuration = ...
+                round(p.trVars.rewardDurationT2);
         else
-            % Chose RIGHT target
-            p.trVars.currentRewardDuration = round(p.trVars.rewardDurationRight);
+            error('SRS:InvalidChosenTargetForReward', ...
+                'sacComplete requires chosenTargetID equal to 1 or 2.');
         end
+
+        % Verify the identity/side mapping and the cumulative correction
+        % reward before any liquid is delivered. If a correctable stale
+        % duration is detected, this function replaces it with the exact
+        % reward computed for the current correction level and records the
+        % repair in trData.
+        p = enforceCorrectionRewardDelivery(p);
 
 
          % Check if reward given & delay  ; exit loop
@@ -590,7 +673,7 @@ switch p.trVars.currentState
             % Temporarily set rewardDurationMs for the pds.deliverReward function
             p.trVars.rewardDurationMs = p.trVars.currentRewardDuration;
             % disp(p.trVars.rewardDurationMs)
-            p = playTone(p, 'high');
+            p = playSuccessfulChoiceFeedback(p);
             p = pds.deliverReward(p);
             
         elseif p.trData.timing.reward > 0
@@ -621,19 +704,23 @@ switch p.trVars.currentState
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     case p.state.fixBreak
         %% FIXATION BREAK
-        p = playTone(p, 'low');
+        if strlength(string(p.trData.failureReason)) == 0
+            p.trData.failureReason = "fixBreak";
+        end
+        p = playFailureFeedback(p);
         p.trVars.exitWhileLoop = true;
         
     case p.state.miss
         %% JOYSTICK BREAK (MISS)
-        p = playTone(p, 'low');
+        p.trData.failureReason = "miss";
+        p = playFailureFeedback(p);
         p.trVars.exitWhileLoop = true;
         
     case p.state.nonStart
         %% NON-START
         % subject did not hold the joystick within the alloted time and
         % trila is considered a non-start.
-%         p = playTone(p, 'low');
+        p = playFailureFeedback(p);
         p.trVars.exitWhileLoop = true;
 end
 
@@ -823,6 +910,19 @@ if timeNow > p.trData.timing.lastFrameTime + p.rig.frameDuration - p.rig.magicNu
     end
     end % experimenter-only overlays are unavailable in C24 mode
 
+    % Final foreground pass: preserve every existing draw call and its
+    % order, then redraw visible fixation immediately before the flip. This
+    % prevents targets, acceptance windows, or the rich-target frame from
+    % covering fixation when targets are close to center (for example at
+    % +/-5 deg). Once MakeSaccade sets fixationVisible=false, no foreground
+    % fixation is drawn, so the fixation-off flip remains the visual go
+    % signal.
+    if isfield(p.trVars, 'fixationVisible') && ...
+            logical(p.trVars.fixationVisible)
+        Screen('FrameRect', p.draw.window, p.draw.color.fix, ...
+            p.draw.fixPointRect, p.draw.fixPointWidth);
+    end
+
     % if p.status.ActualTrialType == 1, trialtype = 'Congruent' ;
     % else,    trialtype = 'Conflict'; end        
     % disp('Actual trial type');
@@ -1001,13 +1101,83 @@ else
     targY = p.trVars.T2_locDegY;
 end
 
-% Check if gaze is within target window (using half-widths)
+% Check if gaze is within target window (using inclusive half-widths).
+% Inclusive boundaries prevent a sample exactly on the displayed window
+% frame from being rejected because of a strict floating-point comparison.
 halfWidth = p.trVars.targWinWidthDeg;
 halfHeight = p.trVars.targWinHeightDeg;
 
-inWindow = abs(p.trVars.eyeDegX - targX) < halfWidth && ...
-           abs(p.trVars.eyeDegY - targY) < halfHeight;
+inWindow = all(isfinite([p.trVars.eyeDegX, p.trVars.eyeDegY, ...
+    targX, targY, halfWidth, halfHeight])) && ...
+    halfWidth > 0 && halfHeight > 0 && ...
+    abs(p.trVars.eyeDegX - targX) <= halfWidth && ...
+    abs(p.trVars.eyeDegY - targY) <= halfHeight;
 
+end
+
+function distance = normalizedTargetDistance(p, targetID)
+%NORMALIZEDTARGETDISTANCE Distance from gaze to a target-window center.
+
+if strcmp(targetID, 'T1')
+    targX = p.trVars.T1_locDegX;
+    targY = p.trVars.T1_locDegY;
+else
+    targX = p.trVars.T2_locDegX;
+    targY = p.trVars.T2_locDegY;
+end
+distance = hypot( ...
+    (p.trVars.eyeDegX - targX) / p.trVars.targWinWidthDeg, ...
+    (p.trVars.eyeDegY - targY) / p.trVars.targWinHeightDeg);
+end
+
+function p = markFixBreakDuringDelay(p, timeNow)
+%MARKFIXBREAKDURINGDELAY Record an eye departure before the go-signal flip.
+
+p.init.strb.strobeNow(p.init.codes.fixBreak);
+p.trData.timing.fixBreak = timeNow;
+p.trData.timing.fixBreakDuringDelay = timeNow;
+p.trData.failureReason = "fixbreakduringdelay";
+p.trVars.currentState = p.state.fixBreak;
+fprintf(['fixbreakduringdelay: t=%.1f ms after target onset, ', ...
+    'scheduled delay=%g ms, gaze=(%.2f, %.2f)\n'], ...
+    1000 * (timeNow - p.trData.timing.targetOn), ...
+    p.trVars.targetDelayDurationMs, ...
+    p.trVars.eyeDegX, p.trVars.eyeDegY);
+end
+
+function p = playSuccessfulChoiceFeedback(p)
+%PLAYSUCCESSFULCHOICEFEEDBACK Tone reflects the learned reward identity.
+
+threeToneMode = isfield(p.trVars, 'useThreeOutcomeTones') && ...
+    logical(p.trVars.useThreeOutcomeTones);
+if ~threeToneMode
+    p = playTone(p, 'high');
+    return
+end
+
+if p.trData.chosenTargetID == p.status.highRewardTargetID
+    toneName = 'highReward';
+else
+    toneName = 'lowReward';
+end
+
+fprintf('%s tone: T%d chosen, delivered reward=%g ms\n', ...
+    toneName, p.trData.chosenTargetID, p.trVars.currentRewardDuration);
+p = playTone(p, toneName);
+end
+
+function p = playFailureFeedback(p)
+%PLAYFAILUREFEEDBACK Use one common tone for all failed-trial categories.
+
+if isfield(p.trVars, 'useThreeOutcomeTones') && ...
+        logical(p.trVars.useThreeOutcomeTones)
+    toneName = 'failure';
+else
+    toneName = 'low';
+end
+fprintf('%s tone: failureReason=%s\n', ...
+    toneName, char(string(p.trData.failureReason)));
+p = playTone(p, toneName);
 end
 %% -------------------- TARGET IDENTITY / SIDE HELPERS --------------------
 function targetID = targetAtSide(p, side)

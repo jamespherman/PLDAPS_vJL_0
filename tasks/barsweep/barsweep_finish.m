@@ -289,7 +289,20 @@ needReset = false;
 if abs(rf.pathLengthDeg - p.trVars.pathLengthDeg) > 1e-6, needReset = true; end
 if abs(rf.barWidthDeg   - p.trVars.barWidthDeg)   > 1e-6, needReset = true; end
 if abs(rf.rfPosBinDeg   - p.trVars.rfPosBinDeg)   > 1e-6, needReset = true; end
-if abs(rf.latencyMs     - p.trVars.rfLatencyMs)   > 1e-6, needReset = true; end
+% rfLatencyMs only affects accumulation in rfmap12 (which subtracts it).
+% cardinal4 v2 ignores it (the midpoint is latency-free), so a change must
+% NOT wipe the cardinal4 accumulator. Keep the live speed snapshot current
+% either way so the cardinal4 latency read-out tracks GUI speed edits
+% (label-only; does not affect the histograms).
+if isfield(rf, 'accumBy') && strcmp(rf.accumBy, 'orientation') && ...
+        abs(rf.latencyMs - p.trVars.rfLatencyMs) > 1e-6
+    needReset = true;
+end
+if isfield(rf, 'speedDegPerSec') && isfield(p.trVars, 'speedDegPerSec') && ...
+        (~isequaln(rf.speedDegPerSec, p.trVars.speedDegPerSec))
+    rf.speedDegPerSec = p.trVars.speedDegPerSec;
+    p.init.barsweepRF.speedDegPerSec = p.trVars.speedDegPerSec;
+end
 
 % pathCenterDeg: sub-bin nudge -> absorbed (label-only); super-bin -> reset.
 deltaPath = abs([p.trVars.pathCenterXDeg; p.trVars.pathCenterYDeg] - rf.pathCenterDeg);

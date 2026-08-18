@@ -34,6 +34,12 @@ if nargin < 4 || isempty(opts), opts = struct(); end
 if ~isfield(opts, 'detectThresh'), opts.detectThresh = 4.0; end
 if ~isfield(opts, 'fitFloorFrac'), opts.fitFloorFrac = 0.25; end
 if ~isfield(opts, 'exclusionDeg'), opts.exclusionDeg = 1.5; end
+% cardinal4 v2 only: PSTH smoothing scale (dva) for display + peak picking,
+% and fit mode -- 'cheap' (parabolic peak of the smoothed profile, used live
+% for all channels) or 'full' (per-direction Gaussian fit, used at session
+% end / on demand and for the export).
+if ~isfield(opts, 'smoothDeg'), opts.smoothDeg = 0.5; end
+if ~isfield(opts, 'fitMode'),   opts.fitMode   = 'cheap'; end
 
 % Build the rate matrix [nOri x nPosBins] for this channel.
 spikeMat = squeeze(rf.spikeHist(:, :, ch));    % [nOri x nPosBins]
@@ -154,66 +160,112 @@ switch exptType
         end
 
     case 'barsweep_cardinal4'
-        % After opposite-pooling, orientationsRad has 2 entries:
-        % 0 (vertical bar => x-projection) and pi/2 (horizontal bar =>
-        % y-projection).
-        xIdx = find(abs(rf.orientationsRad - 0)    < 1e-6, 1);
-        yIdx = find(abs(rf.orientationsRad - pi/2) < 1e-6, 1);
-        if isempty(xIdx) || isempty(yIdx)
-            error(['reconstructBarsweepRF: cardinal4 expects orientationsRad ' ...
-                   'to contain 0 and pi/2 exactly.']);
+        % v2 MIDPOINT METHOD. rateMatrix is [nDir x nPos], one row per sweep
+        % direction in rf.directionsRad order ([0 90 180 270]). Each
+        % direction's response peak sits at s_RF +/- L*v (shifted along the
+        % direction of motion by response latency L). Azimuth = midpoint of
+        % the 0/180 peaks; elevation = midpoint of the 90/270 peaks --
+        % latency cancels, never assumed. Latency is read from the peak
+        % SEPARATION.
+        axisPos = rf.positionCenters(:).';                 % [1 x nPos] path-center-rel dva
+        dirsDeg = round(rad2deg(rf.directionsRad(:).'));   % [0 90 180 270]
+        nDir    = numel(dirsDeg);
+        binDeg  = rf.rfPosBinDeg;
+
+        fullFit    = strcmp(opts.fitMode, 'full');
+        smoothBins = max(1, round(opts.smoothDeg / binDeg));
+
+        smoothByDir = zeros(nDir, numel(axisPos));
+        peakByDir   = nan(nDir, 1);
+        snrByDir    = zeros(nDir, 1);
+        fitByDir    = repmat(emptyGaussFit1D(), nDir, 1);
+        for d = 1:nDir
+            sm = smooth1D(rateMatrix(d, :), smoothBins);
+            smoothByDir(d, :) = sm;
+            % SNR off the smoothed profile, dropping zero-dwell bins.
+            snrByDir(d) = profileSNR(axisPos, sm, rf.dwellTime(d, :), ...
+                opts.exclusionDeg);
+            if fullFit
+                fitByDir(d) = gaussFit1D(axisPos, sm, rf.dwellTime(d, :));
+                if fitByDir(d).ok
+                    peakByDir(d) = fitByDir(d).mu;
+                else
+                    peakByDir(d) = parabolicPeak(axisPos, sm);
+                end
+            else
+                peakByDir(d) = parabolicPeak(axisPos, sm);
+            end
         end
 
-        out.rateX   = rateMatrix(xIdx, :);
-        out.rateY   = rateMatrix(yIdx, :);
-        out.axisX   = rf.positionCenters;
-        out.axisY   = rf.positionCenters;
-        out.xCenter = parabolicPeak(out.axisX, out.rateX);
-        out.yCenter = parabolicPeak(out.axisY, out.rateY);
-        % Outer-product separable estimate, normalized to [0, 1].
-        sep = out.rateY(:) * out.rateX(:)';        % rows = y, cols = x
-        m   = max(sep(:));
-        if m <= 0
-            sep = zeros(size(sep));
+        % Map directions to axes: 0/180 sweep AZIMUTH (x), 90/270 sweep
+        % ELEVATION (y).
+        i0   = findDir(dirsDeg, 0);
+        i180 = findDir(dirsDeg, 180);
+        i90  = findDir(dirsDeg, 90);
+        i270 = findDir(dirsDeg, 270);
+
+        out.xCenter = mean([peakByDir(i0),  peakByDir(i180)], 'omitnan');
+        out.yCenter = mean([peakByDir(i90), peakByDir(i270)], 'omitnan');
+
+        % Latency (ms) from peak separation / (2*speed). For a real lagging
+        % response peak@0 > peak@180 (positive). NaN if speed unknown.
+        if isfield(rf, 'speedDegPerSec') && isfinite(rf.speedDegPerSec) && ...
+                rf.speedDegPerSec > 0
+            out.latencyAzMs = 1000 * (peakByDir(i0)  - peakByDir(i180)) / ...
+                (2 * rf.speedDegPerSec);
+            out.latencyElMs = 1000 * (peakByDir(i90) - peakByDir(i270)) / ...
+                (2 * rf.speedDegPerSec);
         else
-            sep = sep / m;
+            out.latencyAzMs = NaN;
+            out.latencyElMs = NaN;
         end
-        out.separable2D = sep;
-        out.rateMatrix  = rateMatrix;
+        out.latencyMs = mean([out.latencyAzMs, out.latencyElMs], 'omitnan');
 
-        % --- Per-axis SNR (cardinal4) ---
-        % For each 1D profile compute the off-peak noise from bins more
-        % than exclusionDeg from the argmax. SNR is min(snr_x, snr_y) --
-        % both axes must clear threshold for the (x_c, y_c) readout to
-        % be trusted. Pass dwell so profileSNR can drop zero-dwell bins
-        % (which would otherwise dominate the off-peak set with the
-        % row-mean fill applied above, collapsing MAD to 0).
-        snrX = profileSNR(out.axisX, out.rateX, rf.dwellTime(xIdx, :), ...
-            opts.exclusionDeg);
-        snrY = profileSNR(out.axisY, out.rateY, rf.dwellTime(yIdx, :), ...
-            opts.exclusionDeg);
+        % Per-axis SNR: BOTH opposite directions must show a peak, since the
+        % midpoint is only meaningful when both peaks are real.
+        snrX = min(snrByDir(i0),  snrByDir(i180));
+        snrY = min(snrByDir(i90), snrByDir(i270));
         snr  = min(snrX, snrY);
-        peakXVal = max(out.rateX); peakYVal = max(out.rateY);
+
+        % --- New per-direction outputs (4-panel viz consumes these) ---
+        out.directionsDeg = dirsDeg;
+        out.axis          = axisPos;
+        out.rateByDir     = rateMatrix;
+        out.smoothByDir   = smoothByDir;
+        out.peakByDir     = peakByDir;
+        out.fitByDir      = fitByDir;
+        out.snrByDir      = snrByDir;
+        out.rateMatrix    = rateMatrix;
+
         out.peakStats = struct( ...
-            'peakValue', max(peakXVal, peakYVal), ...
+            'peakValue', max(rateMatrix(:)), ...
             'peakXY',    [out.xCenter, out.yCenter], ...
-            'noiseLevel', NaN, ...     % per-axis only; see snrX, snrY
+            'noiseLevel', NaN, ...
             'snr',       snr, ...
             'snrX',      snrX, ...
             'snrY',      snrY, ...
             'detected',  snr >= opts.detectThresh);
-        % 2D moment fit on the separable thumbnail. The thumbnail is
-        % already non-negative (outer product of non-negative profiles)
-        % so no positive-part clipping needed; threshold at fitFloorFrac
-        % to drop the long sub-peak tails that would bias the moments.
-        if out.peakStats.detected
-            [Xg, Yg] = meshgrid(out.axisX, out.axisY);
-            sep2 = out.separable2D;
-            mask = sep2 >= opts.fitFloorFrac * max(sep2(:));
-            out.gaussFit = momentFit2D(sep2, Xg, Yg, mask);
-        else
-            out.gaussFit = emptyGaussFit();
-        end
+
+        % --- Backward-compatible fields (existing plot/browser/export) ---
+        % rateX/rateY are the average of each axis' two direction profiles
+        % (a DISPLAY AID; the RF center is xCenter/yCenter, NOT the peak of
+        % these averages). axisX/axisY = positionCenters.
+        out.axisX = axisPos;
+        out.axisY = axisPos;
+        out.rateX = mean(smoothByDir([i0,  i180], :), 1);
+        out.rateY = mean(smoothByDir([i90, i270], :), 1);
+        sep = out.rateY(:) * out.rateX(:)';
+        m   = max(sep(:));
+        if m <= 0, sep = zeros(size(sep)); else, sep = sep / m; end
+        out.separable2D = sep;
+
+        % gaussFit compat: centered on the midpoint centers, widths from the
+        % per-direction fits (full) or the profile second moment (cheap);
+        % axis-aligned 1-sigma ellipse for overlays.
+        sigX = axisSigma(fitByDir([i0,  i180]), axisPos, smoothByDir([i0,  i180], :));
+        sigY = axisSigma(fitByDir([i90, i270]), axisPos, smoothByDir([i90, i270], :));
+        out.gaussFit = buildCompatGaussFit(out.xCenter, out.yCenter, ...
+            sigX, sigY, out.peakStats.detected);
 
     otherwise
         error('reconstructBarsweepRF: unknown exptType "%s".', exptType);
@@ -222,6 +274,123 @@ end
 end
 
 %% --- helpers ---
+
+function y = smooth1D(x, sigmaBins)
+% Edge-corrected Gaussian smoothing of a 1D profile (no toolbox needed).
+x = x(:).';
+if sigmaBins <= 0.5 || numel(x) < 3
+    y = x;
+    return;
+end
+half = ceil(3 * sigmaBins);
+t = -half:half;
+k = exp(-0.5 * (t / sigmaBins).^2);
+k = k / sum(k);
+num = conv(x, k, 'same');
+den = conv(ones(size(x)), k, 'same');   % normalize out edge tapering
+y = num ./ den;
+end
+
+function idx = findDir(dirsDeg, target)
+% Index of a cardinal direction within dirsDeg (mod 360).
+idx = find(mod(dirsDeg - target, 360) == 0, 1);
+if isempty(idx)
+    error('reconstructBarsweepRF: cardinal4 missing direction %d deg.', target);
+end
+end
+
+function fit = emptyGaussFit1D()
+fit = struct('amp', NaN, 'mu', NaN, 'sigma', NaN, 'offset', NaN, ...
+    'peak', NaN, 'ok', false);
+end
+
+function fit = gaussFit1D(xAxis, y, dwell)
+% 1D Gaussian-plus-offset fit via fminsearch (base MATLAB; no Optimization
+% Toolbox). y = amp*exp(-(x-mu)^2/(2 sigma^2)) + offset, fit over bins with
+% dwell > 0. Returns fit.ok = false (mu = NaN) when the fit is degenerate or
+% lands off-axis, so the caller falls back to the parabolic peak.
+fit = emptyGaussFit1D();
+xAxis = xAxis(:).'; y = y(:).'; dwell = dwell(:).';
+valid = dwell > 0 & isfinite(y);
+if sum(valid) < 5
+    return;
+end
+xv = xAxis(valid); yv = y(valid);
+[ymax, im] = max(yv);
+b0  = median(yv);
+a0  = max(ymax - b0, eps);
+mu0 = xv(im);
+above = yv > (b0 + 0.5 * a0);
+dx = xAxis(2) - xAxis(1);
+if nnz(above) >= 2
+    s0 = max((max(xv(above)) - min(xv(above))) / 2.355, 2 * dx);
+else
+    s0 = 3 * dx;
+end
+obj = @(pp) sum((pp(1) * exp(-0.5 * ((xv - pp(2)) / max(abs(pp(3)), eps)).^2) ...
+    + pp(4) - yv).^2);
+opt = optimset('Display', 'off', 'MaxFunEvals', 2000, 'MaxIter', 2000);
+try
+    pf = fminsearch(obj, [a0, mu0, s0, b0], opt);
+catch
+    pf = [a0, mu0, s0, b0];
+end
+fit.amp = pf(1); fit.mu = pf(2); fit.sigma = abs(pf(3)); fit.offset = pf(4);
+fit.peak = pf(2);
+if ~isfinite(fit.mu) || fit.amp <= 0 || ...
+        fit.mu < xAxis(1) || fit.mu > xAxis(end)
+    fit.mu = NaN; fit.peak = NaN;
+end
+fit.ok = isfinite(fit.mu);
+end
+
+function s = axisSigma(fits, xAxis, profs)
+% Representative RF width (dva) for one axis: mean of the per-direction
+% Gaussian sigmas when available, else the second moment of the mean
+% profile about its centroid.
+sig = [];
+for k = 1:numel(fits)
+    if isstruct(fits(k)) && isfield(fits(k), 'sigma') && ...
+            isfinite(fits(k).sigma) && fits(k).sigma > 0
+        sig(end + 1) = fits(k).sigma; %#ok<AGROW>
+    end
+end
+if ~isempty(sig)
+    s = mean(sig);
+    return;
+end
+xAxis = xAxis(:).';
+mp = mean(profs, 1);
+w  = max(mp - min(mp), 0);
+W  = sum(w);
+if W <= 0
+    s = NaN;
+    return;
+end
+mu = sum(w .* xAxis) / W;
+s  = sqrt(max(sum(w .* (xAxis - mu).^2) / W, 0));
+if s <= 0, s = NaN; end
+end
+
+function fit = buildCompatGaussFit(x0, y0, sigX, sigY, detected)
+% Assemble a 2D gaussFit-compatible struct (same fields as emptyGaussFit)
+% centered on the midpoint centers with axis-aligned widths, for the legacy
+% plot/browser/export overlays.
+fit = emptyGaussFit();
+if ~detected || ~isfinite(x0) || ~isfinite(y0)
+    return;
+end
+fit.x0 = x0; fit.y0 = y0;
+fit.sigmaX = sigX; fit.sigmaY = sigY; fit.rho = 0;
+if isfinite(sigX), fit.fwhmX = 2.3548 * sigX; end
+if isfinite(sigY), fit.fwhmY = 2.3548 * sigY; end
+if isfinite(sigX) && isfinite(sigY)
+    phi = linspace(0, 2*pi, 64);
+    fit.ellipseX = x0 + sigX * cos(phi);
+    fit.ellipseY = y0 + sigY * sin(phi);
+    fit.covariance = [sigX^2, 0; 0, sigY^2];
+end
+end
 
 function xPeak = parabolicPeak(xAxis, y)
 % 3-point parabolic interpolation around the argmax. Falls back to

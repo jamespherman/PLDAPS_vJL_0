@@ -1,0 +1,14 @@
+Metric,Value,Unit,Notes
+Saved attempts,332,trials,One trialXXXX.mat file per saved attempt.
+Successful trials,312,trials,trialEndState = 455 / GoodTrial = 1.
+Completion rate,0.939759036144578,proportion,Successful trials / saved attempts.
+Successful instruction trials,60,trials,Single-target trials.
+Successful two-target choices,252,trials,All acquisition modes combined.
+Real eye-controlled choices,252,trials,passEye=0 and mouseEyeSim=0.
+Fraction passEye,0,proportion,passEye forces a programmed choice in this task.
+Fraction passJoy,1,proportion,Joystick bypass.
+Valid reaction times,320,trials,saccadeOnset strictly after fixOff.
+Valid fixation-acquisition latencies,332,trials,fixAq strictly after fixOn.
+Session duration,22.3654353737831,minutes,Estimated from PTB timestamps.
+Missed frames,1399,frames,Sum across saved attempts.
+Identity-side mapping errors,0,trials,The recorded chosen side does not match the side of the chosen target.
