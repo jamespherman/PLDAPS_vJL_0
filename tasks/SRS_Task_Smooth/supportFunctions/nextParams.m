@@ -1018,14 +1018,49 @@ end
 
 function p = chooseBlockReward(p)
 %CHOOSEBLOCKREWARD Choose rich and poor reward means for the new block.
+%
+% Dubey et al. 2023 (Neuron 111:3321) hold the mean reward of each target
+% constant across a block and draw the two means independently from
+% 0.04-0.21 ml/trial, i.e. 37-191 ms of solenoid time at 0.0011 ml/ms. The
+% two means are required to differ by at least blockMeanRewardMinSepMs so
+% every block presents a discriminable contrast.
+%
+% rewardScale multiplies both means. Scaling rather than re-centering keeps
+% the properties the design depends on: rich and poor values still overlap
+% across blocks, so the size of a single reward does not by itself identify
+% the rich target, and the rich/poor ratio driving choice is unchanged.
 
-rewardMeans = [0, 0];
-while abs(diff(rewardMeans)) < 40
-    rewardMeans = 37 + (191 - 37) * rand(1, 2);
+minMs = getNumericScalar(p.trVars, 'blockMeanRewardMinMs', 37);
+maxMs = getNumericScalar(p.trVars, 'blockMeanRewardMaxMs', 191);
+minSepMs = getNumericScalar(p.trVars, 'blockMeanRewardMinSepMs', 40);
+rewardScale = getNumericScalar(p.trVars, 'rewardScale', 1.5);
+
+if maxMs <= minMs
+    error('SRS:InvalidBlockRewardRange', ...
+        ['blockMeanRewardMaxMs (%g) must exceed blockMeanRewardMinMs ' ...
+         '(%g).'], maxMs, minMs);
 end
 
-p.status.BlockRichMeanDuration = max(rewardMeans);
-p.status.BlockPoorMeanDuration = min(rewardMeans);
+% A separation at or above the full range can never be satisfied and would
+% spin the rejection loop forever.
+if minSepMs >= (maxMs - minMs)
+    error('SRS:InvalidBlockRewardSeparation', ...
+        ['blockMeanRewardMinSepMs (%g) must be smaller than the ' ...
+         'blockMeanReward range (%g ms).'], minSepMs, maxMs - minMs);
+end
+
+if rewardScale <= 0
+    error('SRS:InvalidRewardScale', ...
+        'rewardScale (%g) must be positive.', rewardScale);
+end
+
+rewardMeans = [0, 0];
+while abs(diff(rewardMeans)) < minSepMs
+    rewardMeans = minMs + (maxMs - minMs) * rand(1, 2);
+end
+
+p.status.BlockRichMeanDuration = rewardScale * max(rewardMeans);
+p.status.BlockPoorMeanDuration = rewardScale * min(rewardMeans);
 
 end
 

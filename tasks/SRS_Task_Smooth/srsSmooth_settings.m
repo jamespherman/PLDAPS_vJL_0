@@ -673,6 +673,19 @@ p.trVarsInit.SD_rewardDuration           = 0.015;     % SD for the Gaussian dist
                                                         % SD is in ml not ms! 
 p.trVarsInit.RewardSdGaussianNoiseMs         = 14;      % SD for the gaussian distrib converted in Ms (0.0011ml/ms => 13.64ms--> 14ms)
 
+% Per-block reward means (Dubey et al. 2023, Neuron 111:3321). The mean
+% reward of each target is held constant within a block and drawn from
+% 0.04-0.21 ml/trial, which is 37-191 ms of solenoid time at 0.0011 ml/ms.
+% "rewardScale" rescales that range to reach the desired delivered reward
+% magnitude while leaving every relative property of the paper's design
+% intact: rich/poor values still overlap across blocks, and the rich/poor
+% ratio is unchanged. Scale of 1.5 yields ~171 ms delivered per reward when
+% the animal chooses at chance and ~206 ms at an 80% rich-choice rate.
+p.trVarsInit.blockMeanRewardMinMs    = 37;      % 0.04 ml at 0.0011 ml/ms
+p.trVarsInit.blockMeanRewardMaxMs    = 191;     % 0.21 ml at 0.0011 ml/ms
+p.trVarsInit.blockMeanRewardMinSepMs = 40;      % minimum rich - poor block contrast
+p.trVarsInit.rewardScale             = 1.5;     % multiplies both block means
+
 p.trVarsInit.rewardDurationLeft      = 163;     % To change
 p.trVarsInit.rewardDurationRight     = 163;     % To change
 p.trVarsInit.rewardDelay             = 0.25;    % delay between target hold and reward
