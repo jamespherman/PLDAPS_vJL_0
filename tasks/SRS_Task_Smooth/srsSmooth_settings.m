@@ -314,7 +314,8 @@ p.rig.guiVars = {...
     'rewardDelay'; ...
     'fixDurReqMin'; ...
     'fixDurReqMax'; ...
-    'rewardScale'; ...
+    'rewardScale'; ...          % takes effect at the NEXT block boundary
+    'maxSingleRewardMs'; ...    % takes effect on the NEXT trial
     'responseWindow'; ...
     'T1_locDegX'; ...       % 6
     'T1_locDegY'; ...
@@ -696,7 +697,12 @@ p.trVarsInit.blockMeanRewardMinMs    = 37;      % pre-scale; 0.04 ml at 0.0011 m
 p.trVarsInit.blockMeanRewardMaxMs    = 191;     % pre-scale; 0.21 ml at 0.0011 ml/ms
 p.trVarsInit.blockMeanRewardMinSepMs = 40;      % pre-scale minimum rich - poor contrast
 p.trVarsInit.rewardScale             = 1.5;     % multiplies both block means
-p.trVarsInit.maxSingleRewardMs       = 400;     % hard ceiling on one solenoid opening
+p.trVarsInit.maxSingleRewardMs       = 400;     % hard ceiling on one solenoid opening,
+                                                % applied per trial. Unlike rewardScale this
+                                                % bites immediately, so it is the control to
+                                                % reach for to cut reward mid-block. It also
+                                                % caps rewardScale: the scale is clamped so the
+                                                % largest block mean stays under this value.
 
 p.trVarsInit.rewardDurationLeft      = 163;     % To change
 p.trVarsInit.rewardDurationRight     = 163;     % To change

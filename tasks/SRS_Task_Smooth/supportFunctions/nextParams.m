@@ -331,7 +331,7 @@ poorMean = p.status.BlockPoorMeanDuration;
 % range, so this is the one guarantee that holds for every parameter
 % combination reachable from the GUI. 400 ms is ~0.44 ml at 0.0011 ml/ms,
 % already a large single reward; raise it deliberately if a study needs to.
-maxSingleMs = getNumericScalar(p.trVars, 'maxSingleRewardMs', 400);
+maxSingleMs = blockRewardCeiling(p);
 
 richReward = min(maxSingleMs, max(1, round(richMean + sdMs * randn)));
 poorReward = min(maxSingleMs, max(1, round(poorMean + sdMs * randn)));
@@ -1064,15 +1064,13 @@ function p = chooseBlockReward(p)
 % error would flip the rich target a second time and skip an alternation.
 % Clamping keeps the session running at safe values and says what it did.
 REWARD_SCALE_MIN = 0.1;
-REWARD_SCALE_MAX = 3;       % a mistyped 15 cannot reach the solenoid
 SEPARATION_MIN_MS = 1;      % 0 or less would leave both block means at zero
 SEPARATION_MAX_FRACTION = 0.9;   % keeps rejection sampling from stalling
 BLOCK_MEAN_FLOOR_MS = 1;
+SD_MAX_MS = 100;            % pre-scale; multiplied by rewardScale downstream
 
 minMs = clampRewardParam(p, 'blockMeanRewardMinMs', 37, BLOCK_MEAN_FLOOR_MS, Inf);
 maxMs = clampRewardParam(p, 'blockMeanRewardMaxMs', 191, BLOCK_MEAN_FLOOR_MS, Inf);
-rewardScale = clampRewardParam(p, 'rewardScale', 1.5, ...
-    REWARD_SCALE_MIN, REWARD_SCALE_MAX);
 
 % An inverted or empty range cannot be clamped into something sensible, and
 % editing the two ends one at a time transiently inverts it, so fall back to
@@ -1090,6 +1088,15 @@ end
 % below so the loop cannot exit immediately with both means still zero.
 minSepMs = clampRewardParam(p, 'blockMeanRewardMinSepMs', 40, ...
     SEPARATION_MIN_MS, SEPARATION_MAX_FRACTION * (maxMs - minMs));
+
+% Derive the scale ceiling from the per-reward ceiling rather than hardcoding
+% it. A scale that puts the largest block mean above maxSingleRewardMs makes
+% the ceiling clip a growing share of rich rewards, at which point this stops
+% being a rescale: at 400/191 = 2.09 clipping is negligible, at 3 it is ~74%
+% and the delivered rich mean is a near-constant 400 ms.
+maxSingleMs = blockRewardCeiling(p);
+rewardScale = clampRewardParam(p, 'rewardScale', 1.5, ...
+    REWARD_SCALE_MIN, max(REWARD_SCALE_MIN, maxSingleMs / maxMs));
 
 rewardMeans = [0, 0];
 while abs(diff(rewardMeans)) < minSepMs
@@ -1111,7 +1118,20 @@ p.status.BlockPoorMeanDuration = rewardScale * min(rewardMeans);
 % may since have been clamped or edited.
 p.status.BlockRewardScale = rewardScale;
 p.status.BlockRewardSdMs = rewardScale * ...
-    getNumericScalar(p.trVars, 'RewardSdGaussianNoiseMs', 14);
+    clampRewardParam(p, 'RewardSdGaussianNoiseMs', 14, 0, SD_MAX_MS);
+
+end
+
+function value = blockRewardCeiling(p)
+%BLOCKREWARDCEILING Absolute ceiling on one solenoid opening, in ms.
+%
+% Clamped like every other reward parameter: it is reachable from the GUI
+% dropdown (which lists every trVars field, not just p.rig.guiVars), and it is
+% the last line of defence, so a bad value here disables the protection rather
+% than tripping it. Anything below 1 ms would also defeat the max(1, ...)
+% positivity floor in sampleTrialRewards, since that floor is applied first.
+
+value = clampRewardParam(p, 'maxSingleRewardMs', 400, 1, 1000);
 
 end
 
