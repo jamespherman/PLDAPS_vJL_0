@@ -4,7 +4,7 @@ SRS TASK SMOOTH - SIMPLE BEHAVIORAL ANALYSIS
 Session          : 20260810_t1420_srsClassic_Moretraining
 Source folder    : /home/herman_lab/Documents/PLDAPS_vK2_MASTER/output/20260810_t1420_srsClassic_Moretraining
 Analyzed blocks  : [1 2 3 4 5 6 7 8 9]
-Generated        : 11-Aug-2026 11:05:30
+Generated        : 18-Aug-2026 17:46:35
 
 INFERENCE RULES
 ---------------

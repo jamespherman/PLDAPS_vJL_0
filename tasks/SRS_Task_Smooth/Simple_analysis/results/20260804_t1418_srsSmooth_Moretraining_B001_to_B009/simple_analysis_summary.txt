@@ -1,0 +1,86 @@
+SRS TASK SMOOTH - SIMPLE BEHAVIORAL ANALYSIS
+============================================
+
+Session          : 20260804_t1418_srsSmooth_Moretraining
+Source folder    : /home/herman_lab/Documents/PLDAPS_vK2_MASTER/output/20260804_t1418_srsSmooth_Moretraining
+Analyzed blocks  : [1 2 3 4 5 6 7 8 9]
+Generated        : 18-Aug-2026 18:04:50
+
+INFERENCE RULES
+---------------
+Behavioral inference uses only real eye-controlled successful two-target choices (passEye=0 and mouseEyeSim=0).
+Single-target instruction trials are excluded from choice analyses.
+ns: p/q >= 0.05; *: <0.05; **: <0.01; ***: <0.001. Related exploratory tests use Benjamini-Hochberg FDR correction.
+
+1. DATA RECAP
+-------------
+Saved attempts                  : 863
+Successful trials               : 740
+Successful single-target trials : 402
+Successful two-target choices   : 338
+Real eye-controlled choices     : 338
+Valid reaction times            : 338
+Identity-side mapping errors    : 0
+Missed frames                   : 37
+
+2. CHOICE BY TASK CONDITION
+---------------------------
+P(high salience) - conflict     : 68/200 = 0.340, 95% CI [0.278, 0.408], q=<0.001 ***
+P(high salience) - congruent    : 54/138 = 0.391, 95% CI [0.314, 0.475], q=0.0199 *
+P(high reward) - conflict       : 132/200 = 0.660, 95% CI [0.592, 0.722], q=<0.001 ***
+P(high reward) - congruent      : 54/138 = 0.391, 95% CI [0.314, 0.475], q=0.0199 *
+
+3. CONFLICT VERSUS CONGRUENT
+----------------------------
+Choose high-salience target  | conflict 68/200=0.340; congruent 54/138=0.391; delta=0.051; Fisher p=0.3578; q=0.5367 ns
+Choose high-reward target    | conflict 132/200=0.660; congruent 54/138=0.391; delta=-0.269; Fisher p=<0.001; q=<0.001 ***
+Choose right                 | conflict 112/200=0.560; congruent 77/138=0.558; delta=-0.002; Fisher p=1.0000; q=1.0000 ns
+
+4. CANDIDATE STRATEGIES
+-----------------------
+ 1. Choose low-salience target       accuracy=0.639, N=338, q=<0.001 ***
+ 2. Choose low-salience side         accuracy=0.639, N=338, q=<0.001 ***
+ 3. Switch side                      accuracy=0.561, N=337, q=0.0675 ns
+ 4. Always right                     accuracy=0.559, N=338, q=0.0675 ns
+ 5. Always T2                        accuracy=0.553, N=338, q=0.0829 ns
+ 6. Choose rich target               accuracy=0.550, N=338, q=0.0829 ns
+ 7. Choose rich side                 accuracy=0.550, N=338, q=0.0829 ns
+ 8. Switch identity                  accuracy=0.525, N=337, q=0.3835 ns
+Accuracy cannot identify a unique policy when multiple strategies make the same predictions under the analyzed block design.
+
+5. CONDITIONAL ASSOCIATIONS
+---------------------------
+Rich target on the right      -> Choose right      | delta=0.110; OR=1.559; N=338; Fisher p=0.0483; q=0.0644 ns
+High-salience target on the right -> Choose right      | delta=-0.288; OR=0.300; N=338; Fisher p=<0.001; q=<0.001 ***
+T1 on the right               -> Choose right      | delta=-0.102; OR=0.663; N=338; Fisher p=0.0632; q=0.0723 ns
+Previous choice on the right  -> Choose right      | delta=-0.138; OR=0.571; N=337; Fisher p=0.0149; q=0.0398 *
+T1 is rich                    -> Choose T1         | delta=0.125; OR=1.663; N=338; Fisher p=0.0260; q=0.0520 ns
+T1 is high salience           -> Choose T1         | delta=-0.293; OR=0.294; N=338; Fisher p=<0.001; q=<0.001 ***
+T1 on the right               -> Choose T1         | delta=0.114; OR=1.585; N=338; Fisher p=0.0380; q=0.0607 ns
+Previous choice was T1        -> Choose T1         | delta=-0.063; OR=0.777; N=337; Fisher p=0.2714; q=0.2714 ns
+Delta is P(response=1|predictor=1) minus P(response=1|predictor=0).
+
+6. PREVIOUS REWARD AND IDENTITY SWITCHING
+-----------------------------------------
+P(identity switch)          : 0.525, N=337
+Previous reward vs switch   : r=-0.179, permutation p=<0.001 ***
+
+7. REACTION TIME
+----------------
+All choices      : N=338, median=233.7 ms, IQR=72.959 ms
+Congruent        : N=138, median=225.6 ms, IQR=66.917 ms
+Conflict         : N=200, median=233.8 ms, IQR=74.746 ms
+Conflict minus congruent median = 8.246 ms; permutation p=0.3293 ns
+
+8. COMPACT INTERPRETATION
+-------------------------
+Choose rich target         : 186/338=0.550, 95% CI [0.497, 0.602], q=0.0870 ns.
+Choose high-salience target: 122/338=0.361, 95% CI [0.312, 0.413], q=<0.001 ***.
+Choose right               : 189/338=0.559, 95% CI [0.506, 0.611], q=0.0675 ns.
+Repeat side                : 148/337=0.439, 95% CI [0.387, 0.493], q=0.0675 ns.
+Highest candidate accuracy : Choose low-salience target (0.639, q=<0.001 ***).
+Conflict/congruent difference: Choose high-reward target is significant (delta=-0.269, q=<0.001 ***).
+Previous reward predicts identity switching (r=-0.179, p=<0.001).
+No detectable conflict-related reaction-time cost (conflict-congruent=8.246 ms, p=0.3293).
+
+Interpretation constraint: these are exploratory within-session analyses. Repeated trials are not independent subjects, and candidate strategies can remain confounded when block reversals or side counterbalancing are insufficient.
