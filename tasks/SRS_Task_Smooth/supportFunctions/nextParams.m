@@ -315,8 +315,23 @@ sdMs = p.trVars.RewardSdGaussianNoiseMs;
 richMean = p.status.BlockRichMeanDuration;
 poorMean = p.status.BlockPoorMeanDuration;
 
-richReward = max(1, round(richMean + sdMs * randn));
-poorReward = max(1, round(poorMean + sdMs * randn));
+% Absolute ceiling on a single solenoid opening, independent of how the
+% block means were arrived at. The block-level clamps in chooseBlockReward
+% bound the scale and the separation, but not the product of scale and
+% range, so this is the one guarantee that holds for every parameter
+% combination reachable from the GUI. 400 ms is ~0.44 ml at 0.0011 ml/ms,
+% already a large single reward; raise it deliberately if a study needs to.
+maxSingleMs = getNumericScalar(p.trVars, 'maxSingleRewardMs', 400);
+
+richReward = min(maxSingleMs, max(1, round(richMean + sdMs * randn)));
+poorReward = min(maxSingleMs, max(1, round(poorMean + sdMs * randn)));
+
+if richReward >= maxSingleMs || poorReward >= maxSingleMs
+    warning('SRS:RewardCeilingReached', ...
+        ['A sampled reward hit the %g ms ceiling (rich mean %.0f, poor ' ...
+         'mean %.0f). Check rewardScale and the block mean range.'], ...
+        maxSingleMs, richMean, poorMean);
+end
 
 p.status.ActualRichReward = richReward;
 p.status.ActualPoorReward = poorReward;
@@ -1030,29 +1045,41 @@ function p = chooseBlockReward(p)
 % across blocks, so the size of a single reward does not by itself identify
 % the rich target, and the rich/poor ratio driving choice is unchanged.
 
-minMs = getNumericScalar(p.trVars, 'blockMeanRewardMinMs', 37);
-maxMs = getNumericScalar(p.trVars, 'blockMeanRewardMaxMs', 191);
-minSepMs = getNumericScalar(p.trVars, 'blockMeanRewardMinSepMs', 40);
-rewardScale = getNumericScalar(p.trVars, 'rewardScale', 1.5);
+% Parameters are clamped, not validated with error(). The GUI trial loop
+% (PLDAPS_vK2_GUI.m:491-520) calls this through _next with no try/catch, so
+% throwing here would end a running session with Psychtoolbox, DataPixx and
+% ephys schedules still live. It would also leave block bookkeeping half
+% applied: startNewBlock flips CurrentBlockType (line 55) and increments
+% CurrentBlockNumber (line 75) before calling this, so restarting after an
+% error would flip the rich target a second time and skip an alternation.
+% Clamping keeps the session running at safe values and says what it did.
+REWARD_SCALE_MIN = 0.1;
+REWARD_SCALE_MAX = 3;       % a mistyped 15 cannot reach the solenoid
+SEPARATION_MIN_MS = 1;      % 0 or less would leave both block means at zero
+SEPARATION_MAX_FRACTION = 0.9;   % keeps rejection sampling from stalling
+BLOCK_MEAN_FLOOR_MS = 1;
 
+minMs = clampRewardParam(p, 'blockMeanRewardMinMs', 37, BLOCK_MEAN_FLOOR_MS, Inf);
+maxMs = clampRewardParam(p, 'blockMeanRewardMaxMs', 191, BLOCK_MEAN_FLOOR_MS, Inf);
+rewardScale = clampRewardParam(p, 'rewardScale', 1.5, ...
+    REWARD_SCALE_MIN, REWARD_SCALE_MAX);
+
+% An inverted or empty range cannot be clamped into something sensible, and
+% editing the two ends one at a time transiently inverts it, so fall back to
+% the published range rather than guessing at intent.
 if maxMs <= minMs
-    error('SRS:InvalidBlockRewardRange', ...
+    warning('SRS:InvalidBlockRewardRange', ...
         ['blockMeanRewardMaxMs (%g) must exceed blockMeanRewardMinMs ' ...
-         '(%g).'], maxMs, minMs);
+         '(%g). Using the default 37-191 ms range for this block.'], ...
+        maxMs, minMs);
+    minMs = 37;
+    maxMs = 191;
 end
 
-% A separation at or above the full range can never be satisfied and would
-% spin the rejection loop forever.
-if minSepMs >= (maxMs - minMs)
-    error('SRS:InvalidBlockRewardSeparation', ...
-        ['blockMeanRewardMinSepMs (%g) must be smaller than the ' ...
-         'blockMeanReward range (%g ms).'], minSepMs, maxMs - minMs);
-end
-
-if rewardScale <= 0
-    error('SRS:InvalidRewardScale', ...
-        'rewardScale (%g) must be positive.', rewardScale);
-end
+% Bounded above so the rejection loop keeps a usable acceptance rate, and
+% below so the loop cannot exit immediately with both means still zero.
+minSepMs = clampRewardParam(p, 'blockMeanRewardMinSepMs', 40, ...
+    SEPARATION_MIN_MS, SEPARATION_MAX_FRACTION * (maxMs - minMs));
 
 rewardMeans = [0, 0];
 while abs(diff(rewardMeans)) < minSepMs
@@ -1061,6 +1088,22 @@ end
 
 p.status.BlockRichMeanDuration = rewardScale * max(rewardMeans);
 p.status.BlockPoorMeanDuration = rewardScale * min(rewardMeans);
+
+end
+
+function value = clampRewardParam(p, fieldName, defaultValue, lowerBound, upperBound)
+%CLAMPREWARDPARAM Read one reward parameter, forcing it into a safe range.
+
+value = getNumericScalar(p.trVars, fieldName, defaultValue);
+clamped = min(max(value, lowerBound), upperBound);
+
+if clamped ~= value
+    warning('SRS:RewardParameterClamped', ...
+        '%s = %g is outside [%g %g]; using %g for this block.', ...
+        fieldName, value, lowerBound, upperBound, clamped);
+end
+
+value = clamped;
 
 end
 

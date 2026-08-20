@@ -314,7 +314,7 @@ p.rig.guiVars = {...
     'rewardDelay'; ...
     'fixDurReqMin'; ...
     'fixDurReqMax'; ...
-    'MeanrewardDurationMs'; ...
+    'rewardScale'; ...
     'responseWindow'; ...
     'T1_locDegX'; ...       % 6
     'T1_locDegY'; ...
@@ -668,7 +668,6 @@ p.trVarsInit.T1_luminance        = 6;           % Luminance of T1 =  random from
 p.trVarsInit.T2_luminance        = 6;           % Calculated from Lum of T1 so the average luminance btw T1 & T2 = 6
 %% Reward System
 
-p.trVarsInit.MeanrewardDurationMs        = 300;     % reward duration
 p.trVarsInit.SD_rewardDuration           = 0.015;     % SD for the Gaussian distributiom ;aking the reward value variable
                                                         % SD is in ml not ms! 
 p.trVarsInit.RewardSdGaussianNoiseMs         = 14;      % SD for the gaussian distrib converted in Ms (0.0011ml/ms => 13.64ms--> 14ms)
@@ -676,15 +675,25 @@ p.trVarsInit.RewardSdGaussianNoiseMs         = 14;      % SD for the gaussian di
 % Per-block reward means (Dubey et al. 2023, Neuron 111:3321). The mean
 % reward of each target is held constant within a block and drawn from
 % 0.04-0.21 ml/trial, which is 37-191 ms of solenoid time at 0.0011 ml/ms.
-% "rewardScale" rescales that range to reach the desired delivered reward
-% magnitude while leaving every relative property of the paper's design
-% intact: rich/poor values still overlap across blocks, and the rich/poor
-% ratio is unchanged. Scale of 1.5 yields ~171 ms delivered per reward when
-% the animal chooses at chance and ~206 ms at an 80% rich-choice rate.
-p.trVarsInit.blockMeanRewardMinMs    = 37;      % 0.04 ml at 0.0011 ml/ms
-p.trVarsInit.blockMeanRewardMaxMs    = 191;     % 0.21 ml at 0.0011 ml/ms
-p.trVarsInit.blockMeanRewardMinSepMs = 40;      % minimum rich - poor block contrast
+% "rewardScale" multiplies both means to reach the desired delivered
+% magnitude. Scaling rather than re-centering keeps rich and poor values
+% overlapping across blocks, so the size of a single reward does not by
+% itself identify the rich target, and keeps the rich/poor ratio unchanged.
+% Note it is NOT a pure rescale of the paper's design: RewardSdGaussianNoiseMs
+% above stays at 14 ms, so trial-to-trial variability shrinks relative to the
+% means and a single reward is somewhat more diagnostic than in Dubey. Scale
+% by rewardScale there too if you want the paper's relative variability.
+%
+% IMPORTANT: the three *Ms values below are PRE-scale. Delivered values are
+% these multiplied by rewardScale, so at the default 1.5 the block means
+% actually span 55.5-286.5 ms and the minimum rich-poor contrast is 60 ms.
+% Scale of 1.5 yields ~171 ms delivered per reward when the animal chooses at
+% chance and ~206 ms at an 80% rich-choice rate.
+p.trVarsInit.blockMeanRewardMinMs    = 37;      % pre-scale; 0.04 ml at 0.0011 ml/ms
+p.trVarsInit.blockMeanRewardMaxMs    = 191;     % pre-scale; 0.21 ml at 0.0011 ml/ms
+p.trVarsInit.blockMeanRewardMinSepMs = 40;      % pre-scale minimum rich - poor contrast
 p.trVarsInit.rewardScale             = 1.5;     % multiplies both block means
+p.trVarsInit.maxSingleRewardMs       = 400;     % hard ceiling on one solenoid opening
 
 p.trVarsInit.rewardDurationLeft      = 163;     % To change
 p.trVarsInit.rewardDurationRight     = 163;     % To change
