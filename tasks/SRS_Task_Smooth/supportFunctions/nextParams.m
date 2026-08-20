@@ -311,7 +311,17 @@ function p = sampleTrialRewards(p)
 % independent, as in the original task description. Values are rounded for
 % reward delivery and clamped to a positive duration.
 
-sdMs = p.trVars.RewardSdGaussianNoiseMs;
+% Set by chooseBlockReward at block start, already scaled by the effective
+% rewardScale. Falling back to the unscaled trVars value would silently
+% restore the un-Dubey-like variability, so say so if it ever happens.
+if isfield(p.status, 'BlockRewardSdMs')
+    sdMs = p.status.BlockRewardSdMs;
+else
+    sdMs = p.trVars.RewardSdGaussianNoiseMs;
+    warning('SRS:MissingBlockRewardSd', ...
+        ['p.status.BlockRewardSdMs is not set; using the unscaled SD of ' ...
+         '%g ms. chooseBlockReward should have run first.'], sdMs);
+end
 richMean = p.status.BlockRichMeanDuration;
 poorMean = p.status.BlockPoorMeanDuration;
 
@@ -1088,6 +1098,20 @@ end
 
 p.status.BlockRichMeanDuration = rewardScale * max(rewardMeans);
 p.status.BlockPoorMeanDuration = rewardScale * min(rewardMeans);
+
+% Scale the per-trial noise by the same factor. Dubey's SD (0.015 ml = 14 ms)
+% sat against means of 0.04-0.21 ml; scaling the means without it would shrink
+% relative variability and sharpen rich/poor discriminability (d' 3.94 -> 5.91
+% at scale 1.5), which is precisely the property their design relies on to keep
+% unsignaled block transitions gradual to discover. RewardSdGaussianNoiseMs is
+% therefore a PRE-scale SD, consistent with the blockMeanReward* parameters.
+%
+% Both are stored as the effective, post-clamp values: sampleTrialRewards must
+% use the same scale that produced these means, not re-read a GUI field that
+% may since have been clamped or edited.
+p.status.BlockRewardScale = rewardScale;
+p.status.BlockRewardSdMs = rewardScale * ...
+    getNumericScalar(p.trVars, 'RewardSdGaussianNoiseMs', 14);
 
 end
 

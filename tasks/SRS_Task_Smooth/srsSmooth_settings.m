@@ -671,6 +671,10 @@ p.trVarsInit.T2_luminance        = 6;           % Calculated from Lum of T1 so t
 p.trVarsInit.SD_rewardDuration           = 0.015;     % SD for the Gaussian distributiom ;aking the reward value variable
                                                         % SD is in ml not ms! 
 p.trVarsInit.RewardSdGaussianNoiseMs         = 14;      % SD for the gaussian distrib converted in Ms (0.0011ml/ms => 13.64ms--> 14ms)
+                                                        % PRE-scale, like the blockMeanReward* values below: the SD
+                                                        % actually used is this times rewardScale, so that relative
+                                                        % trial-to-trial variability matches Dubey et al. rather than
+                                                        % shrinking as the means are scaled up.
 
 % Per-block reward means (Dubey et al. 2023, Neuron 111:3321). The mean
 % reward of each target is held constant within a block and drawn from
@@ -679,10 +683,9 @@ p.trVarsInit.RewardSdGaussianNoiseMs         = 14;      % SD for the gaussian di
 % magnitude. Scaling rather than re-centering keeps rich and poor values
 % overlapping across blocks, so the size of a single reward does not by
 % itself identify the rich target, and keeps the rich/poor ratio unchanged.
-% Note it is NOT a pure rescale of the paper's design: RewardSdGaussianNoiseMs
-% above stays at 14 ms, so trial-to-trial variability shrinks relative to the
-% means and a single reward is somewhat more diagnostic than in Dubey. Scale
-% by rewardScale there too if you want the paper's relative variability.
+% RewardSdGaussianNoiseMs above is scaled by rewardScale as well, so this is
+% a pure rescale: inversion rate, d' and coefficient of variation all match
+% the paper (d' 3.94, P(poor sample >= rich sample) 0.26%) at any scale.
 %
 % IMPORTANT: the three *Ms values below are PRE-scale. Delivered values are
 % these multiplied by rewardScale, so at the default 1.5 the block means
