@@ -18,7 +18,7 @@ function p = i1FindGrayBackgroundLum(p, varargin)
 
 
 %% Resolve the directly callable i1 MEX used on this rig
-i1Path = '/home/herman_lab/OneDrive/Code/i1';
+i1Path = pds.i1MexFolder;
 
 %% Options
 

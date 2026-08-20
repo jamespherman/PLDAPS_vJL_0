@@ -27,7 +27,7 @@ function p = i1ScanDklRedLumAxis(p, varargin)
 % Options
 % -------------------------------------------------------------
 
-i1Path = '/home/herman_lab/OneDrive/Code/i1';
+i1Path = pds.i1MexFolder;
 
 nRepeats = 1;
 settleTime = 0.25;

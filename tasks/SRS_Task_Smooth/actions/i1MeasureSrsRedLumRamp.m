@@ -113,7 +113,7 @@ function opts = parseOptions(varargin)
 opts.nRepeats = 3;
 opts.settleTime = 0.25;
 opts.saveTag = 'srsRedLumRamp';
-opts.i1Path = '/home/herman_lab/OneDrive/Code/i1';
+opts.i1Path = pds.i1MexFolder;
 if mod(numel(varargin), 2) ~= 0
     error('Optional inputs must be name/value pairs.');
 end

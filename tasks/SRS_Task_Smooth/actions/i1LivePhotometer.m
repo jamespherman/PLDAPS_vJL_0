@@ -669,14 +669,12 @@ end
 
 
 function i1MexFolder = findI1MexFolder()
-% Prefer a directly callable I1 MEX, not +pds/I1.
+% Prefer whatever I1 is already on the path, else the copy shipped in this repo.
 resolved = which('I1');
 if ~isempty(resolved)
     i1MexFolder = fileparts(resolved);
 else
-    candidates = { ...
-        '/home/herman_lab/OneDrive/Code/i1', ...
-        fullfile(getenv('HOME'), 'OneDrive', 'Code', 'i1')};
+    candidates = {pds.i1MexFolder};
 
     i1MexFolder = '';
     for iCandidate = 1:numel(candidates)
@@ -689,8 +687,8 @@ else
 end
 
 if isempty(i1MexFolder)
-    error(['Could not find a directly callable I1 MEX. Expected the working ', ...
-        'file under /home/herman_lab/OneDrive/Code/i1.']);
+    error('Could not find a directly callable I1 MEX. Expected it under: %s', ...
+        pds.i1MexFolder);
 end
 
 mexFile = fullfile(i1MexFolder, ['I1.' mexext]);

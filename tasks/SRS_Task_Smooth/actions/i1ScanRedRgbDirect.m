@@ -70,7 +70,7 @@ end
 function opts=parseOptions(p,varargin)
 opts.profile='quick'; opts.nRepeats=1; opts.settleTime=0.20;
 opts.targetLow=0.01; opts.targetHigh=12.15;
-opts.i1Path='/home/herman_lab/OneDrive/Code/i1';
+opts.i1Path=pds.i1MexFolder;
 config = struct();
 if isfield(p, 'trVars'), config = p.trVars; elseif isfield(p, 'trVarsInit'), config = p.trVarsInit; end
 if isfield(config, 'redRgbScanProfile'), opts.profile = lower(char(config.redRgbScanProfile)); end

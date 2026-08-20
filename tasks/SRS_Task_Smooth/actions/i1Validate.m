@@ -2,7 +2,7 @@ function p = i1Validate(p)
 %   [] = i1Validate(p)
 
 % use the directly callable I1 MEX used on this rig:
-i1Path = '/home/herman_lab/OneDrive/Code/i1';
+i1Path = pds.i1MexFolder;
 if exist(i1Path, 'dir')
     addpath(i1Path, '-begin');
     rehash;
