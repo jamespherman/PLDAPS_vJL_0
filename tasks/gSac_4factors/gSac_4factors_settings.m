@@ -275,8 +275,10 @@ p.trVarsInit.goLatencyMax            = 1;  % maximum saccade-latency criterion
 % p.trVarsInit.preTargMax            = 1;    % maximum fixation-only time before target onset
 p.trVarsInit.targOnsetMin            = 0.75; % minimum fixation-only time before target onset
 p.trVarsInit.targOnsetMax            = 1;
-p.trVarsInit.goTimePostTargMin       = 0.3; % min duration from targ onset to the 'go' signal to saccade (which is fixation offset)
-p.trVarsInit.goTimePostTargMax       = 0.8; % max duration from targ onset to the 'go' signal to saccade (which is fixation offset)
+% go times are measured from target ONSET; with the 0.4s flash, 0.5-1.0
+% gives a 0.1-0.6s memory delay after target offset (as in older gSac tasks).
+p.trVarsInit.goTimePostTargMin       = 0.5; % min duration from targ onset to the 'go' signal to saccade (which is fixation offset)
+p.trVarsInit.goTimePostTargMax       = 1.0; % max duration from targ onset to the 'go' signal to saccade (which is fixation offset)
 
 p.trVarsInit.maxFixWait              = 10;    % maximum time to wait for fixation-acquisition
 p.trVarsInit.targOnSacOnly           = 1;    % condition target reappearance on saccade?

@@ -163,7 +163,8 @@ Trial Timeline:
 
 5. MEMORY DELAY          |---[variable]------>|
    (State: dontMove)     Target off; fixation maintained until go signal
-                         Total time from target onset to go: 0.3-0.8s
+                         Total time from target onset to go: 0.5-1.0s
+                         (memory delay after target offset: 0.1-0.6s)
 
 6. SACCADE EXECUTION     |----[0.1-1.0s]----->|
    (State: makeSaccade)  Fixation offset (go signal); subject makes saccade
@@ -186,8 +187,8 @@ Trial Timeline:
 | targOnsetMin | 0.75 s | Minimum time from fixation to target onset |
 | targOnsetMax | 1.0 s | Maximum time from fixation to target onset |
 | targetFlashDuration | 0.4 s | Duration target is visible |
-| goTimePostTargMin | 0.3 s | Min time from target onset to go signal |
-| goTimePostTargMax | 0.8 s | Max time from target onset to go signal |
+| goTimePostTargMin | 0.5 s | Min time from target onset to go signal |
+| goTimePostTargMax | 1.0 s | Max time from target onset to go signal |
 | goLatencyMin | 0.1 s | Minimum saccade latency (earlier = fixation break) |
 | goLatencyMax | 1.0 s | Maximum saccade latency (later = fixation break) |
 | maxSacDurationToAccept | 0.1 s | Max saccade flight duration |
