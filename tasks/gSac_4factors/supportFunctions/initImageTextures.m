@@ -23,6 +23,8 @@ n_stim_levels         = p.draw.clutIdx.grayscale_ramp_end - p.draw.clutIdx.grays
 n_images = length(image_struct);
 p.stim.faceTextures    = [];
 p.stim.nonFaceTextures = [];
+p.stim.faceImageRows    = []; % row in images.mat for each texture
+p.stim.nonFaceImageRows = [];
 fprintf('  Processing %d images and creating single-layer indexed textures...\n', n_images);
 
 for i = 1:n_images
@@ -61,8 +63,10 @@ for i = 1:n_images
     % Store Texture Handle in the Correct List
     if isMonkeyFace
         p.stim.faceTextures(end+1) = texture_handle;
+        p.stim.faceImageRows(end+1) = i;
     elseif isNonFaceObject
         p.stim.nonFaceTextures(end+1) = texture_handle;
+        p.stim.nonFaceImageRows(end+1) = i;
     end
 end
 

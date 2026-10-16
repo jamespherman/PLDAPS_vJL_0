@@ -60,15 +60,18 @@ if p.trVars.stimType <= 2
         % Face stimulus - select random face texture
         rand_idx = randi(length(p.stim.faceTextures));
         p.stim.currentTexture = p.stim.faceTextures(rand_idx);
+        p.trVars.imageIdx = p.stim.faceImageRows(rand_idx);
     else
         % Non-face stimulus - select random non-face texture
         rand_idx = randi(length(p.stim.nonFaceTextures));
         p.stim.currentTexture = p.stim.nonFaceTextures(rand_idx);
+        p.trVars.imageIdx = p.stim.nonFaceImageRows(rand_idx);
     end
 else
     % Bullseye trial - procedurally drawn, no texture needed
     p.stim.isProcedural = true;
     p.stim.currentTexture = [];
+    p.trVars.imageIdx = 0; % no image shown
 end
 
 % This task is always memory-guided (target disappears before go signal)
