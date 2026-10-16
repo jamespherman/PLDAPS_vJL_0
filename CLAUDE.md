@@ -100,6 +100,15 @@ The strobe code system sends event markers to neural recording systems (Omniplex
 ```
 For angles that can be negative (-180 to +180), add 1800 after scaling by 10.
 
+## Project Wiki (`wiki/`)
+
+An LLM-maintained knowledge base about this repo: concepts, every task, the `+pds` library, a generated strobe-code registry, history, and session practice that isn't recoverable from code.
+
+- **Answering questions:** read `wiki/index.md` first, then the relevant pages; confirm in code when precision matters.
+- **Maintaining it:** conventions and workflows are in `wiki/SCHEMA.md`; the `/wiki` skill runs update / ingest / query / lint. Never hand-edit `wiki/index.md`, `wiki/reference/strobe-codes.md`, or `GEN:facts` blocks; run `python3 wiki/_tools/wiki_gen.py all`.
+- **Automatic upkeep:** hooks in `.claude/settings.json` record files this session edits; at Stop, Claude is asked once to update the wiki pages that cite them. At session start, pages whose sources changed (including edits made outside Claude) are reported as stale.
+- When the user states how a task is actually run or why something was designed a certain way, record it in that task page's "Session practice & decisions" section.
+
 ## Running the Framework
 
 1. Launch MATLAB and run `PLDAPS_vK2_GUI.m`
