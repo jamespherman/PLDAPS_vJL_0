@@ -41,9 +41,11 @@ Reward level is determined by target location hemifield and half-block position 
 
 ### 2.3 Target Probability
 
-Target probability is manipulated across blocks:
-- **High-Probability Location**: 5 repetitions per half-block (10 per block)
-- **Low-Probability Locations**: 1 repetition per half-block (2 per block)
+Target probability is manipulated across blocks. Repetition counts are
+per stimulus code; image codes are doubled to balance categories (see
+Section 6.4), so the values below are the base (bullseye) reps:
+- **High-Probability Location**: 5 base reps per half-block (10 per block)
+- **Low-Probability Locations**: 1 base rep per half-block (2 per block)
 
 In Block 1, Location 1 is the high-probability location.
 In Block 2, Location 3 is the high-probability location.
@@ -227,16 +229,26 @@ The experiment uses a nested block design:
 
 ### 6.4 Trials Per Half-Block
 
-Each half-block contains trials for all 4 locations and all 6 stimulus types:
+Each half-block contains trials for all 4 locations and all 6 stimulus
+types. Because bullseye trials span 4 stimulus codes (types 3-6) while
+image trials span only 2 (types 1-2), the image codes are given **double**
+the reps of the bullseye codes. This equalizes the two stimulus
+**categories** (image vs bullseye) in number while preserving the bullseye
+hue counterbalancing and the 5:1 high:low probability ratio within each
+category.
 
-| Location Type | Reps per Stim Type | Total per Half-Block |
-|--------------|-------------------|---------------------|
-| High-Prob Location | 5 | 5 x 6 = 30 trials |
-| Low-Prob Location (x3) | 1 each | 3 x 6 = 18 trials |
-| **Total per Half-Block** | | **48 trials** |
+| Location Type | Bullseye reps (x4 codes) | Image reps (x2 codes) | Total per Half-Block |
+|--------------|--------------------------|-----------------------|----------------------|
+| High-Prob Location | 5 each | 10 each | 4x5 + 2x10 = 40 trials |
+| Low-Prob Location (x3) | 1 each | 2 each | 3 x (4x1 + 2x2) = 24 trials |
+| **Total per Half-Block** | | | **64 trials** |
+
+Per half-block this yields 20 bullseye + 20 image (high-prob location) and
+12 bullseye + 12 image (three low-prob locations): 32 bullseye and 32
+image, i.e. balanced categories.
 
 **Total trials per complete experiment cycle:**
-- 4 half-blocks x 48 trials = **192 trials**
+- 4 half-blocks x 64 trials = **256 trials** (128 bullseye, 128 image)
 
 ---
 
@@ -248,14 +260,14 @@ For each half-block, the following conditions are presented:
 
 | Location | Stim Type | Salience | Reward | Reps |
 |----------|-----------|----------|--------|------|
-| High-Prob | Face | - | varies | 5 |
-| High-Prob | Non-Face | - | varies | 5 |
-| High-Prob | Bullseye | High | varies | 5 |
-| High-Prob | Bullseye | Low | varies | 5 |
-| Low-Prob (x3) | Face | - | varies | 1 |
-| Low-Prob (x3) | Non-Face | - | varies | 1 |
-| Low-Prob (x3) | Bullseye | High | varies | 1 |
-| Low-Prob (x3) | Bullseye | Low | varies | 1 |
+| High-Prob | Face | - | varies | 10 |
+| High-Prob | Non-Face | - | varies | 10 |
+| High-Prob | Bullseye (x2 hues) | High | varies | 5 |
+| High-Prob | Bullseye (x2 hues) | Low | varies | 5 |
+| Low-Prob (x3) | Face | - | varies | 2 |
+| Low-Prob (x3) | Non-Face | - | varies | 2 |
+| Low-Prob (x3) | Bullseye (x2 hues) | High | varies | 1 |
+| Low-Prob (x3) | Bullseye (x2 hues) | Low | varies | 1 |
 
 ### 7.2 Trial Selection
 

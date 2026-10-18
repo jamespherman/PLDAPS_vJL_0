@@ -162,13 +162,26 @@ for i_half_block = 1:n_half_blocks
             table(current_row, 4) = salience;
             table(current_row, 6) = targetColor;
 
-            % Set numTrials based on location probability
-            % High-prob location: 5 reps per half-block (10 per block)
-            % Low-prob locations: 1 rep per half-block (2 per block)
+            % Set numTrials based on location probability.
+            % High-prob location: 5 base reps per half-block (10 per block)
+            % Low-prob locations: 1 base rep per half-block (2 per block)
             if i_loc == high_prob_loc
-                table(current_row, 7) = 5;
+                baseReps = 5;
             else
-                table(current_row, 7) = 1;
+                baseReps = 1;
+            end
+
+            % Balance the two stimulus CATEGORIES (image vs bullseye).
+            % Image trials use 2 stimType codes (1-2) while bullseye
+            % trials use 4 (3-6), so with equal reps per code the deck
+            % would be 2:1 bullseye:image. Doubling the reps for image
+            % conditions makes the categories equal in number while
+            % preserving the bullseye hue counterbalancing (4 subtypes)
+            % and the 5:1 high:low probability ratio within each category.
+            if stimType <= 2
+                table(current_row, 7) = 2 * baseReps;
+            else
+                table(current_row, 7) = baseReps;
             end
 
             % Set reward based on hemifield and half-block
