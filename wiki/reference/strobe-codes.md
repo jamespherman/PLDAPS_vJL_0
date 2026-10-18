@@ -5,8 +5,8 @@ category: Reference
 summary: GENERATED table of every code in +pds/initCodes.m, which tasks use it, and integrity checks
 sources:
   - +pds/initCodes.m @ 55d625cb0d
-verified_at: e48934be
-updated: 2026-10-15
+verified_at: a9564f6b
+updated: 2026-10-18
 ---
 
 # Strobe code registry

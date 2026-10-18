@@ -49,8 +49,8 @@ sources:
   - tasks/SRS_Task_Smooth/Simple_analysis/README.md @ 0817f6ea58
   - tasks/SRS_Task_Smooth/SRS_behavior_analysis_2/CHANGELOG.md @ cbafea5033
   - tasks/SRS_Task_Smooth/SRS_behavior_analysis_2/README.md @ 4cb508ba31
-verified_at: e48934be
-updated: 2026-10-16
+verified_at: a9564f6b
+updated: 2026-10-18
 ---
 
 # Docs catalog
@@ -85,7 +85,7 @@ When a new doc appears, add it here (the **ingest** workflow in [SCHEMA](SCHEMA.
   maintaining this wiki (update / ingest / query / lint) — git-ignored (`.claude/`, local to the machine), reference — [SCHEMA](SCHEMA.md)
 - [../analysisPlanningDocs/llm_wiki_implementation_plan.md](../analysisPlanningDocs/llm_wiki_implementation_plan.md)
   — plan for this wiki (layers, ownership vs CLAUDE.md, hooks, staleness hashing), v2 2026-10-15 —
-  *uncommitted*, implemented 2026-10-15 (§13 records implementation notes) — [SCHEMA](SCHEMA.md)
+  implemented 2026-10-15 (§13 records implementation notes) — [SCHEMA](SCHEMA.md)
 
 ## Data dictionaries
 
@@ -107,7 +107,7 @@ the jules bot (PRs #6–#9, unified #12, timing added #16).
   (2026-05) — reference — [rfMap](tasks/rfMap.md)
 - [../data_dictionaries/srsClassic_Moretraining_data_dictionary.md](../data_dictionaries/srsClassic_Moretraining_data_dictionary.md)
   — SRS_Task_Smooth `srsClassic_Moretraining` variant: saved data and Ripple alignment, written for
-  the 2026-08-19/20 sessions — *uncommitted*, reference — [SRS_Task_Smooth](tasks/SRS_Task_Smooth.md)
+  the 2026-08-19/20 sessions — reference — [SRS_Task_Smooth](tasks/SRS_Task_Smooth.md)
 
 ## Analysis planning docs (`analysisPlanningDocs/`)
 
@@ -172,7 +172,7 @@ Design, implementation and investigation docs:
 ## Task-folder docs
 
 - [../tasks/gSac_4factors/gSac_4factors_task_design_specification.md](../tasks/gSac_4factors/gSac_4factors_task_design_specification.md)
-  — design specification: four factors, stimuli, locations, timing (has uncommitted edits) —
+  — design specification: four factors, stimuli, locations, timing —
   reference — [gSac_4factors](tasks/gSac_4factors.md)
 - [../tasks/conflict_task/supportFunctions/CONFLICT_TASK_REFACTOR_PLAN.md](../tasks/conflict_task/supportFunctions/CONFLICT_TASK_REFACTOR_PLAN.md)
   — refactor to more target locations, new reward structure and visualization — implemented

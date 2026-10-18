@@ -20,8 +20,8 @@ sources:
   - tasks/gSac_4factors/gSac_4factors_task_design_specification.md @ 82458e7bb4
   - analysisPlanningDocs/gSac_4factors_task_description.md @ 3e8b965e68
   - data_dictionaries/4factors_data_dictionary.md @ 4439263e5a
-verified_at: e48934be
-updated: 2026-10-15
+verified_at: a9564f6b
+updated: 2026-10-18
 ---
 
 # gSac_4factors
@@ -70,7 +70,7 @@ via `p.trVars.postFlip`. Behavioural events go through `strobeNow`.
 
 ### Generated facts
 
-- **Directory:** `tasks/gSac_4factors/` — last commit touching it: 2026-10-15 e48934be
+- **Directory:** `tasks/gSac_4factors/` — last commit touching it: 2026-10-18 a9564f6b
 - **Quintet files:** `gSac_4factors_finish.m`, `gSac_4factors_init.m`, `gSac_4factors_next.m`, `gSac_4factors_run.m`
 - **Settings files (1):** `gSac_4factors_settings.m` (primary)
 - **Subfolders:** `supportFunctions/` (20 .m files), `actions/` (3 .m files)
@@ -114,7 +114,7 @@ within each block (see [trial structure](../concepts/trial-structure.md)).
 - **stimType 1–6:** 1 face, 2 non-face (image trials, `salience = 0`, `targetColor = 0`); 3/4 bullseye high/low salience at hue A (0° DKL); 5/6 high/low salience at hue B (180° DKL).
 - **Blocks:** 4 half-blocks make 2 blocks. Location 1 is high-probability in block 1, location 3 in block 2.
 - **Reward:** locations 1–2 (hemifield A) are high-reward in half-blocks 1 and 3, and locations 3–4 in half-blocks 2 and 4.
-- **Counts per half-block:** a bullseye code gets 5 reps at the high-probability location and 1 at each low-probability location. Image codes get double reps (10/2), which balances image and bullseye trials 32/32. A half-block is 64 correct trials and a full cycle is 256. (This doubling is the current working-tree version of `initTrialStructure.m`; see the change history.)
+- **Counts per half-block:** a bullseye code gets 5 reps at the high-probability location and 1 at each low-probability location. Image codes get double reps (10/2), which balances image and bullseye trials 32/32. A half-block is 64 correct trials and a full cycle is 256 (since 2026-10-18, a9564f6b; sessions before that used 48/192, see the change history).
 - **trialCode** = `26000 + 1000·block + (targetLocIdx−1)·6 + stimType`, giving 27001–27024 and 28001–28024. It does not encode half-block or reward.
 
 `nextParams.m → chooseRow` draws a random available row from the
@@ -201,11 +201,11 @@ description's strobe summary. Analysis plan:
 - **Location 1 is placed on the RF** (per the user, 2026-10-02). The base location (`targDegX_base`/`targDegY_base`) is set on the recorded neurons' receptive field. Placing it opposite the RF instead is how block/reward order is counterbalanced across sessions. In that case the RF location becomes location 3, which is high-probability in block 2 and starts low-reward.
 - **`passJoy = 1` always** (per the user, 2026-10-02). The monkeys no longer press the joystick. The joystick option is kept in the code deliberately, and setting `passJoy = 0` makes it required again. `p.trVars.passJoy` in the saved data records which setting applied.
 - The go-signal window was set so the memory delay after target offset is 100–600 ms, matching the older gSac tasks with the longer 0.4 s flash (commit 19c9e3a5 message).
-- Image trials are doubled so image and bullseye categories are equal in number while the bullseye hue counterbalancing and the 5:1 probability ratio are preserved (comment in `fourFactorsTable`; design spec §6.4).
+- **Image and bullseye trials are balanced from 2026-10-18 on** (per the user, 2026-10-18). Image codes get double reps so the two categories are equal in number, while the bullseye hue counterbalancing and the 5:1 probability ratio are preserved (comment in `fourFactorsTable`; design spec §6.4). Earlier sessions used equal reps per stimulus code (bullseye:image 2:1); the user chose balanced categories for future sessions, knowing it changes the design mid-dataset and lengthens each half-block from 48 to 64 correct trials. Neither version confounds stimulus type with reward, probability or location; they differ in which groupings are equally frequent.
 
 ## Data/strobe change history
 
-- uncommitted (working tree, 2026-10-15) — `initTrialStructure.m` doubles reps for image stimTypes 1–2, which raises a half-block from 48 to 64 correct trials and a cycle from 192 to 256 (design spec updated to match).
+- 2026-10-18 — a9564f6b — `initTrialStructure.m` doubles reps for image stimTypes 1–2, which raises a half-block from 48 to 64 correct trials and a cycle from 192 to 256 (design spec updated to match). Image share of trials goes from 1/3 to 1/2; location probabilities, reward assignment and `trialCode` values are unchanged. Sessions recorded before this commit used 48/192; `p.init.trialsArray` in each session's saved files shows which version ran.
 - 2026-10-15 — e48934be — `p.trVars.imageIdx` saved per trial and strobed with `imageId` (6660). `p.stim.faceImageRows`/`nonFaceImageRows` are recorded at load.
 - 2026-10-06 — 19c9e3a5 — `goTimePostTargMin/Max` changed from 0.3–0.8 s to 0.5–1.0 s, so the go signal always comes after target offset.
 - 2026-04-28 — ce70510d — behavioural events (trialBegin, joyPress, fixAq, joyRelease, nonStart, fixBreak, saccadeOnset/Offset, targetAq, blinkDuringSac) are strobed immediately via `strobeNow`. Visual events stay flip-locked.
