@@ -73,7 +73,7 @@ via `p.trVars.postFlip`. Behavioural events go through `strobeNow`.
 - **Directory:** `tasks/gSac_4factors/` — last commit touching it: 2026-10-18 a9564f6b
 - **Quintet files:** `gSac_4factors_finish.m`, `gSac_4factors_init.m`, `gSac_4factors_next.m`, `gSac_4factors_run.m`
 - **Settings files (1):** `gSac_4factors_settings.m` (primary)
-- **Subfolders:** `supportFunctions/` (20 .m files), `actions/` (3 .m files)
+- **Subfolders:** `supportFunctions/` (20 .m files), `actions/` (3 .m files); other: `.claude/`
 - **States** (`p.state`, from `gSac_4factors_settings.m`): `trialBegun`=1, `waitForJoy`=2, `showFix`=3, `dontMove`=4, `makeSaccade`=5, `checkLanding`=6, `holdTarg`=7, `sacComplete`=21, `fixBreak`=31, `joyBreak`=32, `nonStart`=33, `failedToHoldTarg`=34
 
 **strobeList** (from `gSac_4factors_settings.m`; strobed each trial by `pds.strobeTrialData`):

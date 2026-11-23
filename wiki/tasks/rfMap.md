@@ -82,10 +82,10 @@ is drawn over fixation on top of the noise. Checkerboard trials queue
 
 ### Generated facts
 
-- **Directory:** `tasks/rfMap/` — last commit touching it: 2026-08-18 76c4b6d3
+- **Directory:** `tasks/rfMap/` — last commit touching it: 2026-11-23 32c4d1d2
 - **Quintet files:** `rfMap_finish.m`, `rfMap_init.m`, `rfMap_next.m`, `rfMap_run.m`
 - **Settings files (8):** `rfMap_checkerboard_settings.m` (primary), `rfMap_denseAchromatic_settings.m`, `rfMap_denseChromatic_settings.m`, `rfMap_sim_checkerboard_settings.m`, `rfMap_sim_denseAchromatic_settings.m`, `rfMap_sim_denseChromatic_settings.m`, `rfMap_sim_sparseBalanced_settings.m`, `rfMap_sparseBalanced_settings.m`
-- **Subfolders:** `supportFunctions/` (45 .m files); other: `_validation/`, `simPopulations/`
+- **Subfolders:** `supportFunctions/` (47 .m files); other: `_validation/`, `output/`, `simPopulations/`
 - **strobeList:** none defined in primary settings file
 
 <!-- GEN:facts:end -->

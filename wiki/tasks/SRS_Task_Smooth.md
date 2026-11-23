@@ -68,7 +68,7 @@ On a successful trial the reward is chosen by the identity the subject picked
 
 ### Generated facts
 
-- **Directory:** `tasks/SRS_Task_Smooth/` — last commit touching it: 2026-08-20 77eb7ee8
+- **Directory:** `tasks/SRS_Task_Smooth/` — last commit touching it: 2026-11-23 7815b951
 - **Quintet files:** `srsSmooth_finish.m`, `srsSmooth_init.m`, `srsSmooth_next.m`, `srsSmooth_run.m`
 - **Settings files (8):** `srsClassic_Moretraining_settings.m`, `srsSmooth_Moretraining_settings.m`, `srsSmooth_classic_settings.m`, `srsSmooth_classic_training_settings.m`, `srsSmooth_direct_rgb_settings.m`, `srsSmooth_direct_rgb_training_settings.m`, `srsSmooth_settings.m` (primary), `srsSmooth_training_settings.m`
 - **Subfolders:** `supportFunctions/` (43 .m files), `actions/` (9 .m files); other: `SRS_behavior_analysis_2/`, `Simple_analysis/`

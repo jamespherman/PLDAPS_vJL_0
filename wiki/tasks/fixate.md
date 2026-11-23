@@ -44,7 +44,7 @@ and a joystick indicator.
 - **Directory:** `tasks/fixate/` — last commit touching it: 2026-05-26 4afbdeed
 - **Quintet files:** `fixate_finish.m`, `fixate_init.m`, `fixate_next.m`, `fixate_run.m`
 - **Settings files (1):** `fixate_settings.m` (primary)
-- **Subfolders:** `supportFunctions/` (24 .m files), `actions/` (6 .m files)
+- **Subfolders:** `supportFunctions/` (24 .m files), `actions/` (6 .m files); other: `output/`
 - **States** (`p.state`, from `fixate_settings.m`): `trialBegun`=1, `showFix`=2, `holdJoy`=3, `dontMove`=4, `makeDecision`=5, `fixBreak`=11, `joyBreak`=12, `nonStart`=13, `hit`=21, `cr`=22, `miss`=23, `foilFa`=24, `fa`=25
 
 **strobeList** (from `fixate_settings.m`; strobed each trial by `pds.strobeTrialData`):

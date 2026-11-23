@@ -51,7 +51,7 @@ The states are the shared gSac set (see the generated list).
 - **Directory:** `tasks/gSac_jph/` — last commit touching it: 2026-07-07 35269b50
 - **Quintet files:** `gSac_jph_finish.m`, `gSac_jph_init.m`, `gSac_jph_next.m`, `gSac_jph_run.m`
 - **Settings files (1):** `gSac_jph_settings.m` (primary)
-- **Subfolders:** `supportFunctions/` (19 .m files)
+- **Subfolders:** `supportFunctions/` (19 .m files); other: `output/`
 - **States** (`p.state`, from `gSac_jph_settings.m`): `trialBegun`=1, `waitForJoy`=2, `showFix`=3, `dontMove`=4, `makeSaccade`=5, `checkLanding`=6, `holdTarg`=7, `sacComplete`=21, `fixBreak`=31, `joyBreak`=32, `nonStart`=33, `failedToHoldTarg`=34
 
 **strobeList** (from `gSac_jph_settings.m`; strobed each trial by `pds.strobeTrialData`):

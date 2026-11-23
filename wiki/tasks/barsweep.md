@@ -66,7 +66,7 @@ waits (`postRewardDuration` or `timeoutAfterFixBreak`, then `iti`) run in
 - **Directory:** `tasks/barsweep/` — last commit touching it: 2026-08-18 ac0a00c0
 - **Quintet files:** `barsweep_finish.m`, `barsweep_init.m`, `barsweep_next.m`, `barsweep_run.m`
 - **Settings files (2):** `barsweep_cardinal4_settings.m` (primary), `barsweep_rfmap12_settings.m`
-- **Subfolders:** `supportFunctions/` (28 .m files)
+- **Subfolders:** `supportFunctions/` (28 .m files); other: `output/`
 - **States** (`p.state`, from `barsweep_cardinal4_settings.m`): `trialBegun`=1, `showFix`=2, `holdFixAndSweep`=3, `fixBreak`=11, `nonStart`=13, `trialComplete`=21
 
 **strobeList** (from `barsweep_cardinal4_settings.m`; strobed each trial by `pds.strobeTrialData`):

@@ -48,7 +48,7 @@ descriptors of the completed choice (`chosenPhysicalSide`, `chosenVerticalSide`,
 - **Directory:** `tasks/SRS_mooving/` — last commit touching it: 2026-08-17 1854e4c9
 - **Quintet files:** `srsMoving_finish.m`, `srsMoving_init.m`, `srsMoving_next.m`, `srsMoving_run.m`
 - **Settings files (2):** `srsMoving_Moretraining_settings.m`, `srsMoving_settings.m` (primary)
-- **Subfolders:** `supportFunctions/` (6 .m files); other: `Simple_analysis/`
+- **Subfolders:** `supportFunctions/` (6 .m files); other: `Simple_analysis/`, `output/`
 - **strobeList:** none defined in primary settings file
 
 <!-- GEN:facts:end -->

@@ -4,9 +4,9 @@ type: reference
 category: Reference
 summary: GENERATED table of every code in +pds/initCodes.m, which tasks use it, and integrity checks
 sources:
-  - +pds/initCodes.m @ 55d625cb0d
-verified_at: a9564f6b
-updated: 2026-10-18
+  - +pds/initCodes.m @ 2ccd7cc205
+verified_at: 32c4d1d2
+updated: 2026-11-23
 ---
 
 # Strobe code registry
@@ -17,7 +17,7 @@ Generated from `+pds/initCodes.m` (the HOLY file — see [strobe codes](../conce
 
 ## Integrity checks
 
-- 283 code definitions, 283 distinct values.
+- 289 code definitions, 289 distinct values.
 - Duplicate values: none.
 - Names assigned more than once: `isNoChangeTrial`, `noChange`
 - strobeList names with no initCodes entry (`pds.strobeTrialData` wraps its whole loop in one try/catch, so such a row and every row after it in that list go unstrobed): `p.init.taskType` (strobeList in tasks/nfl), `p.init.trialsArray(p.trVars.currentTrialsArrayRow, 9)` (strobeList in tasks/nfl), `p.status.iGoodTrial` (strobeList in tasks/nfl), `p.status.iTrial` (strobeList in tasks/nfl), `p.trVars.cueElevDeg` (strobeList in tasks/nfl), `p.trVars.cueOn` (strobeList in tasks/nfl), `p.trVars.foilOn` (strobeList in tasks/nfl), `p.trVars.isCueChangeTrial` (strobeList in tasks/nfl), `p.trVars.isFoilChangeTrial` (strobeList in tasks/nfl), `p.trVars.isNoChangeTrial` (strobeList in tasks/nfl), `p.trVars.rewardDurationMs` (strobeList in tasks/nfl), `p.trVars.stimLocEcc` (strobeList in tasks/nfl), `randSeedStim` (strobeList in tasks/nfl), `randSeedTrial` (strobeList in tasks/nfl), `microStimChanne;` (strobeList in tasks/numerosity (WiP))
@@ -302,6 +302,12 @@ Generated from `+pds/initCodes.m` (the HOLY file — see [strobe codes](../conce
 | `rfMapRngSeedHigh` | 16159 | **rfMap** | RNG seed upper 16 bits (lower 16 in noiseRngSeed 16106) |
 | `rfMapNoiseCycleCount` | 16160 | **rfMap** | # times the pre-generated noise movie has wrapped (0 = first pass) |
 | `rfMapStimHemifield` | 16161 | **rfMap** | 0=full, 1=left, 2=right |
+| `rfMapTrialFrameStartHigh` | 16162 | **rfMap** | floor(trialStartFrame / 32768) |
+| `rfMapTrialFrameEndHigh` | 16163 | **rfMap** | floor(trialEndFrame / 32768) |
+| `rfMapTotalFramesHigh` | 16164 | **rfMap** | floor(nNoiseFrames / 32768) |
+| `rfMapGridSource` | 16165 | **rfMap** | 0 = screen (full/hemifield), 1 = barsweep RF window |
+| `rfMapGridCenterTheta_x10` | 16166 | **rfMap** | noise-grid center polar angle re fixation (deg*10, 0..3599) |
+| `rfMapGridCenterRadius_x100` | 16167 | **rfMap** | noise-grid center eccentricity re fixation (dva*100) |
 
 ### Codes for SRS_Task
 
