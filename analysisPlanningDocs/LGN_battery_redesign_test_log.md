@@ -157,3 +157,35 @@ viz is a later step.
   exported CSV** so I can sanity-check the distribution.
 
 <!-- Phase 3+ tests appended below as each phase is implemented. -->
+
+## Phase 4 — rfMap RF-restricted window (code written 2026-11-23)
+
+### [OFFLINE] 4.1 — window builder, placement, mask, strobes
+- **Do:** `cd tasks/rfMap/_validation; test_barsweepRFWindow`
+- **2026-11-23 result: ☑ pass (10/10 blocks, on `pldaps1`).** On the real
+  `20260814_t1207` corrected CSV: 4 of 7 SNR≥4 channels kept (10, 18, 20, 42;
+  ch 12/24/44 trimmed by the k=2 MAD rule because the cluster is very tight),
+  window center [−2.29 −0.48] dva, 3.72 × 3.35 dva, overlaps fixation → patch
+  + mask kept. Synthetic 2026-06-08-like cluster: outliers trimmed, window
+  clear of fixation. Edges back-convert to the requested dva within 0.05°
+  (tangent-correct; the naive `deg2pix(width)` would be 5 px short at 10°).
+  Hemifield-left mask now lands at fixation (the old code masked the grid
+  center).
+
+### [RIG] 4.2 — rfMap with no CSV is unchanged
+- **Do:** run any STA variant with `barsweepRFCsv = ''`.
+- **Expect:** same init printout as before plus `grid=screen`; same
+  `noiseFrameHold`; no window lines.
+
+### [RIG] 4.3 — rfMap with a barsweep CSV
+- **Do:** set `p.trVarsInit.barsweepRFCsv` to a session folder (or the output
+  root) and run denseAchromatic.
+- **Expect:** init prints the window, `noiseFrameHold = 1`, 1.0° checks,
+  12 lags; the noise visibly occupies only the window; STA browser extent
+  matches; ITI does not stretch noticeably (texture upload at 100 Hz); each
+  good trial prints a `budget:` line.
+
+### [REC] 4.4 — Ripple-side strobes
+- **Expect:** `rfMapGridSource` (16165) = 1, grid center theta/radius
+  (16166/16167) match the init printout; frame start/end reconstruct as
+  `low + 32768*high` past frame 32767 (~5.5 min into a 100 Hz movie).

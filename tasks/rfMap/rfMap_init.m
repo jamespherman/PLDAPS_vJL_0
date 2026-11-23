@@ -25,6 +25,14 @@ p = initClut(p);
 %% (3) initialize VIEWPixx/DATAPixx
 p = pds.initDataPixx(p);
 
+%% (3a) optional barsweep -> rfMap handoff: RF-restricted noise window.
+% Needs deg2pix (rig geometry) and the measured refresh, so it runs after
+% initDataPixx and BEFORE (3b), which turns the STA-window update rate into
+% noiseFrameHold. No CSV (the default) -> inactive -> byte-for-byte the
+% previous full/hemifield behavior. Checkerboard is never windowed (its
+% spatial config is deliberately full-screen).
+p = applyBarsweepRFWindow(p);
+
 %% (3b) derive noiseFrameHold from the target noise update rate.
 % Settings declare a rig-rate-independent target Hz; we round to the
 % nearest integer hold length now that p.rig.refreshRate is populated.
@@ -198,8 +206,30 @@ switch hemi
         error('rfMap_init:badHemifield', ...
             'stimHemifield must be ''full'', ''left'', or ''right'' (got ''%s'').', hemi);
 end
-nChecksX        = ceil(gridWidthPix   / checkSizePix);
-nChecksY        = ceil(screenHeightPix / checkSizePix);
+gridHeightPix = screenHeightPix;
+gridCenterY   = p.draw.middleXY(2);
+gridSource    = 'screen';
+
+% RF-restricted window (Phase 4): placed by barsweepWindowToGridPix with
+% tangent-correct edge conversion (never deg2pix on a width).
+win = getdefLocal(p.init, 'barsweepWindow', struct('active', false));
+if win.active && ~strcmp(p.init.stimType, 'checkerboard')
+    g = barsweepWindowToGridPix(p, win, checkSizePix);
+    if g.ok
+        gridWidthPix  = g.widthPix;
+        gridHeightPix = g.heightPix;
+        gridCenterX   = g.centerPix(1);
+        gridCenterY   = g.centerPix(2);
+        gridSource    = 'barsweepWindow';
+    else
+        warning('rfMap_init:windowOffscreen', ...
+            'barsweep RF window is off-screen (%s); using the %s grid.', ...
+            g.reason, hemi);
+    end
+end
+
+nChecksX        = ceil(gridWidthPix  / checkSizePix);
+nChecksY        = ceil(gridHeightPix / checkSizePix);
 
 % Compute total noise frames
 frameDurS    = p.trVarsInit.noiseFrameHold * p.rig.frameDuration;
@@ -261,19 +291,99 @@ end
 
 % Store metadata
 p.init.noiseGridSize      = [nChecksY, nChecksX];
-p.init.noiseGridCenterPix = [gridCenterX, p.draw.middleXY(2)];
+p.init.noiseGridCenterPix = [gridCenterX, gridCenterY];
 p.init.stimHemifield      = hemi;
 hemiMap = struct('full', 0, 'left', 1, 'right', 2);
 p.init.stimHemifieldInt   = hemiMap.(hemi);
+p.init.gridSource         = gridSource;
+p.init.gridSourceInt      = double(strcmp(gridSource, 'barsweepWindow'));
 p.init.nNoiseFrames       = nNoiseFrames;
 p.init.noiseFrameIdx      = 1;
 p.init.noiseCycleCount    = 0;   % # times the cursor has wrapped (movie modes)
 
-fprintf('rfMap stimType=%s: %d x %d checks, %d total frames (hemifield=%s)\n', ...
-    p.init.stimType, nChecksY, nChecksX, nNoiseFrames, hemi);
+% Grid center in fixation-relative dva (tangent-correct: absolute screen
+% eccentricity first, then subtract fixation). Strobed in polar form so a
+% Ripple-only analysis can place the grid without p.mat.
+gcDeg = [pds.pix2deg(gridCenterX - p.draw.middleXY(1), p) - p.trVarsInit.fixDegX, ...
+         pds.pix2deg(p.draw.middleXY(2) - gridCenterY, p) - p.trVarsInit.fixDegY];
+p.init.noiseGridCenterDeg        = gcDeg;
+p.init.noiseGridCenterTheta_x10  = round(10 * mod(atan2d(gcDeg(2), gcDeg(1)), 360));
+p.init.noiseGridCenterRadius_x100 = round(100 * hypot(gcDeg(1), gcDeg(2)));
+
+fprintf(['rfMap stimType=%s: %d x %d checks, %d total frames ' ...
+         '(grid=%s, hemifield=%s, center [%.2f %.2f] dva re fix)\n'], ...
+    p.init.stimType, nChecksY, nChecksX, nNoiseFrames, gridSource, hemi, gcDeg);
 
 end
 
+
+function p = applyBarsweepRFWindow(p)
+% Read the barsweep CSV (if any) and, for STA variants, switch to the
+% RF-window STA defaults: finer checks, every-frame noise, more lags, and
+% no clearing patch when the window is clear of fixation. Each override is
+% mirrored to trVarsInit / trVars / trVarsGuiComm (same pattern as 3b).
+win = importBarsweepRFWindow(p);
+p.init.barsweepWindow = win;
+if ~win.active
+    if ~isempty(win.csvPath) || ~strcmp(win.reason, 'no barsweepRFCsv set')
+        fprintf('rfMap_init: barsweep window inactive (%s).\n', win.reason);
+    end
+    return;
+end
+if strcmp(p.init.stimType, 'checkerboard')
+    fprintf(['rfMap_init: barsweep window ignored for checkerboard ' ...
+             '(full-screen by design).\n']);
+    p.init.barsweepWindow.active = false;
+    p.init.barsweepWindow.reason = 'checkerboard is never windowed';
+    return;
+end
+
+% Reject an off-screen window here, before any STA defaults change, so a
+% bad CSV falls back to exactly the pre-Phase-4 configuration.
+ckDeg = getdefLocal(p.trVarsInit, 'rfWindowCheckSizeDeg', 1.0);
+g = barsweepWindowToGridPix(p, win, max(pds.deg2pix(ckDeg, p), 1));
+if ~g.ok
+    warning('rfMap_init:windowOffscreen', ...
+        'barsweep RF window is off-screen (%s); using the default grid.', g.reason);
+    p.init.barsweepWindow.active = false;
+    p.init.barsweepWindow.reason = ['off-screen: ' g.reason];
+    return;
+end
+
+ov = struct( ...
+    'checkSizeDeg',        ckDeg, ...
+    'noiseTargetUpdateHz', p.rig.refreshRate, ...   % -> noiseFrameHold = 1 in (3b)
+    'nSTALags',            getdefLocal(p.trVarsInit, 'rfWindowNSTALags', 12));
+if ~win.containsFixation
+    ov.clearPatchDeg = 0;   % nothing to clear; occludedCheckMask -> all-false
+end
+f = fieldnames(ov);
+for i = 1:numel(f)
+    p.trVarsInit.(f{i})    = ov.(f{i});
+    p.trVars.(f{i})        = ov.(f{i});
+    p.trVarsGuiComm.(f{i}) = ov.(f{i});
+end
+
+fprintf(['rfMap_init: barsweep RF window from %s\n' ...
+         '    %d/%d channels (snr>=%.2f, after robust trim): ' ...
+         'center [%.2f %.2f] dva, %.2f x %.2f dva, fixation %s\n' ...
+         '    STA overrides: checkSizeDeg=%.2f, every frame (%.1f Hz), ' ...
+         'nSTALags=%d, clearPatchDeg=%.2f\n'], ...
+    win.csvPath, win.nChannelsUsed, win.nChannelsAboveThresh, ...
+    getdefLocal(p.trVarsInit, 'rfWindowSnrThresh', 4.0), ...
+    win.centerDeg, win.widthDeg, win.heightDeg, ...
+    ternary(win.containsFixation, 'INSIDE (patch + mask kept)', 'clear'), ...
+    p.trVarsInit.checkSizeDeg, p.rig.refreshRate, p.trVarsInit.nSTALags, ...
+    p.trVarsInit.clearPatchDeg);
+end
+
+function v = getdefLocal(s, f, d)
+if isfield(s, f) && ~isempty(s.(f)), v = s.(f); else, v = d; end
+end
+
+function out = ternary(c, a, b)
+if c, out = a; else, out = b; end
+end
 
 function checkInfo = uploadCheckerboardTextures(p, checkInfo)
 % Upload the pre-computed checkerboard texture data matrices to PTB.

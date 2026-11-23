@@ -101,7 +101,7 @@ yet.** See `LGN_battery_redesign_test_log.md` for per-block numbers.
 | **Phase 2 core** — barsweep cardinal4 midpoint method (crossings) + offline tests + export latency column | ✅ done | `44e4e016` (rebased `c4b143af`) |
 | Phase 2 viz — 4-panel per-direction PSTH display (plotBarsweepRF + browser) | ⬜ pending | — (task runs now via backward-compat fields) |
 | **Phase 3** — MUAE selectable signal source | ⬜ pending | needs rig/Trellis continuous-stream validation |
-| **Phase 4** — rfMap RF-restricted window + STA defaults + occlusion-mask fix + adequacy estimator | ⬜ pending | best built with a real Phase-2 export CSV in hand (calibrates `rfWindowSnrThresh`) |
+| **Phase 4** — rfMap RF-restricted window + STA defaults + occlusion-mask fix + adequacy estimator | 🟨 code written 2026-11-23, offline test 4.1 passes; needs rig tests 4.2–4.4 + threshold calibration from a real Phase-2 CSV | — |
 | **Phase 5** — checkerboard contrast set `[0.125 0.25 0.5 1.0]` + RF-centered denseChromatic + cross-session classifier | ⬜ pending | checkerboard settings file is actively co-edited; do as one unit |
 
 Sequencing note: Phase 4's window-selection threshold is calibrated from the

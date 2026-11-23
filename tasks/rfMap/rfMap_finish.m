@@ -97,6 +97,10 @@ if ~p.trData.trialRepeatFlag
     else
         % Noise-movie modes: advance playback index.
         p.init.noiseFrameIdx = p.trVars.trialEndFrame + 1;
+        % Spike-budget bookkeeping: stimulus (fixation) time actually shown.
+        p = initSpikeBudget(p);
+        p.init.staBudget.stimTimeS = p.init.staBudget.stimTimeS + ...
+            p.trVars.nFramesThisTrial * p.trVars.noiseFrameDurS;
     end
 
     % (4b) Accumulate STA from Ripple data (if enabled and data available)
@@ -112,6 +116,11 @@ if ~p.trData.trialRepeatFlag
         % Persisted on p.init so aborts/zero-spike trials inherit the
         % latest valid estimate when saved.
         p.init.lastRFCentersDeg = computeRFCenters(p);
+    end
+
+    % (4d) Spike-budget (adequacy) estimate, STA variants only.
+    if ~strcmp(p.init.stimType, 'checkerboard')
+        p = reportSpikeBudget(p);
     end
 end
 
@@ -334,6 +343,18 @@ else
         stimStartFrame, p.trVars.nFramesThisTrial, ...
         p.trVars.nSTALags);
 
+    % Spike-budget bookkeeping: spikes inside this trial's stimulus window.
+    p = initSpikeBudget(p);
+    trialEndTime = stimOnTimeRipple + ...
+        p.trVars.nFramesThisTrial * p.trVars.noiseFrameDurS;
+    for ch = 1:min(p.trVars.nChannels, numel(p.init.staBudget.spikes))
+        spk = spikeTimesPerChan{ch};
+        if ~isempty(spk)
+            p.init.staBudget.spikes(ch) = p.init.staBudget.spikes(ch) + ...
+                sum(spk >= stimOnTimeRipple & spk < trialEndTime);
+        end
+    end
+
     % Zero the fixation-occluded checks: the clearing patch / fixation
     % point are drawn over the noise (rfMap_run.m), so the noise there was
     % never shown and its STA correlation is a spurious RF pinned at
@@ -372,4 +393,50 @@ end
 
 fprintf('  STA: %d total spikes accumulated\n', p.init.staSpikeCount(1, 1));
 
+end
+
+
+function p = initSpikeBudget(p)
+if ~isfield(p.init, 'staBudget') || isempty(p.init.staBudget)
+    p.init.staBudget = struct('stimTimeS', 0, ...
+        'spikes', zeros(p.trVarsInit.nChannels, 1), 'warned', false);
+end
+end
+
+function p = reportSpikeBudget(p)
+% Project spikes/channel at the end of the run from the observed rate.
+% The run is movieDurationMin * targetNoiseCycles of STIMULUS time (not
+% wall clock: fix breaks and ITIs add to the session but not to this).
+p = initSpikeBudget(p);
+b = p.init.staBudget;
+if b.stimTimeS <= 0, return; end
+runS   = p.trVarsInit.movieDurationMin * 60 * ...
+    max(1, getdefFinish(p.trVarsGuiComm, 'targetNoiseCycles', 1));
+target = getdefFinish(p.trVarsInit, 'staTargetSpikesPerCh', 2000);
+rate   = b.spikes / b.stimTimeS;             % Hz per channel
+proj   = rate * runS;
+resp   = rate >= 1;                          % ignore silent / dead channels
+if ~any(resp)
+    fprintf('  budget: %.0f s of %.0f s shown | no channel >= 1 Hz yet\n', ...
+        b.stimTimeS, runS);
+    return;
+end
+medProj = median(proj(resp));
+nOk     = sum(proj(resp) >= target);
+fprintf(['  budget: %.0f/%.0f s shown | median rate %.1f Hz (%d ch >=1 Hz) | ' ...
+         'projected %.0f spk/ch at end (target %d; %d/%d ch on track)\n'], ...
+    b.stimTimeS, runS, median(rate(resp)), sum(resp), medProj, target, ...
+    nOk, sum(resp));
+% Warn once, after enough stimulus to trust the rate.
+if ~b.warned && b.stimTimeS >= 30 && medProj < target
+    warning('rfMap:spikeBudget', ...
+        ['Projected median %.0f spikes/channel by the end of the run, below ' ...
+         'the %d target. Consider checkSizeDeg = 2 (4x fewer checks) or a ' ...
+         'longer movieDurationMin / targetNoiseCycles.'], medProj, target);
+    p.init.staBudget.warned = true;
+end
+end
+
+function v = getdefFinish(s, f, d)
+if isfield(s, f) && ~isempty(s.(f)), v = s.(f); else, v = d; end
 end

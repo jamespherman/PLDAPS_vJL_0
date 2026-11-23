@@ -320,7 +320,19 @@ codes.rfMapSparseBalancedFlag        = 16158;  % 1 = uniform-random (legacy), 2 
 codes.rfMapRngSeedHigh               = 16159;  % RNG seed upper 16 bits (lower 16 in noiseRngSeed 16106)
 codes.rfMapNoiseCycleCount           = 16160;  % # times the pre-generated noise movie has wrapped (0 = first pass)
 codes.rfMapStimHemifield              = 16161;  % 0=full, 1=left, 2=right
-% 16162-16169 reserved for future per-stim-type params
+% LGN battery redesign Phase 4 (2026-11). At noiseFrameHold = 1 a 10-min
+% movie is ~60000 frames, past the 15-bit strobe ceiling, so frame indices
+% are now sent as two words: value = low + 32768 * high, where the low word
+% is the existing code (noiseTrialFrameStart/End, noiseTotalFrames).
+% Sessions before this change sent the low word saturated at 32767 and no
+% high word (only reachable above 32767 frames, i.e. never in practice).
+codes.rfMapTrialFrameStartHigh       = 16162;  % floor(trialStartFrame / 32768)
+codes.rfMapTrialFrameEndHigh         = 16163;  % floor(trialEndFrame / 32768)
+codes.rfMapTotalFramesHigh           = 16164;  % floor(nNoiseFrames / 32768)
+codes.rfMapGridSource                = 16165;  % 0 = screen (full/hemifield), 1 = barsweep RF window
+codes.rfMapGridCenterTheta_x10       = 16166;  % noise-grid center polar angle re fixation (deg*10, 0..3599)
+codes.rfMapGridCenterRadius_x100     = 16167;  % noise-grid center eccentricity re fixation (dva*100)
+% 16168-16169 reserved for future per-stim-type params
 % 16170-16175 reserved as headroom
 
 
